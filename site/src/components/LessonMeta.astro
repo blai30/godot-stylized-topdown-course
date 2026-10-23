@@ -1,0 +1,91 @@
+---
+// The lesson's number, time estimate, what it teaches, and the lessons it builds on. The page must agree with the
+// syllabus on its number, title, and folder, or the build fails.
+import { publishedIds } from '../data/published';
+import { lessonByNumber } from '../data/syllabus';
+
+interface Props {
+	lesson: { number: number; minutes: number; learn: string[]; prerequisites: number[] };
+}
+
+const { lesson } = Astro.props;
+const { id, entry } = Astro.locals.starlightRoute;
+const planned = lessonByNumber(lesson.number);
+if (planned.id !== id || planned.title !== entry.data.title) {
+	throw new Error(`Page ${id} ("${entry.data.title}") does not match syllabus lesson ${planned.number}: ${planned.id} ("${planned.title}").`);
+}
+
+const published = await publishedIds();
+const prerequisites = lesson.prerequisites.map((number) => {
+	const prerequisite = lessonByNumber(number);
+	return { ...prerequisite, href: published.has(prerequisite.id) ? `/${prerequisite.id}/` : undefined };
+});
+---
+
+<div class="lesson-meta">
+	<p class="summary">Lesson {lesson.number} <span aria-hidden="true">&middot;</span> about {lesson.minutes} minutes</p>
+	<dl>
+		<div>
+			<dt>You will learn</dt>
+			<dd>
+				<ul>{lesson.learn.map((item) => <li>{item}</li>)}</ul>
+			</dd>
+		</div>
+		<div>
+			<dt>Before you start</dt>
+			<dd>
+				{prerequisites.length === 0 ? (
+					<p>Nothing. This lesson is a starting point.</p>
+				) : (
+					<ul>
+						{prerequisites.map(({ number, title, href }) => (
+							<li>{href ? <a href={href}>Lesson {number}: {title}</a> : <span>Lesson {number}: {title} (not yet published)</span>}</li>
+						))}
+					</ul>
+				)}
+			</dd>
+		</div>
+	</dl>
+</div>
+
+<style>
+	.lesson-meta {
+		margin-top: 1.25rem;
+		padding: 1rem 1.25rem;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 0.5rem;
+		background: var(--sl-color-gray-6);
+	}
+
+	.summary {
+		margin: 0;
+		color: var(--sl-color-text-accent);
+		font-weight: 600;
+	}
+
+	dl {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+		gap: 1rem 2rem;
+		margin: 0.75rem 0 0;
+	}
+
+	dt {
+		color: var(--sl-color-gray-3);
+		font-size: var(--sl-text-sm);
+		font-weight: 600;
+	}
+
+	dd {
+		margin: 0.25rem 0 0;
+	}
+
+	dd p,
+	ul {
+		margin: 0;
+	}
+
+	ul {
+		padding-inline-start: 1.1rem;
+	}
+</style>

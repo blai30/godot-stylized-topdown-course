@@ -1,0 +1,70 @@
+---
+// The end of a lesson, under its "## Checkpoint" heading: what the project contains now (passed in as content), and
+// the "Mark lesson done" toggle.
+const lessonId = Astro.locals.starlightRoute.id;
+---
+
+<div class="checkpoint">
+	<slot />
+	<button class="mark-done" type="button" aria-pressed="false" data-lesson={lessonId}>
+		<span class="box" aria-hidden="true"></span>
+		Mark lesson done
+	</button>
+</div>
+
+<script>
+	import { onProgressChange, readDone, setDone } from '../scripts/progress';
+
+	for (const button of document.querySelectorAll<HTMLButtonElement>('.mark-done')) {
+		const lesson = button.dataset.lesson ?? '';
+		onProgressChange((done) => button.setAttribute('aria-pressed', String(done.has(lesson))));
+		button.addEventListener('click', () => setDone(lesson, !readDone().has(lesson)));
+	}
+</script>
+
+<style>
+	.mark-done {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.6rem;
+		margin-top: 1.5rem;
+		padding: 0.6rem 1rem;
+		border: 1px solid var(--sl-color-accent);
+		border-radius: 0.5rem;
+		background: transparent;
+		color: var(--sl-color-white);
+		font: inherit;
+		font-weight: 600;
+		cursor: pointer;
+	}
+
+	.mark-done:focus-visible {
+		outline: 2px solid var(--sl-color-text-accent);
+		outline-offset: 2px;
+	}
+
+	.box {
+		position: relative;
+		width: 1.1rem;
+		height: 1.1rem;
+		border: 2px solid var(--sl-color-accent);
+		border-radius: 0.25rem;
+	}
+
+	.mark-done[aria-pressed='true'] {
+		background: var(--sl-color-accent-low);
+	}
+
+	.mark-done[aria-pressed='true'] .box {
+		background: var(--sl-color-accent);
+	}
+
+	.mark-done[aria-pressed='true'] .box::after {
+		content: '';
+		position: absolute;
+		inset: 0.05rem 0.3rem 0.25rem;
+		border-right: 2px solid var(--sl-color-black);
+		border-bottom: 2px solid var(--sl-color-black);
+		transform: rotate(45deg);
+	}
+</style>

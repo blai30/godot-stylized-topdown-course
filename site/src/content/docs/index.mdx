@@ -1,0 +1,50 @@
+---
+title: Hand-Made Top-Down
+description: Build a stylized top-down Godot game template by hand, from the first install to your own art library.
+template: splash
+hero:
+  tagline: Build a cozy, stylized top-down world in Godot with your own hands. Every model, texture, shader, and script is yours, and the result is a template you can start any game from.
+  actions:
+    - text: Start the course
+      link: /start/how-this-course-works/
+      icon: right-arrow
+    - text: See the syllabus
+      link: /start/syllabus/
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+import Figure from '../../components/Figure.astro';
+import targetNoon from '../../assets/home/target-noon.png';
+import targetDusk from '../../assets/home/target-dusk.png';
+
+## The look you will build
+
+<Figure
+	src={targetNoon}
+	alt="A sunny meadow seen from above at a steep angle: soft rounded trees casting crisp shadows on bright grass, a small pond with an earthen bank, and patches of dirt."
+	caption="The target look at noon. These captures come from FactoryGame, the project this style was developed in. Your own art will look different, and that is the point."
+/>
+
+<Figure
+	src={targetDusk}
+	alt="The same meadow at golden hour: warm orange light, long shadows stretching across the grass, and a violet tint on the pond."
+	caption="The same place at golden hour. The day cycle you build in Module 4 moves the light through dawn, noon, dusk, and night."
+/>
+
+## What you get at the end
+
+<CardGrid>
+	<Card title="A template, not a game" icon="document">
+		A Godot project with terrain, water, grass, trees, rocks, sky, a day cycle, and a walking character. Copy it to start a farming game, an action RPG, a tactics game, or a JRPG overworld.
+	</Card>
+	<Card title="Made by you" icon="pencil">
+		You model, paint, and code everything yourself, so you can truthfully say you made it without AI.
+	</Card>
+	<Card title="An hour at a time" icon="clock">
+		Every lesson takes an hour or less and ends with something new to see in the running game.
+	</Card>
+	<Card title="No experience needed" icon="open-book">
+		The course assumes no Godot, Blender, or shader experience. Every term is explained the first time it appears.
+	</Card>
+</CardGrid>

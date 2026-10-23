@@ -1,0 +1,75 @@
+---
+// Starlight's sidebar with course progress: a meter on top and a check beside every finished lesson.
+import Default from '@astrojs/starlight/components/Sidebar.astro';
+import { getCollection } from 'astro:content';
+
+const lessons = (await getCollection('docs', ({ data }) => data.lesson !== undefined)).map(({ id }) => id);
+---
+
+<div class="course-progress" data-lessons={JSON.stringify(lessons)}>
+	<p class="count">0 of {lessons.length} lessons done</p>
+	<progress max={lessons.length} value="0" aria-label="Course progress"></progress>
+</div>
+<div class="course-sidebar">
+	<Default />
+</div>
+
+<script>
+	import { onProgressChange } from '../../scripts/progress';
+
+	const meter = document.querySelector<HTMLElement>('.course-progress');
+	const lessons: string[] = JSON.parse(meter?.dataset.lessons ?? '[]');
+	onProgressChange((done) => {
+		const finished = lessons.filter((id) => done.has(id));
+		const count = meter?.querySelector('.count');
+		if (count) count.textContent = `${finished.length} of ${lessons.length} lessons done`;
+		meter?.querySelector('progress')?.setAttribute('value', String(finished.length));
+		for (const link of document.querySelectorAll<HTMLAnchorElement>('.course-sidebar a[href]')) {
+			const id = new URL(link.href).pathname.replace(/^\/|\/$/g, '');
+			link.toggleAttribute('data-done', finished.includes(id));
+		}
+	});
+</script>
+
+<style>
+	.course-progress {
+		margin-bottom: 1rem;
+		padding-bottom: 1rem;
+		border-bottom: 1px solid var(--sl-color-hairline-light);
+	}
+
+	.count {
+		margin: 0 0 0.4rem;
+		color: var(--sl-color-gray-2);
+		font-size: var(--sl-text-sm);
+	}
+
+	progress {
+		width: 100%;
+		height: 0.4rem;
+		border: 0;
+		border-radius: 1rem;
+		background: var(--sl-color-gray-5);
+		overflow: hidden;
+		appearance: none;
+	}
+
+	progress::-webkit-progress-bar {
+		background: var(--sl-color-gray-5);
+	}
+
+	progress::-webkit-progress-value {
+		background: var(--sl-color-accent);
+	}
+
+	progress::-moz-progress-bar {
+		background: var(--sl-color-accent);
+	}
+
+	.course-sidebar :global(a[data-done])::after {
+		content: '\2713';
+		margin-inline-start: auto;
+		padding-inline-start: 0.5rem;
+		color: var(--sl-color-accent);
+	}
+</style>

@@ -1,0 +1,10 @@
+---
+// Starlight's title, followed by the lesson metadata on lesson pages.
+import Default from '@astrojs/starlight/components/PageTitle.astro';
+import LessonMeta from '../LessonMeta.astro';
+
+const { lesson } = Astro.locals.starlightRoute.entry.data;
+---
+
+<Default />
+{lesson && <LessonMeta lesson={lesson} />}

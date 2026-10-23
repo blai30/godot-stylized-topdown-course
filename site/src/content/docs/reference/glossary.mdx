@@ -1,0 +1,166 @@
+---
+title: Glossary
+description: Every term the course uses, in plain language.
+---
+
+Terms are in alphabetical order. Lessons link here the first time they use a term.
+
+## Albedo
+
+The plain color of a surface before any light falls on it. In a shader you set it with `ALBEDO`.
+
+## Bevel
+
+A narrow slanted face that replaces a sharp edge. Real objects never have perfectly sharp edges, so small bevels catch light along the edge and make a model read as solid.
+
+## Blockout
+
+A first, rough version of a model made of big simple shapes, to settle its size and silhouette before any detail.
+
+## C#
+
+The programming language this course uses for game code. You write it in your IDE, and Godot's .NET edition runs it.
+
+## Edit Mode
+
+Blender's mode for changing a mesh's vertices, edges, and faces. Press <kbd>Tab</kbd> to switch between Edit Mode and Object Mode.
+
+## Fragment function
+
+The part of a shader that runs once for every pixel a surface covers on screen, and decides that pixel's color and other surface properties. In Godot it is written `void fragment()`.
+
+## Game engine
+
+A program that does the hard, shared work of a game: drawing 3D graphics, playing sound, reading input, and running physics. You build your game inside it. This course uses Godot.
+
+## Git
+
+A version control system: it records snapshots of your project, called commits, so you can see what changed and go back to any earlier state.
+
+## Git LFS
+
+Git Large File Storage, an add-on for Git that stores big binary files, such as images and Blender files, outside the normal history so the project stays fast to download.
+
+## Gizmo
+
+The colored arrows, rings, and handles Godot and Blender draw on a selected object. Drag them to move, rotate, or scale it.
+
+## Hard-surface model
+
+A model of a solid object with firm edges and flat or gently curved faces, such as a rock, a crate, or a wall, as opposed to soft organic forms like skin or cloth.
+
+## IDE
+
+Integrated development environment: a code editor with tools built in, such as autocomplete, error checking, and debugging. Rider and VS Code are the IDEs this course supports.
+
+## Inspector
+
+Godot's panel, on the right by default, that shows every property of the selected node or resource and lets you change it.
+
+## Loop cut
+
+In Blender, a new ring of edges cut all the way around a mesh. It adds vertices you can move to shape the model.
+
+## Material
+
+A resource that describes how a surface looks: its color, roughness, and how it reacts to light. A `ShaderMaterial` is a material whose look comes from a shader you write.
+
+## Matrix
+
+A grid of numbers that stores a transform: a position, rotation, and scale together. Multiplying a point by an object's matrix moves the point from the object's own coordinates into the world.
+
+## Mesh
+
+The shape of a 3D object: a set of points (vertices) joined by edges into flat faces. In Godot, a `MeshInstance3D` node shows a mesh in the scene.
+
+## Mipmap
+
+A smaller copy of a texture. A texture with mipmaps has a chain of copies, each half the size of the last, so a surface far from the camera samples a small copy and does not shimmer.
+
+## Modifier
+
+In Blender, an operation added to an object that changes its mesh without destroying the original, such as Bevel. You can change or remove a modifier at any time.
+
+## Node
+
+The building block of a Godot scene. Every light, camera, mesh, and script lives on a node, and nodes form a tree.
+
+## Normal
+
+The direction a surface faces at a point. Lighting depends on normals, so changing them changes how smooth or sharp a model looks without changing its shape.
+
+## Object Mode
+
+Blender's mode for moving, rotating, and scaling whole objects. Press <kbd>Tab</kbd> to switch between Object Mode and Edit Mode.
+
+## Origin
+
+The single point an object is positioned and rotated around. In Blender it shows as a small orange dot. For props in this course, the origin sits at the center of the model's base, so the model stands on the ground where you place it.
+
+## Resource
+
+A piece of data Godot saves and shares, such as a mesh, a material, a texture, or a shader. Several nodes can use the same resource.
+
+## Roughness
+
+How rough a surface is, from 0 (a mirror) to 1 (matte). Rough surfaces spread light out; smooth ones show sharp highlights. In a shader you set it with `ROUGHNESS`.
+
+## Scene
+
+A tree of nodes saved as one file, ending in `.tscn`. A level, a player, and a tree are each a scene, and a scene can contain other scenes.
+
+## SDK
+
+Software development kit: the tools a programming language needs to build programs. The .NET SDK compiles your C# code.
+
+## Shader
+
+A small program that runs on the graphics card and decides how a surface is drawn. Godot shaders are written in Godot's shading language, a language much like GLSL.
+
+## Smooth shading
+
+Lighting a mesh as if its surface were curved between vertices, instead of flat on every face. It makes a few faces look round.
+
+## sRGB
+
+The color space of ordinary images and screens. Color textures are stored in sRGB and must be converted before lighting math; the `source_color` hint tells Godot a texture is a color texture so it does this for you.
+
+## Texel density
+
+How many texture pixels (texels) cover one meter of a surface. This course uses 256 pixels per meter everywhere, so textures on different objects look equally sharp side by side.
+
+## Texture
+
+An image a shader reads colors or other values from. Reading from it is called sampling.
+
+## Triangle budget
+
+The most triangles a model may use. Graphics cards draw triangles, so the count decides how expensive a model is to draw. A budget keeps every model in proportion to how big it appears on screen.
+
+## Uniform
+
+A value a shader reads that you set from outside, in the Inspector or from code. It stays the same for every pixel of a surface, which is where the name comes from.
+
+## UV
+
+Two coordinates, U and V, that say where on a texture each point of a mesh reads its color. They are stored in the mesh.
+
+## Varying
+
+A value a shader's vertex function calculates and hands to its fragment function. Each pixel receives a blend of the values from the vertices around it.
+
+## Vertex function
+
+The part of a shader that runs once for every vertex of a mesh. In Godot it is written `void vertex()`.
+
+## Weighted normals
+
+Normals calculated so that large faces stay flat and only the small faces around them, such as bevels, carry the curve. It makes a low-poly model look smooth at the edges and crisp across its faces.
+
+## World space
+
+Positions measured in the coordinates of the whole level, rather than relative to one object. A point in world space stays put when you move or turn the object it belongs to.
+
+## X-ray
+
+A Blender view mode that makes the model see-through, so you can select vertices on its far side. Toggle it with Alt+Z.

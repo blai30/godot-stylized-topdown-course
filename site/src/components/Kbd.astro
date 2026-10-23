@@ -1,0 +1,40 @@
+---
+// A hotkey as keys, such as "Ctrl+Shift+A", with the macOS keys after it when they differ.
+interface Props {
+	keys: string;
+	mac?: string;
+}
+
+const { keys, mac } = Astro.props;
+const split = (combo: string) => combo.split('+').map((key) => key.trim());
+---
+
+<span class="hotkey">{split(keys).map((key, i) => <>{i > 0 && <span class="plus">+</span>}<kbd>{key}</kbd></>)}{mac && <span class="mac">(macOS: {split(mac).map((key, i) => <>{i > 0 && <span class="plus">+</span>}<kbd>{key}</kbd></>)})</span>}</span>
+
+<style>
+	.hotkey {
+		white-space: nowrap;
+	}
+
+	kbd {
+		display: inline-block;
+		padding: 0.05rem 0.4rem;
+		border: 1px solid var(--sl-color-gray-4);
+		border-bottom-width: 2px;
+		border-radius: 0.3rem;
+		background: var(--sl-color-gray-6);
+		color: var(--sl-color-white);
+		font-size: 0.85em;
+		line-height: 1.4;
+	}
+
+	.plus {
+		margin-inline: 0.15rem;
+	}
+
+	/* The macOS hint inherits its color so it stays readable on every background, asides included. */
+	.mac {
+		margin-inline-start: 0.35rem;
+		font-size: 0.9em;
+	}
+</style>

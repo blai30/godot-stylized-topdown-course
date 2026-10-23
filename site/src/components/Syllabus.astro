@@ -1,0 +1,35 @@
+---
+// Every module and lesson from the syllabus data, linking the lessons that are published.
+import { publishedIds } from '../data/published';
+import { modules } from '../data/syllabus';
+
+const published = await publishedIds();
+const rows = modules.map((module) => ({
+	module,
+	lessons: module.lessons.map((lesson) => {
+		const id = `${module.directory}/${lesson.slug}`;
+		return { ...lesson, href: published.has(id) ? `/${id}/` : undefined };
+	}),
+}));
+---
+
+{rows.map(({ module, lessons }) => (
+	<section class="module">
+		<h2 id={`module-${module.number}`}>Module {module.number}: {module.title}</h2>
+		<ol start={lessons[0]?.number}>
+			{lessons.map(({ title, href }) => (
+				<li>{href ? <a href={href}>{title}</a> : <span>{title}</span>}{!href && <span class="pending"> (coming soon)</span>}</li>
+			))}
+		</ol>
+	</section>
+))}
+
+<style>
+	.module ol {
+		padding-inline-start: 2.25rem;
+	}
+
+	.pending {
+		color: var(--sl-color-gray-3);
+	}
+</style>

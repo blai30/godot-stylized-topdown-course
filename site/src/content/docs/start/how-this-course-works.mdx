@@ -1,0 +1,61 @@
+---
+title: How this course works
+description: What every lesson looks like, how hidden solutions work, and which versions the course was checked on.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import Kbd from '../../../components/Kbd.astro';
+import Solution from '../../../components/Solution.astro';
+
+You will build a Godot project from an empty folder to a finished game template: a stylized natural world with terrain, water, grass, trees, rocks, a sky that moves through the day, and a character you can walk around. You make every part of it yourself. This page explains how the lessons work before you start.
+
+## Every lesson has the same shape
+
+1. **The title and lesson card.** The card says how long the lesson takes, what you will learn, and which lessons come first.
+2. **What you will build.** A picture of the result, so you know where you are going.
+3. **Steps.** One action per step, with the exact menu path, hotkey, or value to type.
+4. **Why.** Short notes that explain why a step is done that way. New terms link to the [glossary](/reference/glossary/).
+5. **Code, piece by piece.** You write each piece of code yourself from a description. Every piece has its own hidden solution.
+6. **Try it.** A check you do in Godot or Blender, with what you should see.
+7. **If it does not work.** The mistakes people make most often in that lesson, and how to fix each one.
+8. **Checkpoint.** What your project should contain now, the full files, and a button to mark the lesson done.
+
+## Hidden solutions
+
+When a lesson asks you to write code, try it yourself first. If you get stuck, or want to compare, open the solution:
+
+<Solution>
+
+```gdshader
+shader_type spatial;
+```
+
+</Solution>
+
+Solutions are closed every time you load a page, and opening one is your choice. Writing the code yourself, even badly at first, is how it sticks.
+
+## Hotkeys
+
+Hotkeys look like <Kbd keys="Ctrl+S" />. When a key differs on macOS, the macOS version follows in parentheses: <Kbd keys="Ctrl+A" mac="Cmd+A" />. The course is written for Windows first; where a step differs on macOS or Linux, the lesson says so.
+
+## Your progress
+
+The **Mark lesson done** button at the end of each lesson saves your progress in this browser only. The sidebar shows a check beside every lesson you finish and a count at the top. There are no accounts, and nothing leaves your computer. If you clear your browser data or switch browsers, your progress starts over, but your project is unaffected.
+
+## Reference art
+
+The screenshots of finished models, textures, and scenes come from the course's own reference project. They show one possible answer. Your rock, your tree, and your character will look different, and the art lessons are designed for that: they teach technique and give you rules (a palette, a triangle budget, a size), not one fixed shape to copy.
+
+## Versions this course was checked on
+
+Every step was performed in these exact versions. Newer point releases of the same versions should work the same way.
+
+| Tool | Version |
+|---|---|
+| Godot, .NET edition | 4.8 beta 1 (v4.8.beta1.mono.official) |
+| .NET SDK | 10.0.402 |
+| Blender | 5.2.0 LTS |
+
+<Aside type="note" title="Why a beta version of Godot?">
+Beta 1 is where Godot 4.8 stopped adding features, so what you learn here is what the stable 4.8 release will have. When 4.8 stable arrives, the course will be rechecked on it.
+</Aside>

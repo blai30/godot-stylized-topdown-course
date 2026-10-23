@@ -1,0 +1,11 @@
+# Local tool output
+.playwright-mcp/
+.impeccable/
+
+# Editors
+.idea/
+.vs/
+*.DotSettings.user
+
+# Blender backups
+*.blend1

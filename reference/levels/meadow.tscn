@@ -1,0 +1,47 @@
+[gd_scene format=3 uid="uid://c6nk3ayx6alhj"]
+
+[ext_resource type="Shader" uid="uid://c4qg4vmlogg7m" path="res://art/ground/ground.gdshader" id="1_fbj5a"]
+[ext_resource type="Texture2D" uid="uid://doob7okp7dtuu" path="res://art/ground/grass_albedo.png" id="2_k6xl7"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_uor45"]
+
+[sub_resource type="Sky" id="Sky_1sye5"]
+sky_material = SubResource("ProceduralSkyMaterial_uor45")
+
+[sub_resource type="Environment" id="Environment_fbj5a"]
+background_mode = 2
+sky = SubResource("Sky_1sye5")
+tonemap_mode = 4
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_k6xl7"]
+size = Vector2(20, 20)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_782p2"]
+render_priority = 0
+shader = ExtResource("1_fbj5a")
+shader_parameter/albedo_texture = ExtResource("2_k6xl7")
+shader_parameter/texture_scale = 0.5
+shader_parameter/roughness = 0.9
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_j63un"]
+material = SubResource("ShaderMaterial_782p2")
+
+[node name="Meadow" type="Node3D" unique_id=1193422639]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=204009177]
+environment = SubResource("Environment_fbj5a")
+
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=1048401749]
+transform = Transform3D(0.70710677, -0.579228, 0.4055798, 0, 0.57357645, 0.81915206, -0.70710677, -0.579228, 0.4055798, 0, 0, 0)
+shadow_enabled = true
+
+[node name="Ground" type="MeshInstance3D" parent="." unique_id=590968599]
+mesh = SubResource("PlaneMesh_k6xl7")
+
+[node name="TestTile" type="MeshInstance3D" parent="." unique_id=927460900]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.01, 0)
+mesh = SubResource("PlaneMesh_j63un")
+
+[node name="TestTile2" type="MeshInstance3D" parent="." unique_id=680255534]
+transform = Transform3D(0.8660254, 0, 0.5, 0, 1, 0, -0.5, 0, 0.8660254, 1.4, 0.012, 0.6)
+mesh = SubResource("PlaneMesh_j63un")

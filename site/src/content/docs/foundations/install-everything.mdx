@@ -1,0 +1,274 @@
+---
+title: Install everything
+description: Install Godot's .NET edition, the .NET SDK, a code editor, Blender, Krita, and Git with Git LFS, and check that each one works.
+sidebar:
+  order: 1
+  label: 1. Install everything
+lesson:
+  number: 1
+  minutes: 50
+  learn:
+    - Which tools a hand-made Godot game needs, and what each one is for
+    - How to install Godot's .NET edition and the .NET SDK it builds C# with
+    - How to check every install from a terminal
+  prerequisites: []
+---
+
+import { Aside, Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import projectManager from '../../../assets/lessons/install-everything/project-manager.png';
+import godotPage from '../../../assets/lessons/install-everything/godot.png';
+import dotnetPage from '../../../assets/lessons/install-everything/dotnet.png';
+import blenderPage from '../../../assets/lessons/install-everything/blender.png';
+import kritaPage from '../../../assets/lessons/install-everything/krita.png';
+import gitPage from '../../../assets/lessons/install-everything/git.png';
+import riderPage from '../../../assets/lessons/install-everything/rider.png';
+import vscodePage from '../../../assets/lessons/install-everything/vscode.png';
+
+## What you will build
+
+Nothing you can see yet, but everything you need. At the end of this lesson, Godot opens on its Project Manager, and every other tool answers when you check it.
+
+<Figure
+	src={projectManager}
+	alt="The Godot Project Manager on first launch: an empty project list with the buttons Create New Project, Import Existing Project, and Go Online and Open Asset Store. The version at the bottom right reads v4.8.beta1.mono.official."
+	caption="Godot's Project Manager the first time you open it. The version at the bottom right ends in mono, which means the .NET edition."
+/>
+
+<Aside type="note" title="On a Mac or Linux?">
+The steps below are for Windows. Read the note on macOS and Linux near the end of this lesson first; most steps are the same with a different download.
+</Aside>
+
+## The tools and what they are for
+
+| Tool | What you use it for |
+|---|---|
+| Godot, .NET edition | The [game engine](/reference/glossary/#game-engine): scenes, lighting, shaders, and running the game. The .NET edition is the one that runs [C#](/reference/glossary/#c), the programming language you write the game's code in. |
+| .NET SDK | The [SDK](/reference/glossary/#sdk) that turns your C# code into something Godot can run. |
+| Rider or VS Code | A code editor for C#, with autocomplete and error checking. Godot opens your scripts in it. |
+| Blender | Modeling every 3D object in the game. |
+| Krita | Painting textures. |
+| Git with Git LFS | Saving the history of your project, so you can always go back. [Git LFS](/reference/glossary/#git-lfs) stores the large art files. |
+
+Install them in the order below. The .NET SDK comes before Godot, because Godot looks for it. Most tools come as an installer, a program you run once that puts the tool on your computer; Godot comes as a zip, a compressed folder you unpack yourself.
+
+<Aside type="note" title="x64 or Arm64?">
+Most Windows PCs are x64. Some newer laptops, such as those with a Snapdragon processor, are Arm64 and need the Arm64 downloads instead. To check, open **Settings > System > About** and read **System type**: it says x64-based or ARM-based.
+</Aside>
+
+<Aside type="caution" title="Use these exact versions">
+The course was checked on Godot 4.8 beta 1 and Blender 5.2. Other major versions move menus and rename settings, and the steps would stop matching what you see.
+</Aside>
+
+## Install the .NET SDK
+
+<Steps>
+
+1. Open [the .NET 10.0 download page](https://dotnet.microsoft.com/en-us/download/dotnet/10.0).
+
+2. Under **Build apps - SDK**, find the **Windows** row and, in the **Installers** column, click **x64** (or **Arm64** on an Arm PC). The download starts on the next page.
+
+	<Figure
+		src={dotnetPage}
+		alt="The Download .NET 10.0 page. The left box, Build apps - SDK, shows SDK 10.0.402 and a table with rows for Linux, macOS, and Windows; the Windows row has the installer links x64, x86, and Arm64."
+		caption="The SDK box is on the left. Pick the x64 installer in the Windows row. The SDK version on the page may be newer than 10.0.402; any 10.0 SDK works."
+	/>
+
+3. Run the installer you downloaded and follow it through with the default choices. Close it when it finishes.
+
+</Steps>
+
+## Install Godot
+
+<Steps>
+
+1. Open [the Godot 4.8 beta 1 download page](https://godotengine.org/download/archive/4.8-beta1/).
+
+2. In **Supported platforms**, find the **Windows** row and click **.NET**, not **Standard**. The zip downloads to your **Downloads** folder.
+
+	<Figure
+		src={godotPage}
+		alt="The Download Godot 4.8 beta1 page. On the right, Supported platforms lists Android, Linux, macOS, Windows, Web editor, and Export templates, each with a Standard button and most with a .NET button."
+		caption="Each platform has two buttons. Standard cannot run C#; the .NET button is the one you want."
+	/>
+
+3. Open your **Downloads** folder in File Explorer, right-click the Godot zip, and choose **Extract All...**.
+
+4. In the window that opens, replace the folder path in the text box with `C:\` and click **Extract**. The zip holds a single folder, so you end up with `C:\Godot_v4.8-beta1_mono_win64`. Godot has no installer: this folder is the installation.
+
+5. Open `C:\Godot_v4.8-beta1_mono_win64`. You see `Godot_v4.8-beta1_mono_win64.exe`, a console version beside it, and a folder named `GodotSharp`. Keep them together; the `GodotSharp` folder holds the C# support.
+
+6. Double-click `Godot_v4.8-beta1_mono_win64.exe`. If Windows shows **Windows protected your PC**, click **More info**, then **Run anyway**; Windows shows this for programs it has not seen often. The Project Manager opens, like the picture at the top of this lesson.
+
+7. Close Godot for now. To find it again easily, right-click the `.exe` and choose **Pin to Start**.
+
+</Steps>
+
+<Aside type="note" title="Why the .NET edition">
+Godot comes in two editions. The standard edition only runs Godot's own scripting language, GDScript. This course uses C#, which needs the .NET edition. You can tell them apart by the word `mono` in the file name and in the version shown in the Project Manager. Mono is the name of the .NET runtime Godot first used for C#, and the name stuck.
+</Aside>
+
+## Install a code editor
+
+Pick one. Both work well with Godot, and the course shows steps for each where they differ.
+
+<Tabs syncKey="ide">
+<TabItem label="Rider">
+
+[JetBrains Rider](https://www.jetbrains.com/rider/) is a full C# [IDE](/reference/glossary/#ide) with strong Godot support: it suggests code as you type (autocomplete) and marks mistakes before you run anything. It is free for non-commercial use: learning, hobby projects, and open source. If you plan to sell a game made with it, JetBrains asks for a paid license.
+
+<Steps>
+
+1. Open [the Rider download page](https://www.jetbrains.com/rider/download/) and click **Download**.
+
+	<Figure
+		src={riderPage}
+		alt="The Download Rider page with the Rider logo, the version number, and a Download button for Windows."
+		caption="The page detects Windows and offers the installer."
+	/>
+
+2. Run the installer and accept the defaults.
+
+3. Open Rider. When it asks about a license, choose **Non-commercial use** and sign in with a free JetBrains account.
+
+</Steps>
+
+</TabItem>
+<TabItem label="VS Code">
+
+[Visual Studio Code](https://code.visualstudio.com/) is a free code editor for any use, made by Microsoft. An extension, an add-on you install inside VS Code, adds C# support.
+
+<Steps>
+
+1. Open [the VS Code download page](https://code.visualstudio.com/download) and click **Windows**.
+
+	<Figure
+		src={vscodePage}
+		alt="The Download Visual Studio Code page with three columns, Windows, macOS, and Linux, and a large Windows button in the first column."
+		caption="The big Windows button downloads the User Installer."
+	/>
+
+2. Run the installer and accept the defaults.
+
+3. Open VS Code, press <Kbd keys="Ctrl+Shift+X" mac="Cmd+Shift+X" /> to open **Extensions**, search for **C#**, and install the extension named **C#** published by **Microsoft**.
+
+</Steps>
+
+</TabItem>
+</Tabs>
+
+You connect the editor to Godot in the next lesson, once you have a project to open.
+
+## Install Blender
+
+<Steps>
+
+1. Open [the Blender download page](https://www.blender.org/download/).
+
+2. Click **Download Blender**. The line under the button says which version you get; it must start with **5.2**.
+
+	<Figure
+		src={blenderPage}
+		alt="The Blender download page with the headline The Freedom to Create and a Download Blender button. Below the button: Windows, Installer, 349 MB, v5.2.3 LTS."
+		caption="When this lesson was written, the main download was 5.2.3 LTS. Any 5.2 version works."
+	/>
+
+3. Run the installer and accept the defaults.
+
+</Steps>
+
+<Aside type="tip" title="If the page offers a newer major version">
+If the download button shows a version that does not start with 5.2, get 5.2 from Blender's release folder instead: open [download.blender.org/release/Blender5.2](https://download.blender.org/release/Blender5.2/) and download the file that ends in `windows-x64.msi` with the highest number.
+</Aside>
+
+## Install Krita
+
+<Steps>
+
+1. Open [the Krita download page](https://krita.org/en/download/) and click **Windows Installer**.
+
+	<Figure
+		src={kritaPage}
+		alt="The Download Krita 5.3.4.1 page with a blue Windows Installer button over a painted landscape."
+		caption="Any recent Krita version works; the course only uses its basic painting tools."
+	/>
+
+2. Run the installer and accept the defaults.
+
+</Steps>
+
+## Install Git and Git LFS
+
+[Git](/reference/glossary/#git) records every version of your project, so a mistake is never permanent. Git for Windows includes Git LFS.
+
+<Steps>
+
+1. Open [the Git for Windows download page](https://git-scm.com/install/windows) and click **Click here to download**.
+
+	<Figure
+		src={gitPage}
+		alt="The Git Install page on the Windows tab. The first line reads Click here to download the latest x64 version of Git for Windows."
+		caption="The first link downloads the 64-bit installer."
+	/>
+
+2. Run the installer. On **Select Components**, make sure **Git LFS (Large File Support)** stays checked. It is checked by default.
+
+3. A few pages later, on **Choosing the default editor used by Git**, choose **Use Notepad as Git's default editor**. The default, Vim, is hard to use if you have never learned it. Accept the defaults on every other page.
+
+4. Open a terminal: a window where you type commands instead of clicking. Windows has one called PowerShell; press <Kbd keys="Win" />, type `PowerShell`, and press <Kbd keys="Enter" />.
+
+5. Type this command and press <Kbd keys="Enter" />:
+
+	```powershell
+	git lfs install
+	```
+
+	It answers `Git LFS initialized.` This turns Git LFS on for your user account once, for every project.
+
+</Steps>
+
+## Try it
+
+Open a new PowerShell window, so it sees everything you installed. Type each command below and press <Kbd keys="Enter" /> after each one:
+
+```powershell
+dotnet --list-sdks
+git --version
+git lfs version
+```
+
+You should see:
+
+- `dotnet --list-sdks` prints at least one line that starts with `10.0`, such as `10.0.402 [C:\Program Files\dotnet\sdk]`.
+- `git --version` prints `git version` followed by a number.
+- `git lfs version` prints `git-lfs/` followed by a number.
+
+Then open each program once: Godot shows its Project Manager with a version ending in `mono.official` at the bottom right, Blender shows its start screen with **5.2** in the corner, Krita opens, and your code editor opens to its welcome page.
+
+## If it does not work
+
+- **`dotnet` is not recognized as a command.** The terminal was open before the install finished. Close every PowerShell window and open a new one. If it still fails, restart Windows.
+- **`git` is not recognized as a command.** Git did not finish installing, or the terminal was already open. Open a new PowerShell window; if it still fails, run the Git installer again.
+- **`git lfs` answers that `lfs` is not a git command.** Git LFS was unchecked during the install. Run the Git installer again and keep **Git LFS (Large File Support)** checked on **Select Components**.
+- **Godot has no C# options later, or `mono` is missing from its version.** You downloaded the Standard edition. Download the **.NET** one and extract it the same way.
+- **Godot shows an error about .NET when it starts.** Install the .NET SDK, then open Godot again. Make sure the `GodotSharp` folder sits next to the `.exe`.
+- **Blender shows a version other than 5.2.** Uninstall it from **Settings > Apps > Installed apps** and install 5.2 from the release folder in the tip above.
+
+<Aside type="note" title="On macOS or Linux">
+The same pages offer macOS and Linux downloads. On the Godot page, pick **.NET** in the macOS or Linux row. On the .NET page, use the installer for your system. Git on macOS comes with Xcode's command line tools; install Git LFS from [git-lfs.com](https://git-lfs.com) and then run `git lfs install`. Anywhere this course says <Kbd keys="Ctrl" />, macOS uses <Kbd keys="Cmd" /> unless a lesson says otherwise.
+</Aside>
+
+## Checkpoint
+
+You have no project yet. Your computer has:
+
+- The .NET SDK 10.0
+- Godot 4.8 beta 1, .NET edition, in its own folder
+- Rider or VS Code
+- Blender 5.2
+- Krita
+- Git, with Git LFS turned on
+
+<Checkpoint />

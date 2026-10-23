@@ -1,0 +1,51 @@
+/* Dark theme: a meadow at night. Grays lean toward night blue; the accent is lit grass. */
+:root {
+	--sl-font: 'Inter Variable';
+	--sl-font-mono: 'JetBrains Mono Variable';
+
+	--sl-color-white: hsl(210, 30%, 97%);
+	--sl-color-gray-1: hsl(212, 22%, 90%);
+	--sl-color-gray-2: hsl(213, 14%, 76%);
+	--sl-color-gray-3: hsl(214, 10%, 58%);
+	--sl-color-gray-4: hsl(215, 12%, 38%);
+	--sl-color-gray-5: hsl(216, 18%, 24%);
+	--sl-color-gray-6: hsl(217, 24%, 15%);
+	--sl-color-black: hsl(218, 30%, 10%);
+
+	--sl-color-accent-low: hsl(102, 32%, 17%);
+	--sl-color-accent: hsl(96, 44%, 52%);
+	--sl-color-accent-high: hsl(88, 62%, 82%);
+}
+
+/* Light theme: the same meadow at noon. */
+:root[data-theme='light'] {
+	--sl-color-white: hsl(218, 30%, 10%);
+	--sl-color-gray-1: hsl(217, 24%, 16%);
+	--sl-color-gray-2: hsl(216, 18%, 24%);
+	--sl-color-gray-3: hsl(215, 12%, 38%);
+	--sl-color-gray-4: hsl(214, 10%, 56%);
+	--sl-color-gray-5: hsl(213, 16%, 80%);
+	--sl-color-gray-6: hsl(212, 30%, 94%);
+	--sl-color-gray-7: hsl(210, 36%, 97%);
+	--sl-color-black: hsl(0, 0%, 100%);
+
+	--sl-color-accent-low: hsl(92, 52%, 88%);
+	--sl-color-accent: hsl(100, 48%, 30%);
+	--sl-color-accent-high: hsl(104, 52%, 20%);
+}
+
+/* Headings and the site title in Fraunces at its softest, echoing the rounded shapes of the art. */
+:is(h1, h2, h3, .site-title, .hero h1) {
+	font-family: 'Fraunces Variable', serif;
+	font-variation-settings: 'SOFT' 100, 'WONK' 0;
+	font-optical-sizing: auto;
+	letter-spacing: -0.01em;
+}
+
+.sl-markdown-content :is(h2, h3) {
+	font-weight: 650;
+}
+
+kbd {
+	font-family: var(--__sl-font-mono);
+}

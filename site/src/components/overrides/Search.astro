@@ -1,0 +1,29 @@
+---
+// Starlight's search. Its button shows "Search" and the shortcut keys, but its markup has no spaces between them and
+// its spoken name is only "Search", which fails WCAG's label-in-name check for speech-input users. Spaces between the
+// parts (invisible in the flex layout) make the text read "Search Ctrl K", and the spoken name then matches it. The
+// name is read after Starlight swaps Ctrl for Cmd on Apple devices.
+import Default from '@astrojs/starlight/components/Search.astro';
+---
+
+<Default />
+
+<script>
+	const button = document.querySelector<HTMLButtonElement>('button[data-open-modal]');
+	if (button) {
+		for (const part of button.querySelectorAll(':scope > span, :scope > kbd, :scope > kbd > kbd')) part.after(' ');
+		button.setAttribute('aria-label', button.textContent?.replace(/\s+/g, ' ').trim() || 'Search');
+	}
+
+	// Pagefind builds its search field when the dialog first opens, labeled only by a title attribute; give it a
+	// proper accessible name.
+	const dialog = document.querySelector('dialog[aria-label]');
+	if (dialog) {
+		new MutationObserver((_, observer) => {
+			const input = dialog.querySelector<HTMLInputElement>('input.pagefind-ui__search-input');
+			if (!input) return;
+			input.setAttribute('aria-label', input.title || 'Search');
+			observer.disconnect();
+		}).observe(dialog, { childList: true, subtree: true });
+	}
+</script>

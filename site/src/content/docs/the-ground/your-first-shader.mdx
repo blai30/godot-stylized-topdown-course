@@ -1,0 +1,317 @@
+---
+title: Your first shader
+description: Write a ground shader that samples your grass texture in world space, so tiles join seamlessly however they are placed.
+sidebar:
+  order: 15
+  label: 15. Your first shader
+lesson:
+  number: 15
+  minutes: 55
+  learn:
+    - What a shader is, and what its vertex and fragment functions do
+    - How uniforms let you set a shader's values in the Inspector
+    - How to sample a texture, and what the texture hints do
+    - Why the ground samples its texture in world space instead of by UV
+  prerequisites: [4, 13]
+---
+
+import { Aside, Code, FileTree, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Solution from '../../../components/Solution.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import piece1 from '../../../checkpoints/15/pieces/piece-1.gdshader?raw';
+import piece2 from '../../../checkpoints/15/pieces/piece-2.gdshader?raw';
+import piece3 from '../../../checkpoints/15/pieces/piece-3.gdshader?raw';
+import piece4 from '../../../checkpoints/15/pieces/piece-4.gdshader?raw';
+import groundShader from '../../../checkpoints/15/files/art/ground/ground.gdshader?raw';
+import worldSpaceGrass from '../../../assets/lessons/your-first-shader/world-space-grass.png';
+import createNewNode from '../../../assets/lessons/your-first-shader/create-new-node.png';
+import meshMenu from '../../../assets/lessons/your-first-shader/mesh-menu.png';
+import shaderMenu from '../../../assets/lessons/your-first-shader/shader-menu.png';
+import createShaderDialog from '../../../assets/lessons/your-first-shader/create-shader-dialog.png';
+import shaderEditor from '../../../assets/lessons/your-first-shader/shader-editor.png';
+import pieceOne from '../../../assets/lessons/your-first-shader/piece-1.png';
+import nestedParameters from '../../../assets/lessons/your-first-shader/nested-parameters.png';
+import pieceTwo from '../../../assets/lessons/your-first-shader/piece-2.png';
+import uvProblem from '../../../assets/lessons/your-first-shader/uv-problem.png';
+import worldSpaceIcons from '../../../assets/lessons/your-first-shader/world-space-icons.png';
+
+## What you will build
+
+Two ground tiles, one turned at an angle and overlapping the other, covered by your grass texture with no seam where they meet. The [shader](/reference/glossary/#shader) you write here becomes the ground shader for the whole template: in lesson 17 it learns to draw soft edges between grass, dirt, and sand.
+
+<Figure
+	src={worldSpaceGrass}
+	alt="Two overlapping square tiles in the Godot editor, the second one rotated about 30 degrees, both covered by one continuous grass texture with no visible seam between them."
+	caption="Two tiles, one rotated, sharing one seamless grass surface."
+/>
+
+## What a shader is
+
+A shader is a small program that runs on your graphics card and decides how a surface is drawn. Godot runs it for every part of a surface on every frame, so it must be short and fast. A 3D shader has two main parts you write:
+
+- The [vertex function](/reference/glossary/#vertex-function), `vertex()`, runs once for every corner point of the mesh. It can move points and pass values along.
+- The [fragment function](/reference/glossary/#fragment-function), `fragment()`, runs once for every pixel the surface covers on screen. It decides that pixel's color, roughness, and other surface properties.
+
+Godot then lights the result with your sun and sky. You only describe the surface; you do not write the lighting.
+
+## Add a test tile
+
+You need a surface to put the shader on. A flat square, called a `PlaneMesh`, is a stand-in for one ground tile.
+
+<Steps>
+
+1. In the **FileSystem** dock, double-click `levels/meadow.tscn` to open the scene from lesson 4.
+
+2. In the **Scene** dock, select the root node `Meadow`, then click the **+** button at the top of the dock (or press <Kbd keys="Ctrl+A" mac="Cmd+A" />). This opens **Create New Node**.
+
+3. Type `MeshInstance3D` in the **Search** field, select **MeshInstance3D** in the list, and click **Create**.
+
+	<Figure
+		src={createNewNode}
+		alt="The Create New Node dialog with MeshInstance3D typed in the search field and MeshInstance3D highlighted in the Matches tree, under Node3D, VisualInstance3D, and GeometryInstance3D."
+		caption="The Create New Node dialog. The description at the bottom explains the selected node."
+	/>
+
+4. Double-click the new node's name, type `TestTile`, and press <Kbd keys="Enter" />.
+
+5. Look at the **Inspector** on the right. A new `MeshInstance3D` starts with a box shape in its **Mesh** property. Click the small down arrow at the right end of the **Mesh** row and, under **New**, choose **PlaneMesh**. The box becomes a flat square, 2 by 2 meters.
+
+	<Figure
+		src={meshMenu}
+		alt="The Inspector's Mesh property menu open beside the default box preview. Under the heading New, the list shows BoxMesh, SphereMesh, CapsuleMesh, CylinderMesh, PrismMesh, TorusMesh, PlaneMesh, QuadMesh, and more, followed by Quick Load, Load, Edit, Clear, Make Unique, Save, Save As, and Copy."
+		caption="The Mesh menu. Under New, pick PlaneMesh."
+	/>
+
+6. Scroll down the Inspector to **Node3D > Transform** and set **Position** **y** to `0.01`. This lifts the tile one centimeter above the placeholder ground from lesson 4.
+
+	<Aside type="note" title="Why lift it">
+	Two surfaces at exactly the same height fight over the same pixels, and you see flickering stripes where they overlap. This is called z-fighting. A centimeter is enough to make the tile always win, and too little to notice.
+	</Aside>
+
+7. Scroll back up to the **Mesh** section. Below the **PlaneMesh** properties, under the heading **PrimitiveMesh**, find **Material**. Click its **&lt;empty&gt;** field and, under **New**, choose **ShaderMaterial**. A [material](/reference/glossary/#material) decides how a surface looks; a `ShaderMaterial` uses a shader you write.
+
+8. The new **ShaderMaterial** opens right below. Click its **Shader** property's **&lt;empty&gt;** field and choose **New Shader...**.
+
+	<Figure
+		src={shaderMenu}
+		alt="The Inspector showing the PlaneMesh's Material set to a new ShaderMaterial, with the Shader property's menu open listing New Shader, Quick Load, and Load."
+		caption="The ShaderMaterial's Shader menu. Choose New Shader."
+	/>
+
+9. In the **Create Shader** dialog, keep **Type** on **Shader**, **Mode** on **Spatial**, and **Template** on **Default**, and leave **Built-in Shader** unchecked. Change **Path** to `res://art/ground/ground.gdshader` and click **Create**.
+
+	<Figure
+		src={createShaderDialog}
+		alt="The Create Shader dialog: Type Shader, Mode Spatial, Template Default, Built-in Shader unchecked, Path res://art/ground/ground.gdshader, and the messages Shader path/name is valid and Will create a new shader file."
+		caption="The Create Shader dialog, filled in. Spatial means a shader for 3D surfaces."
+	/>
+
+	<Aside type="note" title="Why a separate file">
+	A built-in shader would live inside this one scene. A separate `.gdshader` file in `art/ground` can be shared by every ground tile, in this scene and every scene after it, and you edit it in one place.
+	</Aside>
+
+</Steps>
+
+Godot opens the new shader in the **Shader Editor** at the bottom of the window. Save the scene now with <Kbd keys="Ctrl+S" mac="Cmd+S" />, so `TestTile` is kept.
+
+<Figure
+	src={shaderEditor}
+	alt="The Godot editor with the Shader Editor panel open at the bottom, showing ground.gdshader with the Default template: shader_type spatial, an empty vertex function, and an empty fragment function, each with a comment. The Inspector on the right shows TestTile's PlaneMesh, 2 by 2 meters, with its ShaderMaterial."
+	caption="The Shader Editor with the Default template. The Inspector shows the PlaneMesh and its ShaderMaterial."
+/>
+
+## Write the shader, piece by piece
+
+You write the shader in four pieces. After each piece, save it with **File > Save** in the Shader Editor (<Kbd keys="Ctrl+Alt+S" mac="Cmd+Option+S" />) and look at the tile in the 3D view.
+
+<Aside type="tip" title="Saving shaders">
+In the Shader Editor, <Kbd keys="Ctrl+Alt+S" mac="Cmd+Option+S" /> saves the shader. Plain <Kbd keys="Ctrl+S" mac="Cmd+S" /> saves the scene. A moment after you stop typing, Godot shows your changes in the 3D view, but they only reach the file when you save. Until then, the file's tab shows `(*)` after its name.
+</Aside>
+
+### Piece 1: one color
+
+Look at the template first. Its first line, `shader_type spatial;`, tells Godot this is a shader for 3D surfaces. Below it are two functions. Each starts with `void`, its name, and `()`, and its body sits between braces `{` and `}`. Lines starting with `//` are comments: notes for people that Godot ignores. Every instruction ends with a semicolon `;`.
+
+Change the template so that:
+
+- the first line stays `shader_type spatial;`
+- the `vertex()` function and its comment are gone (you bring `vertex()` back in piece 3)
+- inside `fragment()`, the comment is replaced by one instruction that sets `ALBEDO` to a green color, written as `vec3(0.4, 0.6, 0.2)`, with `=` between them
+
+[Albedo](/reference/glossary/#albedo) is the plain color of a surface before light touches it. A `vec3` holds three numbers, here the red, green, and blue amounts, each from 0 to 1.
+
+<Solution>
+	<Code code={piece1} lang="gdshader" title="art/ground/ground.gdshader" />
+</Solution>
+
+Save the shader. The tile turns a soft green, lit by your sun.
+
+<Figure
+	src={pieceOne}
+	alt="The 3D view from above at an angle: the test tile is a flat light green square on the gray placeholder ground."
+	caption="Piece 1: the whole tile is one color."
+/>
+
+### Piece 2: a texture
+
+Now read the color from your grass [texture](/reference/glossary/#texture) instead. A [uniform](/reference/glossary/#uniform) is written as the word `uniform`, then its type, then its name. After the name you can add a colon and hints, separated by commas, and the line ends with a semicolon. Add, between `shader_type spatial;` and `fragment()`:
+
+- a uniform named `albedo_texture` of type `sampler2D` (a texture the shader can read), with the hints `source_color`, `filter_linear_mipmap`, and `repeat_enable`
+
+and change `fragment()` so it sets `ALBEDO` to the color of `albedo_texture` at the [mesh](/reference/glossary/#mesh)'s `UV` coordinates. The function `texture(albedo_texture, UV)` returns four numbers (red, green, blue, and alpha); take the first three by adding `.rgb` after it.
+
+<Aside type="note" title="What the three hints do">
+- `source_color` says this texture holds colors. Color images are stored in [sRGB](/reference/glossary/#srgb), and Godot converts them before lighting. Without the hint, the grass looks washed out.
+- `filter_linear_mipmap` smooths the texture between pixels and uses its [mipmaps](/reference/glossary/#mipmap), the smaller copies made on import, when the ground is far away. Without it, distant ground shimmers.
+- `repeat_enable` repeats the texture past its edges instead of smearing the last row of pixels. The ground needs it, as you see in piece 3.
+</Aside>
+
+<Solution>
+	<Code code={piece2} lang="gdshader" title="art/ground/ground.gdshader" />
+</Solution>
+
+Save the shader. The tile turns white, because the texture is still empty. Fill it in:
+
+<Steps>
+
+1. Select `TestTile`. In the Inspector, under **Mesh**, then **Material**, find **Shader Parameters** (click it if it is closed). Your uniform appears there as **Albedo Texture**: Godot shows names written with underscores as separate capitalized words.
+
+2. Drag `art/ground/grass_albedo.png` from the FileSystem dock onto **Albedo Texture**.
+
+	<Figure
+		src={nestedParameters}
+		alt="The Inspector for TestTile, scrolled down through Mesh (a PlaneMesh), PrimitiveMesh, and Material (a ShaderMaterial) to Shader Parameters, where Albedo Texture shows the grass texture."
+		caption="Where to find Shader Parameters under TestTile. This picture is from the end of the lesson, so it also shows Texture Scale and Roughness, which you add in pieces 3 and 4."
+	/>
+
+</Steps>
+
+<Figure
+	src={pieceTwo}
+	alt="The test tile now covered by the grass texture: painted green with lighter and darker strokes."
+	caption="Piece 2: the grass texture on the tile."
+/>
+
+### See the problem with UV
+
+[UV](/reference/glossary/#uv) coordinates are stored in the mesh, so the texture is glued to the tile. That breaks as soon as a second tile is turned or overlaps the first. Try it:
+
+<Steps>
+
+1. Select `TestTile` and press <Kbd keys="Ctrl+D" mac="Cmd+D" /> to duplicate it. Godot names the copy `TestTile2`.
+
+2. With `TestTile2` selected, set **Transform > Position** to `1.4`, `0.012`, `0.6` and **Rotation** **y** to `30`. The y of `0.012` lifts it 2 millimeters above `TestTile`, so where they overlap they do not fight over pixels. The copy shares the same material, so it shows the same texture.
+
+3. To make the problem easy to see, select `TestTile`, find **Albedo Texture** under **Shader Parameters** again, and drag `icon.svg` onto it in place of the grass for a moment. `icon.svg` is the Godot logo that every new project starts with, at the bottom of the FileSystem dock.
+
+4. Save the scene with <Kbd keys="Ctrl+S" mac="Cmd+S" />.
+
+</Steps>
+
+<Figure
+	src={uvProblem}
+	alt="Two overlapping tiles, each showing one large Godot logo. The second tile's logo is turned 30 degrees with its tile, so the two logos cross each other where the tiles overlap."
+	caption="With UV, each tile carries its own copy of the texture, turned with the tile. Where they overlap, the two images clash."
+/>
+
+Each tile shows its own whole image, turned with the tile. With grass the clash is subtler, but it is there at every tile edge. The fix is to ignore the mesh's UV and ask a different question: where is this pixel in the world?
+
+<Aside type="note" title="A message about icon.svg">
+The **Output** panel shows `res://icon.svg: Texture detected as used in 3D. Enabling mipmap generation and setting the texture compression mode to VRAM Compressed (S3TC).` Godot noticed you used the icon on a 3D surface and reimported it with the settings 3D textures need, the same ones you chose for your grass in lesson 13. It is harmless.
+</Aside>
+
+### Piece 3: world space
+
+Change the shader so each pixel samples the texture by its position in the world:
+
+- Declare a [varying](/reference/glossary/#varying) named `world_position` of type `vec3`. A varying carries a value from the vertex function to the fragment function.
+- Add a `vertex()` function, shaped like `fragment()`, that sets `world_position` to the vertex's position in the [world](/reference/glossary/#world-space). Inside `vertex()`, `VERTEX` is the point's position relative to the mesh itself, and `MODEL_MATRIX` is the [matrix](/reference/glossary/#matrix) that places the mesh in the world. Multiplying the matrix by the position moves the point into world coordinates. The matrix needs four numbers, so build a `vec4` from `VERTEX` with a fourth number of `1.0`, which marks it as a position, and keep the first three numbers of the result with `.xyz`.
+- Add a uniform `float` (a number with a decimal point) named `texture_scale`, with a default value of `0.5`: write `= 0.5` after the name. It is how many times the texture repeats per meter.
+- In `fragment()`, sample the texture at the pixel's world position instead of `UV`. The ground is flat, so use only the world's X and Z axes, which `world_position.xz` gives you, and multiply them by `texture_scale`.
+
+<Solution>
+	<Code code={piece3} lang="gdshader" title="art/ground/ground.gdshader" />
+</Solution>
+
+Save the shader. The two icons become one continuous grid that runs straight across both tiles, no matter how the second tile is turned.
+
+<Figure
+	src={worldSpaceIcons}
+	alt="The same two overlapping tiles, now showing a single continuous grid of Godot logos that lines up across both tiles; the rotated tile's logos are not rotated."
+	caption="In world space, the tiles are windows onto one shared image. Moving or turning a tile does not move the image."
+/>
+
+Drag `grass_albedo.png` back onto **Albedo Texture**. The grass now runs across both tiles with no seam, like the picture at the top of this lesson.
+
+<Aside type="note" title="Why 0.5">
+Your grass texture is 512 pixels wide and covers 2 meters of ground, the 256 pixels per meter [texel density](/reference/glossary/#texel-density) from lesson 13. Repeating it 0.5 times per meter, once every 2 meters, shows it at exactly that size.
+</Aside>
+
+### Piece 4: roughness and comments
+
+Finish the shader:
+
+- Add a uniform `float` named `roughness` with the hint `hint_range(0.0, 1.0)` and the default `0.9`. The hint comes first, after a colon, and the default last: `: hint` then `= value`. Then set `ROUGHNESS` to it in `fragment()`. [Roughness](/reference/glossary/#roughness) 0.9 keeps grass matte, with no shiny highlights.
+- Add a short comment, a line starting with `//`, above `albedo_texture` and above `texture_scale` that says what each one is for.
+
+<Solution>
+	<Code code={piece4} lang="gdshader" title="art/ground/ground.gdshader" />
+</Solution>
+
+Save the shader, then save the scene with <Kbd keys="Ctrl+S" mac="Cmd+S" />. Select `TestTile`: under **Shader Parameters**, **Roughness** is now a slider, because of `hint_range`.
+
+<Figure
+	src={nestedParameters}
+	alt="The Inspector for TestTile showing Shader Parameters with Albedo Texture showing the grass, Texture Scale set to 0.5, and Roughness shown as a slider at 0.9."
+	caption="Every uniform appears in the Inspector. The hint turns Roughness into a slider."
+/>
+
+## Try it
+
+- Select `TestTile2` and drag it around with the arrows of its move [gizmo](/reference/glossary/#gizmo), or turn it with the rings. The grass stays still while the tile slides over it, and there is never a seam.
+- Change **Texture Scale** to `1` and then `0.25`. The grass gets smaller and bigger on both tiles at once, because they share one material. Set it back to `0.5`.
+- Drag **Roughness** to `0.2` and orbit the 3D view until you look toward the sun: a soft shine appears on the tile. Set it back to `0.9`.
+
+## If it does not work
+
+- **The tile disappears and a line turns red in the Shader Editor.** The shader has an error, described at the bottom of the Shader Editor, such as `Error at line 5: Expected a ';'.` A missing semicolon is reported on the line *after* the one that needs it, so look one line up. The other common cause is a misspelled name, such as `albedo_texure`.
+- **The grass looks pale and washed out.** The `source_color` hint is missing from `albedo_texture`.
+- **The tile is plain white.** The texture is not assigned. Drag `grass_albedo.png` onto **Albedo Texture** under **Shader Parameters**.
+- **The texture smears into long stripes.** The `repeat_enable` hint is missing.
+- **The tile flickers with stripes of gray.** It sits at the same height as the placeholder ground. Set its **Position** **y** to `0.01`.
+- **Your shader changes disappear when you reopen the project.** The shader was not saved. Use <Kbd keys="Ctrl+Alt+S" mac="Cmd+Option+S" /> in the Shader Editor.
+- **The test tiles are gone when you reopen the scene.** The scene was not saved. Add them again and press <Kbd keys="Ctrl+S" mac="Cmd+S" />.
+
+## Checkpoint
+
+Your project now contains:
+
+<FileTree>
+- art
+  - ground
+    - grass_albedo.png
+    - **ground.gdshader** the shader from this lesson
+- levels
+  - meadow.tscn
+</FileTree>
+
+The `Meadow` scene's tree:
+
+<FileTree>
+- Meadow
+  - WorldEnvironment
+  - Sun
+  - Ground
+  - TestTile
+  - TestTile2
+</FileTree>
+
+<Solution label="Show the full ground.gdshader">
+	<Code code={groundShader} lang="gdshader" title="art/ground/ground.gdshader" />
+</Solution>
+
+The test tiles are temporary. In lesson 16, you turn the tile into a real ground tile in a `MeshLibrary` and paint ground with it.
+
+<Checkpoint />

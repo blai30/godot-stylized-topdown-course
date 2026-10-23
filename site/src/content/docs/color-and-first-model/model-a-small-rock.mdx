@@ -1,0 +1,220 @@
+---
+title: Model a small rock
+description: Block out a small stylized rock in Blender, then give it soft bevels and clean shading with modifiers.
+sidebar:
+  order: 9
+  label: 9. Model a small rock
+lesson:
+  number: 9
+  minutes: 55
+  learn:
+    - How to block out a shape from a cube with loop cuts and vertex moves
+    - What makes a rock read well from a top-down camera
+    - How bevels and weighted normals give low-poly models soft, solid edges
+    - How to check a model's triangle count and origin
+  prerequisites: [8]
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import final from '../../../assets/lessons/model-a-small-rock/final.png';
+import start from '../../../assets/lessons/model-a-small-rock/start.png';
+import blocked from '../../../assets/lessons/model-a-small-rock/blocked.png';
+import randomized from '../../../assets/lessons/model-a-small-rock/randomized.png';
+import smoothOnly from '../../../assets/lessons/model-a-small-rock/smooth-only.png';
+import modifierStack from '../../../assets/lessons/model-a-small-rock/modifier-stack.png';
+import statistics from '../../../assets/lessons/model-a-small-rock/statistics.png';
+import frontOrigin from '../../../assets/lessons/model-a-small-rock/front-origin.png';
+
+## What you will build
+
+A small rock, about 60 cm across: a chunky shape with broad flat faces and soft rounded edges. It is the first model in your art library, and the technique carries over to every [hard-surface model](/reference/glossary/#hard-surface-model) in the course.
+
+<Figure
+	src={final}
+	alt="A small gray rock in Blender's viewport: a squat, uneven block with a narrower top, broad flat faces, and softly rounded edges that catch the light."
+	caption="The reference rock: 192 triangles, about 0.63 by 0.51 by 0.39 meters. Yours will have its own shape."
+/>
+
+## What makes a rock read from above
+
+Your camera looks down at the world from high up, so players see a rock mostly from the top and from one side. Three things make it read as a rock at that distance:
+
+- **An uneven silhouette from above.** A perfect box or circle looks man-made. Push a few corners in and out until the outline is irregular.
+- **Broad, flat faces.** Big planes catch light in clear patches of bright and dark, which reads as solid stone. Lots of small bumps turn into noise at a distance.
+- **Soft edges.** Real stone has worn edges. A narrow [bevel](/reference/glossary/#bevel) on each edge catches a thin line of light and makes the shape feel heavy and real.
+
+The [triangle budget](/reference/glossary/#triangle-budget) for a small rock is **100 to 400 triangles**. That is plenty, because the shape does the work, not the detail.
+
+<Aside type="tip" title="Two habits for Blender hotkeys">
+- Blender hotkeys act on the area under the mouse pointer. Keep the pointer over the 3D viewport when you press them.
+- No number pad on your keyboard? Wherever this lesson says <Kbd keys="Numpad 1" /> or <Kbd keys="Numpad 7" />, use **View > Viewpoint > Front** or **View > Viewpoint > Top** in the viewport's header instead.
+</Aside>
+
+## Start from the default cube
+
+<Steps>
+
+1. Open Blender and choose **File > New > General**. The new scene has a cube, a camera, and a light. The cube is your starting block.
+
+	<Figure
+		src={start}
+		alt="Blender's 3D viewport with the default cube selected, outlined in orange, in the middle of the grid."
+		caption="The default cube is 2 meters on each side."
+	/>
+
+2. In the **Outliner** at the top right, double-click **Cube**, type `rock_small`, and press <Kbd keys="Enter" />. Every object in the course is named after what it is, in lowercase with underscores, so you can find it later in Godot.
+
+3. Save right away: choose **File > Save As** (<Kbd keys="Ctrl+Shift+S" mac="Cmd+Shift+S" />). Blender's file browser opens.
+
+4. Use the path box at the top of the file browser to go to your project's `art_source` folder.
+
+5. Click the folder icon with a plus sign at the top of the file browser to create a new folder, type `nature` as its name, and press <Kbd keys="Enter" />. Double-click `nature` to go into it.
+
+6. Create another folder the same way, name it `rock_small`, and double-click it to go into it.
+
+7. In the file name box at the bottom, type `rock_small.blend` and click **Save As**.
+
+</Steps>
+
+<Aside type="note" title="Why art_source">
+Your `.blend` and Krita files live in `art_source`, outside the folders Godot imports, because Godot cannot read them. In lesson 10 you export a file Godot can read into the `art` folder. Keeping sources apart keeps the project tidy, and lesson 2 told Godot to skip that folder entirely.
+</Aside>
+
+## Block out the shape
+
+<Steps>
+
+1. With `rock_small` selected, press <Kbd keys="N" /> to open the **Sidebar** on the right of the viewport. On the **Item** tab, under **Transform**, find **Dimensions**: three fields for X, Y, and Z. Double-click the X field, type `0.6`, and press <Kbd keys="Enter" />. Do the same with `0.5` for Y and `0.35` for Z. Blender reads plain numbers as meters.
+
+2. Apply that size so it becomes the mesh's real size: press <Kbd keys="Ctrl+A" mac="Cmd+A" /> and choose **Scale**. The **Scale** fields return to `1.000`.
+
+	<Aside type="note" title="Why apply the scale">
+	Before applying, the mesh is still a 2-meter cube that the object stretches to the size you typed. Modifiers such as Bevel measure in the mesh's own size, so on a stretched object a 4 cm bevel would come out a different width on every side. Applying the scale bakes the size into the mesh, so every later measurement is true.
+	</Aside>
+
+3. Press <Kbd keys="Tab" /> to enter [Edit Mode](/reference/glossary/#edit-mode), where you change the mesh itself.
+
+4. Add a [loop cut](/reference/glossary/#loop-cut) around the middle: press <Kbd keys="Ctrl+R" mac="Cmd+R" />, hover over one of the cube's vertical edges until a yellow line circles the middle, click once, and then right-click. The right-click cancels the sliding part, so the cut stays centered.
+
+5. Repeat the loop cut twice more, hovering over edges that run in the other two directions, so the cube is cut once around each axis.
+
+6. Press <Kbd keys="1" /> for vertex selection, then press <Kbd keys="Numpad 1" /> to look from the front and <Kbd keys="Alt+Z" /> to turn on [X-ray](/reference/glossary/#x-ray), so a box selection reaches the vertices on the back too.
+
+7. Drag a box around the top row of vertices to select them, press <Kbd keys="S" />, type `0.75`, and press <Kbd keys="Enter" />. The top is now narrower than the base, like a stone that has settled. Press <Kbd keys="Alt+Z" /> again to turn X-ray off.
+
+	<Figure
+		src={blocked}
+		alt="The rock in Edit Mode with all vertices selected in orange: a squat block, narrower at the top, with a cut around the middle in every direction."
+		caption="The blockout after the loop cuts and the narrower top. The numbers at the top left are the Statistics overlay, which you turn on at the end of this lesson."
+	/>
+
+8. Now break the symmetry from above. Press <Kbd keys="Numpad 7" /> to look down from the top. Click one corner vertex of the outline, press <Kbd keys="G" />, move the mouse to push the corner a little in or out, and click to confirm. Do this to three or four corners. The outline should look irregular, not like a box. With X-ray off, a click picks the vertex nearest you, on the top of the rock.
+
+9. Add a little natural unevenness to everything: press <Kbd keys="A" /> to select all, then choose **Mesh > Transform > Randomize**. A **Randomize** panel appears at the bottom left of the viewport; if it shows only its title, click the title to open it. Set **Amount** to `0.03 m`. **Random Seed** picks a different random pattern; try a few values until you like the result.
+
+	<Figure
+		src={randomized}
+		alt="The rock in Edit Mode after Randomize: the same block shape, with every vertex nudged slightly so no face is perfectly flat or square."
+		caption="Randomize moves every vertex a small random amount. Keep it small; the big shapes should come from your own moves."
+	/>
+
+10. Set the rock on the ground. Look from the front (<Kbd keys="Numpad 1" />) and zoom in with the mouse wheel until the rock fills most of the view. Keep everything selected, press <Kbd keys="G" /> then <Kbd keys="Z" />, and move the rock up until its lowest point touches the red line, which is the ground. Click to confirm. A gap of a few millimeters is fine; nobody sees it from the game camera.
+
+	<Aside type="note" title="Why the base sits at zero">
+	You moved the mesh, not the object, so the object's [origin](/reference/glossary/#origin) stayed at the center of the world, which is now the center of the rock's base. In Godot, a rock placed at any spot then sits on the ground there instead of sinking halfway into it.
+	</Aside>
+
+11. Press <Kbd keys="Tab" /> to go back to [Object Mode](/reference/glossary/#object-mode).
+
+</Steps>
+
+## Bevels and clean shading
+
+<Steps>
+
+1. Choose **Object > Shade Smooth**. The rock now looks soft and blobby, with dark smudges across its big faces. That is expected; the next two steps fix it.
+
+	<Figure
+		src={smoothOnly}
+		alt="The rock with smooth shading only: its faces look rounded and puffy, like clay, with soft dark gradients across what should be flat sides."
+		caption="Smooth shading alone blends the lighting across the whole rock, so flat faces look curved."
+	/>
+
+	<Aside type="note" title="Why smooth shading first">
+	[Smooth shading](/reference/glossary/#smooth-shading) makes lighting blend from face to face instead of jumping at every edge. On its own it makes flat faces look round. The bevel and the weighted normals below decide where the blend happens: only along the narrow edges, so the big faces stay flat and the edges look softly rounded.
+	</Aside>
+
+2. With `rock_small` still selected, go to the **Properties** editor at the bottom right and click the **Modifiers** tab (the blue wrench). A [modifier](/reference/glossary/#modifier) changes the [mesh](/reference/glossary/#mesh) without destroying it. Click **Add Modifier** at the top of the tab, then **Generate > Bevel**.
+
+3. In the **Bevel** panel, set **Amount** to `0.04 m` and **Segments** to `2`. Leave **Limit Method** on **Angle**, at `30°`: only edges sharper than 30 degrees get a bevel, so the softer folds you made with Randomize stay as they are.
+
+4. Click **Add Modifier > Normals > Weighted Normal**. In its panel, check **Keep Sharp**. It must be below **Bevel** in the list, because modifiers run from top to bottom. If it ended up above, drag it down by the dotted grip at the right end of its title bar.
+
+	<Figure
+		src={modifierStack}
+		alt="The Modifiers tab with two modifiers. Bevel: Edges, Width Type Offset, Amount 0.04 m, Segments 2, Limit Method Angle, Angle 30 degrees. Below it, WeightedNormal: Weighting Mode Face Area, Weight 50, Threshold 0.01, Keep Sharp checked."
+		caption="The finished modifier stack: Bevel first, then Weighted Normal."
+	/>
+
+	<Aside type="note" title="Why weighted normals">
+	A [normal](/reference/glossary/#normal) is the direction a surface faces, and lighting depends on it. The Weighted Normal modifier points each vertex's normal mostly toward the biggest face beside it, so large faces light as flat planes and the small bevel faces carry all the rounding. That is the look of [weighted normals](/reference/glossary/#weighted-normals): crisp planes, soft edges, and no smudges.
+	</Aside>
+
+</Steps>
+
+## Check the triangle count and origin
+
+<Steps>
+
+1. At the top right of the viewport, find the icon of two overlapping circles: **Viewport Overlays**. Click the small down arrow immediately to its right and, in the menu that opens, check **Statistics**. The top left of the viewport now lists the scene's counts.
+
+	<Figure
+		src={statistics}
+		alt="The statistics overlay in the top left of the viewport: Objects 1 of 3, Vertices 98, Edges 192, Faces 96, Triangles 192."
+		caption="The reference rock has 192 triangles, well inside the 100 to 400 budget."
+	/>
+
+2. Make sure **Triangles** is between 100 and 400. The count includes the bevels, because Blender shows the result of the modifiers.
+
+3. Look from the front (<Kbd keys="Numpad 1" />). The small orange dot, the origin, should sit at the middle of the rock's base.
+
+	<Figure
+		src={frontOrigin}
+		alt="A front view of the rock in orthographic mode: the rock rests on the red ground line, and its origin sits at the center of its base."
+		caption="From the front: the rock rests on the ground line, with its origin at the center of its base."
+	/>
+
+4. Press <Kbd keys="Ctrl+S" mac="Cmd+S" /> to save.
+
+</Steps>
+
+## Try it
+
+Orbit around the rock with the middle mouse button and look at it from above with <Kbd keys="Numpad 7" />. You should see:
+
+- An irregular outline from above, not a box.
+- Big faces that look flat, with a thin bright line along each edge where the bevel catches the light.
+- No dark smudges across the faces.
+
+## If it does not work
+
+- **The bevel is much wider on some sides than others.** The scale was not applied. Select the rock, press <Kbd keys="Ctrl+A" mac="Cmd+A" />, choose **Scale**, and the bevel evens out.
+- **Dark smudges remain across the faces.** The **Weighted Normal** modifier is missing, is above **Bevel** in the stack, or **Keep Sharp** is off.
+- **The loop cut slid off-center.** You moved the mouse before right-clicking. Press <Kbd keys="Ctrl+Z" mac="Cmd+Z" /> and cut again: click once, then right-click right away.
+- **You can only select the vertices in front.** X-ray is off. Press <Kbd keys="Alt+Z" />.
+- **The triangle count is over 400.** Check that **Segments** is `2`, not higher, and that you made three loop cuts, not more.
+- **Blender ignores a hotkey or does something else.** The mouse pointer was not over the 3D viewport. Move it over the viewport and press the key again.
+- **The rock floats above or sinks below the red line.** In Edit Mode, select all and move it with <Kbd keys="G" /> then <Kbd keys="Z" /> until the lowest point touches the line.
+
+## Checkpoint
+
+Your project now has one new file:
+
+- `art_source/nature/rock_small/rock_small.blend`
+
+In Blender, the Outliner shows the object `rock_small`, and its Modifiers tab shows **Bevel** above **WeightedNormal**. The rock is about 60 cm across, rests on the ground with its origin at the center of its base, and has between 100 and 400 triangles. In the next lesson, you color it from your palette and export it for Godot.
+
+<Checkpoint />

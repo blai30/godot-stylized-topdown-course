@@ -1,0 +1,17 @@
+# Normalize line endings for text files.
+* text=auto eol=lf
+
+
+# Binary art and media are never normalized.
+*.png -text
+*.jpg -text
+*.jpeg -text
+*.webp -text
+*.blend -text
+*.kra -text
+*.glb -text
+*.gltf -text
+*.fbx -text
+*.wav -text
+*.ogg -text
+*.mp4 -text
