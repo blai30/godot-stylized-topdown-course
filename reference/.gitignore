@@ -1,3 +1,14 @@
 # Godot 4+ specific ignores
 .godot/
 /android/
+
+# Code editor settings
+.idea/
+.vs/
+.vscode/
+*.DotSettings.user
+
+# Backups made by Blender, Krita, and Godot's C# project update
+*.blend1
+*.kra~
+*.csproj.old

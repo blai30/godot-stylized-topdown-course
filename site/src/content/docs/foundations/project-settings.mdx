@@ -1,0 +1,262 @@
+---
+title: Project settings for a top-down 3D game
+description: Set the window size, keep V-Sync, turn on physics interpolation, name the physics layers, and build the input map the template's code reads.
+sidebar:
+  order: 3
+  label: 3. Project settings
+lesson:
+  number: 3
+  minutes: 45
+  learn:
+    - Where Godot keeps project settings, and what Advanced Settings shows
+    - How the window size, stretch mode, and V-Sync work together
+    - Why physics runs at a fixed rate, and how interpolation keeps movement smooth
+    - How input actions let your code read moves instead of keys
+  prerequisites: [2]
+---
+
+import { Aside, Code, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import eventShift from '../../../assets/lessons/project-settings/event-shift.png';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Solution from '../../../components/Solution.astro';
+import Kbd from '../../../components/Kbd.astro';
+import projectGodot from '../../../checkpoints/03/files/project.godot?raw';
+import inputMap from '../../../assets/lessons/project-settings/input-map.png';
+import windowSize from '../../../assets/lessons/project-settings/window-size.png';
+import vsync from '../../../assets/lessons/project-settings/vsync.png';
+import physicsInterpolation from '../../../assets/lessons/project-settings/physics-interpolation.png';
+import layerNames from '../../../assets/lessons/project-settings/layer-names.png';
+import actionsAdded from '../../../assets/lessons/project-settings/actions-added.png';
+import eventKey from '../../../assets/lessons/project-settings/event-key.png';
+import eventStick from '../../../assets/lessons/project-settings/event-stick.png';
+import eventWheel from '../../../assets/lessons/project-settings/event-wheel.png';
+
+## What you will build
+
+The settings every later lesson relies on: the window, smooth physics, named physics layers, and seven input actions that let the player walk, sprint, and zoom with a keyboard, a mouse, or a gamepad.
+
+<Figure
+	src={inputMap}
+	alt="The Input Map tab of Project Settings listing seven actions, each with its events: move_left with A (Physical) and Joypad Axis 0 minus (Left Stick Left), move_right with D and Joypad Axis 0 plus, move_forward with W and Joypad Axis 1 minus, move_back with S and Joypad Axis 1 plus, sprint with Shift, zoom_in with Mouse Wheel Up, and zoom_out with Mouse Wheel Down."
+	caption="The input map at the end of this lesson."
+/>
+
+## Open Project Settings
+
+Project settings belong to this project and travel with it, unlike the editor settings from lesson 2. Godot saves them in `project.godot`.
+
+<Steps>
+
+1. Open **Project > Project Settings...**. The window opens on its **General** tab.
+
+2. Look at the list on the left: settings are grouped into sections, such as **Display > Window** and **Physics > Common**. Click a section to see its settings on the right. The search field at the top finds a setting by name.
+
+3. Note the **Advanced Settings** switch at the top right. It is off, so Godot shows only the settings most projects change. You turn it on once in this lesson.
+
+</Steps>
+
+A setting that differs from Godot's default shows a round arrow next to its name, whether you changed it or the Project Manager did. Click the arrow to put the setting back to the default.
+
+## The window
+
+<Steps>
+
+1. In the list on the left, find the heading **Display**, the third one, under **Application** and **Accessibility**, and click **Window** below it.
+
+2. Under **Size**, click the **Viewport Width** field, type `1280`, and press <Kbd keys="Enter" />. Set **Viewport Height** to `720` the same way.
+
+	<Figure
+		src={windowSize}
+		alt="The Display Window settings: under Size, Viewport Width 1280 and Viewport Height 720, both with a round reset arrow, Mode Windowed, Resizable on. Under Stretch, Mode canvas_items and Aspect expand, also with reset arrows."
+		caption="The window size. The round arrows mark settings that differ from Godot's defaults."
+	/>
+
+3. Look at **Stretch**: **Mode** is already `canvas_items` and **Aspect** is `expand`. The Project Manager set them when it created the project; leave them.
+
+4. Scroll to the bottom of the section. Under **V-Sync**, **V-Sync Mode** is **Enabled**. Leave it.
+
+	<Figure
+		src={vsync}
+		alt="The rest of the Display Window settings, ending with the V-Sync section, where V-Sync Mode is Enabled."
+		caption="V-Sync Mode at the bottom of the Window section."
+	/>
+
+</Steps>
+
+<Aside type="note" title="Why these values">
+- **The viewport size** is the window's size when the game starts, and the size your menus are designed for. 1280 by 720 fits on every screen, and it has the 16:9 shape of most monitors. The window can still be resized or made full screen.
+- **Stretch mode `canvas_items`** scales menus and text with the window, so a menu designed for 1280 by 720 fills a 4K screen at the same proportions, drawn sharply. **Aspect `expand`** shows more of the world on a wider screen instead of adding black bars.
+- **V-Sync** waits for the monitor to finish showing one picture before drawing the next. A **frame** is one picture the game draws. Without V-Sync, the top of the screen can show one frame and the bottom the next, a split called tearing. In lesson 54 you add a switch for it to the pause menu.
+</Aside>
+
+## Smooth physics
+
+Godot moves physics objects, such as your player, in fixed steps called physics ticks: 60 per second by default, whatever the speed of your monitor. A fixed rate keeps movement the same on every computer. But many monitors refresh faster: a 144 Hz monitor (hertz means times per second) shows 144 pictures a second, so between two ticks it shows the player in the same place two or three times, then a jump: the movement stutters. **Physics interpolation** fixes this by drawing objects partway between their last two ticks.
+
+<Steps>
+
+1. Click **Physics > Common**. **Physics Ticks per Second** is `60`; leave it.
+
+2. Switch **Advanced Settings** on. More settings appear.
+
+3. Click the box next to **Physics Interpolation**, so it is checked: it turns blue with a tick. Every box in this window has the word **On** beside it, checked or not; the tick is what counts.
+
+	<Figure
+		src={physicsInterpolation}
+		alt="Project Settings with Advanced Settings switched on and Physics Common selected: Physics Ticks per Second 60, Max Physics Steps per Frame 8, Physics Jitter Fix 0.5, Physics Interpolation checked On with a reset arrow, and Enable Object Picking On."
+		caption="Physics Interpolation appears only with Advanced Settings on."
+	/>
+
+4. Switch **Advanced Settings** off again, so the lists stay short.
+
+</Steps>
+
+<Aside type="note" title="What interpolation asks of your code">
+Interpolation draws movement smoothly as long as your code moves things in Godot's physics step, which you do from lesson 6 on. **Physics Jitter Fix** is another remedy for the same problem; Godot turns it off by itself when interpolation is on, so leave it.
+</Aside>
+
+## Name the physics layers
+
+Every physics object sits on one or more of 32 [physics layers](/reference/glossary/#physics-layer), and chooses which layers it collides with. Naming the layers you use means the Inspector shows `world` and `player` instead of bare numbers.
+
+<Steps>
+
+1. Click **Layer Names > 3D Physics**.
+
+2. Click the field right of **Layer 1**, type `world`, and press <Kbd keys="Enter" />. Set **Layer 2** to `player` the same way.
+
+	<Figure
+		src={layerNames}
+		alt="Project Settings with Layer Names 3D Physics selected: Layer 1 is world and Layer 2 is player, both with reset arrows; Layer 3 to Layer 18 are empty."
+		caption="Two named layers. Later lessons add more when they need them."
+	/>
+
+</Steps>
+
+`world` is for the ground and everything solid standing on it. `player` is for the player, so that later things can tell the player apart from the world, such as water the player cannot walk into in lesson 47.
+
+## The input map
+
+Your code should not ask "is the W key down?". Players on a French keyboard reach W where you have Z, and some play with a gamepad. Godot calls gamepads **joypads**, so the lists below say Joypad. Instead, your code asks about an [action](/reference/glossary/#input-action), such as `move_forward`, and the input map lists which keys, buttons, and sticks trigger it. Action names are `snake_case`, like file names.
+
+### Add the actions
+
+<Steps>
+
+1. Click the **Input Map** tab.
+
+2. Click the **Add New Action** field, type `move_left`, and press <Kbd keys="Enter" /> (or click **Add**). The action appears in the list.
+
+3. Add six more actions the same way: `move_right`, `move_forward`, `move_back`, `sprint`, `zoom_in`, and `zoom_out`.
+
+	<Figure
+		src={actionsAdded}
+		alt="The Input Map tab with seven actions in the list: move_left, move_right, move_forward, move_back, sprint, zoom_in, and zoom_out, each with Deadzone 0.2 and a plus and a trash button on the right."
+		caption="The seven actions, with no events yet."
+	/>
+
+</Steps>
+
+<Aside type="tip" title="Show Built-in Actions">
+Godot also has actions of its own, named `ui_` something, which its menus use. **Show Built-in Actions** at the top right lists them. Leave them as they are: Godot's menus and text fields rely on them, so changing them can break typing in your own menus later.
+</Aside>
+
+### Give each action its events
+
+An event is one key, button, or stick direction. You add events with the **+** at the right end of an action's row, which opens **Event Configuration**.
+
+<Steps>
+
+1. Click **+** on the `move_left` row. **Event Configuration** opens with its top field **Listening for Input**.
+
+2. Press <Kbd keys="A" /> on your keyboard. The field shows `A or A (Physical) or A (Unicode)`, and the title shows **A (Physical)**. Click **OK**.
+
+	<Figure
+		src={eventKey}
+		alt="The Event Configuration dialog after pressing A: the title reads A (Physical), the field reads A or A (Physical) or A (Unicode), and at the bottom the key type is Physical Keycode (Position on US QWERTY Keyboard)."
+		caption="A pressed key. Physical means the key's position on the keyboard, not its letter."
+	/>
+
+3. Click **+** on `move_left` again. This time do not press anything: in the list, open **Joypad Axes** and select **Joypad Axis 0 - (Left Stick Left, Joystick 0 Left)**. The list is short, so scroll it to see more, or type part of a name, such as `axis 0`, in **Filter Inputs**. Click **OK**.
+
+	<Figure
+		src={eventStick}
+		alt="The Event Configuration dialog with Joypad Axes opened and Joypad Axis 0 minus (Left Stick Left, Joystick 0 Left) selected. The title shows the same text followed by All Devices."
+		caption="Picking an event from the list. You do not need a gamepad plugged in."
+	/>
+
+4. Add the rest the same way, so the list matches this table:
+
+	| Action | Press | Pick from Joypad Axes or Mouse Buttons |
+	|---|---|---|
+	| `move_left` | <Kbd keys="A" /> | Joypad Axis 0 - (Left Stick Left, Joystick 0 Left) |
+	| `move_right` | <Kbd keys="D" /> | Joypad Axis 0 + (Left Stick Right, Joystick 0 Right) |
+	| `move_forward` | <Kbd keys="W" /> | Joypad Axis 1 - (Left Stick Up, Joystick 0 Up) |
+	| `move_back` | <Kbd keys="S" /> | Joypad Axis 1 + (Left Stick Down, Joystick 0 Down) |
+	| `sprint` | <Kbd keys="Shift" /> | |
+	| `zoom_in` | | Mouse Wheel Up |
+	| `zoom_out` | | Mouse Wheel Down |
+
+	When you press <Kbd keys="Shift" /> for `sprint`, the field describes the key you pressed, such as `Shift (Physical left)`, and the dialog also shows **Physical Location**, set to **Unspecified**. What is saved follows **Physical Location**, not the field. Leave it, so either Shift key sprints; **Left** or **Right** would accept only one of them.
+
+	<Figure
+		src={eventShift}
+		alt="The Event Configuration dialog after pressing Shift: the title reads Shift (Physical), and at the bottom Physical Location is Unspecified."
+		caption="Shift, with its Physical Location left on Unspecified."
+	/>
+
+	For the wheel, open **Mouse Buttons** in the list and scroll down to **Mouse Wheel Up** or **Mouse Wheel Down**, below the three mouse buttons.
+
+	<Figure
+		src={eventWheel}
+		alt="The Event Configuration dialog with Mouse Buttons opened, listing Left Mouse Button, Right Mouse Button, and Middle Mouse Button; the title reads Mouse Wheel Up - All Devices."
+		caption="The mouse wheel comes from the Mouse Buttons list; Mouse Wheel Up is below the three buttons shown here."
+	/>
+
+5. Click **Close**. Godot has been saving each change to `project.godot` as you went.
+
+</Steps>
+
+<Aside type="note" title="Why physical keys, and why the stick in two halves">
+- A **physical** key is a position on the keyboard, named after the US layout. On a French AZERTY keyboard, the key in the W position is labeled Z, and it still moves the player forward, so the four movement keys stay in the same comfortable shape on every keyboard.
+- A stick has two axes, left and right (axis 0) and up and down (axis 1), each from -1 to 1. Each move action takes one half of an axis. In lesson 6, your code combines the four move actions into one direction, and a stick pushed part of the way walks slower than one pushed all the way.
+- **Deadzone** 0.2 ignores small stick movements, so a worn stick that never quite centers does not make the player drift.
+</Aside>
+
+## Try it
+
+- Open `project.godot` in your code editor (it is in the project folder, beside `TopDownTemplate.csproj`). Find `window/size/viewport_width=1280` under `[display]`, `common/physics_interpolation=true` under `[physics]`, `3d_physics/layer_1="world"` under `[layer_names]`, and your seven actions under `[input]`. Close it without changing anything: the Project Settings window is the safe way to edit this file.
+- In the Input Map tab, type `move` in **Filter by Name**: the list narrows to the four move actions. Clear the field to see all seven again.
+
+## If it does not work
+
+- **Physics Interpolation is missing from Physics > Common.** Switch **Advanced Settings** on.
+- **Pressing a key in Event Configuration does nothing.** Click the **Listening for Input** field first, then press the key.
+- **An action got the wrong event.** Click the trash button at the right of the event's row to remove it, then add the right one. To rename an action, double-click its name.
+- **An event shows `A (Unicode)` (the character the key types) or plain `A` instead of `A (Physical)`.** The type was changed at the bottom of Event Configuration. Remove the event and add it again, keeping **Physical Keycode (Position on US QWERTY Keyboard)**.
+- **The settings are gone after reopening the project.** Check that you changed them in **Project Settings**, not **Editor Settings**.
+
+## Checkpoint
+
+Your project's files are the same as in lesson 2; only `project.godot` has changed. It now holds:
+
+- `[display]`: the 1280 by 720 window.
+- `[input]`: seven actions with their events.
+- `[layer_names]`: `world` and `player`.
+- `[physics]`: physics interpolation on.
+
+<Solution label="Show the full project.godot">
+	<Code code={projectGodot} lang="ini" title="project.godot" />
+</Solution>
+
+Commit your work. If you closed PowerShell, open it in the project folder as in lesson 2: right-click `res://` in the FileSystem dock, choose **Open in File Explorer**, type `powershell` in File Explorer's address bar, and press <Kbd keys="Enter" />. Then run:
+
+```powershell
+git add .
+git commit -m "Set up the project settings"
+```
+
+Git answers with the commit's short code and `1 file changed`: only `project.godot`. Committing after every lesson means you can always return to the end of any lesson.
+
+<Checkpoint />

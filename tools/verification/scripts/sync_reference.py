@@ -1,5 +1,5 @@
-# Copies the workbench into the course repository's reference/ folder: no capture driver, no .godot cache, no driver
-# entry in project.godot, and LF line endings for text files.
+# Copies the workbench into the course repository's reference/ folder: no capture drivers, no .godot cache, no driver
+# entries in project.godot, and LF line endings for text files.
 import os
 import re
 import shutil
@@ -23,7 +23,8 @@ for root, dirs, files in os.walk(source):
         if suffix in text_suffixes:
             text = open(src, encoding='utf-8-sig' if name.endswith('.sln') else 'utf-8').read().replace('\r\n', '\n')
             if name == 'project.godot':
-                text = re.sub(r'\n\[editor_plugins\]\n\nenabled=PackedStringArray\("res://\.capture/plugin\.cfg"\)\n', '\n', text)
+                text = re.sub(r'\n\[editor_plugins\]\n\nenabled=PackedStringArray\("res://\.capture/plugin\.cfg"\)\n', '', text)
+                text = re.sub(r'\n\[autoload\]\n\nGameDriver="\*res://\.capture/game_driver\.gd"\n', '', text)
             open(dst, 'w', encoding='utf-8', newline='\n').write(text)
         else:
             shutil.copy2(src, dst)

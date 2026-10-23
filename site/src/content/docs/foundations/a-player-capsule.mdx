@@ -1,0 +1,388 @@
+---
+title: A player capsule that walks
+description: Build a player from a CharacterBody3D and a capsule, give the ground collision, write the movement script with gravity, sprint, and turning, and make the camera follow.
+sidebar:
+  order: 6
+  label: 6. A player capsule
+lesson:
+  number: 6
+  minutes: 60
+  learn:
+    - What physics bodies and collision shapes are, and how layers and masks decide what collides
+    - How a CharacterBody3D moves with velocity and MoveAndSlide
+    - How to turn four input actions into one direction, with acceleration and gravity
+    - How the camera follows the player smoothly under physics interpolation
+  prerequisites: [5]
+---
+
+import { Aside, Code, FileTree, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import meshMenu from '../../../assets/lessons/a-player-capsule/mesh-menu.png';
+import shapeAdded from '../../../assets/lessons/a-player-capsule/shape-added.png';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Solution from '../../../components/Solution.astro';
+import Kbd from '../../../components/Kbd.astro';
+import piece1 from '../../../checkpoints/06/pieces/piece-1.cs?raw';
+import piece2 from '../../../checkpoints/06/pieces/piece-2.cs?raw';
+import piece3 from '../../../checkpoints/06/pieces/piece-3.cs?raw';
+import piece4 from '../../../checkpoints/06/pieces/piece-4.cs?raw';
+import playerScript from '../../../checkpoints/06/files/src/Player/PlayerMovement.cs?raw';
+import cameraRigScript from '../../../checkpoints/06/files/src/Camera/CameraRig.cs?raw';
+import playerScene from '../../../checkpoints/06/files/world/player/player.tscn?raw';
+import meadowScene from '../../../checkpoints/06/files/levels/meadow.tscn?raw';
+import result from '../../../assets/lessons/a-player-capsule/result.png';
+import createRoot from '../../../assets/lessons/a-player-capsule/create-root.png';
+import warning from '../../../assets/lessons/a-player-capsule/warning.png';
+import capsuleShape from '../../../assets/lessons/a-player-capsule/capsule-shape.png';
+import layers from '../../../assets/lessons/a-player-capsule/layers.png';
+import playerSceneView from '../../../assets/lessons/a-player-capsule/player-scene.png';
+import attachScript from '../../../assets/lessons/a-player-capsule/attach-script.png';
+import collisionDialog from '../../../assets/lessons/a-player-capsule/collision-dialog.png';
+import running from '../../../assets/lessons/a-player-capsule/running.png';
+import targetEmpty from '../../../assets/lessons/a-player-capsule/target-empty.png';
+import selectPlayer from '../../../assets/lessons/a-player-capsule/select-player.png';
+import walkRight from '../../../assets/lessons/a-player-capsule/walk-right.png';
+import meadowTree from '../../../assets/lessons/a-player-capsule/meadow-tree.png';
+
+## What you will build
+
+A stand-in player: a capsule with a small box for a nose, which walks with the keyboard or a gamepad, sprints, turns to face where it goes, and falls off the edge of the world. The camera follows it. In lesson 42 your own character replaces the capsule, and this code keeps working.
+
+<Figure
+	src={result}
+	alt="The running game, zoomed in: a white capsule stands on the light gray ground, seen from above at an angle, with a small box nose pointing toward the bottom right and its shadow falling up and to the left."
+	caption="The player capsule in the meadow, zoomed in."
+/>
+
+## Bodies, shapes, and layers
+
+Godot's physics moves **bodies**, and each body has one or more **collision shapes** that say how much space it takes. The shape is invisible and simple, such as a capsule or a box, because physics checks it many times per second; what you see is a separate [mesh](/reference/glossary/#mesh). Godot has three bodies you meet in this course:
+
+- A `StaticBody3D` never moves: the ground, rocks, and walls.
+- A `CharacterBody3D` moves only when your code tells it to, and slides along whatever it bumps into. It is made for players and characters.
+- A `RigidBody3D` is moved by forces and gravity, like a ball. The template does not need one.
+
+Each body sits on [physics layers](/reference/glossary/#physics-layer) and has a **mask**: the layers it collides with. In lesson 3 you named layer 1 `world` and layer 2 `player`. The player sits on `player` and collides with `world`.
+
+## Build the player scene
+
+<Steps>
+
+1. In the FileSystem dock, create a folder `player` inside `world`, and a folder `Player` inside `src`, as you did for the camera in lesson 5.
+
+2. Open **Scene > New Scene** and click **Other Node** under **Create Root Node**. **Create New Node** opens.
+
+3. Search for `CharacterBody3D`, select it, and click **Create**. Rename the root `Player`.
+
+	<Figure
+		src={createRoot}
+		alt="The Create New Node dialog with CharacterBody3D typed in the search field and selected in the tree under Node, Node3D, CollisionObject3D, and PhysicsBody3D, with its description at the bottom: A 3D physics body specialized for characters moved by script."
+		caption="Choosing the root node type."
+	/>
+
+	A yellow warning sign appears beside `Player` in the Scene dock. Hover it to read it: the body has no collision shape yet, so it cannot collide with anything. You fix that next.
+
+	<Figure
+		src={warning}
+		alt="The Scene dock with the Player node and a yellow warning triangle beside its name."
+		caption="Godot warns when a node is missing something it needs."
+	/>
+
+4. With `Player` selected, add a `CollisionShape3D`. The warning beside `Player` disappears at once: a new `CollisionShape3D` already holds a box shape, so the body has something to collide with.
+
+	<Figure
+		src={shapeAdded}
+		alt="The Scene dock with Player and, under it, CollisionShape3D. No warning sign shows beside Player."
+		caption="With a collision shape under it, the body's warning is gone."
+	/>
+
+	A box is the wrong shape for a person. In the Inspector, click the down arrow at the right end of the **Shape** row and, under **New**, choose **CapsuleShape3D**.
+
+5. The CapsuleShape3D opens below. Set **Radius** to `0.3` and **Height** to `1.8`. Then set the CollisionShape3D's **Transform > Position** **y** to `0.9`, half the height, so the capsule stands on the ground instead of halfway in it.
+
+	<Figure
+		src={capsuleShape}
+		alt="The Inspector for CollisionShape3D with Shape set to a CapsuleShape3D showing Radius 0.3 m and Height 1.8 m, Margin 0.04 m, and below Disabled, Debug Color, and Debug Fill."
+		caption="The capsule shape with Radius 0.3 m and Height 1.8 m."
+	/>
+
+6. Select `Player` again and add a `MeshInstance3D` named `Body`. Set its **Mesh** to a new **CapsuleMesh** with the same **Radius** `0.3` and **Height** `1.8`, and its **Position** **y** to `0.9`. The shape and the mesh now match: what you see is what collides.
+
+7. Select `Player` and add one more `MeshInstance3D`, named `Nose`. It starts with a box: click the **BoxMesh** in its **Mesh** row to open it, and set its **Size** to `0.15`, `0.15`, `0.3`. Set the Nose's **Position** to `0`, `1.5`, `0.3`, so it sticks out of the capsule's face toward **+Z**.
+
+8. Select `Player`. In the Inspector, scroll down to **CollisionObject3D > Collision**. **Layer** shows a grid of numbered squares, with 1 lit. Click **2** and then **1**, so only 2 is lit: the player sits on the `player` layer. Hover a square to see its name. Leave **Mask** on 1, `world`.
+
+	<Figure
+		src={layers}
+		alt="The Inspector for Player scrolled down past Floor and Axis Lock to CollisionObject3D, Collision, where the Layer grid has only square 2 lit, with a round reset arrow."
+		caption="The player on layer 2. Mask, below it, stays on layer 1."
+	/>
+
+9. Save the scene with <Kbd keys="Ctrl+S" mac="Cmd+S" />: double-click `world`, then `player`, and click **Save**. The dialog proposes `player.tscn`.
+
+</Steps>
+
+<Figure
+	src={playerSceneView}
+	alt="The Godot editor with the player scene: the Scene dock lists Player, CollisionShape3D, Body, and Nose; the 3D view shows a white capsule standing on the origin with a small box sticking out of its side at head height."
+	caption="The player scene, before you save it. The nose shows which way the player faces."
+/>
+
+<Aside type="note" title="Why the nose points to +Z">
+Godot calls **+Z** the front of a model, and Blender's front becomes Godot's +Z when you export, as you see in lesson 8. Code that turns the player uses that convention, so the nose must point the same way. 1.8 meters is the height of an adult, the size the animations you use in lesson 41 expect.
+</Aside>
+
+## Attach the movement script
+
+<Steps>
+
+1. Select `Player` and click **Attach Script**.
+
+2. Set **Language** to **C#**. **Template** now offers **CharacterBody3D: Basic Movement**, a starting point for a jumping game; choose **Node: Default** instead, so you start from the same small template as in lesson 5.
+
+3. Change **Path** to `res://src/Player/PlayerMovement.cs`. Godot proposes `res://world/player/Player.cs`, beside the scene and named after the node; the code goes in `src/Player`, and the script does one job, movement, so its name says so. Click **Create**.
+
+	<Figure
+		src={attachScript}
+		alt="The Attach Node Script dialog: Language C#, Inherits CharacterBody3D, Template Node: Default, Path res://src/Player/PlayerMovement.cs."
+		caption="The movement script."
+	/>
+
+</Steps>
+
+Godot names the class after the file: `public partial class PlayerMovement : CharacterBody3D`. Save the player scene with <Kbd keys="Ctrl+S" mac="Cmd+S" />, so it keeps the script.
+
+## Write the movement, piece by piece
+
+### Piece 1: walk
+
+A `CharacterBody3D` has a `Velocity`: a `Vector3`, three numbers for the speed along x, y, and z, in meters per second. You set it, then call `MoveAndSlide()`, which moves the body by its velocity for one physics tick and slides it along anything it hits.
+
+Movement belongs in `_PhysicsProcess(double delta)`, which Godot calls once per physics tick, 60 times a second. That keeps it in step with physics, and it is what physics interpolation from lesson 3 needs to draw it smoothly.
+
+Change the template so that:
+
+- `using System;` and the comments are gone, and `namespace TopDownTemplate.Player;` is under `using Godot;`: the project's name and the folder under `src`, as in lesson 5.
+- Four `private static readonly StringName` fields, written as in lesson 5, hold the move actions: `MoveLeft` for `"move_left"`, `MoveRight` for `"move_right"`, `MoveForward` for `"move_forward"`, and `MoveBack` for `"move_back"`.
+- An exported `float` property `Speed` defaults to `3.5f`, in meters per second, a light jog.
+- `_Ready()` and `_Process()` are replaced by `public override void _PhysicsProcess(double delta)`, which:
+	- reads the input with `var input = Input.GetVector(MoveLeft, MoveRight, MoveForward, MoveBack);`
+	- sets `Velocity` to `new Vector3(input.X, 0f, input.Y) * Speed`
+	- calls `MoveAndSlide();`
+
+<Solution>
+	<Code code={piece1} lang="csharp" title="src/Player/PlayerMovement.cs" />
+</Solution>
+
+<Aside type="note" title="How four actions become one direction">
+`Input.GetVector` combines four actions into a `Vector2`, two numbers from -1 to 1: `X` is left (-1) to right (1), and `Y` is forward (-1) to back (1). Diagonals are kept to a length of 1, so walking diagonally is not faster, and a stick pushed part of the way gives a shorter vector, so the player walks slower. Past the 0.2 deadzone, the range is stretched to fill 0 to 1, so a stick pushed halfway gives about 0.4. The game's ground is the x and z of the world, and the camera looks toward **-Z**, so the input's `Y` becomes the world's z: pushing forward walks away from the camera. `var` lets C# work out the type, here `Vector2`, from the right side.
+</Aside>
+
+### Give the ground collision
+
+The player needs something to stand on. The `Ground` in the meadow is only a mesh; give it a static body.
+
+<Steps>
+
+1. Open `levels/meadow.tscn`. If the 3D view is not showing, click **3D** at the top.
+
+2. Select `Ground`. A **Mesh** menu appears in the toolbar above the 3D view. Open **Mesh > Create Collision Shape...**.
+
+	<Figure
+		src={meshMenu}
+		alt="The Mesh menu open below the 3D view's toolbar, listing Create Collision Shape, Create Navigation Mesh, Create Outline Mesh, Create Debug Tangents, View UV1, View UV2, and Unwrap UV2 for Lightmap/AO."
+		caption="The Mesh menu, shown while a MeshInstance3D is selected."
+	/>
+
+3. In **Create Collision Shape**, set **Collision Shape Placement** to **Static Body Child** and keep **Collision Shape Type** on **Trimesh**. Click **Create**.
+
+	<Figure
+		src={collisionDialog}
+		alt="The Create Collision Shape dialog with Collision Shape Placement Static Body Child and Collision Shape Type Trimesh, and Create and Cancel buttons."
+		caption="A static body with a shape matching the mesh."
+	/>
+
+</Steps>
+
+`Ground` now has a `StaticBody3D` child with a `CollisionShape3D` under it, on layer 1, `world`. **Static Body Child** makes the body for you: a collision shape only works under a body, and the ground's body must be static, never moving. **Sibling** would only add a shape beside the mesh, with no body to collide. **Trimesh** copies the mesh's triangles exactly, which suits flat ground that never moves.
+
+### Put the player in the meadow
+
+<Steps>
+
+1. Select `Meadow`, click the chain button (<Kbd keys="Ctrl+Shift+A" mac="Cmd+Shift+A" />), type `player`, and press <Kbd keys="Enter" />. `Player` appears under `Meadow`, at the center of the ground.
+
+2. Save the meadow with <Kbd keys="Ctrl+S" mac="Cmd+S" />.
+
+3. Make sure `PlayerMovement.cs` is saved in your code editor, then click **Build Project**.
+
+4. Run the game with <Kbd keys="F5" mac="Cmd+B" />.
+
+</Steps>
+
+The game runs inside the editor, in the **Game** tab at the top, which Godot switches to on its own:
+
+<Figure
+	src={running}
+	alt="The Godot editor with the Game tab active: the running game fills the middle of the window, showing the capsule on the ground from above, with the game's toolbar above it."
+	caption="The game running in the editor's Game tab. The game draws in its own window placed over the tab; this picture shows the game's frame from the same run in its place. Click inside the game before pressing keys, so it receives them."
+/>
+
+Click inside the game, then press <Kbd keys="W" />, <Kbd keys="A" />, <Kbd keys="S" />, and <Kbd keys="D" />: the capsule slides around. Three things are wrong: it starts and stops instantly, it never turns, and the camera stays behind. Stop the game with the square **Stop** button at the top right, or <Kbd keys="F8" mac="Cmd+." />.
+
+### Piece 2: speed up, slow down, and fall
+
+Change the script so that:
+
+- A fifth field, `Sprint`, holds `"sprint"`, and two more exported `float` properties hold `SprintSpeed` (`6f`) and `Acceleration` (`30f`). Add a comment above `Acceleration` saying what it is: how quickly the player speeds up and slows down, in meters per second, per second.
+- `_PhysicsProcess` first turns `delta`, the seconds since the last tick, into a `float`: `var step = (float)delta;`. It picks the speed with `var speed = Input.IsActionPressed(Sprint) ? SprintSpeed : Speed;` (the `? :` picks the first value when the condition is true and the second when it is false), and works out the velocity it wants: `var target = new Vector3(input.X, 0f, input.Y) * speed;`.
+- Piece 1's line `Velocity = new Vector3(input.X, 0f, input.Y) * Speed;` is gone: the velocity now changes step by step instead of jumping to full speed.
+- It copies `Velocity` into a variable: `var velocity = Velocity;`.
+- It moves only the flat part of the velocity, x and z, toward `target`, and leaves y alone, because y is falling, which gravity handles below. Make the flat part with `new Vector3(velocity.X, 0f, velocity.Z)`, and call `MoveToward` on it: `a.MoveToward(b, most)` returns `a` moved toward `b` by at most `most`. Here `b` is `target` and `most` is `Acceleration * step`. Keep the result in a variable `horizontal`, then copy its two numbers back: `velocity.X = horizontal.X;` and `velocity.Z = horizontal.Z;`.
+- When the body is not on the floor (`!IsOnFloor()`), it adds gravity: `velocity += GetGravity() * step;`. `GetGravity()` returns the project's gravity, 9.8 meters per second, per second, pointing down.
+- It sets `Velocity = velocity;` and calls `MoveAndSlide();`.
+
+<Solution>
+	<Code code={piece2} lang="csharp" title="src/Player/PlayerMovement.cs" />
+</Solution>
+
+<Aside type="note" title="Why copy Velocity first">
+`Velocity` is a property holding a `Vector3`, and a `Vector3` is copied whenever you read it. `Velocity.X = 1f;` would change a copy and is not allowed, so you change your own copy and write it back. Moving toward the target by `Acceleration * step` each tick means the player reaches full speed in about a tenth of a second, a short ramp that feels responsive but not robotic.
+</Aside>
+
+### Piece 3: face where you walk
+
+Add, after `MoveAndSlide();`: when `target` is not `Vector3.Zero` (an `if` with `!=`, "is not equal to"), call `LookAt(GlobalPosition + target, Vector3.Up, true);`. `LookAt` turns a node to face a point; here, a point one step ahead in the walking direction. `GlobalPosition` is the node's position in the world, and the last argument, `true`, means "turn my front, +Z, toward it", the nose's direction. Add a comment above the class saying what it does, and one above the `LookAt` line.
+
+<Solution>
+	<Code code={piece3} lang="csharp" title="src/Player/PlayerMovement.cs" />
+</Solution>
+
+### Piece 4: the camera follows
+
+Open `src/Camera/CameraRig.cs` and change it so that:
+
+- Right after the `Camera` property, an exported property `Target` of type `Node3D?` holds the node to follow. The `?` says it may be empty, `null`, so the rig still works as a fixed camera. Add a comment above it saying so.
+- After the three zoom properties and before `_UnhandledInput()`, a method `public override void _Ready()` ends at once when there is no target: `if (Target == null) { return; }`, where `return;` leaves the method. Otherwise it sets `GlobalPosition = Target.GlobalPosition;` and then calls `ResetPhysicsInterpolation();`, with a comment above that call saying the rig jumped to its target and must not be drawn sliding there.
+- After `_Ready()`, a method `public override void _PhysicsProcess(double delta)` sets `GlobalPosition = Target.GlobalPosition;` when `Target` is not `null`.
+- The comment above the class says the rig also follows a target.
+
+<Solution>
+	<Code code={piece4} lang="csharp" title="src/Camera/CameraRig.cs" />
+</Solution>
+
+<Aside type="note" title="Why reset the interpolation">
+Physics interpolation draws a node partway between where it was on the last tick and where it is now. When the rig jumps to the player at the start, the jump would be drawn as a slide across the level in the first frame. `ResetPhysicsInterpolation()` tells Godot the jump is a teleport. The rig follows in `_PhysicsProcess`, the same step the player moves in, so both are drawn smoothly. The rig sits above the player in the Scene dock, so Godot runs it first and it copies where the player was one tick earlier, a sixtieth of a second behind: too little to see.
+</Aside>
+
+Build, then connect the target:
+
+<Steps>
+
+1. In the meadow, select `CameraRig`. The Inspector shows a new **Target** row reading **Assign...**.
+
+	<Figure
+		src={targetEmpty}
+		alt="The Inspector for CameraRig: Camera set to Camera3D, Target with an Assign... button, then Min Size 8.0, Max Size 48.0, and Zoom Step 1.15."
+		caption="The new Target property on the rig."
+	/>
+
+2. Click **Assign...**, select `Player`, and click **OK**. Only nodes that are a `Node3D` or a kind of one can be chosen.
+
+	<Figure
+		src={selectPlayer}
+		alt="The Select a Node dialog: Allowed Node3D, and the meadow's tree Meadow, Ground, StaticBody3D, CollisionShape3D, Sun, CameraRig, and Player, with Player selected."
+		caption="The rig follows the player. Set this in the meadow, not in the rig scene: each level has its own player."
+	/>
+
+3. Save the meadow.
+
+</Steps>
+
+## Try it
+
+Run the game with <Kbd keys="F5" mac="Cmd+B" /> and click inside it:
+
+- Walk with <Kbd keys="W" />, <Kbd keys="A" />, <Kbd keys="S" />, <Kbd keys="D" />, or a gamepad's left stick. The capsule speeds up and slows down quickly, turns its nose where it walks, and the camera keeps it in the middle of the screen.
+
+	<Figure
+		src={walkRight}
+		alt="The running game: the capsule in the middle of the screen, the ground shifted to the left as the camera follows the player to the right."
+		caption="Walking right: the camera follows, so the ground slides past."
+	/>
+
+- Hold <Kbd keys="D" /> and <Kbd keys="S" /> together: the player walks diagonally, toward the bottom right, no faster than straight.
+- Hold <Kbd keys="Shift" /> while walking to sprint at 6 meters per second.
+- Zoom in with the mouse wheel to look at the capsule up close.
+- Walk off the edge of the ground: the player falls, and the camera falls with it. A real level has edges you cannot walk past; for now, stop the game and run it again.
+
+## If it does not work
+
+- **The player falls through the ground at once.** The ground has no collision: check that `Ground` has a `StaticBody3D` with a `CollisionShape3D` under it. Or the player's **Mask** does not include layer 1.
+- **The player never falls off the edge, or falls very slowly.** Piece 1's `Velocity = ...` line is still there, setting y back to 0 every tick, or the `MoveToward` line moves the whole velocity, y included, which pulls the fall back toward 0. Move only the flat part, `new Vector3(velocity.X, 0f, velocity.Z)`, and copy back only its X and Z.
+- **`CS0120` or `CS1501` on the `MoveToward` line.** It was written `Vector3.MoveToward(a, b, most)`. In Godot's C#, `MoveToward` is called on a vector: `a.MoveToward(b, most)`.
+- **The player sinks halfway into the ground.** The CollisionShape3D's **Position y** is not `0.9`.
+- **The player walks backward compared to the keys, or sideways.** Check the order in `Input.GetVector(MoveLeft, MoveRight, MoveForward, MoveBack)`, and that `input.Y` goes into the z of the `Vector3`, not its y.
+- **The capsule turns its back, not its nose, toward where it walks.** The last argument of `LookAt` must be `true`, and the nose must sit at **+Z** (position z `0.3`).
+- **The Debugger shows `Node origin and target are in the same position, look_at() failed.`** `LookAt` was called while standing still, with no direction to face. Call it only when `target` is not `Vector3.Zero`.
+- **The camera does not follow.** `Target` is not assigned on the meadow's `CameraRig`, or the project was not built after piece 4.
+- **Keys do nothing.** Click inside the game first, so it has the keyboard.
+- **`CS0103: The name 'Sprint' does not exist`.** The `Sprint` field is missing or misspelled.
+
+## Checkpoint
+
+Your project now contains:
+
+<FileTree>
+- levels
+  - meadow.tscn with ground collision, the rig's target, and the player
+- src
+  - Camera
+    - **CameraRig.cs** now follows a target
+    - CameraRig.cs.uid
+  - Player
+    - **PlayerMovement.cs**
+    - PlayerMovement.cs.uid
+- world
+  - camera
+    - camera_rig.tscn
+  - player
+    - **player.tscn**
+</FileTree>
+
+The `Player` scene's tree:
+
+<FileTree>
+- Player (CharacterBody3D, PlayerMovement.cs, layer 2, mask 1)
+  - CollisionShape3D (CapsuleShape3D, radius 0.3, height 1.8)
+  - Body (MeshInstance3D, CapsuleMesh)
+  - Nose (MeshInstance3D, BoxMesh)
+</FileTree>
+
+The `Meadow` scene's tree:
+
+<Figure
+	src={meadowTree}
+	alt="The Scene dock showing Meadow with Ground and, under it, StaticBody3D and CollisionShape3D, then WorldEnvironment, Sun, CameraRig, and Player, the last two with scene icons."
+	caption="The meadow with the ground collision, the camera rig, and the player."
+/>
+
+<Solution label="Show the full PlayerMovement.cs">
+	<Code code={playerScript} lang="csharp" title="src/Player/PlayerMovement.cs" />
+</Solution>
+
+<Solution label="Show the full CameraRig.cs">
+	<Code code={cameraRigScript} lang="csharp" title="src/Camera/CameraRig.cs" />
+</Solution>
+
+<Solution label="Show the full player.tscn">
+	<Code code={playerScene} lang="ini" title="world/player/player.tscn" />
+</Solution>
+
+<Solution label="Show the full meadow.tscn">
+	<Code code={meadowScene} lang="ini" title="levels/meadow.tscn" />
+</Solution>
+
+Commit your work: `git add .` and `git commit -m "Add the player capsule"`. Module 1 is done: you have a project, a level, a camera, and a player, all made by hand.
+
+<Checkpoint />

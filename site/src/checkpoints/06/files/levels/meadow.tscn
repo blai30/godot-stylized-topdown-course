@@ -1,0 +1,42 @@
+[gd_scene format=3 uid="uid://c6nk3ayx6alhj"]
+
+[ext_resource type="PackedScene" uid="uid://b60qe1fx138cc" path="res://world/camera/camera_rig.tscn" id="1_1sye5"]
+[ext_resource type="PackedScene" uid="uid://da4v4dtydqec2" path="res://world/player/player.tscn" id="2_fbj5a"]
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_uor45"]
+size = Vector2(20, 20)
+
+[sub_resource type="ConcavePolygonShape3D" id="ConcavePolygonShape3D_k6xl7"]
+data = PackedVector3Array(10, 0, 10, -10, 0, 10, 10, 0, -10, -10, 0, 10, -10, 0, -10, 10, 0, -10)
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_wedpq"]
+
+[sub_resource type="Sky" id="Sky_fbj5a"]
+sky_material = SubResource("ProceduralSkyMaterial_wedpq")
+
+[sub_resource type="Environment" id="Environment_uor45"]
+background_mode = 2
+sky = SubResource("Sky_fbj5a")
+tonemap_mode = 4
+
+[node name="Meadow" type="Node3D" unique_id=1957612478]
+
+[node name="Ground" type="MeshInstance3D" parent="." unique_id=2095691799]
+mesh = SubResource("PlaneMesh_uor45")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="Ground" unique_id=104613516]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground/StaticBody3D" unique_id=1559433823]
+shape = SubResource("ConcavePolygonShape3D_k6xl7")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=870309231]
+environment = SubResource("Environment_uor45")
+
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=754535464]
+transform = Transform3D(0.70710677, -0.579228, 0.4055798, 0, 0.57357645, 0.81915206, -0.70710677, -0.579228, 0.4055798, 0, 0, 0)
+shadow_enabled = true
+
+[node name="CameraRig" parent="." unique_id=1372657056 node_paths=PackedStringArray("Target") instance=ExtResource("1_1sye5")]
+Target = NodePath("../Player")
+
+[node name="Player" parent="." unique_id=1368437750 instance=ExtResource("2_fbj5a")]

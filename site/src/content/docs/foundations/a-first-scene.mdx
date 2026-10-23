@@ -1,0 +1,317 @@
+---
+title: 'A first scene: ground, sun, and sky'
+description: Build the meadow level's first scene from a placeholder ground, a sun that casts shadows, and a WorldEnvironment with a sky, and learn what each one does.
+sidebar:
+  order: 4
+  label: 4. A first scene
+lesson:
+  number: 4
+  minutes: 45
+  learn:
+    - What scenes, nodes, and resources are, and how the Scene dock shows them
+    - How to add nodes, set their properties, and move around the 3D view
+    - What a WorldEnvironment, a sky, and tonemapping do for the picture
+    - How a directional light works as the sun, and how to turn on its shadows
+  prerequisites: [3]
+---
+
+import { Aside, Code, FileTree, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import deleteConfirm from '../../../assets/lessons/a-first-scene/delete-confirm.png';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Solution from '../../../components/Solution.astro';
+import Kbd from '../../../components/Kbd.astro';
+import meadowScene from '../../../checkpoints/04/files/levels/meadow.tscn?raw';
+import result from '../../../assets/lessons/a-first-scene/result.png';
+import createRootNode from '../../../assets/lessons/a-first-scene/create-root-node.png';
+import saveScene from '../../../assets/lessons/a-first-scene/save-scene.png';
+import createNewNode from '../../../assets/lessons/your-first-shader/create-new-node.png';
+import meshMenu from '../../../assets/lessons/your-first-shader/mesh-menu.png';
+import planeMesh from '../../../assets/lessons/a-first-scene/plane-mesh.png';
+import groundPreview from '../../../assets/lessons/a-first-scene/ground-preview.png';
+import previewButtons from '../../../assets/lessons/a-first-scene/preview-buttons.png';
+import environmentAdded from '../../../assets/lessons/a-first-scene/environment-added.png';
+import newSky from '../../../assets/lessons/a-first-scene/new-sky.png';
+import proceduralSky from '../../../assets/lessons/a-first-scene/procedural-sky.png';
+import tonemap from '../../../assets/lessons/a-first-scene/tonemap.png';
+import withSky from '../../../assets/lessons/a-first-scene/with-sky.png';
+import sunDefault from '../../../assets/lessons/a-first-scene/sun-default.png';
+import sunRotation from '../../../assets/lessons/a-first-scene/sun-rotation.png';
+import sunShadow from '../../../assets/lessons/a-first-scene/sun-shadow.png';
+import lowSun from '../../../assets/lessons/a-first-scene/low-sun.png';
+import sceneTree from '../../../assets/lessons/a-first-scene/scene-tree.png';
+
+## What you will build
+
+The first version of the meadow, the level you grow through the whole course: a flat placeholder ground 20 meters across, lit by a sun, under a sky. Everything you add later stands on it.
+
+<Figure
+	src={result}
+	alt="The Godot 3D view from above at an angle: a flat light gray square of ground fills most of the picture, with the dark brown lower half of the sky beyond its far edge. A small sun icon marks the light at the center."
+	caption="The meadow's first scene. It is plain on purpose: a stage for everything that follows."
+/>
+
+## Scenes, nodes, and resources
+
+Everything in a Godot game is built from [nodes](/reference/glossary/#node). Each node does one job: a `MeshInstance3D` shows a 3D shape, a `DirectionalLight3D` lights the world, a `Camera3D` films it. Nodes hang under each other in a tree, and a saved tree is a [scene](/reference/glossary/#scene), a `.tscn` file. Your level is a scene; later, the camera rig and the player are scenes too, placed inside the level.
+
+Many nodes need data to do their job: the shape a `MeshInstance3D` shows, the sky an environment uses. That data is a [resource](/reference/glossary/#resource). The Inspector shows a node's resources as rows you can open, and you create them from the row's menu.
+
+## Create the scene
+
+<Steps>
+
+1. In the **Scene** dock, under **Create Root Node**, click **3D Scene**. Godot creates a scene whose root, its top node, is a `Node3D` named `Node3D`. A `Node3D` is a point in 3D space that holds the nodes under it.
+
+	<Figure
+		src={createRootNode}
+		alt="The Scene dock of an empty scene with the heading Create Root Node and the buttons 2D Scene, 3D Scene, User Interface, and Other Node."
+		caption="The Scene dock offers a root node for a new scene."
+	/>
+
+2. Double-click `Node3D` in the Scene dock, type `Meadow`, and press <Kbd keys="Enter" />. Node names are `PascalCase`: each word starts with a capital letter, with no spaces.
+
+3. Save the scene with <Kbd keys="Ctrl+S" mac="Cmd+S" />. The **Save Scene As...** dialog opens with the file name `meadow.tscn`: Godot made it from the root's name in `snake_case`.
+
+4. The dialog opens at `res://`, the project folder, showing your folders as icons. Double-click the `levels` folder, so the **Path** at the top reads `res://levels`, then click **Save**.
+
+	<Figure
+		src={saveScene}
+		alt="The Save Scene As dialog with the path res://levels/, an empty folder list, the file name meadow.tscn, the filter All Recognized, and Save and Cancel buttons."
+		caption="Saving the scene in the levels folder."
+	/>
+
+</Steps>
+
+## Add the ground
+
+<Steps>
+
+1. Select `Meadow` in the Scene dock, then click the **+** button at the top of the dock (or press <Kbd keys="Ctrl+A" mac="Cmd+A" />). **Create New Node** opens.
+
+2. Type `MeshInstance3D` in the search field, select **MeshInstance3D**, and click **Create**. The node appears under `Meadow`.
+
+	<Figure
+		src={createNewNode}
+		alt="The Create New Node dialog with MeshInstance3D typed in the search field and MeshInstance3D highlighted in the Matches tree, under Node3D, VisualInstance3D, and GeometryInstance3D."
+		caption="Create New Node. Every node in this course is added this way; the description at the bottom explains the selected type."
+	/>
+
+3. Rename it `Ground`.
+
+4. In the Inspector, a new `MeshInstance3D` starts with a box in its **Mesh** property. Click the down arrow at the right end of the **Mesh** row and, under **New**, choose **PlaneMesh**. The box becomes a flat square.
+
+	<Figure
+		src={meshMenu}
+		alt="The Inspector's Mesh property menu open beside the default box preview. Under the heading New, the list shows BoxMesh, SphereMesh, CapsuleMesh, CylinderMesh, PrismMesh, TorusMesh, PlaneMesh, QuadMesh, and more, followed by Quick Load, Load, Edit, Clear, Make Unique, Save, Save As, and Copy."
+		caption="A resource row's menu. The types you can create are under New; you use menus like this for every resource in this lesson."
+	/>
+
+5. The PlaneMesh's properties open below the **Mesh** row. Set **Size** to `20` for **x** and `20` for **y**. A PlaneMesh lies flat, so its **y** is its depth on the ground. Godot measures in meters, so this is a 20 by 20 meter square.
+
+	<Figure
+		src={planeMesh}
+		alt="The Inspector for Ground: MeshInstance3D, with Mesh set to a PlaneMesh shown in a preview, and below it the PlaneMesh properties with Size x 20.0 m and y 20.0 m."
+		caption="The PlaneMesh, 20 by 20 meters."
+	/>
+
+</Steps>
+
+Look at the 3D view: the ground is lit, and a sky fades into the distance, though you have added neither.
+
+<Figure
+	src={groundPreview}
+	alt="The 3D view showing a large flat light gray square under a sky that fades from gray-blue above to brown below the horizon."
+	caption="The ground under Godot's preview sun and sky."
+/>
+
+That is the editor's **preview** sun and environment, so a new scene is never pitch black. Their two buttons sit in the toolbar above the 3D view, a sun and a globe:
+
+<Figure
+	src={previewButtons}
+	alt="The toolbar above the 3D view: tool buttons on the left, then near the right a sun button and a globe button, both highlighted, a small down arrow, and the Transform and View menus."
+	caption="The preview sun and preview environment buttons, on while the scene has no light or environment of its own."
+/>
+
+They light only the editor; the running game would be dark. You replace each one with a node of your own, and Godot turns the preview off when you do.
+
+## Add the environment
+
+A `WorldEnvironment` node holds an [Environment](/reference/glossary/#environment) resource: the scene's background, the light that comes from the sky, the [tonemapping](/reference/glossary/#tonemapping), fog, glow, and more. One per level is enough; in lesson 19 you tune it for the look of the template.
+
+<Steps>
+
+1. Select `Meadow`, add a `WorldEnvironment` node the same way, and keep its name, `WorldEnvironment`.
+
+2. The 3D view turns flat gray. Godot gave the new node a new Environment, which you can see on its **Environment** row in the Inspector, and the preview environment switched itself off. A new Environment draws a plain gray background and takes no light from a sky, because it has none yet.
+
+	<Figure
+		src={environmentAdded}
+		alt="The Godot editor after adding the WorldEnvironment: the 3D view shows the ground and the background in nearly the same flat gray. The Scene dock lists Meadow, Ground, and WorldEnvironment; the Inspector shows WorldEnvironment with Environment set."
+		caption="With its own Environment and no sky, the scene goes gray."
+	/>
+
+3. In the Inspector, click the **Environment** resource (the button reading `Environment` on that row). Its properties open below it.
+
+4. Click **Background** to open it, and set **Mode** to **Sky**.
+
+5. A **Sky** section appears. Click the **&lt;empty&gt;** field of its **Sky** row and choose **New Sky**.
+
+6. The new Sky opens, and its **Sky Material** row already holds a **PanoramaSkyMaterial**, which draws the sky from a photo. You want a sky drawn from colors instead: click the down arrow at the right end of the **Sky Material** row and, under **New**, choose **ProceduralSkyMaterial**.
+
+	<Figure
+		src={newSky}
+		alt="The Inspector with the Environment open: Background Mode Sky, and the Sky section holding a new Sky whose Sky Material row shows a PanoramaSkyMaterial."
+		caption="A new Sky comes with a PanoramaSkyMaterial. Replace it."
+	/>
+
+	<Figure
+		src={proceduralSky}
+		alt="The Inspector with the Sky Material now set to a ProceduralSkyMaterial, showing its Sky, Ground, and Sun sections, Use Debanding On, and Energy Multiplier 1.0."
+		caption="The ProceduralSkyMaterial, with Sky, Ground, and Sun colors you can tune later."
+	/>
+
+7. Scroll down the Environment's properties to **Tonemap**, open it, and set **Mode** to **AgX**.
+
+	<Figure
+		src={tonemap}
+		alt="The Inspector further down the Environment: Ambient Light with Source Background, Reflected Light with Source Background, and Tonemap with Mode set to AgX."
+		caption="Tonemap Mode set to AgX."
+	/>
+
+</Steps>
+
+The sky is back, and this time it is your own.
+
+<Figure
+	src={withSky}
+	alt="The 3D view with the ground under a gray-blue sky with a brown lower half, much like the preview."
+	caption="Your environment with a procedural sky."
+/>
+
+<Aside type="note" title="Why a sky, and why AgX">
+- **The sky matters even though you will rarely see it.** The game's camera looks down at the ground, so the sky hardly shows on screen. But the Environment's **Ambient Light** and **Reflected Light** both use **Background** as their source: the sky lights every surface softly from all around, so shadows are never black, and shiny surfaces reflect it.
+- **Tonemapping** turns the light the renderer computes, which can be far brighter than a screen can show, into colors a screen can show. AgX does it gently, rolling bright colors toward white the way film does, without the harsh, oversaturated look of the default **Linear**, which cuts bright colors off.
+</Aside>
+
+## Add the sun
+
+A `DirectionalLight3D` lights the whole world from one direction, the way the sun does: its light arrives in parallel rays, and its position does not matter, only its rotation.
+
+<Steps>
+
+1. Select `Meadow`, add a `DirectionalLight3D`, and rename it `Sun`. The ground darkens: a new light points straight toward the horizon, so its light only grazes the ground.
+
+	<Figure
+		src={sunDefault}
+		alt="The 3D view with the Sun's gizmo at the center: the ground is now a darker blue-gray, lit only at a grazing angle."
+		caption="A new DirectionalLight3D points at the horizon."
+	/>
+
+2. In the Inspector, open **Transform** under **Node3D**: every 3D node has one, holding its position, rotation, and scale. Set **Rotation** **x** to `-55` and **y** to `45`. Rotation is in degrees. The light now comes down at 55 degrees from the horizon, turned 45 degrees around the vertical, and the ground brightens. Light from a diagonal shows two sides of everything in a different shade, which helps shapes read; lesson 20 tunes it.
+
+	<Figure
+		src={sunRotation}
+		alt="The Inspector for Sun, scrolled down to Node3D Transform: Position 0, 0, 0 and Rotation x -55.0 degrees, y 45.0 degrees, z 0.0 degrees."
+		caption="The Sun's rotation."
+	/>
+
+3. Scroll up to the **Shadow** heading under **Light3D** and check its **On** box. The sun now casts [shadows](/reference/glossary/#shadow-map).
+
+	<Figure
+		src={sunShadow}
+		alt="The Inspector for Sun with the Shadow section open and its On box checked, showing Bias 0.1, Normal Bias 2.0, Opacity 1.0, and Blur 1.0."
+		caption="Shadow is a section with an On box in its heading."
+	/>
+
+4. Save the scene with <Kbd keys="Ctrl+S" mac="Cmd+S" />.
+
+</Steps>
+
+<Aside type="note" title="One sun for day and night">
+In lesson 21 this same light becomes the moon at night, so shadows never switch from one light to another. The settings below **Shadow** control how sharp and how accurate shadows are; lesson 20 tunes them for the top-down camera.
+</Aside>
+
+## Move around the 3D view
+
+You navigate the 3D view with the mouse:
+
+- **Orbit**: hold the middle mouse button (press the wheel) and drag.
+- **Pan**: hold <Kbd keys="Shift" /> and the middle mouse button, and drag.
+- **Zoom**: turn the mouse wheel.
+- **Frame a node**: select it in the Scene dock, move the mouse over the 3D view, and press <Kbd keys="F" />, **Focus and Frame Selection**. The view centers on the node and fits it in.
+
+Each scene remembers its own view, so you find the meadow as you left it when you open it again.
+
+## Try it
+
+A flat ground shows no shadows, so add something to cast one, for a moment:
+
+<Steps>
+
+1. Select `Meadow` and add a `MeshInstance3D`. It starts as a 1 meter box. Rename it `Box`.
+
+2. Set its **Transform > Position** **y** to `0.5`, so it sits on the ground instead of halfway in it.
+
+3. Orbit around the box: its shadow falls away from the sun, behind the box when you look from the sun's side.
+
+4. Select `Sun` and set **Rotation** **x** to `-20`. The sun sinks toward the horizon, the ground darkens, and the shadow stretches out past the box.
+
+	<Figure
+		src={lowSun}
+		alt="The 3D view with a gray box on a darker ground under a low sun, and a blue-gray shadow reaching out from behind the box."
+		caption="A low sun: a dimmer ground, and a shadow that reaches past the box. Orbit around to see all of it."
+	/>
+
+5. Set **Rotation** **x** back to `-55`. Then select `Box` in the Scene dock and press <Kbd keys="Delete" />. Godot asks **Delete node "Box"?**; click **Delete**. Save the scene.
+
+	<Figure
+		src={deleteConfirm}
+		alt="A small dialog reading Delete node Box, with Delete and Cancel buttons."
+		caption="Godot asks before deleting a node."
+	/>
+
+</Steps>
+
+## If it does not work
+
+- **Everything is flat gray and the sky is gone.** The Environment's **Background > Mode** is still **Clear Color**, or the Sky has no material. Set Mode to **Sky** and give the Sky a **ProceduralSkyMaterial**.
+- **The sky shows a photo or is black.** The Sky Material is still the **PanoramaSkyMaterial**, which needs an image. Replace it with **ProceduralSkyMaterial**.
+- **The ground is very dark.** The Sun's rotation is not set; set **Rotation** to `-55`, `45`, `0`.
+- **No shadow under the box.** Check the **On** box in the Sun's **Shadow** heading.
+- **The ground is a small square.** The PlaneMesh **Size** is still 2 by 2; set it to 20 by 20.
+- **Nodes ended up under the wrong parent.** Drag a node onto `Meadow` in the Scene dock to move it there. Every node in this lesson sits directly under `Meadow`.
+
+## Checkpoint
+
+Your project now contains:
+
+<FileTree>
+- levels
+  - **meadow.tscn** the scene from this lesson
+</FileTree>
+
+The `Meadow` scene's tree:
+
+<Figure
+	src={sceneTree}
+	alt="The Scene dock showing Meadow with the children Ground, WorldEnvironment, and Sun."
+	caption="The meadow scene."
+/>
+
+<FileTree>
+- Meadow (Node3D)
+  - Ground (MeshInstance3D, PlaneMesh 20 by 20 m)
+  - WorldEnvironment (Environment with a procedural sky and AgX)
+  - Sun (DirectionalLight3D, rotation -55, 45, 0, shadows on)
+</FileTree>
+
+<Solution label="Show the full meadow.tscn">
+	<Code code={meadowScene} lang="ini" title="levels/meadow.tscn" />
+</Solution>
+
+A `.tscn` file is text, so Git can show what changed in it. You never edit it by hand: Godot writes it, including the ids that link its parts.
+
+Commit your work: `git add .` and `git commit -m "Add the meadow scene"`.
+
+<Checkpoint />

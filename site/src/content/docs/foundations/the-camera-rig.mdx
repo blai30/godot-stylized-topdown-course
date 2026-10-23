@@ -1,0 +1,397 @@
+---
+title: The camera rig and your first C# script
+description: Build a camera rig scene with an orthographic camera at a 55 degree pitch, write your first C# script to zoom it, and run the game for the first time.
+sidebar:
+  order: 5
+  label: 5. The camera rig
+lesson:
+  number: 5
+  minutes: 60
+  learn:
+    - Why a top-down game uses an orthographic camera, and how its size works
+    - How to build a scene of your own and place it in another scene
+    - How to attach a C# script, export properties to the Inspector, and build
+    - How to read input actions in code, and run the game
+  prerequisites: [4]
+---
+
+import { Aside, Code, FileTree, Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Solution from '../../../components/Solution.astro';
+import Kbd from '../../../components/Kbd.astro';
+import piece1 from '../../../checkpoints/05/pieces/piece-1.cs?raw';
+import piece2 from '../../../checkpoints/05/pieces/piece-2.cs?raw';
+import piece3 from '../../../checkpoints/05/pieces/piece-3.cs?raw';
+import cameraRigScript from '../../../checkpoints/05/files/src/Camera/CameraRig.cs?raw';
+import cameraRigScene from '../../../checkpoints/05/files/world/camera/camera_rig.tscn?raw';
+import result from '../../../assets/lessons/the-camera-rig/result.png';
+import rigScene from '../../../assets/lessons/the-camera-rig/rig-scene.png';
+import cameraInspector from '../../../assets/lessons/the-camera-rig/camera-inspector.png';
+import attachScript from '../../../assets/lessons/the-camera-rig/attach-script.png';
+import attachButton from '../../../assets/lessons/the-camera-rig/attach-button.png';
+import buildButton from '../../../assets/lessons/the-camera-rig/build-button.png';
+import exportEmpty from '../../../assets/lessons/the-camera-rig/export-empty.png';
+import selectNode from '../../../assets/lessons/the-camera-rig/select-node.png';
+import exportAssigned from '../../../assets/lessons/the-camera-rig/export-assigned.png';
+import instantiate from '../../../assets/lessons/the-camera-rig/instantiate.png';
+import mainSceneDialog from '../../../assets/lessons/the-camera-rig/main-scene-dialog.png';
+import running from '../../../assets/lessons/the-camera-rig/running.png';
+import zoomIn from '../../../assets/lessons/the-camera-rig/zoom-in.png';
+import zoomOut from '../../../assets/lessons/the-camera-rig/zoom-out.png';
+import exportsFinal from '../../../assets/lessons/the-camera-rig/exports-final.png';
+
+## What you will build
+
+The game's camera: a rig that looks down at the world at the same angle as FactoryGame, the game whose look this template rebuilds by hand, and zooms with the mouse wheel. You also run the game for the first time.
+
+<Figure
+	src={result}
+	alt="The running game: the meadow's light gray ground seen from above at an angle, a wide rectangle in the middle of the picture, with the sky's colors around it, blue-gray above and brown below."
+	caption="The meadow through the game's camera. The ground ends at 20 meters; past it you see the sky's colors."
+/>
+
+## How the camera sees
+
+A normal camera, like your eyes, shows far things smaller than near things. That is a **perspective** projection. Top-down games such as FactoryGame use an [orthographic projection](/reference/glossary/#orthographic-projection) instead: every object shows at the same size wherever it is on screen, and parallel lines stay parallel. A tile at the top of the screen looks exactly like a tile at the bottom, which keeps a tiled world tidy and easy to read.
+
+An orthographic camera has no zoom by distance. Moving it closer changes nothing; what it shows is set by its **Size**, the height of the view in meters. Size 20 shows 20 meters of the world from the bottom of the window to the top.
+
+The camera looks down at 55 degrees. Straight down would show only the tops of things, flat as a map; 55 degrees shows the fronts of trees, rocks, and characters too, so they read as objects.
+
+## Build the rig scene
+
+The rig is its own scene, so every level can use the same camera. It has three nodes:
+
+- `CameraRig`, the root, is the point the camera looks at. In lesson 6 it moves with the player.
+- `Pivot`, under it, tilts everything below it by 55 degrees.
+- `Camera3D`, under the pivot, sits 60 meters back along the tilt and looks at the rig's point.
+
+<Steps>
+
+1. In the FileSystem dock, right-click `world` and choose **Create New > Folder...**, as you did for the top folders in lesson 2. Name it `camera` and click **OK**. Then right-click `src` and make a folder named `Camera`, with a capital C, for the rig's code.
+
+2. Open **Scene > New Scene**. A new empty scene opens in its own tab.
+
+3. Click **3D Scene** and rename the root `CameraRig`.
+
+4. With `CameraRig` selected, add a `Node3D` and rename it `Pivot`. Set its **Transform > Rotation** **x** to `-55`.
+
+5. Select `Pivot` and add a `Camera3D` under it. Keep its name, `Camera3D`.
+
+6. With `Camera3D` selected, set in the Inspector:
+	- **Transform > Position** **z** to `60`
+	- **Projection** to **Orthogonal**
+	- **Size** to `20`
+
+	<Figure
+		src={cameraInspector}
+		alt="The Inspector for Camera3D: a Camera Preview at the top showing the sky's colors, then Keep Aspect Keep Height, Projection Orthogonal, Size 20.0 m, Near 0.05 m, Far 4000.0 m, and Transform Position 0, 0, 60."
+		caption="The camera's settings. The Camera Preview at the top shows what it sees; this scene has nothing in it yet."
+	/>
+
+7. Save the scene with <Kbd keys="Ctrl+S" mac="Cmd+S" />. The dialog opens at `res://` and proposes `camera_rig.tscn`. Double-click the `world` folder, then `camera`, so the **Path** reads `res://world/camera`, and click **Save**.
+
+</Steps>
+
+<Figure
+	src={rigScene}
+	alt="The Godot editor with the camera_rig scene: the Scene dock shows CameraRig, Pivot, and Camera3D; the 3D view shows the camera's icon above the grid."
+	caption="The rig scene, before you save it. The camera floats 60 meters up the tilt, looking down at the rig's origin."
+/>
+
+<Aside type="note" title="Why 60 meters away">
+The distance does not change what an orthographic camera shows, but anything closer to the camera than its **Near** distance (0.05 m), the near plane, is cut away. 60 meters back along a 55 degree tilt puts the camera about 49 meters up, far above the tallest tree you will make.
+</Aside>
+
+## Attach a script
+
+A [script](/reference/glossary/#script) gives a node behavior. Your C# script becomes part of the `CameraRig` node: it can read and change the node's properties and react to input.
+
+<Steps>
+
+1. Select `CameraRig` in the Scene dock. A scroll with a green plus appears at the top of the dock, right of the **Filter Nodes** field: the **Attach Script** button, whose tooltip reads **Attach a new or existing script to the selected node.** Click it.
+
+	<Figure
+		src={attachButton}
+		alt="The top of the Scene dock while a node is selected: the plus and chain buttons, the Filter Nodes field, then a scroll icon with a green plus, and a menu button."
+		caption="The Attach Script button, right of Filter Nodes. It appears while a node is selected."
+	/>
+
+2. In **Attach Node Script**, set **Language** to **C#**. **Inherits** is `Node3D`, the root's type, and **Template** is **Node: Default**. **Path** proposes `res://world/camera/CameraRig.cs`, beside the scene; change it to `res://src/Camera/CameraRig.cs`, so the code lives with the rest of your code. C# files are named in `PascalCase` after the class inside them. Click **Create**.
+
+	<Figure
+		src={attachScript}
+		alt="The Attach Node Script dialog: Language C#, Inherits Node3D, Template checked with Node: Default, Built-in Script off, Path res://src/Camera/CameraRig.cs, and the messages Script path/name is valid and Will create a new script file."
+		caption="Attach Node Script, set for C#."
+	/>
+
+3. Godot creates the file and opens it in your code editor. If your code editor asks whether to load the project, say yes.
+
+4. Tell Rider that `src` is only a container, not part of any namespace (VS Code readers skip this step):
+
+	<Tabs syncKey="ide">
+	<TabItem label="Rider">
+	In Rider's **Explorer**, switch the drop-down at its top back to **Solution** (lesson 2 left it on **File System**), then right-click the `src` folder and choose **Properties**. Clear **Namespace Provider** and close the window. Rider saves this in `TopDownTemplate.csproj.DotSettings`, a small file Git keeps. Without it, Rider expects your code's namespace to be `TopDownTemplate.src.Camera` and marks the right one as a warning.
+	</TabItem>
+	<TabItem label="VS Code">
+	Nothing to do: VS Code does not check namespaces against folders unless you ask it to.
+	</TabItem>
+	</Tabs>
+
+</Steps>
+
+The template looks like this:
+
+```csharp
+using Godot;
+using System;
+
+public partial class CameraRig : Node3D
+{
+	// Called when the node enters the scene tree for the first time.
+	public override void _Ready()
+	{
+	}
+
+	// Called every frame. 'delta' is the elapsed time since the previous frame.
+	public override void _Process(double delta)
+	{
+	}
+}
+```
+
+Read it from the top:
+
+- `using Godot;` lets the file use Godot's types, such as `Node3D`, without writing `Godot.Node3D` each time. `using System;` does the same for .NET's basic types.
+- `public partial class CameraRig : Node3D` declares a [class](/reference/glossary/#class) named `CameraRig`. `: Node3D` means it is a kind of `Node3D`, with everything a `Node3D` can do. `partial` lets Godot add generated code to the class from another file, which it needs for every script.
+- Inside the braces after the class name is everything that belongs to the class. `_Ready()` and `_Process()` are **methods**, blocks of code with a name. Godot calls `_Ready()` once when the node enters the game, and `_Process()` every frame. `override` says your method replaces an empty one `Node3D` already has.
+
+## Write the script, piece by piece
+
+You write the script in three pieces. After each piece, save the file in your code editor and click **Build Project**, the hammer at the top right of Godot, left of the run buttons (or press <Kbd keys="Alt+B" mac="Option+B" />). The **MSBuild** tab in the bottom panel shows any errors, with the file and line.
+
+<Figure
+	src={buildButton}
+	alt="The top right of the Godot editor: a hammer button, then the run, pause, and stop buttons and the scene run buttons."
+	caption="Build Project, the hammer, left of Run Project."
+/>
+
+### Piece 1: a reference to the camera
+
+The script needs to reach the `Camera3D` to change its size. Change the template so that:
+
+- `using System;`, `_Process()`, and the two comments are gone: the script uses nothing from `System` and needs no work every frame, and the comments only described the template.
+- A line `namespace TopDownTemplate.Camera;` sits under `using Godot;`, separated by an empty line. A [namespace](/reference/glossary/#namespace) is a family name for your classes, so your `CameraRig` can never clash with someone else's. Every namespace in the template starts with the project's name, `TopDownTemplate`, followed by the folder under `src` the file sits in, here `Camera`.
+- Inside the class, above `_Ready()`, there is a **property**, a named value the class holds, called `Camera` and of type `Camera3D`. Write it `public Camera3D Camera { get; set; }`: `public` lets Godot and other code see it, and `{ get; set; }` means it can be read and changed. Put `[Export]` in front of it, an **attribute**, which is a label in square brackets that tells Godot something about the code after it, and ` = null!;` after it.
+- `_Ready()` prints the camera's size with `GD.Print($"Camera size: {Camera.Size}");`.
+
+<Solution>
+	<Code code={piece1} lang="csharp" title="src/Camera/CameraRig.cs" />
+</Solution>
+
+<Aside type="note" title="Export, and what null! means">
+- **`[Export]`** [exports](/reference/glossary/#export) the property: it shows in the Inspector, so you can set it there instead of in code. Godot saves the value in the scene.
+- **`= null!`** tells the compiler, which checks your code as it builds, "this starts empty, but I promise it is set before it is used". Nullable checks, which you turned on in lesson 2, would otherwise warn that `Camera` might be `null`. You keep the promise in the next steps by assigning the camera in the Inspector.
+- **`$"Camera size: {Camera.Size}"`** is a string, a piece of text, with a value placed inside it at the braces.
+</Aside>
+
+Save the file and click **Build Project**. Then connect the property:
+
+<Steps>
+
+1. Select `CameraRig` in the Scene dock. The Inspector has a new **CameraRig** section at the top with a **Camera** row reading **Assign...**. (If it is missing, the build failed: read the **MSBuild** panel.)
+
+	<Figure
+		src={exportEmpty}
+		alt="The Inspector for CameraRig: a CameraRig section with a Camera row showing an Assign... button, above the Node3D and Node sections and the Script row showing CameraRig."
+		caption="The exported Camera property, not yet assigned."
+	/>
+
+2. Click **Assign...**. **Select a Node** opens, listing the scene's nodes; only `Camera3D` can be chosen, because the property's type is `Camera3D`. Select `Camera3D` and click **OK**.
+
+	<Figure
+		src={selectNode}
+		alt="The Select a Node dialog: Allowed Camera3D, a Filter Nodes field, Show All off, and the tree CameraRig, Pivot, Camera3D with Camera3D selected."
+		caption="Choosing the node for the Camera property."
+	/>
+
+	<Figure
+		src={exportAssigned}
+		alt="The Inspector for CameraRig with the Camera row now showing Camera3D and a round reset arrow."
+		caption="The property now points at the camera."
+	/>
+
+3. Save the scene with <Kbd keys="Ctrl+S" mac="Cmd+S" />.
+
+</Steps>
+
+### Put the rig in the meadow
+
+<Steps>
+
+1. Open `levels/meadow.tscn` from the FileSystem dock (double-click it).
+
+2. Select `Meadow` and click the chain button at the top of the Scene dock, whose tooltip reads **Instantiate a scene file as a Node.** (or press <Kbd keys="Ctrl+Shift+A" mac="Cmd+Shift+A" />, **Instantiate Child Scene**). **Select Scene** opens.
+
+3. Type `camera_rig`, check that `camera_rig.tscn` is highlighted, and press <Kbd keys="Enter" />. A `CameraRig` node appears under `Meadow`, with a small scene icon beside it: it is an [instance](/reference/glossary/#instance) of your rig scene.
+
+	<Figure
+		src={instantiate}
+		alt="The Select Scene dialog with camera_rig typed in the search field and camera_rig.tscn in res://world/camera highlighted, with Fuzzy Search on."
+		caption="Select Scene finds the rig as you type."
+	/>
+
+4. Save the meadow.
+
+</Steps>
+
+An instance is a copy of a scene placed inside another. Change the rig scene and every level that holds an instance changes with it.
+
+### Run the game
+
+<Steps>
+
+1. Press <Kbd keys="F5" mac="Cmd+B" /> (or click the triangle **Run Project** at the top right). The project has no main scene yet, the scene the game starts in, so Godot asks for one.
+
+	<Figure
+		src={mainSceneDialog}
+		alt="A dialog reading No main scene has ever been defined. Select one? You can change it later in Project Settings under the application category, with the buttons Select, Cancel, and Select Current."
+		caption="The first time you run the project, Godot asks for its main scene."
+	/>
+
+2. Click **Select Current**: the meadow becomes the main scene. Godot builds your code, switches to the **Game** tab at the top, and runs the game there, inside the editor.
+
+	<Figure
+		src={running}
+		alt="The Godot editor with the Game tab active. The running game fills the middle: the meadow's light gray ground seen from above at an angle, with the sky's colors around it. The Scene dock shows Remote and Local buttons above the meadow's tree, and the Output panel at the bottom shows two lines about Godot and the graphics device, then Camera size: 20."
+		caption="The game running in the editor's Game tab, with your line in the Output panel. The game draws in its own window placed over the tab; this picture shows the game's frame from the same run in its place."
+	/>
+
+3. Look at the **Output** panel at the bottom: your line `Camera size: 20` is there. `GD.Print` writes to the Output panel.
+
+4. Stop the game with the square **Stop** button at the top right, or <Kbd keys="F8" mac="Cmd+." />.
+
+</Steps>
+
+### Piece 2: zoom
+
+Each time something happens with the keyboard, mouse, or a gamepad, Godot creates an **input event** and offers it to the nodes in the game. A node receives the events nothing else used in its `_UnhandledInput()` method.
+
+Godot compares action names as `StringName`s, a kind of text it can compare very quickly. You keep the two action names in **fields**: plain variables that belong to the class, like a property without the `{ get; set; }`. `Size` is a `float`, a number with a decimal point, and a `float` written in code ends in `f`, as in `1.15f`.
+
+Change the script so that:
+
+- `_Ready()` is gone.
+- Two fields at the top of the class hold the action names: `private static readonly StringName ZoomIn = "zoom_in";`, and the same for `ZoomOut` and `"zoom_out"`.
+- A new method `public override void _UnhandledInput(InputEvent @event)` checks the event. If `@event.IsActionPressed(ZoomIn)` is true, it divides the camera's size by `1.15f`, with `Camera.Size /= 1.15f;`. Otherwise, if `@event.IsActionPressed(ZoomOut)` is true, it multiplies it by `1.15f`. Write this as `if (...) { ... } else if (...) { ... }`: one event is never both actions, so once the first test matches, `else` skips the second.
+
+<Solution>
+	<Code code={piece2} lang="csharp" title="src/Camera/CameraRig.cs" />
+</Solution>
+
+<Aside type="note" title="Why StringName fields">
+Writing `"zoom_in"` straight into `IsActionPressed` would turn the text into a `StringName` again on every event. `static readonly` makes one `StringName` that the whole class shares and that never changes. `private` keeps it inside the class. And the `@` in `@event` lets you use `event`, a word C# reserves, as a name.
+</Aside>
+
+Build, run with <Kbd keys="F5" mac="Cmd+B" />, and turn the mouse wheel over the game: the view zooms in and out. Keep turning, and it zooms in until the ground fills the view, and out until the meadow is a dot.
+
+### Piece 3: limits you can tune
+
+Finish the script:
+
+- Add three exported `float` properties with these defaults: `MinSize` `8f`, `MaxSize` `48f`, and `ZoomStep` `1.15f`. 8 meters frames the player and a few steps around it; 48 meters shows a whole small level.
+- In `_UnhandledInput()`, use `ZoomStep` instead of `1.15f`, and keep the size between `MinSize` and `MaxSize` with `Mathf.Clamp(value, min, max)`, which returns the value pushed back inside the range. The values you pass in the parentheses are the method's **arguments**: `Camera.Size = Mathf.Clamp(Camera.Size / ZoomStep, MinSize, MaxSize);`, and the same with `*` for zooming out.
+- Add three short comments: above the class, saying what it does; above `MinSize` and `MaxSize` together, saying they are the smallest and largest view heights in meters; and above `ZoomStep`, saying how much one wheel notch zooms. `Camera` needs none: its name and type say it all.
+
+<Solution>
+	<Code code={piece3} lang="csharp" title="src/Camera/CameraRig.cs" />
+</Solution>
+
+Build, open `camera_rig.tscn`, and select its root, `CameraRig`: the Inspector shows **Min Size**, **Max Size**, and **Zoom Step** with your defaults. Godot shows names written in `PascalCase` as separate words.
+
+<Figure
+	src={exportsFinal}
+	alt="The Inspector for CameraRig showing Camera set to Camera3D, Min Size 8.0, Max Size 48.0, and Zoom Step 1.15."
+	caption="Every exported property appears in the Inspector."
+/>
+
+## Try it
+
+Run the game with <Kbd keys="F5" mac="Cmd+B" /> and turn the wheel:
+
+- Zoom in as far as it goes: the view stops at 8 meters high, and the ground fills the window.
+
+	<Figure
+		src={zoomIn}
+		alt="The running game filled with the flat light gray ground."
+		caption="Zoomed in to the 8 meter limit."
+	/>
+
+- Zoom out as far as it goes: it stops at 48 meters, and the whole meadow shows in the middle.
+
+	<Figure
+		src={zoomOut}
+		alt="The running game with the meadow's ground as a smaller light gray rectangle in the middle, surrounded by the sky's colors."
+		caption="Zoomed out to the 48 meter limit."
+	/>
+
+- Stop the game, select `CameraRig` in the meadow, set **Max Size** to `30`, and run again: you cannot zoom out as far. Values you set on an instance belong to that level, so another level could zoom differently. Set it back to `48` by clicking its round arrow.
+
+## If it does not work
+
+- **The MSBuild panel shows an error such as `CS1002: ; expected`.** The code has a typing mistake on the line it names. `CS` errors come from the C# compiler; the number after them, searched online, explains the error.
+- **The Camera row never appears in the Inspector.** The project was not built after you added the property, or the build failed. Click **Build Project** and check the MSBuild panel.
+- **The Debugger shows a `NullReferenceException`, and zooming does nothing.** `Camera` is still empty. Assign it in the rig scene, not only in the meadow, and save the rig scene.
+- **Godot says it cannot find the script class, or the node has no CameraRig section.** The class name must match the file name exactly: `CameraRig` in `CameraRig.cs`.
+- **The wheel does nothing.** The action names in the code must match the input map exactly, `zoom_in` and `zoom_out`, and the wheel events must be on them (lesson 3).
+- **The view is gray with no ground.** The rig is not in the meadow, or the camera's **Position z** or the pivot's **Rotation x** are not set. Check the rig scene's values.
+- **F5 runs the wrong scene.** The main scene is set in **Project Settings > Application > Run > Main Scene**; set it to `res://levels/meadow.tscn`.
+
+## Checkpoint
+
+Your project now contains:
+
+<FileTree>
+- levels
+  - meadow.tscn now with the camera rig
+- src
+  - Camera
+    - **CameraRig.cs**
+    - CameraRig.cs.uid
+- world
+  - camera
+    - **camera_rig.tscn**
+</FileTree>
+
+With Rider, the project folder also has `TopDownTemplate.csproj.DotSettings`, which holds the Namespace Provider setting.
+
+`CameraRig.cs.uid` holds the id Godot gave the script, so scenes keep finding it if you move it. Keep it with the script, and in Git.
+
+The `CameraRig` scene's tree, and the meadow's:
+
+<FileTree>
+- CameraRig (Node3D, CameraRig.cs)
+  - Pivot (Node3D, rotation x -55)
+    - Camera3D (orthographic, size 20, position z 60)
+</FileTree>
+
+<FileTree>
+- Meadow
+  - Ground
+  - WorldEnvironment
+  - Sun
+  - CameraRig (instance of camera_rig.tscn)
+</FileTree>
+
+<Solution label="Show the full CameraRig.cs">
+	<Code code={cameraRigScript} lang="csharp" title="src/Camera/CameraRig.cs" />
+</Solution>
+
+<Solution label="Show the full camera_rig.tscn">
+	<Code code={cameraRigScene} lang="ini" title="world/camera/camera_rig.tscn" />
+</Solution>
+
+Commit your work: `git add .` and `git commit -m "Add the camera rig"`.
+
+<Checkpoint />

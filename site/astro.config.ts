@@ -19,6 +19,8 @@ export default defineConfig({
 				'@fontsource-variable/jetbrains-mono',
 				'./src/styles/theme.css',
 			],
+			// Long code lines wrap instead of scrolling, so phone readers see every line without a scroll bar to reach.
+			expressiveCode: { defaultProps: { wrap: true } },
 			components: {
 				PageTitle: './src/components/overrides/PageTitle.astro',
 				Search: './src/components/overrides/Search.astro',

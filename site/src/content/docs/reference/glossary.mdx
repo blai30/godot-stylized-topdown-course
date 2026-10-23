@@ -9,6 +9,10 @@ Terms are in alphabetical order. Lessons link here the first time they use a ter
 
 The plain color of a surface before any light falls on it. In a shader you set it with `ALBEDO`.
 
+## Assembly
+
+A compiled library of code. Building your C# scripts produces one assembly for the whole project, named after the project, which Godot loads when the game starts.
+
 ## Bevel
 
 A narrow slanted face that replaces a sharp edge. Real objects never have perfectly sharp edges, so small bevels catch light along the edge and make a model read as solid.
@@ -17,13 +21,33 @@ A narrow slanted face that replaces a sharp edge. Real objects never have perfec
 
 A first, rough version of a model made of big simple shapes, to settle its size and silhouette before any detail.
 
+## Branch
+
+A line of commits in Git. A new repository has one, here named `main`. Later you can make another branch to try an idea without touching `main`, and merge it back if it works.
+
 ## C#
 
 The programming language this course uses for game code. You write it in your IDE, and Godot's .NET edition runs it.
 
+## Class
+
+In C#, the description of a kind of object: its data (properties and fields) and what it can do (methods). Each Godot script is a class, such as `CameraRig`, that extends a node type, such as `Node3D`.
+
+## Commit
+
+A saved version of your project in Git: a snapshot of every file at that moment, with a short message saying what changed. You can always go back to any commit.
+
 ## Edit Mode
 
 Blender's mode for changing a mesh's vertices, edges, and faces. Press <kbd>Tab</kbd> to switch between Edit Mode and Object Mode.
+
+## Environment
+
+Godot's resource for how a scene's world looks as a whole: the background and sky, the light that comes from the sky, tonemapping, fog, glow, and ambient occlusion. A `WorldEnvironment` node holds it.
+
+## Export
+
+In a Godot script, marking a property with `[Export]` so it appears in the Inspector and its value is saved in the scene. Tunable numbers and references to other nodes are exported, so you can change them without editing code.
 
 ## Fragment function
 
@@ -53,9 +77,17 @@ A model of a solid object with firm edges and flat or gently curved faces, such 
 
 Integrated development environment: a code editor with tools built in, such as autocomplete, error checking, and debugging. Rider and VS Code are the IDEs this course supports.
 
+## Input action
+
+A named move the game reacts to, such as `move_forward` or `zoom_in`, defined in **Project Settings > Input Map** with the keys, buttons, and sticks that trigger it. Code checks the action, never a specific key.
+
 ## Inspector
 
 Godot's panel, on the right by default, that shows every property of the selected node or resource and lets you change it.
+
+## Instance
+
+A copy of one scene placed inside another, such as the camera rig inside the meadow. An instance follows its scene: change the scene and every instance changes, except for the properties you overrode on the instance.
 
 ## Loop cut
 
@@ -81,6 +113,10 @@ A smaller copy of a texture. A texture with mipmaps has a chain of copies, each 
 
 In Blender, an operation added to an object that changes its mesh without destroying the original, such as Bevel. You can change or remove a modifier at any time.
 
+## Namespace
+
+A family name for C# classes, written at the top of a file, such as `namespace TopDownTemplate.Camera;`. It keeps your class names from clashing with classes of the same name elsewhere. In the template, it is the project name followed by the folder under `src` the file sits in.
+
 ## Node
 
 The building block of a Godot scene. Every light, camera, mesh, and script lives on a node, and nodes form a tree.
@@ -97,6 +133,22 @@ Blender's mode for moving, rotating, and scaling whole objects. Press <kbd>Tab</
 
 The single point an object is positioned and rotated around. In Blender it shows as a small orange dot. For props in this course, the origin sits at the center of the model's base, so the model stands on the ground where you place it.
 
+## Orthographic projection
+
+A camera projection that shows every object at the same size wherever it is, with no perspective: parallel lines stay parallel. Its `Size` is the height of the view in meters. Top-down and strategy games use it so the world reads like a tidy map.
+
+## Physics layer
+
+One of 32 groups a physics body can sit on. Each body also has a mask, the layers it collides with. Naming layers in Project Settings, such as `world` and `player`, makes them readable in the Inspector.
+
+## Project
+
+A folder with a `project.godot` file in it. Everything inside the folder belongs to the game, and Godot writes paths to it starting from `res://`.
+
+## Repository
+
+The place Git keeps a project's history: a hidden `.git` folder in the project folder, holding every commit.
+
 ## Resource
 
 A piece of data Godot saves and shares, such as a mesh, a material, a texture, or a shader. Several nodes can use the same resource.
@@ -109,6 +161,10 @@ How rough a surface is, from 0 (a mirror) to 1 (matte). Rough surfaces spread li
 
 A tree of nodes saved as one file, ending in `.tscn`. A level, a player, and a tree are each a scene, and a scene can contain other scenes.
 
+## Script
+
+A file of code attached to a node to give it behavior. In this course scripts are C# files, named after the class inside them, such as `CameraRig.cs`.
+
 ## SDK
 
 Software development kit: the tools a programming language needs to build programs. The .NET SDK compiles your C# code.
@@ -117,9 +173,17 @@ Software development kit: the tools a programming language needs to build progra
 
 A small program that runs on the graphics card and decides how a surface is drawn. Godot shaders are written in Godot's shading language, a language much like GLSL.
 
+## Shadow map
+
+How Godot draws shadows: the light renders the scene from its own point of view to find what it can reach, and anything it cannot reach is in shadow. Turn it on with the light's **Shadow** setting.
+
 ## Smooth shading
 
 Lighting a mesh as if its surface were curved between vertices, instead of flat on every face. It makes a few faces look round.
+
+## Solution
+
+A `.sln` file that lists one or more C# projects for a code editor to open together. Godot creates one beside your `.csproj` file.
 
 ## sRGB
 
@@ -132,6 +196,10 @@ How many texture pixels (texels) cover one meter of a surface. This course uses 
 ## Texture
 
 An image a shader reads colors or other values from. Reading from it is called sampling.
+
+## Tonemapping
+
+Turning the light the renderer computes, which can be far brighter than a screen shows, into colors a screen can show. AgX rolls bright colors gently toward white, as film does.
 
 ## Triangle budget
 

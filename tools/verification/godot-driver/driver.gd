@@ -18,7 +18,7 @@ extends EditorPlugin
 #   {"op": "set_text", "find": {"window": "Create Shader", "type": "LineEdit", "nth": 0}, "text": "..."}
 #   {"op": "press", "find": {"window": "Create Shader", "type": "Button", "text": "Create"}}
 #   {"op": "quit"}
-# Every step logs "[capture] <op> ok" or "[capture] <op> FAILED: <reason>".
+# Every step logs "[capture] <op> ok" or "[capture] <op> FAILED: <reason>" to the CAPTURE_LOG file.
 
 var _out_dir := ""
 
@@ -40,12 +40,24 @@ func _run() -> void:
 	for line in FileAccess.get_file_as_string(steps_path).split("\n", false):
 		var step: Dictionary = JSON.parse_string(line)
 		var error: String = await _do(step)
-		print("[capture] ", step.get("op"), " ", step.get("name", step.get("path", "")), " ok" if error == "" else " FAILED: " + error)
+		_log("[capture] %s %s%s" % [step.get("op"), step.get("name", step.get("path", "")), " ok" if error == "" else " FAILED: " + error])
 		# A failed step leaves the editor in an unknown state, so nothing after it is trustworthy.
 		if error != "" and not step.get("optional", false):
-			print("[capture] stopped")
+			_log("[capture] stopped")
 			break
+	# After a game session the editor may not quit on its own, so run-steps.ps1 closes it when it sees this line.
+	_log("[capture] done")
 	get_tree().quit()
+
+# Step results go to the file named by CAPTURE_LOG, not the Output panel, so they never show in captures of it. The file
+# stays open for the whole run: reopening it per line fails while run-steps.ps1 is reading it, and loses lines.
+var _log_file: FileAccess = null
+
+func _log(text: String) -> void:
+	if _log_file == null:
+		_log_file = FileAccess.open(OS.get_environment("CAPTURE_LOG"), FileAccess.WRITE)
+	_log_file.store_line(text)
+	_log_file.flush()
 
 func _settle() -> void:
 	var fs := EditorInterface.get_resource_filesystem()
@@ -110,6 +122,14 @@ func _do(step: Dictionary) -> String:
 			var orbit_view := _collect(get_tree().root, "Node3DEditorViewport", "")[0] as Control
 			var at := orbit_view.get_global_transform_with_canvas() * (orbit_view.size / 2.0)
 			var drag := Vector2(float(step.get("dx", 0)), float(step.get("dy", 0)))
+			var press := InputEventMouseButton.new()
+			press.button_index = MOUSE_BUTTON_MIDDLE
+			press.button_mask = MOUSE_BUTTON_MASK_MIDDLE
+			press.pressed = true
+			press.position = at
+			press.global_position = at
+			orbit_view.get_viewport().push_input(press)
+			await _frames(2)
 			for i in 10:
 				var motion := InputEventMouseMotion.new()
 				motion.button_mask = MOUSE_BUTTON_MASK_MIDDLE
@@ -119,6 +139,10 @@ func _do(step: Dictionary) -> String:
 				motion.global_position = at
 				orbit_view.get_viewport().push_input(motion)
 				await _frames(2)
+			var release := press.duplicate() as InputEventMouseButton
+			release.pressed = false
+			release.button_mask = 0
+			orbit_view.get_viewport().push_input(release)
 			await _frames(20)
 		"wheel":
 			# Zooms the visible 3D viewport: positive steps zoom in.
@@ -333,17 +357,20 @@ func _capture(name: String, window_title: String) -> String:
 	if window_title != "":
 		target = null
 		for window in _windows(get_tree().root):
-			if window.visible and window_title in window.title:
+			# "class:ConfirmationDialog" picks a window by class, for dialogs without a title.
+			var by_class: bool = window_title.begins_with("class:") and window.get_class() == window_title.substr(6)
+			if window.visible and window != get_window() and (by_class or window_title in window.title):
 				target = window
 		if target == null:
 			return "no visible window titled " + window_title
 	var image := target.get_texture().get_image()
 	image.convert(Image.FORMAT_RGBA8)
-	# Popups and dialogs are separate native windows; paint the visible ones over the main window where they sit.
+	# Native popups and dialogs are separate windows; paint the visible ones over the main window where they sit. The
+	# verification editor runs in single-window mode, where they are embedded and already in the main window's image.
 	if window_title == "":
 		var origin := get_window().position
 		for window in _windows(get_tree().root):
-			if window == get_window() or not window.visible or not (window is Popup or window is AcceptDialog or window is ConfirmationDialog):
+			if window == get_window() or not window.visible or window.is_embedded() or not (window is Popup or window is AcceptDialog or window is ConfirmationDialog):
 				continue
 			var shot: Image = window.get_texture().get_image()
 			shot.convert(Image.FORMAT_RGBA8)

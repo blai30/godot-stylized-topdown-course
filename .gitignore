@@ -1,6 +1,7 @@
 # Local tool output
 .playwright-mcp/
 .impeccable/
+__pycache__/
 
 # Editors
 .idea/

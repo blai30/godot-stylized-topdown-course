@@ -1,0 +1,402 @@
+---
+title: Create the project
+description: Create the Godot project, connect your code editor, add the C# solution, lay out the folders, and save the first version with Git and Git LFS.
+sidebar:
+  order: 2
+  label: 2. Create the project
+lesson:
+  number: 2
+  minutes: 55
+  learn:
+    - How to create a Godot project and which renderer to pick
+    - How Godot works with your code editor and the C# solution
+    - Why the template's folders are laid out by purpose
+    - How to put the project under Git, with large art files in Git LFS
+  prerequisites: [1]
+---
+
+import { Aside, Code, FileTree, Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Solution from '../../../components/Solution.astro';
+import Kbd from '../../../components/Kbd.astro';
+import csproj from '../../../checkpoints/02/files/TopDownTemplate.csproj?raw';
+import gitignore from '../../../checkpoints/02/files/.gitignore?raw';
+import gitattributes from '../../../checkpoints/02/files/.gitattributes?raw';
+import result from '../../../assets/lessons/create-the-project/result.png';
+import projectManager from '../../../assets/lessons/install-everything/project-manager.png';
+import createNewProject from '../../../assets/lessons/create-the-project/create-new-project.png';
+import editor from '../../../assets/lessons/create-the-project/editor.png';
+import externalEditor from '../../../assets/lessons/create-the-project/external-editor.png';
+import createFolder from '../../../assets/lessons/create-the-project/create-folder.png';
+import folders from '../../../assets/lessons/create-the-project/folders.png';
+import projectListed from '../../../assets/lessons/create-the-project/project-listed.png';
+import foldersGdignore from '../../../assets/lessons/create-the-project/folders-gdignore.png';
+
+## What you will build
+
+The project that becomes your template: a Godot project with C# turned on, connected to your code editor, with a folder for each kind of file, and its first version saved in Git.
+
+<Figure
+	src={result}
+	alt="The Godot editor with the project open. The FileSystem dock at the bottom left lists the folders art, levels, src, ui, and world, and the file icon.svg. The 3D view in the middle shows an empty grid."
+	caption="Your project at the end of this lesson. There is nothing to see in 3D yet; the work is in the folders and the files around them."
+/>
+
+## Create the project in Godot
+
+A Godot [project](/reference/glossary/#project) is a folder with a file named `project.godot` in it. Everything in that folder belongs to the game: scenes, scripts, textures, models. Godot's Project Manager makes the folder and the file for you.
+
+<Steps>
+
+1. Open Godot. The Project Manager appears, as it did at the end of lesson 1.
+
+	<Figure
+		src={projectManager}
+		alt="The Godot Project Manager with an empty project list and the buttons Create New Project, Import Existing Project, and Go Online and Open Asset Store."
+		caption="With no projects yet, the Create New Project button sits in the middle. Once you have projects, use Create at the top left."
+	/>
+
+2. Click **Create New Project**. The **Create New Project** dialog opens.
+
+3. In **Project Name**, type `TopDownTemplate`, with no spaces. As you type, **Project Path** changes to a folder named `top-down-template` inside your **Documents** folder. Keep that, or click **Browse** to put it somewhere else you will remember.
+
+	<Aside type="caution" title="Not in OneDrive">
+	On many Windows PCs, **Documents** is synced to OneDrive. OneDrive locks files while it uploads them, which breaks Godot's cache and Git in confusing ways. If the path contains `OneDrive`, click **Browse** and choose a folder outside it, such as a new `Projects` folder in your user folder.
+	</Aside>
+
+4. Leave **Create Folder** switched on, so Godot makes the `top-down-template` folder for you.
+
+5. Under **Renderer**, keep **Forward+**. The renderer is the part of Godot that draws each picture of the game.
+
+6. Leave **Version Control Metadata** on **Git**.
+
+	<Figure
+		src={createNewProject}
+		alt="The Create New Project dialog: Project Name TopDownTemplate, Project Path ending in Documents/top-down-template with Create Folder on and the message The project folder will be automatically created, Renderer Forward+ selected with its list of features, and Version Control Metadata set to Git."
+		caption="The dialog filled in. Your path starts with your own Documents folder."
+	/>
+
+7. Click **Create**. The Project Manager closes and the Godot editor opens on your new project.
+
+</Steps>
+
+<Aside type="note" title="Why these choices">
+- **The name** becomes the name of your game's C# code library, its [assembly](/reference/glossary/#assembly), and the first part of every code name you write. Code names cannot contain spaces, so `TopDownTemplate` is written as one word with a capital letter at the start of each part. You can rename the project when you copy the template into a real game, in lesson 57.
+- **Forward+** is Godot's renderer for desktop computers, and the only one with every lighting feature this course uses: soft shadows, ambient occlusion, fog, and glow. Mobile and Compatibility trade those away to run on phones and old graphics cards.
+- **Git** metadata makes Godot write two small files that tell Git how to treat a Godot project. You add to them later in this lesson.
+</Aside>
+
+## A first look at the editor
+
+<Figure
+	src={editor}
+	alt="The Godot editor on a new project. Top: the menus Scene, Project, Debug, Editor, Help, then the 2D, 3D, Script, Game, and Asset Store buttons, and run buttons on the right. Left: the Scene dock with Create Root Node buttons, and the FileSystem dock below it showing res:// and icon.svg. Middle: the 3D view with a grid and colored axis lines. Right: the Inspector, empty. Bottom: the Output, Debugger, Audio, Animation, and Shader Editor tabs."
+	caption="The Godot editor. You meet each part properly in the lessons that use it."
+/>
+
+The window has five parts you use all the time. The panels around the edges are **docks**: you can drag them elsewhere, but this course always shows them where they start.
+
+- The **Scene** dock, top left, shows the [nodes](/reference/glossary/#node) of the [scene](/reference/glossary/#scene) you are editing. A scene is saved as a `.tscn` file. A new project has no scene, so it offers buttons to create one.
+- The **FileSystem** dock, bottom left, shows the files in your project. `res://` at its top is the project folder itself. Godot writes every file path starting from there, such as `res://levels/meadow.tscn`.
+- The **viewport** in the middle shows the scene. **2D**, **3D**, **Script**, and **Game** at the top switch what it shows.
+- The [Inspector](/reference/glossary/#inspector), on the right, shows the settings of whatever you select.
+- The **bottom panel** holds the **Output** log, where Godot and your game print messages, and other tools.
+
+## Connect your code editor
+
+When you open a C# script, Godot can hand it to your code editor. You set that once in the editor settings, which belong to Godot on your computer rather than to this project.
+
+<Steps>
+
+1. Open **Editor > Editor Settings...**.
+
+2. Type `external editor` in the search field at the top. Two sections show up on the left; click **Editor** under **Dotnet**.
+
+3. Set **External Editor** to your code editor:
+
+	<Tabs syncKey="ide">
+	<TabItem label="Rider">
+	Choose **JetBrains Rider**.
+	</TabItem>
+	<TabItem label="VS Code">
+	Choose **Visual Studio Code and VSCodium**.
+	</TabItem>
+	</Tabs>
+
+	<Figure
+		src={externalEditor}
+		alt="The Editor Settings window with external editor in the search field. On the left, Text Editor with External under it, and Dotnet with Editor under it. On the right, the setting External Editor set to Disabled."
+		caption="External Editor under Dotnet. It starts as Disabled."
+	/>
+
+4. Click **Close**. Godot saves editor settings as you change them.
+
+</Steps>
+
+<Aside type="note" title="Why not the other External setting">
+The **External** section under **Text Editor** is for Godot's own scripting language, GDScript. C# scripts use the one under **Dotnet**.
+</Aside>
+
+## Create the C# solution
+
+Your C# code is built by the .NET SDK, which needs two files to know what to build: a C# **project file** (`.csproj`), and a [solution](/reference/glossary/#solution) file (`.sln`) that your code editor opens. Godot writes both.
+
+<Steps>
+
+1. Open **Project > Tools > C# > Create C# solution**.
+
+2. Look at the FileSystem dock: nothing new appears there, because Godot does not list these files. They are in the project folder on disk, beside `project.godot`: `TopDownTemplate.csproj` and `TopDownTemplate.sln`.
+
+3. Look at the top right of the editor: a hammer button has appeared left of the run buttons. It is **Build Project** (<Kbd keys="Alt+B" mac="Option+B" />), which turns your C# code into something Godot can run. An **MSBuild** tab has also appeared in the bottom panel, where build messages show up. You use both from lesson 5 on.
+
+</Steps>
+
+## Turn on nullable checks
+
+In C#, a **variable** is a named place that holds a value, and an **object** is a thing your code works with, such as a node. A variable that refers to an object can also hold `null`, which means "nothing". Using a `null` as if it were an object is one of the most common bugs in any program. With **nullable reference types** turned on, your code editor warns you wherever that could happen, before you run anything. Godot's file leaves them off; turn them on for the whole project.
+
+<Steps>
+
+1. Open the project in your code editor:
+
+	<Tabs syncKey="ide">
+	<TabItem label="Rider">
+	In Rider, choose **Open**, go to your project folder, and open `TopDownTemplate.sln`. If Rider asks whether to trust the solution, choose to trust it: you made it.
+	</TabItem>
+	<TabItem label="VS Code">
+	In VS Code, choose **File > Open Folder...** and open your project folder. If VS Code asks whether you trust the authors of the files, choose **Yes**: you are the author.
+	</TabItem>
+	</Tabs>
+
+2. Open `TopDownTemplate.csproj`:
+
+	<Tabs syncKey="ide">
+	<TabItem label="Rider">
+	Rider's **Explorer**, on the left, starts in its **Solution** view, which shows your code but hides files such as this one. At the top of the Explorer, open the drop-down that reads **Solution** and choose **File System**: it lists every file in the project folder as it is on disk. Double-click `TopDownTemplate.csproj`. Use this view whenever the course asks you to open a file that is not a script.
+	</TabItem>
+	<TabItem label="VS Code">
+	Click `TopDownTemplate.csproj` in the **Explorer** on the left, which lists every file in the project folder.
+	</TabItem>
+	</Tabs>
+
+	It is a short file in a format called XML, where each setting sits between an opening tag such as `<TargetFramework>` and a closing tag such as `</TargetFramework>`.
+
+3. Add this line inside `<PropertyGroup>`, under the `<EnableDynamicLoading>` line, and save the file:
+
+	```xml
+	<Nullable>enable</Nullable>
+	```
+
+</Steps>
+
+## Lay out the folders
+
+A game collects hundreds of files. The template keeps them in a few top-level folders, one for each purpose, so you always know where a file goes and where to find it:
+
+| Folder | What goes in it |
+|---|---|
+| `art` | The art library: models, textures, materials, and shaders. It never depends on the folders below, so every game you make from the template can reuse it. |
+| `art_source` | Your Blender and Krita working files. Godot does not need them; it uses what you export from them into `art`. |
+| `world` | The template's systems as scenes, each in its own folder: the camera, the player, the ground, and more. |
+| `src` | All your C# code, kept apart from Godot's scenes and resources. Its folders are named after the namespace their code belongs to, such as `src/Camera`. |
+| `levels` | The levels you play. |
+| `ui` | The menus and their theme. |
+
+File and folder names are all lowercase, with underscores between words, a style called `snake_case`. Godot recommends it because some systems treat `Meadow.tscn` and `meadow.tscn` as different files and others as the same file, which breaks a project moved between them. C# files are the exception, the project's own `TopDownTemplate.csproj` and `.sln` and everything inside `src`: C# names its files and folders in `PascalCase`, each word starting with a capital letter, such as `src/Camera/CameraRig.cs`, because they match the names in the code. You write your first one in lesson 5.
+
+<Steps>
+
+1. In the FileSystem dock, right-click `res://` and choose **Create New > Folder...**.
+
+2. In **Create Folder**, type `art` in **Name** and click **OK**.
+
+	<Figure
+		src={createFolder}
+		alt="The Create Folder dialog: Base path res://, Name art, and the message Folder name is valid, with OK and Cancel buttons."
+		caption="The Create Folder dialog. The base path is the folder you right-clicked."
+	/>
+
+3. Do the same for `art_source`, `levels`, `src`, `ui`, and `world`.
+
+</Steps>
+
+<Figure
+	src={folders}
+	alt="The FileSystem dock showing res:// with the folders art, art_source, levels, src, ui, and world, and the file icon.svg."
+	caption="The six folders. Godot sorts them by name."
+/>
+
+## Hide the source folder from Godot
+
+Godot **imports** every file it finds in the project folder: it converts each one into a form the game loads quickly, and keeps the result in a hidden `.godot` folder. It would try to import your `.blend` and `.kra` working files too, which wastes time and can fail. An empty file named `.gdignore` inside a folder tells Godot to skip that folder.
+
+Windows File Explorer makes files that start with a dot hard to create, so use PowerShell:
+
+<Steps>
+
+1. In the FileSystem dock, right-click `res://` and choose **Open in File Explorer**. File Explorer opens your project folder.
+
+2. In File Explorer, turn on **View > Show > File name extensions**. File Explorer hides the part of a name after the last dot by default, so `TopDownTemplate.csproj` and the `TopDownTemplate.csproj.old` file you delete soon could look alike. With extensions shown, you can tell every file apart.
+
+3. Click the address bar at the top of File Explorer, type `powershell`, and press <Kbd keys="Enter" />. PowerShell opens, already in your project folder.
+
+4. Type this command and press <Kbd keys="Enter" />:
+
+	```powershell
+	New-Item -ItemType File art_source\.gdignore
+	```
+
+	PowerShell answers with a short table describing the new file, with a length of 0.
+
+</Steps>
+
+Keep File Explorer and this PowerShell window open; you use them again soon.
+
+## Reopen the project
+
+Godot reads `.gdignore` files, and tidies the `.csproj`, when it opens a project. Close it and open it again, so both changes happen before you save the project in Git.
+
+<Steps>
+
+1. Close the Godot editor window. Godot quits.
+
+2. Open Godot again. The Project Manager now lists your project. Double-click **TopDownTemplate** (or click it, then click **Edit**). The editor opens.
+
+	<Figure
+		src={projectListed}
+		alt="The Godot Project Manager listing one project, TopDownTemplate, with its folder path, the version 4.8, and the date it was last edited. On the right, the Edit, Run, Rename, Duplicate, Manage Tags, Remove, and Remove Missing buttons."
+		caption="Your project in the Project Manager. Its path shows your own folder; this one was made in a test folder."
+	/>
+
+3. Look at the FileSystem dock: `art_source` is gone, because Godot now skips it. The folder is still on disk, as File Explorer shows.
+
+	<Figure
+		src={foldersGdignore}
+		alt="The FileSystem dock after reopening the project: res:// with the folders art, levels, src, ui, and world, and icon.svg. The art_source folder is no longer listed."
+		caption="After reopening, art_source no longer appears in Godot."
+	/>
+
+4. Open `TopDownTemplate.csproj` in your code editor again. Godot has tidied it: the line mentioning `android`, which it no longer needs, is gone, and your `Nullable` line is still there. Godot kept the old version as `TopDownTemplate.csproj.old`, which you can see in File Explorer. Delete `TopDownTemplate.csproj.old` there, and only that file: nothing uses it, and it would only clutter the folder. This lesson also tells Git to ignore it, in case it comes back.
+
+</Steps>
+
+## Save the first version with Git
+
+[Git](/reference/glossary/#git) keeps the history of your project in a [repository](/reference/glossary/#repository), a hidden `.git` folder inside the project folder. Each saved version is a [commit](/reference/glossary/#commit): a snapshot of every file, with a short message saying what changed. Before the first commit, tell Git two more things about a Godot project.
+
+### What Git should ignore
+
+`.gitignore` lists the files Git should never save. Godot already wrote one with its own rules: the `.godot` folder, which holds Godot's cache of imported files and can always be rebuilt, and an `android` folder used only for Android exports. Open `.gitignore` in your code editor (in Rider, from the **File System** view) and replace its contents with:
+
+<Code code={gitignore} lang="txt" title=".gitignore" />
+
+The new lines ignore your code editor's own settings (Rider makes an `.idea` folder and `.DotSettings.user` files, Visual Studio makes `.vs`, VS Code makes `.vscode`), the backup copies Blender and Krita save beside your files (`.blend1` and `.kra~`), and the old project file Godot leaves when it updates the `.csproj`.
+
+### Which files go to Git LFS
+
+Git is built for text. It stores every version of every file in full, so a 20 MB texture saved ten times costs 200 MB in every copy of the repository, forever. [Git LFS](/reference/glossary/#git-lfs) stores large files on the side and keeps only a small pointer in Git. `.gitattributes` says which files are text and which go to Git LFS. Open it in your code editor the same way and replace its contents with:
+
+<Code code={gitattributes} lang="txt" title=".gitattributes" />
+
+The first rule is Godot's own: it stores text files with the line endings Linux and macOS use (LF, short for line feed), so the same file never looks changed on another computer. The others send images, Blender and Krita files, models, audio, and video to Git LFS. `.tscn` scenes, `.tres` [resources](/reference/glossary/#resource), shaders, and C# scripts are text, so Git stores them itself and can show you exactly what changed.
+
+### The first commit
+
+<Steps>
+
+1. If you have never used Git on this computer, tell it your name and email. They are written into every commit you make. In PowerShell, run these two commands with your own name and email; `--global` saves them for every project on this computer:
+
+	```powershell
+	git config --global user.name "Your Name"
+	git config --global user.email "you@example.com"
+	```
+
+2. Create the repository. `-b main` names its main [branch](/reference/glossary/#branch) `main`, the name most projects use today:
+
+	```powershell
+	git init -b main
+	```
+
+	Git answers `Initialized empty Git repository in` followed by your project path.
+
+3. Add every file to the next commit, and see what Git will save:
+
+	```powershell
+	git add .
+	git status
+	```
+
+	Git may first warn that `in the working copy of 'TopDownTemplate.csproj', CRLF will be replaced by LF`. That is your `.gitattributes` rule at work on the file Godot wrote with Windows line endings; it is harmless. `git status` then lists nine new files, among them `.gitattributes`, `.gitignore`, `TopDownTemplate.csproj`, `art_source/.gdignore`, and `project.godot`. The `.godot` folder is not there, because it is ignored, and the empty folders are not there either: Git saves files, and a folder appears in Git once it holds one.
+
+4. Make the commit. `-m` gives it its message, a short description of what changed:
+
+	```powershell
+	git commit -m "Create the project"
+	```
+
+	Git answers with `[main (root-commit)`, a short code that names the commit, and `9 files changed`.
+
+</Steps>
+
+## Try it
+
+- Check that Git LFS will take your art. In PowerShell, run:
+
+	```powershell
+	git check-attr filter -- art/test.png
+	```
+
+	It answers `art/test.png: filter: lfs`. The file does not need to exist: Git only checks the rules. Try it with `levels/meadow.tscn` instead, and it answers `filter: unspecified`, because a scene is text.
+
+## If it does not work
+
+- **The Create New Project dialog shows a red message under Project Path and Create is grayed out.** The path cannot be used as it is, most often because a folder with that name already holds files. Choose another location with **Browse**, or delete the old folder if it is a leftover you do not need.
+- **There is no C# entry under Project > Tools.** You are running the standard edition of Godot. Open the .NET edition from lesson 1; its version ends in `mono`.
+- **Your code editor does not open when you open a script later.** **External Editor** under **Dotnet** is still **Disabled**, or you changed the one under **Text Editor**. Set the Dotnet one.
+- **`New-Item` answers that the path does not exist.** PowerShell is not in the project folder. Close it and open it again from the project folder's address bar, or check that `art_source` exists.
+- **`git commit` answers `Author identity unknown`.** Run the two `git config` commands from step 1 of the first commit, then commit again.
+- **`git status` lists files inside `.godot`.** `.gitignore` was not saved, or it was saved with another name such as `.gitignore.txt`. Check its name in File Explorer with **View > Show > File name extensions** turned on.
+- **`art_source` still shows in Godot.** The file must be named exactly `.gdignore`, with the dot and no extension, and sit inside `art_source`. Reopen the project after creating it.
+- **There is no `TopDownTemplate.csproj.old`.** Godot had nothing to tidy, which is fine. Check that your `Nullable` line is in the `.csproj`.
+- **Rider shows no `.gitignore` or `.csproj` in its Explorer.** The Explorer is in its **Solution** view; switch it to **File System**.
+
+## Checkpoint
+
+Your project folder now contains:
+
+<FileTree>
+- .git/ Git's repository, hidden
+- .godot/ Godot's cache, not in Git
+- art/
+- art_source/
+  - .gdignore
+- levels/
+- src/
+- ui/
+- world/
+- .editorconfig
+- .gitattributes
+- .gitignore
+- icon.svg
+- icon.svg.import
+- project.godot
+- TopDownTemplate.csproj
+- TopDownTemplate.sln
+</FileTree>
+
+Your code editor may also have made a settings folder of its own, `.idea` for Rider or `.vscode` for VS Code; Git ignores it. `.editorconfig` is a third small file Godot wrote; it tells code editors to save files as UTF-8, the standard text encoding. `icon.svg` is the project's icon, and `icon.svg.import` holds Godot's import settings for it. Every imported file gets an `.import` file like it, and Git keeps them.
+
+<Solution label="Show the full TopDownTemplate.csproj">
+	<Code code={csproj} lang="xml" title="TopDownTemplate.csproj" />
+</Solution>
+
+<Solution label="Show the full .gitignore">
+	<Code code={gitignore} lang="txt" title=".gitignore" />
+</Solution>
+
+<Solution label="Show the full .gitattributes">
+	<Code code={gitattributes} lang="txt" title=".gitattributes" />
+</Solution>
+
+<Checkpoint />
