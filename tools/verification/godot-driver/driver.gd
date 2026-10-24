@@ -13,7 +13,7 @@ extends EditorPlugin
 #   {"op": "click", "find": {...}, "item": "ground", "button": "right", "double": false}
 #       find: {"class": "FileSystemDock"} or {"window": "Create Shader"} plus optional "text" (a Button/Label text) or
 #       "nth" (index among matches of "type"); "item" picks a Tree item by text inside the found control
-#   {"op": "key", "find": {...}, "key": "F", "ctrl": false, "shift": false}
+#   {"op": "key", "find": {...}, "key": "F", "ctrl": false, "shift": false, "alt": false}
 #   {"op": "popup", "text": "Shader..."}               presses a visible popup menu's item by text, searching submenus
 #   {"op": "set_text", "find": {"window": "Create Shader", "type": "LineEdit", "nth": 0}, "text": "..."}
 #   {"op": "press", "find": {"window": "Create Shader", "type": "Button", "text": "Create"}}
@@ -144,6 +144,46 @@ func _do(step: Dictionary) -> String:
 			release.button_mask = 0
 			orbit_view.get_viewport().push_input(release)
 			await _frames(20)
+		"paint":
+			# A left-button drag through points on the ground (x, z at height y, default 0), as a reader paints with
+			# the GridMap editor: each point is projected through the editor's 3D camera to its pixel.
+			var sub := EditorInterface.get_editor_viewport_3d(0)
+			var container := sub.get_parent() as Control
+			var camera := sub.get_camera_3d()
+			var height := float(step.get("y", 0.0))
+			var pixels: Array[Vector2] = []
+			for point in step["points"]:
+				var inside := camera.unproject_position(Vector3(point[0], height, point[1]))
+				pixels.append(container.get_global_transform_with_canvas() * (inside * container.size / Vector2(sub.size)))
+			var paint_press := InputEventMouseButton.new()
+			paint_press.button_index = MOUSE_BUTTON_LEFT
+			paint_press.button_mask = MOUSE_BUTTON_MASK_LEFT
+			paint_press.pressed = true
+			paint_press.position = pixels[0]
+			paint_press.global_position = pixels[0]
+			var hover := InputEventMouseMotion.new()
+			hover.position = pixels[0]
+			hover.global_position = pixels[0]
+			container.get_viewport().push_input(hover)
+			await _frames(2)
+			container.get_viewport().push_input(paint_press)
+			await _frames(2)
+			for index in range(1, pixels.size()):
+				var motion := InputEventMouseMotion.new()
+				motion.button_mask = MOUSE_BUTTON_MASK_LEFT
+				motion.relative = pixels[index] - pixels[index - 1]
+				motion.screen_relative = motion.relative
+				motion.position = pixels[index]
+				motion.global_position = pixels[index]
+				container.get_viewport().push_input(motion)
+				await _frames(1)
+			var paint_release := paint_press.duplicate() as InputEventMouseButton
+			paint_release.pressed = false
+			paint_release.button_mask = 0
+			paint_release.position = pixels[-1]
+			paint_release.global_position = pixels[-1]
+			container.get_viewport().push_input(paint_release)
+			await _frames(5)
 		"wheel":
 			# Zooms the visible 3D viewport: positive steps zoom in.
 			var view := _collect(get_tree().root, "Node3DEditorViewport", "")[0] as Control
@@ -292,6 +332,7 @@ func _key(step: Dictionary) -> String:
 		event.keycode = OS.find_keycode_from_string(step["key"])
 		event.ctrl_pressed = step.get("ctrl", false)
 		event.shift_pressed = step.get("shift", false)
+		event.alt_pressed = step.get("alt", false)
 		event.pressed = pressed
 		control.get_viewport().push_input(event)
 		await _frames(2)
@@ -339,7 +380,16 @@ func _menu(path: Array) -> String:
 			if popup == null:
 				return "item '%s' has no submenu" % path[depth]
 		else:
-			popup.id_pressed.emit(popup.get_item_id(index))
+			# Menus listen on different signals (Scene > Export As... handles index_pressed), so the press goes to
+			# whichever the menu is connected to, as a real click does.
+			if popup.get_signal_connection_list("id_pressed").size() > 0:
+				popup.id_pressed.emit(popup.get_item_id(index))
+			elif popup.get_signal_connection_list("index_pressed").size() > 0:
+				popup.index_pressed.emit(index)
+			else:
+				var parent := popup.get_parent() as PopupMenu
+				if parent != null:
+					parent.id_pressed.emit(popup.get_item_id(index))
 			await _frames(30)
 	return ""
 

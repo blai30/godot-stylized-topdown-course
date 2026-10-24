@@ -1,0 +1,268 @@
+---
+title: Paint dirt and sand to match
+description: Paint tileable dirt and sand textures in Krita that sit beside your grass, with a pebble stamp brush built from clean shapes, then import them into Godot.
+sidebar:
+  order: 14
+  label: 14. Paint dirt and sand to match
+lesson:
+  number: 14
+  minutes: 60
+  learn:
+    - How to paint a clean, stylized object from three shapes, a contact shadow, a body, and a lit rim
+    - How a selection keeps paint inside a shape
+    - How to make a second stamp brush and reuse your blade brush for twigs
+    - How to keep a set of textures matching in scale, value, and style
+  prerequisites: [13]
+---
+
+import { Aside, FileTree, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import result from '../../../assets/lessons/paint-dirt-and-sand/result.png';
+import blotches from '../../../assets/lessons/paint-dirt-and-sand/blotches.png';
+import pebbleBody from '../../../assets/lessons/paint-dirt-and-sand/pebble-body.png';
+import pebble from '../../../assets/lessons/paint-dirt-and-sand/pebble.png';
+import pebbleTip from '../../../assets/lessons/paint-dirt-and-sand/pebble-tip.png';
+import pebbleSize from '../../../assets/lessons/paint-dirt-and-sand/pebble-size.png';
+import pebbles from '../../../assets/lessons/paint-dirt-and-sand/pebbles.png';
+import twigs from '../../../assets/lessons/paint-dirt-and-sand/twigs.png';
+import dirtFar from '../../../assets/lessons/paint-dirt-and-sand/dirt-far.png';
+import damp from '../../../assets/lessons/paint-dirt-and-sand/damp.png';
+import ripples from '../../../assets/lessons/paint-dirt-and-sand/ripples.png';
+import sandDetails from '../../../assets/lessons/paint-dirt-and-sand/sand-details.png';
+import sandFar from '../../../assets/lessons/paint-dirt-and-sand/sand-far.png';
+import importSand from '../../../assets/lessons/paint-dirt-and-sand/import-sand.png';
+
+## What you will build
+
+Two more ground textures beside your grass: dirt, with pebbles in three sizes and a few twigs, and sand, with soft ripples, damp patches, and a scatter of small stones and shell bits. In lesson 17 the three meet with soft edges on the ground.
+
+<Figure
+	src={result}
+	alt="Three square textures side by side: dense green grass tufts; brown dirt with soft darker and lighter patches, light chipped pebbles with dark contact shadows, and thin dark twigs; and golden sand with wavy pale ripples, faint damp patches, and small scattered stones."
+	caption="Grass, dirt, and sand: one set, painted the same way."
+/>
+
+## How to make textures match
+
+Textures that sit side by side must look like one world. Three things keep them together:
+
+- **The same scale.** Every texture covers 2 meters in 512 pixels, so a pebble and a grass blade are drawn at sizes that make sense next to each other: a large pebble about 20 cm, 50 pixels across.
+- **The same value range.** Each texture uses its own four-step ramp from your palette, from shadow to highlight, so none looks much darker or brighter than the others.
+- **The same style.** Every feature is a clean shape with a darker base and a lit edge, painted back to front, as in lesson 13.
+
+The reference ramps from lesson 7, as hue, saturation, and value:
+
+- **Dirt**: 20, 44, 40; 26, 46, 53; 32, 44, 66; 38, 38, 79
+- **Sand**: 30, 38, 52; 36, 40, 65; 42, 36, 78; 48, 28, 90
+
+## Start the dirt
+
+<Steps>
+
+1. Choose **File > New...**, keep **Width** and **Height** at `512`, set **Name** on the **Content** tab to `dirt_albedo`, and click **Create**.
+
+2. Set the foreground color to the dirt ramp's **dark** swatch, `26`, `46`, `53`, and choose **Edit > Fill with Foreground Color** (<Kbd keys="Shift+Backspace" />). Turn on **View > Wrap Around Mode** (<Kbd keys="Shift+W" />) and zoom out a step (<Kbd keys="Ctrl+-" mac="Cmd+-" />).
+
+3. Press <Kbd keys="B" />, search the Brush Presets docker for `Basic-2 Opacity`, and click it. It paints a hard-edged round dab. Set **Size** to `90` and **Opacity** to `25`, right-clicking each field, typing, and pressing <Kbd keys="Enter" />.
+
+4. Set the color to the **shadow** swatch, `20`, `44`, `40`, and paint about six short, wandering strokes, each about a quarter of the image long. Then set the **light** swatch, `32`, `44`, `66`, and paint six more between them. Each see-through dab keeps its hard edge, so overlapping dabs build flat, painted blotches instead of a blurry smudge.
+
+	<Figure
+		src={blotches}
+		alt="Brown canvas with large, soft-cornered blotches of slightly darker and lighter brown, each built from overlapping round dabs with visible edges."
+		caption="Blotches: big shapes for the eye at a distance."
+	/>
+
+</Steps>
+
+## Paint a pebble
+
+A stylized pebble has three parts, each a clean shape: a dark **contact shadow** where it sits on the ground, the stone's **body**, and a **lit rim** along its top edge, where the light catches it. You paint it once, in grays, and make it a stamp brush, as with the grass tufts.
+
+<Steps>
+
+1. Add a new paint layer (<Kbd keys="Insert" />).
+
+2. **The shadow.** Choose the **Elliptical Selection Tool** (<Kbd keys="J" />) and drag a flat oval near the middle of the image, about 90 pixels wide and 35 tall. Set the color to a dark gray, value `30`, and fill the selection (<Kbd keys="Shift+Backspace" />). Choose **Select > Deselect** (<Kbd keys="Ctrl+Shift+A" mac="Cmd+Shift+A" />).
+
+3. **The body.** Choose the **Polygonal Selection Tool**, the selection tool with a many-sided outline in the toolbox. Click seven points around a stone shape about 90 pixels wide, sitting on the upper part of the shadow so the shadow peeks out below it, and press <Kbd keys="Enter" /> to close the shape. Uneven corners make it look chipped, like a real stone. Set the color to a mid gray, value `55`, and fill.
+
+	<Figure
+		src={pebbleBody}
+		alt="A gray seven-sided stone shape outlined by the selection's marching ants, sitting on a darker gray oval that shows below it."
+		caption="The body, still selected, on its shadow."
+	/>
+
+4. **The rim.** Keep the stone selected: a selection keeps paint inside it, so you can paint along its edge without going over. Press <Kbd keys="B" />, pick **Basic-2 Opacity**, set **Size** to `16` and **Opacity** to `100`, and set a light gray, value `75`. Drag one stroke along the stone's upper edges, close inside the outline.
+
+5. **The shine.** Set **Size** to `8` and a lighter gray, value `90`, and add one short stroke near the top left. Then deselect.
+
+	<Figure
+		src={pebble}
+		alt="The finished gray pebble: a dark oval shadow below, a mid-gray chipped body, a light band along its upper edges, and a small bright mark at the top left."
+		caption="Shadow, body, rim, shine: four shapes make a stone."
+	/>
+
+</Steps>
+
+<Aside type="note" title="Why this works">
+Light comes from above in your game, so tops are lit and the ground under an object is shaded. You do not paint light and shadow on every pebble by hand: you paint them once into the stamp, and every printed pebble carries them.
+</Aside>
+
+## Make the pebble brush
+
+<Steps>
+
+1. Hide **Paint Layer 1** and **Background** with their eyes, draw a rectangle selection (<Kbd keys="Ctrl+R" mac="Cmd+R" />) around the pebble and its shadow, press <Kbd keys="B" />, and pick **Basic-2 Opacity**.
+
+2. Press <Kbd keys="F5" />, click **Brush Tip**, the **Predefined** tab, and **Stamp**. Name it `Pebble`, uncheck **Create mask from color**, and click **Save**.
+
+3. Set **Brush mode** to **Lightness map** and **Spacing** to `5`: pebbles print far apart along a stroke.
+
+	<Figure
+		src={pebbleTip}
+		alt="The Brush Tip page with the Pebble tip selected, Spacing 5.00, and Brush mode Lightness map."
+		caption="Your pebble as a brush tip."
+	/>
+
+4. Check **Rotation**, then in its inputs check **Fuzzy Dab** and uncheck **Pressure**: each pebble lies at a random angle.
+
+5. Check **Size**, check **Fuzzy Dab** and uncheck **Pressure**, click the curve's left point, and type `33` in the percentage field to its right: pebbles print from a third of full size to full, from small gravel to big stones.
+
+	<Figure
+		src={pebbleSize}
+		alt="The Size option with Fuzzy Dab checked and a curve rising from 33% at the left to 100% at the right."
+		caption="Three sizes and everything between."
+	/>
+
+6. Check **Scatter**. Click **Save New Brush Preset...**, name it `Pebble`, click **Save**, and close the editor with <Kbd keys="F5" />.
+
+7. Deselect, show **Paint Layer 1** and **Background** again, hide **Paint Layer 2**, and click **Paint Layer 1**.
+
+</Steps>
+
+## Scatter pebbles and twigs
+
+<Steps>
+
+1. Set **Size** to `60` and **Opacity** to `100`. Set the dirt ramp's **light** swatch and paint about five long, wandering strokes across the image. Then set the **highlight** swatch and add two shorter ones. Pebbles should cover only a small part of the dirt; leave most of it bare.
+
+	<Figure
+		src={pebbles}
+		alt="The brown dirt with scattered light pebbles of many sizes and angles, each with a dark contact shadow."
+		caption="Pebbles in light and highlight colors."
+	/>
+
+2. Pick your **Grass Blade** brush from lesson 13, set **Size** to `7`, and set the **shadow** swatch. Paint about ten short, slightly curved strokes in different directions, each about a tenth of the image long: twigs and small roots. The blade brush tapers them to a point.
+
+	<Figure
+		src={twigs}
+		alt="The dirt with thin, dark, tapering twig strokes among the pebbles."
+		caption="Twigs, painted with the blade brush."
+	/>
+
+3. Zoom out to about three copies across and look for a spot that repeats, as in lesson 13.
+
+	<Figure
+		src={dirtFar}
+		alt="The dirt texture zoomed out and repeated: an even ground of blotches, pebbles, and twigs with no visible edges."
+		caption="Dirt, repeated."
+	/>
+
+4. Save it as `art_source/ground/dirt_albedo.kra` and export it as `art/ground/dirt_albedo.png`, as in lesson 13. Then choose **File > Close**, so the sand is the only image open.
+
+</Steps>
+
+## Paint the sand
+
+<Steps>
+
+1. Create a new image named `sand_albedo` the same way, fill it with the sand ramp's **light** swatch, `42`, `36`, `78`, and turn on wrap-around mode.
+
+2. **Damp patches.** Pick **Basic-2 Opacity**, set **Size** to `110` and **Opacity** to `20`, set the **dark** swatch, `36`, `40`, `65`, and paint about five short, wandering strokes.
+
+	<Figure
+		src={damp}
+		alt="Golden sand with a few faint, slightly darker patches."
+		caption="Damp patches: sand stays soft, so keep them faint."
+	/>
+
+3. **Ripples.** Set **Size** to `5` and **Opacity** to `60`. With the **dark** swatch, paint about sixteen long, gently wavy lines across the image from left to right, one every 30 pixels or so from top to bottom, each about half to three quarters of the image wide. Then set the **highlight** swatch and paint a lighter line close above each dark one: the crest of the ripple catching the light.
+
+	<Figure
+		src={ripples}
+		alt="Sand with rows of thin, gently wavy lines: a darker line with a pale line right above it, repeated down the image."
+		caption="A ripple is a shadow line with a lit line above it."
+	/>
+
+4. **Stones and shells.** Pick your **Pebble** brush, set **Size** to `40` and **Opacity** to `100`, set the **dark** swatch, and paint four wandering strokes: a few small stones. Then pick **Basic-2 Opacity**, set **Size** to `6`, set the **highlight** swatch, and click about twenty-five single dabs here and there: shell bits.
+
+	<Figure
+		src={sandDetails}
+		alt="The sand with ripples, a few small stones with shadows, and tiny pale dots."
+		caption="Small stones and shell bits."
+	/>
+
+5. Zoom out and check the repeat, then save it as `art_source/ground/sand_albedo.kra` and export it as `art/ground/sand_albedo.png`.
+
+	<Figure
+		src={sandFar}
+		alt="The sand texture zoomed out and repeated: even ripples and scattered stones with no visible edges."
+		caption="Sand, repeated."
+	/>
+
+</Steps>
+
+## Import them into Godot
+
+<Steps>
+
+1. In Godot, click `art/ground/dirt_albedo.png`, open the **Import** tab, set **Compress > Mode** to **VRAM Compressed**, check **Mipmaps > Generate**, and click **Reimport (\*)**, as for the grass.
+
+2. Do the same for `art/ground/sand_albedo.png`.
+
+	<Figure
+		src={importSand}
+		alt="The Import dock for sand_albedo.png: Compress Mode VRAM Compressed and Mipmaps Generate checked, with the Reimport (*) button."
+		caption="The same settings for every ground texture."
+	/>
+
+</Steps>
+
+## Try it
+
+- In the dirt image, try your **Pebble** brush with the grass ramp's colors. The same stamp makes green moss-covered stones.
+- Set the Pebble brush's **Spacing** lower, such as `1`, and paint one stroke. The pebbles pile into a gravel path.
+
+## If it does not work
+
+- **Paint went outside the stone.** The stone was not selected when you painted the rim. Undo, select it again with the Polygonal Selection Tool, and paint the rim.
+- **The polygon did not close.** Press <Kbd keys="Enter" /> after the last point, or click on the first point again.
+- **Pebbles print as gray-brown squares.** Paint Layer 1 or Background was visible when you clicked **Stamp**. Hide them and make the stamp again.
+- **Ripples or damp patches print as pebbles.** You are painting with the Pebble brush. Pick **Basic-2 Opacity** in the Brush Presets docker again.
+- **Strokes go to the wrong image.** Another image was open. Close it with **File > Close**, or click the right image's tab above the canvas.
+
+## Checkpoint
+
+Your project now has four new files:
+
+<FileTree>
+- art
+  - ground
+    - **dirt_albedo.png**
+    - grass_albedo.png
+    - **sand_albedo.png**
+- art_source
+  - ground
+    - **dirt_albedo.kra**
+    - grass_albedo.kra
+    - **sand_albedo.kra**
+</FileTree>
+
+Godot writes a `.import` file beside each image, with **VRAM Compressed** and mipmaps on; commit them too.
+
+Commit your work: `git add .` and `git commit -m "Paint dirt and sand"`. In the next lesson, you write your first shader and put the grass on the ground.
+
+<Checkpoint />

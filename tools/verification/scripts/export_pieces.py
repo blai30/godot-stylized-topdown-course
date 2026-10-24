@@ -7,8 +7,8 @@ import os
 import re
 import sys
 
-STEPS = {15: 'lesson15b', 5: 'lesson05', 6: 'lesson06'}
-EXTENSIONS = {15: '.gdshader', 5: '.cs', 6: '.cs'}
+STEPS = {15: 'lesson15', 17: 'lesson17', 5: 'lesson05', 6: 'lesson06'}
+EXTENSIONS = {15: '.gdshader', 17: '.gdshader', 5: '.cs', 6: '.cs'}
 verification = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 site = os.path.join(os.path.dirname(os.path.dirname(verification)), 'site', 'src', 'checkpoints')
 lesson = int(sys.argv[1])

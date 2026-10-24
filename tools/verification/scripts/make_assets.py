@@ -25,19 +25,6 @@ save('project_manager_first_launch.png', None, 'install-everything', 'project-ma
 
 # Lesson 9 moved to the Module 2 section below: it was recaptured in Phase 2, the reader's way.
 
-# Lesson 15: Godot 4.8 beta1 editor captures.
-save('l15_create_node.png', None, 'your-first-shader', 'create-new-node')
-save('l15_mesh_menu.png', (1300, 140, 1920, 960), 'your-first-shader', 'mesh-menu')
-save('l15_shader_menu.png', (1500, 560, 1920, 1080), 'your-first-shader', 'shader-menu')
-save('l15_create_shader.png', None, 'your-first-shader', 'create-shader-dialog')
-save('l15_after_create.png', None, 'your-first-shader', 'shader-editor')
-save('l15_piece1.png', VIEW_WITH_PANEL, 'your-first-shader', 'piece-1')
-save('l15_piece2.png', VIEW_WITH_PANEL, 'your-first-shader', 'piece-2')
-save('l15_uv_problem.png', VIEW_WITH_PANEL, 'your-first-shader', 'uv-problem')
-save('l15_piece3.png', VIEW_WITH_PANEL, 'your-first-shader', 'world-space-icons')
-save('l15_piece3_grass.png', VIEW_WITH_PANEL, 'your-first-shader', 'world-space-grass')
-save('l15_nested_parameters.png', INSPECTOR, 'your-first-shader', 'nested-parameters')
-
 # Phase 2, Module 1: Godot 4.8 beta1 captures.
 shots = os.path.join(os.environ['TEMP'], 'sgt-phase2', 'shots')
 SCENE_DOCK = (0, 40, 286, 556)
@@ -280,3 +267,105 @@ for source, box, name, scale in (
         ('l12_game_close', None, 'result', None)):
     save(source + '.png', box, 'a-large-rock-and-variants', name, scale)
 running('l12_running.png', 'l12_game_wide.png', 'a-large-rock-and-variants', 'running')
+
+# Lesson 13: Krita 5.3.4.1, then Godot 4.8 beta1. The result is the exported texture repeated three by three.
+KRITA_CANVAS = (74, 118, 1640, 1066)
+# The Brush Editor's middle: the option list and the shown option's settings. Its captures include the title bar.
+EDITOR_OPTIONS = (301, 121, 1061, 641)
+EDITOR_TIP = (481, 126, 1046, 591)
+for source, box, name in (
+        ('k13_new_dimensions', None, 'new-dimensions'),
+        ('k13_color_base', None, 'color-shadow'),
+        ('k13_blade_settings', EDITOR_OPTIONS, 'blade-settings'),
+        ('k13_blade_settings', (1191, 36, 1346, 101), 'save-new-preset'),
+        ('k13_save_preset', None, 'save-preset'),
+        ('k13_tufts_alone', KRITA_CANVAS, 'tufts'),
+        ('k13_stamp', None, 'stamp'),
+        ('k13_tuft_tip', EDITOR_TIP, 'tuft-tip'),
+        ('k13_tuft_rotation', EDITOR_OPTIONS, 'tuft-rotation'),
+        ('k13_tuft_size', EDITOR_OPTIONS, 'tuft-size'),
+        ('k13_tuft_scatter', EDITOR_OPTIONS, 'tuft-scatter'),
+        ('k13_pass_dark', KRITA_CANVAS, 'pass-dark'),
+        ('k13_pass_light', KRITA_CANVAS, 'pass-light'),
+        ('k13_pass_highlight', KRITA_CANVAS, 'pass-highlight'),
+        ('k13_pass_dark', (690, 52, 1040, 88), 'toolbar-sliders'),
+        ('k13_pass_dark', (1660, 684, 1922, 1080), 'preset-search'),
+        ('k13_far', KRITA_CANVAS, 'far'),
+        ('k_grass_albedo_png_options', None, 'png-options')):
+    save(os.path.join(krita, source + '.png'), box, 'paint-a-grass-texture', name)
+for source, box, name in (
+        ('l13_import_before', LEFT_DOCK, 'import-before'),
+        ('l13_import_set', LEFT_DOCK, 'import-set')):
+    save(source + '.png', box, 'paint-a-grass-texture', name)
+grass = Image.open(os.path.join(os.environ['TEMP'], 'sgt-phase1', 'snapshots', 'lesson-13', 'art', 'ground', 'grass_albedo.png')).convert('RGB')
+tiled = Image.new('RGB', (grass.width * 3, grass.height * 3))
+for column in range(3):
+    for row in range(3):
+        tiled.paste(grass, (column * grass.width, row * grass.height))
+tiled.resize((1152, 1152), Image.LANCZOS).save(os.path.join(site, 'paint-a-grass-texture', 'result.png'), optimize=True)
+
+# Lesson 14: Krita 5.3.4.1, then Godot 4.8 beta1. The result is the three ground textures side by side.
+PEBBLE = (700, 470, 1015, 690)
+for source, box, name in (
+        ('k14_dirt_blotches', KRITA_CANVAS, 'blotches'),
+        ('k14_pebble_body', PEBBLE, 'pebble-body'),
+        ('k14_pebble', PEBBLE, 'pebble'),
+        ('k14_pebble_tip', EDITOR_TIP, 'pebble-tip'),
+        ('k14_pebble_size', EDITOR_OPTIONS, 'pebble-size'),
+        ('k14_dirt_pebbles', KRITA_CANVAS, 'pebbles'),
+        ('k14_dirt_details', KRITA_CANVAS, 'twigs'),
+        ('k14_dirt_far', KRITA_CANVAS, 'dirt-far'),
+        ('k14_sand_damp', KRITA_CANVAS, 'damp'),
+        ('k14_sand_ripples', KRITA_CANVAS, 'ripples'),
+        ('k14_sand_details', KRITA_CANVAS, 'sand-details'),
+        ('k14_sand_far', KRITA_CANVAS, 'sand-far')):
+    save(os.path.join(krita, source + '.png'), box, 'paint-dirt-and-sand', name)
+save('l14_sand_albedo_import.png', LEFT_DOCK, 'paint-dirt-and-sand', 'import-sand')
+ground = os.path.join(os.environ['TEMP'], 'sgt-phase1', 'snapshots', 'lesson-14', 'art', 'ground')
+row = Image.new('RGB', (512 * 3 + 32, 512), 'white')
+for column, name in enumerate(('grass', 'dirt', 'sand')):
+    row.paste(Image.open(os.path.join(ground, name + '_albedo.png')).convert('RGB'), (column * 528, 0))
+row.save(os.path.join(site, 'paint-dirt-and-sand', 'result.png'), optimize=True)
+
+# Lesson 15: Godot 4.8 beta1, rebuilt on top of lesson 14.
+save('l15_create_node.png', None, 'your-first-shader', 'create-new-node')
+save('l15_mesh_menu.png', (1300, 140, 1920, 960), 'your-first-shader', 'mesh-menu')
+save('l15_shader_menu.png', (1500, 560, 1920, 1080), 'your-first-shader', 'shader-menu')
+save('l15_create_shader.png', None, 'your-first-shader', 'create-shader-dialog')
+save('l15_after_create.png', None, 'your-first-shader', 'shader-editor')
+save('l15_piece1.png', VIEW_WITH_PANEL, 'your-first-shader', 'piece-1')
+save('l15_piece2.png', VIEW_WITH_PANEL, 'your-first-shader', 'piece-2')
+save('l15_uv_problem.png', VIEW_WITH_PANEL, 'your-first-shader', 'uv-problem')
+save('l15_piece3.png', VIEW_WITH_PANEL, 'your-first-shader', 'world-space-icons')
+save('l15_piece3_grass.png', VIEW_WITH_PANEL, 'your-first-shader', 'world-space-grass')
+save('l15_nested_parameters.png', INSPECTOR, 'your-first-shader', 'nested-parameters')
+
+# Lesson 16: Godot 4.8 beta1. With the GridMap panel open, the 3D view ends above it at y 830.
+VIEW_WITH_GRIDMAP = (288, 114, 1633, 990)
+for source, box, name in (
+        ('l16_delete_confirm', None, 'delete-confirm'),
+        ('l16_grass_tile', INSPECTOR_DOCK, 'grass-tile'),
+        ('l16_make_unique', INSPECTOR_DOCK, 'make-unique'),
+        ('l16_tiles_scene', (0, 40, 1633, 1040), 'tiles-scene'),
+        ('l16_save_tiles', None, 'save-tiles'),
+        ('l16_export', None, 'export'),
+        ('l16_gridmap_inspector', INSPECTOR_DOCK, 'gridmap-inspector'),
+        ('l16_selection', VIEW_WITH_GRIDMAP, 'selection'),
+        ('l16_grass_filled', VIEW_WITH_GRIDMAP, 'grass-filled'),
+        ('l16_painted', VIEW_WITH_GRIDMAP, 'painted'),
+        ('l16_game_wide', None, 'result')):
+    save(source + '.png', box, 'tiles-and-gridmap', name)
+running('l16_running.png', 'l16_game_wide.png', 'tiles-and-gridmap', 'running')
+
+# Lesson 17: Godot 4.8 beta1.
+TILES_CLOSE = (860, 330, 1520, 650)
+for source, box, name in (
+        ('l17_grass_mesh', INSPECTOR_DOCK, 'grass-mesh'),
+        ('l17_piece1_tiles', TILES_CLOSE, 'piece-1-tiles'),
+        ('l17_piece1_meadow', VIEW_WITH_PANEL, 'piece-1-meadow'),
+        ('l17_noise_settings', INSPECTOR_DOCK, 'noise-settings'),
+        ('l17_save_noise', None, 'save-noise'),
+        ('l17_piece2_tiles', TILES_CLOSE, 'piece-2-tiles'),
+        ('l17_piece2_meadow', VIEW_WITH_PANEL, 'piece-2-meadow'),
+        ('l17_game_close', None, 'result')):
+    save(source + '.png', box, 'soft-tile-edges', name)

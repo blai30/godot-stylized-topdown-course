@@ -269,21 +269,29 @@ if dialog == null:
 	return "no file dialog"
 print("[probe] file dialog opened at ", dialog.current_dir, " with file ", dialog.current_file)
 for folder in {list(folders)!r}:
-	var found := false
+	# The folder list, not the Recent or Favorites lists: the one whose double-click takes the dialog into the folder.
+	var entered := false
 	for list in plugin._collect(dialog, "ItemList", ""):
 		for i in list.item_count:
 			if list.get_item_text(i) == folder:
 				list.select(i)
 				list.item_activated.emit(i)
-				found = true
+				for attempt in 30:
+					await plugin.get_tree().process_frame
+					if dialog.current_dir.ends_with("/" + folder):
+						entered = true
+						break
 				break
-		if found:
+		if entered:
 			break
-	if not found:
-		return "no folder " + folder + " in the dialog at " + dialog.current_dir
-	await plugin.get_tree().process_frame
-	await plugin.get_tree().process_frame
+	if not entered:
+		return "could not go into " + folder + " from " + dialog.current_dir
+	# Let the list show the new folder's contents.
+	for attempt in 10:
+		await plugin.get_tree().process_frame
 print("[probe] file dialog now at ", dialog.current_dir)
+if not dialog.current_dir.ends_with("/" + {list(folders)!r}[-1]):
+	return "the dialog is at " + dialog.current_dir
 ''')
 
 
@@ -442,3 +450,146 @@ for attempt in 4:
 				return ""
 return "Advanced Import Settings did not open"
 ''')
+
+
+def quick_load(property, query, capture=None):
+    # A resource row's menu > Quick Load..., the search typed, and Enter, as in lesson 11.
+    steps = [
+        show_row(property),
+        # The row's menu, then Quick Load... in it, in one step: a popup closes when the editor's window loses focus,
+        # which the owner's own work on the computer can cause between steps.
+        eval_(f'''
+var row = plugin._find_property(plugin._find_class(plugin.get_tree().root, "InspectorDock"), "{property}")
+if row == null:
+	return "no row {property}"
+# The picker's field and its arrow both open the menu; try them in turn.
+for button in plugin._collect(row, "Button", ""):
+	button.pressed.emit()
+	for attempt in 10:
+		await plugin.get_tree().process_frame
+		for window in plugin._windows(plugin.get_tree().root):
+			if window is PopupMenu and window.visible:
+				for i in window.item_count:
+					if window.get_item_text(i) == "Quick Load...":
+						window.id_pressed.emit(window.get_item_id(i))
+						window.hide()
+						return ""
+return "no Quick Load... in the {property} menu"
+'''),
+        {'op': 'wait', 'frames': 40},
+        eval_(f'''
+for window in plugin._windows(plugin.get_tree().root):
+	if window.visible and window.get_class() == "EditorQuickOpenDialog":
+		var edit: LineEdit = plugin._collect(window, "LineEdit", "")[0]
+		edit.text = "{query}"
+		edit.text_changed.emit(edit.text)
+		return ""
+return "no Quick Load dialog"
+'''),
+        {'op': 'wait', 'frames': 30},
+    ]
+    if capture:
+        steps.append({'op': 'capture', 'name': capture, 'window': 'Quick Load'})
+    steps += [
+        eval_('''
+for window in plugin._windows(plugin.get_tree().root):
+	if window.visible and window.get_class() == "EditorQuickOpenDialog":
+		var edit: LineEdit = plugin._collect(window, "LineEdit", "")[0]
+		edit.grab_focus()
+		for pressed in [true, false]:
+			var event := InputEventKey.new()
+			event.keycode = KEY_ENTER
+			event.pressed = pressed
+			window.push_input(event)
+			await plugin.get_tree().process_frame
+		return ""
+return "no Quick Load dialog"
+'''),
+        {'op': 'wait', 'frames': 30},
+    ]
+    return steps
+
+
+def resource_menu(property, item):
+    # Opens a resource row's menu in the Inspector and picks an item from it, in one step, so the menu cannot close
+    # in between when the editor's window loses focus.
+    return eval_(f'''
+var row = plugin._find_property(plugin._find_class(plugin.get_tree().root, "InspectorDock"), "{property}")
+if row == null:
+	return "no row {property}"
+editor.get_inspector().ensure_control_visible(row)
+for button in plugin._collect(row, "Button", ""):
+	button.pressed.emit()
+	for attempt in 10:
+		await plugin.get_tree().process_frame
+		for window in plugin._windows(plugin.get_tree().root):
+			if window is PopupMenu and window.visible:
+				for i in window.item_count:
+					if window.get_item_text(i) == "{item}":
+						window.id_pressed.emit(window.get_item_id(i))
+						window.hide()
+						return ""
+				window.hide()
+return "no {item} in the {property} menu"
+''')
+
+
+def open_resource(property, shows):
+    # Clicks a resource row's picture, as the reader does, so the resource's own properties open below it; waits
+    # until the row named shows appears. A resource already open is left open.
+    return eval_(f'''
+if plugin._find_property(plugin._find_class(plugin.get_tree().root, "InspectorDock"), "{shows}") != null:
+	return ""
+var row = plugin._find_property(plugin._find_class(plugin.get_tree().root, "InspectorDock"), "{property}")
+if row == null:
+	return "no row {property}"
+editor.get_inspector().ensure_control_visible(row)
+var picker = plugin._collect(row, "EditorResourcePicker", "")[0]
+plugin._collect(picker, "Button", "")[0].pressed.emit()
+for attempt in 20:
+	await plugin.get_tree().process_frame
+	if plugin._find_property(plugin._find_class(plugin.get_tree().root, "InspectorDock"), "{shows}") != null:
+		return ""
+return "{property} did not open: no row {shows}"
+''')
+
+
+# Godot can raise "The following files are newer on disk" around a shader save. The text in the Shader Editor is the
+# reader's, so the answer is Ignore external changes.
+DISK_PROMPT = eval_('''
+for window in plugin._windows(plugin.get_tree().root):
+	if window.visible and window is ConfirmationDialog:
+		for label in plugin._collect(window, "Label", ""):
+			if label.text.contains("newer on disk"):
+				for button in plugin._collect(window, "Button", ""):
+					if button.text.begins_with("Ignore"):
+						print("[probe] newer on disk prompt: ", button.text)
+						button.pressed.emit()
+						return ""
+''')
+
+
+def type_shader(code, path):
+    # The reader types the code into the Shader Editor and saves it with Ctrl+Alt+S; the file must then hold it.
+    return [
+        eval_(f'''
+var edits := plugin._collect(plugin.get_tree().root, "CodeEdit", "")
+if edits.is_empty():
+	return "no visible CodeEdit"
+var edit: CodeEdit = edits[0]
+edit.text = {code!r}
+edit.text_changed.emit()
+'''),
+        {'op': 'wait', 'frames': 20},
+        {'op': 'key', 'find': {'type': 'CodeEdit'}, 'key': 'S', 'ctrl': True, 'alt': True},
+        {'op': 'wait', 'frames': 60},
+        DISK_PROMPT,
+        {'op': 'wait', 'frames': 20},
+        {'op': 'key', 'find': {'type': 'CodeEdit'}, 'key': 'S', 'ctrl': True, 'alt': True},
+        {'op': 'wait', 'frames': 40},
+        eval_(f'''
+var saved := FileAccess.get_file_as_string("{path}")
+if saved != {code!r}:
+	return "the file on disk is not the typed code: " + saved.left(120)
+'''),
+    ]

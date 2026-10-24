@@ -6,7 +6,7 @@ import traceback
 
 from krita import Krita
 from PyQt5.QtCore import QEvent, QPointF, QTimer, Qt
-from PyQt5.QtGui import QEnterEvent, QFocusEvent, QKeyEvent, QMouseEvent
+from PyQt5.QtGui import QContextMenuEvent, QEnterEvent, QFocusEvent, QKeyEvent, QMouseEvent
 from PyQt5.QtWidgets import QApplication, QMenuBar, QWidget
 
 OUT = os.environ.get('KRITA_OUT', '')
@@ -44,11 +44,14 @@ def run_script(name, *arguments):
     return output
 
 
-def capture(name, title=None):
+def capture(name, title=None, widget=None):
     # Saves a top-level window as the desktop compositor shows it, overlays included (QWidget.grab() leaves out the
-    # canvas's grid and selection outline). Without a title it captures the main window.
+    # canvas's grid and selection outline, and grabbing a dialog leaves Krita's slider fields committing after one
+    # key). Without a title or widget it captures the main window.
     path = os.path.join(OUT, name + '.png')
-    if title is None:
+    if widget is not None:
+        yield from run_script('capture-window.ps1', '-Handle', int(widget.window().winId()), '-Out', path)
+    elif title is None:
         yield from run_script('capture-window.ps1', '-Handle', int(window().winId()), '-Out', path)
     else:
         yield from run_script('capture-window.ps1', '-ProcessId', os.getpid(), '-Title', title, '-Out', path)
@@ -201,6 +204,12 @@ def click(widget, position=None, double=False):
         QApplication.sendEvent(widget, QMouseEvent(kind, point, Qt.LeftButton, buttons, Qt.NoModifier))
 
 
+def click_later(widget, position=None):
+    # A click on a button that opens a modal dialog: deferred, so the dialog runs its own loop while the steps keep
+    # ticking, as action() does.
+    QTimer.singleShot(0, lambda: click(widget, position))
+
+
 def key(widget, code, modifiers=Qt.NoModifier, text=''):
     for kind in (QEvent.KeyPress, QEvent.KeyRelease):
         QApplication.sendEvent(widget, QKeyEvent(kind, code, modifiers, text))
@@ -228,6 +237,112 @@ def set_number(spin, value):
     edit.selectAll()
     type_text(edit, str(value))
     key(edit, Qt.Key_Tab)
+
+
+def slider(spin, value):
+    # Types into one of Krita's slider fields (brush Size, Opacity) the way its manual says: right-click it, type
+    # the number, and press Enter. A generator: the field drops keys sent while it switches into typing.
+    point = spin.rect().center()
+    # The field's text box covers it, so a real click lands on the text box, which the field watches. Without the
+    # field typing yet, Krita takes a digit as a shortcut (1 resets the zoom, 4 to 6 turn the canvas), so check the
+    # value and type again if it went wrong.
+    target = spin.lineEdit()
+    for attempt in range(2):
+        enter(target, point)
+        yield 0.2
+        for kind, buttons in ((QEvent.MouseButtonPress, Qt.RightButton), (QEvent.MouseButtonRelease, Qt.NoButton)):
+            event = QMouseEvent(kind, QPointF(point), QPointF(point), QPointF(target.mapToGlobal(point)), Qt.RightButton, buttons, Qt.NoModifier)
+            QApplication.instance().notify(target, spontaneous(event))
+            yield 0.15
+        # The field selects its text a moment after it starts typing, and a key before that is overwritten: wait
+        # until the text shows selected, as a reader sees it.
+        for _ in range(30):
+            yield 0.1
+            if target.hasSelectedText():
+                break
+        yield 0.2
+        log('SLIDER typing {} text {!r} selected {!r}'.format(not target.isReadOnly(), target.text(), target.selectedText()))
+        # Krita need not be the active window on the desktop, so tell the field it has the keyboard; otherwise it
+        # takes the first key as its last and commits.
+        QApplication.sendEvent(target, QFocusEvent(QEvent.FocusIn, Qt.OtherFocusReason))
+        yield 0.1
+        for character in str(value):
+            code = Qt.Key_Period if character == '.' else Qt.Key_0 + int(character)
+            key(target, code, Qt.NoModifier, character)
+            yield 0.2
+            log('SLIDER key {!r} text {!r} selected {!r} readonly {}'.format(character, target.text(), target.selectedText(), target.isReadOnly()))
+        key(target, Qt.Key_Return)
+        yield 0.3
+        log('SLIDER {}{}'.format(spin.prefix(), spin.text()))
+        if abs(spin.value() - float(value)) < 0.01:
+            return
+    # The field commits after one key when Krita is not the active window on the desktop, which the driver must not
+    # change. Typing is verified in the runs where Krita had focus; here the value is set directly, and logged.
+    # The toolbar's Size and Opacity are set on the brush itself, since setting the field alone does not always
+    # reach the brush.
+    view = Krita.instance().activeWindow().activeView()
+    if spin.prefix().startswith('Size'):
+        view.setBrushSize(float(value))
+    elif spin.prefix().startswith('Opacity'):
+        view.setPaintingOpacity(float(value) / 100)
+    else:
+        spin.setValue(float(value))
+    yield 0.3
+    log('SLIDER SET DIRECTLY {}{} brush size {} opacity {}'.format(spin.prefix(), spin.text(), view.brushSize(), view.paintingOpacity()))
+    if abs(spin.value() - float(value)) >= 0.01:
+        raise RuntimeError('{} is {}, not {}'.format(spin.prefix(), spin.value(), value))
+
+
+def toolbar_slider(label):
+    # The toolbar's Size or Opacity field; the Layers docker has an Opacity field of its own.
+    from PyQt5.QtWidgets import QAbstractSpinBox
+    for spin in window().findChildren(QAbstractSpinBox):
+        if spin.isVisible() and spin.parent().objectName() != 'WdgLayerBox' and getattr(spin, 'prefix', lambda: '')().startswith(label):
+            return spin
+    raise RuntimeError('no toolbar field ' + label)
+
+
+def preset(name):
+    # Types into the Brush Presets docker's search box and clicks the one preset left, as a reader does.
+    from PyQt5.QtWidgets import QAbstractItemView, QDockWidget, QLineEdit
+    dock = [dock for dock in window().findChildren(QDockWidget) if dock.objectName() == 'PresetDocker'][0]
+    search = find(dock, QLineEdit)
+    search.setFocus()
+    search.selectAll()
+    type_text(search, name)
+    yield 1
+    items = [view for view in dock.findChildren(QAbstractItemView) if view.isVisible()][0]
+    model = items.model()
+    # A name can be the start of another ("Basic-5 Size" and "Basic-5 Size Opacity"): click each match until the
+    # chosen preset's name ends with the exact name, as a reader picks by its tooltip.
+    chosen = ''
+    for row in range(model.rowCount()):
+        click(items.viewport(), items.visualRect(model.index(row, 0)).center())
+        yield 0.5
+        chosen = Krita.instance().activeWindow().activeView().currentBrushPreset().name()
+        if chosen.endswith(') ' + name) or chosen == name:
+            break
+    log('PRESET ' + chosen)
+    if not chosen.endswith(name):
+        raise RuntimeError('preset is ' + chosen)
+
+
+def foreground(hsv, shot_name=None):
+    # Sets the foreground color by its HSV numbers in the Select a Color dialog, as lesson 7 teaches.
+    from PyQt5.QtWidgets import QAbstractSpinBox, QPushButton, QTabWidget
+    from PyQt5.QtCore import QPoint
+    click(of_class(window(), 'KoDualColorButton'), QPoint(8, 8))
+    yield 1
+    picker = top('Select a Color')
+    tab(find(picker, QTabWidget, name='tabWidget'), 'HSV')
+    yield 0.3
+    for spin, value in zip(of_class(picker, 'KisSpinboxHSXSelector').findChildren(QAbstractSpinBox), hsv):
+        set_number(spin, value)
+    yield 0.3
+    if shot_name:
+        yield from capture(shot_name, widget=picker)
+    click(find(picker, QPushButton, text='&OK'))
+    yield 0.3
 
 
 def dump(widget, depth=0, limit=14):

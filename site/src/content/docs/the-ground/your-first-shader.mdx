@@ -127,7 +127,9 @@ Godot opens the new shader in the **Shader Editor** at the bottom of the window.
 You write the shader in four pieces. After each piece, save it with **File > Save** in the Shader Editor (<Kbd keys="Ctrl+Alt+S" mac="Cmd+Option+S" />) and look at the tile in the 3D view.
 
 <Aside type="tip" title="Saving shaders">
-In the Shader Editor, <Kbd keys="Ctrl+Alt+S" mac="Cmd+Option+S" /> saves the shader. Plain <Kbd keys="Ctrl+S" mac="Cmd+S" /> saves the scene. A moment after you stop typing, Godot shows your changes in the 3D view, but they only reach the file when you save. Until then, the file's tab shows `(*)` after its name.
+In the Shader Editor, <Kbd keys="Ctrl+Alt+S" mac="Cmd+Option+S" /> saves the shader. Plain <Kbd keys="Ctrl+S" mac="Cmd+S" /> saves the scene. A moment after you stop typing, Godot shows your changes in the 3D view, but they only reach the file when you save. Until then, the file's name in the Shader Editor's list shows `(*)` after it.
+
+The first time you save a shader Godot has newly created, it may ask about **The following files are newer on disk**. What you typed is what you want, so click **Ignore external changes**, then save again.
 </Aside>
 
 ### Piece 1: one color
@@ -150,7 +152,7 @@ Save the shader. The tile turns a soft green, lit by your sun.
 
 <Figure
 	src={pieceOne}
-	alt="The 3D view from above at an angle: the test tile is a flat light green square on the gray placeholder ground."
+	alt="The 3D view from above at an angle: the test tile is a flat light green square under the player capsule, on the gray placeholder ground, with rocks around it."
 	caption="Piece 1: the whole tile is one color."
 />
 
@@ -178,7 +180,7 @@ Save the shader. The tile turns white, because the texture is still empty. Fill 
 
 1. Select `TestTile`. In the Inspector, under **Mesh**, then **Material**, find **Shader Parameters** (click it if it is closed). Your uniform appears there as **Albedo Texture**: Godot shows names written with underscores as separate capitalized words.
 
-2. Drag `art/ground/grass_albedo.png` from the FileSystem dock onto **Albedo Texture**.
+2. Click the **&lt;empty&gt;** field of **Albedo Texture** and choose **Quick Load...**, as for the palette in lesson 11. Type `grass_albedo`, and press <Kbd keys="Enter" /> to pick `grass_albedo.png`.
 
 	<Figure
 		src={nestedParameters}
@@ -190,7 +192,7 @@ Save the shader. The tile turns white, because the texture is still empty. Fill 
 
 <Figure
 	src={pieceTwo}
-	alt="The test tile now covered by the grass texture: painted green with lighter and darker strokes."
+	alt="The test tile now covered by the grass texture: dense painted grass tufts in light and dark greens."
 	caption="Piece 2: the grass texture on the tile."
 />
 
@@ -204,7 +206,7 @@ Save the shader. The tile turns white, because the texture is still empty. Fill 
 
 2. With `TestTile2` selected, set **Transform > Position** to `1.4`, `0.012`, `0.6` and **Rotation** **y** to `30`. The y of `0.012` lifts it 2 millimeters above `TestTile`, so where they overlap they do not fight over pixels. The copy shares the same material, so it shows the same texture.
 
-3. To make the problem easy to see, select `TestTile`, find **Albedo Texture** under **Shader Parameters** again, and drag `icon.svg` onto it in place of the grass for a moment. `icon.svg` is the Godot logo that every new project starts with, at the bottom of the FileSystem dock.
+3. To make the problem easy to see, select `TestTile`, find **Albedo Texture** under **Shader Parameters** again, and put `icon.svg` in place of the grass for a moment: click the grass picture in the field, choose **Quick Load...**, type `icon.svg`, and press <Kbd keys="Enter" />. `icon.svg` is the Godot logo that every new project starts with, at the bottom of the FileSystem dock.
 
 4. Save the scene with <Kbd keys="Ctrl+S" mac="Cmd+S" />.
 
@@ -243,7 +245,7 @@ Save the shader. The two icons become one continuous grid that runs straight acr
 	caption="In world space, the tiles are windows onto one shared image. Moving or turning a tile does not move the image."
 />
 
-Drag `grass_albedo.png` back onto **Albedo Texture**. The grass now runs across both tiles with no seam, like the picture at the top of this lesson.
+Put `grass_albedo.png` back in **Albedo Texture** with **Quick Load...** the same way. The grass now runs across both tiles with no seam, like the picture at the top of this lesson.
 
 <Aside type="note" title="Why 0.5">
 Your grass texture is 512 pixels wide and covers 2 meters of ground, the 256 pixels per meter [texel density](/reference/glossary/#texel-density) from lesson 13. Repeating it 0.5 times per meter, once every 2 meters, shows it at exactly that size.
@@ -278,7 +280,8 @@ Save the shader, then save the scene with <Kbd keys="Ctrl+S" mac="Cmd+S" />. Sel
 
 - **The tile disappears and a line turns red in the Shader Editor.** The shader has an error, described at the bottom of the Shader Editor, such as `Error at line 5: Expected a ';'.` A missing semicolon is reported on the line *after* the one that needs it, so look one line up. The other common cause is a misspelled name, such as `albedo_texure`.
 - **The grass looks pale and washed out.** The `source_color` hint is missing from `albedo_texture`.
-- **The tile is plain white.** The texture is not assigned. Drag `grass_albedo.png` onto **Albedo Texture** under **Shader Parameters**.
+- **The tile is plain white.** The texture is not assigned. Pick `grass_albedo.png` for **Albedo Texture** under **Shader Parameters** with **Quick Load...**.
+- **The tile is white after your first save, and your typing is gone.** Godot asked about files newer on disk and **Reload from disk** was chosen, which loads the empty template again. Type the piece again, save, and choose **Ignore external changes** if Godot asks.
 - **The texture smears into long stripes.** The `repeat_enable` hint is missing.
 - **The tile flickers with stripes of gray.** It sits at the same height as the placeholder ground. Set its **Position** **y** to `0.01`.
 - **Your shader changes disappear when you reopen the project.** The shader was not saved. Use <Kbd keys="Ctrl+Alt+S" mac="Cmd+Option+S" /> in the Shader Editor.
@@ -291,8 +294,10 @@ Your project now contains:
 <FileTree>
 - art
   - ground
+    - dirt_albedo.png
     - grass_albedo.png
     - **ground.gdshader** the shader from this lesson
+    - sand_albedo.png
 - levels
   - meadow.tscn
 </FileTree>
@@ -308,6 +313,14 @@ The `Meadow` scene's tree:
   - Sun
   - CameraRig
   - Player
+  - Rocks
+    - RockSmall
+    - RockSmall2
+    - RockSmall3
+    - RockSmall4
+    - RockLarge
+    - RockLarge2
+    - RockLarge3
   - TestTile
   - TestTile2
 </FileTree>

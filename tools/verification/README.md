@@ -30,10 +30,14 @@ The editor plugin cannot run in the Project Manager. Start Godot with `--project
 - `krita-driver/` is a Krita Python plugin that replays a lesson's steps (`krita-steps/lessonNN.py`) inside Krita: synthetic Qt events to Krita's own widgets, and window grabs. The canvas needs a FocusIn event before it takes input, and Krita's shape and selection tools finish a shape only on a spontaneous release, so the driver marks its mouse events spontaneous and delivers them with `QApplication.notify`. Canvas overlays (grid, selection outline) are captured with `capture-window.ps1 -Handle` (PrintWindow), and Windows' own file dialogs are filled with window messages (`file_dialog()`).
 - `scripts/run-krita.ps1 -Script lesson07` installs the plugin and runs Krita. Krita keeps its settings in fixed places (`%LOCALAPPDATA%\kritarc`, `%APPDATA%\krita`, and a few logs), so the script moves any existing ones to `%TEMP%\sgt-phase2\krita-backup`, runs, deletes everything the run created, and moves the originals back (owner approved). It refuses to run while an old backup exists.
 - Krita reads the real keyboard's modifier state during a canvas drag, so a key held on the computer during a run can spoil one selection; the lesson 7 script checks every swatch's selection and retries.
+- Slider fields (brush Size, Opacity, Fade Length, Spacing) take a typed number after a right-click on the field's text box, once its text shows selected (`slider()`). When Krita is not the active window on the desktop, the field commits after the first key, and the driver must not change the desktop's focus, so `slider()` then sets the value directly and logs `SLIDER SET DIRECTLY`; typing itself is verified in the runs where Krita had focus. Digits sent before the field is typing are Krita shortcuts (1 resets the zoom, 4 to 6 turn the canvas).
+- Dialogs are captured with PrintWindow (`capture(name, widget=...)`), not `QWidget.grab()`. Buttons that open a modal dialog are clicked with `click_later()`, so the steps keep ticking.
+- `run-krita.ps1 -SaveUser lesson-13` keeps a copy of Krita's settings and resources after a run under `%TEMP%\sgt-phase2\krita-users`, and `-User lesson-13` starts from it, so lesson 14 has the brushes lesson 13 saved, as on a reader's machine. `krita-steps/ground_painting.py` holds the steps lessons 13 and 14 share.
 
-## Module 2 chain
+## Module chains
 
 - `scripts/run-module2.ps1 [-From 7]` replays lessons 7 to 12 in order across Krita, Blender, and Godot. Each lesson starts from the snapshot the lesson before it saved, and the chain stops at the first failure. Lesson 8 changes only Blender's user folder, which is saved for lesson 9; lessons 10 and 12 reuse the user folder of the lesson before.
+- `scripts/run-module3.ps1 [-From 13]` does the same for Module 3: lessons 13 and 14 in Krita, then each lesson's import steps in Godot.
 
 ## Assets and code
 

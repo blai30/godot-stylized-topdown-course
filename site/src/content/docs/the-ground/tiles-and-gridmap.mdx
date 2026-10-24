@@ -1,0 +1,242 @@
+---
+title: Tile meshes, a MeshLibrary, and a GridMap
+description: Turn your test tile into grass, dirt, and sand tiles, collect them in a MeshLibrary, and paint the meadow's ground with Godot's GridMap.
+sidebar:
+  order: 16
+  label: 16. Tiles and a GridMap
+lesson:
+  number: 16
+  minutes: 60
+  learn:
+    - What a GridMap and a MeshLibrary are, and why ground is built from tiles
+    - The difference between a shared resource and a unique one
+    - How to export a scene of meshes as a MeshLibrary
+    - How to paint, select, and fill with the GridMap editor
+  prerequisites: [14, 15]
+---
+
+import { Aside, FileTree, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import result from '../../../assets/lessons/tiles-and-gridmap/result.png';
+import deleteConfirm from '../../../assets/lessons/tiles-and-gridmap/delete-confirm.png';
+import grassTile from '../../../assets/lessons/tiles-and-gridmap/grass-tile.png';
+import makeUnique from '../../../assets/lessons/tiles-and-gridmap/make-unique.png';
+import tilesScene from '../../../assets/lessons/tiles-and-gridmap/tiles-scene.png';
+import saveTiles from '../../../assets/lessons/tiles-and-gridmap/save-tiles.png';
+import exportDialog from '../../../assets/lessons/tiles-and-gridmap/export.png';
+import gridmapInspector from '../../../assets/lessons/tiles-and-gridmap/gridmap-inspector.png';
+import selection from '../../../assets/lessons/tiles-and-gridmap/selection.png';
+import grassFilled from '../../../assets/lessons/tiles-and-gridmap/grass-filled.png';
+import painted from '../../../assets/lessons/tiles-and-gridmap/painted.png';
+import running from '../../../assets/lessons/tiles-and-gridmap/running.png';
+
+## What you will build
+
+The meadow's ground, painted by hand from three tiles: grass everywhere, a dirt path across it, and a patch of sand. The edges between them are square for now; in the next lesson they turn soft and ragged.
+
+<Figure
+	src={result}
+	alt="The running game seen from above: the 20 by 20 meter meadow covered in painted grass, a winding dirt path made of small square tiles across it, a sand patch in one corner, the player capsule, and the rocks."
+	caption="Your meadow, painted with tiles."
+/>
+
+## Ground from tiles
+
+Many games build their ground from **tiles**: small squares, each of one kind of ground, laid in a grid like a board game. You choose what each square is, and the game knows it too, which matters later, when grass grows only on grass tiles and the player walks slower in sand.
+
+Godot has this built in. A [GridMap](/reference/glossary/#gridmap) is a node that places meshes in a 3D grid of cells. It takes its meshes from a [MeshLibrary](/reference/glossary/#meshlibrary), a resource that lists them by name, like a palette of pieces. You make the library from a scene of mesh nodes, one per tile, and then paint cells with the mouse.
+
+Your tiles are half a meter wide: small enough that a curving path looks like a curve, not a staircase, once the next lesson softens the edges. Your textures cover 2 meters, but that does not matter: the shader from lesson 15 reads the texture by world position, so neighboring tiles of the same kind join without a seam, whatever their size.
+
+## The tiles scene
+
+<Steps>
+
+1. Open `levels/meadow.tscn`. Select `TestTile` and press <Kbd keys="Ctrl+C" mac="Cmd+C" /> to copy it.
+
+2. Hold <Kbd keys="Ctrl" mac="Cmd" /> and click `TestTile2`, so both test tiles are selected, and press <Kbd keys="Delete" />. Godot asks **Delete 2 nodes?**; click **Delete**. Save the scene (<Kbd keys="Ctrl+S" mac="Cmd+S" />).
+
+	<Figure
+		src={deleteConfirm}
+		alt="A box asking Delete 2 nodes?, with Delete Related Animation Tracks checked and the Delete and Cancel buttons."
+		caption="The test tiles go; the copy of TestTile stays on the clipboard."
+	/>
+
+3. Choose **Scene > New Scene**. In the Scene dock, click **3D Scene** to make a `Node3D` root. Double-click it and rename it `GroundTiles`.
+
+4. With `GroundTiles` selected, press <Kbd keys="Ctrl+V" mac="Cmd+V" />. Your `TestTile` appears under it, with its PlaneMesh and ground material. Rename it `Grass`, and set its **Transform > Position** back to `0`, `0`, `0`.
+
+5. In the Inspector, click the picture of the plane in the **Mesh** row. The PlaneMesh's own properties open below it. Set **Size** to `0.5` and `0.5`. The tile shrinks to half a meter.
+
+	<Figure
+		src={grassTile}
+		alt="The Inspector for Grass with its PlaneMesh open: Size 0.5 by 0.5 m, and below it the PrimitiveMesh section with the Material."
+		caption="One grass tile, half a meter across."
+	/>
+
+</Steps>
+
+## Shared and unique resources
+
+Duplicate `Grass` now and both copies show grass, because a duplicate shares the original's mesh, and the mesh holds the material. A [resource](/reference/glossary/#resource) such as a mesh or a material is shared by every node that points at it: change it in one, and all change. That is what you wanted in lesson 15, where two test tiles showed one grass. Here each tile needs its own material, so you make the copy's resources **unique**: Godot gives the node its own copy of the resource, which you can then change alone.
+
+<Steps>
+
+1. Select `Grass` and press <Kbd keys="Ctrl+D" mac="Cmd+D" />. Rename the copy, `Grass2`, to `Dirt`.
+
+2. In the Inspector, click the arrow at the right end of the **Mesh** row and choose **Make Unique**. `Dirt` now has its own PlaneMesh, but the PlaneMesh still points at the shared material.
+
+3. Below the mesh's properties, click the arrow at the right end of the **Material** row and choose **Make Unique** too.
+
+	<Figure
+		src={makeUnique}
+		alt="The Inspector for Dirt: the PlaneMesh at 0.5 by 0.5 m, and its Material, a ShaderMaterial, with Shader Parameters showing Albedo Texture still the grass, Texture Scale 0.5, and Roughness 0.9."
+		caption="Dirt's own material, still showing the grass it was copied from."
+	/>
+
+4. Under **Shader Parameters**, click the grass picture in **Albedo Texture**, choose **Quick Load...**, type `dirt_albedo`, and press <Kbd keys="Enter" />. Set `Dirt`'s **Position** **x** to `1`, so it sits beside the grass where you can see it.
+
+5. Do the same for sand: select `Grass`, duplicate it, rename the copy `Sand`, make its **Mesh** and its **Material** unique, load `sand_albedo` into **Albedo Texture**, and set **Position** **x** to `2`.
+
+	<Figure
+		src={tilesScene}
+		alt="The GroundTiles scene with Grass, Dirt, and Sand in the Scene dock and three small square tiles in a row in the 3D view: grass, dirt with pebbles, and sand."
+		caption="Three tiles, each with its own material."
+	/>
+
+6. Press <Kbd keys="Ctrl+S" mac="Cmd+S" />. In **Save Scene As...**, double-click `art` and `ground`, keep the name `ground_tiles.tscn`, and click **Save**.
+
+	<Figure
+		src={saveTiles}
+		alt="The Save Scene As dialog in res://art/ground with File ground_tiles.tscn."
+		caption="The tiles scene lives with the ground textures."
+	/>
+
+</Steps>
+
+<Aside type="note" title="Why Make Unique twice">
+The mesh and the material are two resources, one inside the other. **Make Unique** on the mesh copies the mesh but keeps pointing at the same material, so the material needs its own **Make Unique**. If you change the dirt texture and the grass tile turns to dirt too, the material was still shared.
+</Aside>
+
+## Export the MeshLibrary
+
+<Steps>
+
+1. With `ground_tiles.tscn` open, choose **Scene > Export As... > MeshLibrary...**.
+
+2. In the **Export Mesh Library** dialog, go to `res://art/ground`, set **File** to `ground_tiles.meshlib`, and click **Save**. Leave **Merge With Existing** checked and **Apply MeshInstance Transforms** unchecked.
+
+	<Figure
+		src={exportDialog}
+		alt="The Export Mesh Library dialog in res://art/ground with File ground_tiles.meshlib, Merge With Existing checked, Apply MeshInstance Transforms unchecked, and the file type All Recognized (*.tres, *.meshlib, *.res)."
+		caption="Each mesh node in the scene becomes one item, named after its node."
+	/>
+
+</Steps>
+
+The library now holds three items: **Grass**, **Dirt**, and **Sand**. Their positions in the scene do not matter: with **Apply MeshInstance Transforms** off, each item is its mesh alone, centered in its cell. Whenever you change a tile, export again over the same file; **Merge With Existing** keeps each item's number, so the cells you painted keep their tiles.
+
+## A GridMap in the meadow
+
+<Steps>
+
+1. Switch to the `meadow` tab. In the Scene dock, click the eye beside `Ground` to hide the gray placeholder. Its collision shape still works: hiding a node only stops it being drawn, so the player keeps walking on it.
+
+2. Select `Meadow` and add a **GridMap** node (<Kbd keys="Ctrl+A" mac="Cmd+A" />). Rename it `GroundTiles`.
+
+3. In the Inspector, click the **Mesh Library** field, choose **Quick Load...**, type `ground_tiles`, and press <Kbd keys="Enter" />.
+
+4. Under **Cell**, set **Size** to `0.5`, `0.5`, `0.5`: half a meter per cell, the size of your tiles. Uncheck **Center Y**, so tiles sit on the ground at height 0 instead of half a cell above it.
+
+	<Figure
+		src={gridmapInspector}
+		alt="The Inspector for GroundTiles, a GridMap: Mesh Library set, Cell Size 0.5 by 0.5 by 0.5 m, Center X and Center Z checked, Center Y unchecked."
+		caption="Half-meter cells, with tiles at ground height."
+	/>
+
+</Steps>
+
+With the GridMap selected, the **GridMap** panel opens at the bottom of the editor, with your three tiles in its palette and a row of tools above them.
+
+## Paint the ground
+
+Look straight down: click **Perspective** at the top left of the 3D view and choose **Top View** (or press <Kbd keys="Numpad 7" />). Roll the mouse wheel back until the whole 20 by 20 meter ground fits in the view. An orange grid shows the cells.
+
+<Steps>
+
+1. **Grass everywhere.** In the GridMap panel, click **Grass**. Click the **Selection** tool, the arrow (<Kbd keys="Q" />), and drag a box from one corner of the ground to the opposite one. The cells turn blue.
+
+	<Figure
+		src={selection}
+		alt="The top view with a blue box covering the whole 20 by 20 meter ground, and the GridMap palette below showing Dirt, Grass selected, and Sand."
+		caption="A selection over the whole ground."
+	/>
+
+2. Click the **Fill** tool, the bucket (<Kbd keys="Z" />). Every selected cell gets a grass tile, 1,600 in all.
+
+	<Figure
+		src={grassFilled}
+		alt="The whole ground covered in grass tiles, with the rocks and the player on top."
+		caption="Fill puts the chosen tile in every selected cell."
+	/>
+
+3. **A dirt path.** Click **Dirt** in the palette, then the **Paint** tool, the brush (<Kbd keys="E" />). Drag across the ground from one side to the other in a gentle curve, then twice more right beside the first stroke, so the path is about three cells, 1.5 meters, wide. Add a narrower branch toward one edge with two strokes.
+
+4. **A sand patch.** Click **Sand**, the **Selection** tool, and drag a box of about 10 by 8 cells in a corner. Click **Fill**.
+
+	<Figure
+		src={painted}
+		alt="The top view of the painted meadow: grass with a winding dirt path crossing it, a branch, and a sand patch in a corner."
+		caption="Grass, a path, and a patch of sand. The stepped, square edges are next lesson's job."
+	/>
+
+5. Click the **Selection** tool again, so a stray click does not paint, and save the scene.
+
+</Steps>
+
+<Aside type="tip" title="GridMap tools">
+- **Paint** (<Kbd keys="E" />) places the chosen tile where you click or drag, and **Erase** (<Kbd keys="W" />) removes tiles the same way.
+- **Pick** (<Kbd keys="R" />) chooses the tile under the pointer in the palette, handy once you have many tiles.
+- **Fill** (<Kbd keys="Z" />) fills a selection with the chosen tile, and **Delete** (<Kbd keys="V" />) empties it.
+- <Kbd keys="Ctrl+Z" mac="Cmd+Z" /> undoes a stroke.
+</Aside>
+
+## Try it
+
+Press <Kbd keys="F5" mac="Cmd+B" /> and walk around. The ground is your painted tiles, the player still walks on the hidden ground's collision, and the grass joins across tiles without a seam.
+
+<Figure
+	src={running}
+	alt="The editor with the running game in the Game tab: the painted meadow from the game camera, with the dirt path and sand patch."
+	caption="The painted meadow in the running game."
+/>
+
+## If it does not work
+
+- **Painting does nothing.** The **Selection** tool is active, or no tile is chosen in the palette. Click a tile, then the **Paint** tool.
+- **Tiles float half a meter above the ground.** **Center Y** is still checked on the GridMap.
+- **Tiles have gaps between them.** The GridMap's **Cell > Size** is still 2, the default. Set it to `0.5`, `0.5`, `0.5`.
+- **All three tiles look like grass, or changing one changes the others.** A material is still shared. In `ground_tiles.tscn`, make the **Material** unique on `Dirt` and `Sand`, set their textures again, and export the library again.
+- **The GridMap palette is empty.** The **Mesh Library** is not set, or the library was exported from a scene without mesh nodes.
+- **The player falls through the ground.** `Ground` was deleted instead of hidden. Undo, or add the placeholder ground again from lesson 4.
+
+## Checkpoint
+
+Your project now has two new files, and the meadow has a painted ground:
+
+<FileTree>
+- art
+  - ground
+    - **ground_tiles.meshlib**
+    - **ground_tiles.tscn**
+- levels
+  - meadow.tscn
+</FileTree>
+
+The `Meadow` scene has `GroundTiles`, a GridMap, as its last child, and `Ground` is hidden. `TestTile` and `TestTile2` are gone.
+
+Commit your work: `git add .` and `git commit -m "Paint the ground with tiles"`. In the next lesson, you give the tiles soft, hand-drawn edges.
+
+<Checkpoint />

@@ -1,0 +1,200 @@
+---
+title: Soft tile edges
+description: Give your ground tiles ragged, hand-drawn edges that overlap their neighbors, with a few lines of shader code, alpha scissor, a shared noise texture, and tile layers.
+sidebar:
+  order: 17
+  label: 17. Soft tile edges
+lesson:
+  number: 17
+  minutes: 60
+  learn:
+    - How tiles that overhang their cells hide the grid
+    - How alpha scissor cuts a shape out of a surface
+    - How a noise texture turns a straight cut into a ragged one
+    - Why each kind of ground sits in its own thin layer
+  prerequisites: [16]
+---
+
+import { Aside, Code, FileTree, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Solution from '../../../components/Solution.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import piece1 from '../../../checkpoints/17/pieces/piece-1.gdshader?raw';
+import piece2 from '../../../checkpoints/17/pieces/piece-2.gdshader?raw';
+import groundShader from '../../../checkpoints/17/files/art/ground/ground.gdshader?raw';
+import result from '../../../assets/lessons/soft-tile-edges/result.png';
+import grassMesh from '../../../assets/lessons/soft-tile-edges/grass-mesh.png';
+import piece1Tiles from '../../../assets/lessons/soft-tile-edges/piece-1-tiles.png';
+import piece1Meadow from '../../../assets/lessons/soft-tile-edges/piece-1-meadow.png';
+import noiseSettings from '../../../assets/lessons/soft-tile-edges/noise-settings.png';
+import saveNoise from '../../../assets/lessons/soft-tile-edges/save-noise.png';
+import piece2Tiles from '../../../assets/lessons/soft-tile-edges/piece-2-tiles.png';
+import piece2Meadow from '../../../assets/lessons/soft-tile-edges/piece-2-meadow.png';
+
+## What you will build
+
+The same meadow as in lesson 16, but the borders between grass, dirt, and sand are ragged and natural, as if drawn by hand, and the grid of tiles is gone.
+
+<Figure
+	src={result}
+	alt="The running game from above: a winding dirt path with ragged, organic edges crossing the grass, a sand patch with a rough border, the player, and the rocks. No square tile edges are visible."
+	caption="The meadow with soft tile edges."
+/>
+
+## The idea
+
+Three small tricks, each simple on its own, make the grid disappear:
+
+1. **Each tile overhangs its cell.** A tile is 0.9 meters wide on a 0.5 meter cell, so it reaches 0.2 meters into each neighbor.
+2. **The overhang is cut with noise.** The shader keeps the whole cell, and keeps only part of the overhang, along a ragged line set by a [noise texture](/reference/glossary/#noise-texture). The cut is made with [alpha scissor](/reference/glossary/#alpha-scissor): each pixel is drawn fully or not at all, so the edge stays crisp, like a brush stroke, not a blur.
+3. **Each kind of ground has its own layer.** Sand sits lowest, dirt 4 millimeters above it, and grass 4 millimeters above that. Where grass meets dirt, the grass's ragged overhang lies on top of the dirt, as grass grows over a path's edge. Two tiles of the same kind overlap at the same height, but they show the same world-space texture, so you cannot see where one ends.
+
+None of the tiles needs to know its neighbors. That is what keeps the shader short.
+
+## Bigger tiles in layers
+
+<Steps>
+
+1. Open `art/ground/ground_tiles.tscn` and select `Sand`. Click the plane picture in the **Mesh** row to open the PlaneMesh, and set **Size** to `0.9` and `0.9`. Leave **Center Offset** at `0`, `0`, `0`: sand is the lowest layer.
+
+2. Select `Dirt`, open its PlaneMesh the same way, set **Size** to `0.9` and `0.9`, and set **Center Offset** **y** to `0.004`.
+
+3. Select `Grass`, set **Size** to `0.9` and `0.9`, and **Center Offset** **y** to `0.008`. Save the scene.
+
+	<Figure
+		src={grassMesh}
+		alt="The Inspector for Grass with its PlaneMesh open: Size 0.9 by 0.9 m and Center Offset 0, 0.008, 0."
+		caption="Grass: 0.9 meters wide and 8 millimeters up."
+	/>
+
+</Steps>
+
+<Aside type="note" title="Why Center Offset and not Position">
+The MeshLibrary keeps each tile's mesh, not its node's position, so the height must live in the mesh itself. **Center Offset** moves the plane inside its own mesh. Four millimeters is too little for the eye to see from the game camera, and enough for the graphics card to tell which surface is on top: at the same height, two different textures would flicker in stripes, which is called [z-fighting](/reference/glossary/#z-fighting).
+</Aside>
+
+## Piece 1: cut the overhang
+
+Double-click `art/ground/ground.gdshader` in the FileSystem dock to open it in the Shader Editor. Change it so that:
+
+- the comment above `albedo_texture` says the textures come from lessons 13 and 14;
+- there are two new uniforms: a `float` named `overhang` with the default `0.2`, how far the tile reaches past its cell, and a `float` named `cell_size` with the default `0.5`, the GridMap's cell size, each with a comment;
+- there is a second varying, a `vec2` named `tile_position`, which `vertex()` sets to `VERTEX.xz`: the point's position on the tile itself, from the tile's center, in meters;
+- at the end of `fragment()`, a `float` named `outside` measures how far the pixel is past the cell's edge, as a share of the overhang: 0 inside the cell, 1 at the tile's outer edge. Write it as `length(max(abs(tile_position) - cell_size * 0.5, 0.0)) / overhang`;
+- `ALPHA` is set to `1.0 - outside`, and `ALPHA_SCISSOR_THRESHOLD` to `0.5`.
+
+<Aside type="note" title="How the distance works">
+`abs(tile_position)` folds the four sides of the tile onto one, and subtracting half a cell leaves how far past the cell's edge the pixel is, along each axis. `max(..., 0.0)` turns everything inside the cell into 0, and `length` combines the two axes into one distance, which rounds the corners. `ALPHA` is how opaque the pixel is, and with `ALPHA_SCISSOR_THRESHOLD`, Godot draws every pixel with an alpha above 0.5 fully and skips the rest.
+</Aside>
+
+<Solution>
+	<Code code={piece1} lang="gdshader" title="art/ground/ground.gdshader" />
+</Solution>
+
+Save the shader with <Kbd keys="Ctrl+Alt+S" mac="Cmd+Option+S" />. Each tile now ends halfway into its overhang, with rounded corners.
+
+<Figure
+	src={piece1Tiles}
+	alt="The three tiles in the tiles scene, each now a square with rounded corners, a little larger than before."
+	caption="Piece 1: the overhang cut straight, halfway out."
+/>
+
+The meadow uses the MeshLibrary, not this scene, so export the library again: **Scene > Export As... > MeshLibrary...**, `ground_tiles.meshlib` in `art/ground`, **Save**, and confirm when Godot says the file already exists. **Merge With Existing** keeps each tile's number, so your painted cells keep their tiles. Switch to the `meadow` tab.
+
+<Figure
+	src={piece1Meadow}
+	alt="The meadow up close: grass now reaches over the dirt path's edges with smooth, rounded steps, still following the cells."
+	caption="Grass now lies over the dirt's edge, but the steps of the grid still show."
+/>
+
+## Piece 2: a ragged edge
+
+Replace the straight cut with noise. Change the shader so that:
+
+- there is a uniform `sampler2D` named `edge_noise` with the hints `filter_linear_mipmap` and `repeat_enable`, and a uniform `float` named `edge_noise_scale` with the default `0.4`, how many times the noise repeats per meter, each with a comment;
+- in `fragment()`, a `float` named `noise` reads the red channel of `edge_noise` at `world_position.xz * edge_noise_scale`;
+- `ALPHA` is `noise + 0.5 - outside`.
+
+<Solution>
+	<Code code={piece2} lang="gdshader" title="art/ground/ground.gdshader" />
+</Solution>
+
+The noise is a value from 0 to 1 that changes smoothly across the ground. Inside the cell, `outside` is 0, so `ALPHA` is at least 0.5 and the cell is always covered, with no holes. At the tile's outer edge, `outside` is 1, so `ALPHA` is below 0.5 and nothing is drawn. Between them, where the cut falls depends on the noise, and the noise is different everywhere, so the edge wanders.
+
+Save the shader. Now make the noise texture.
+
+<Steps>
+
+1. Select `Grass`. Open its PlaneMesh, then its **Material**, and under **Shader Parameters**, click the **Edge Noise** field and choose **New NoiseTexture2D**.
+
+2. Click the new texture to open it. Set **Width** and **Height** to `256` and check **Seamless**, so it repeats with no visible edge.
+
+3. Click the **Noise** field and choose **New FastNoiseLite**. Click it to open it, and set **Frequency** to `0.03` and, under **Fractal**, **Octaves** to `3`. A low frequency makes broad, gentle wobbles; fewer octaves keep the edge clean instead of fuzzy.
+
+	<Figure
+		src={noiseSettings}
+		alt="The Inspector with the Edge Noise shader parameter showing a soft black and white noise image, the NoiseTexture2D at 256 by 256 and seamless, and its FastNoiseLite with Frequency 0.03."
+		caption="A soft, seamless noise."
+	/>
+
+4. All three tiles should share this one noise, so the edges of grass, dirt, and sand wander together. Click the arrow at the right of the **Edge Noise** row and choose **Save As...**. Go into `art` and `ground`, name it `edge_noise.tres`, and click **Save**.
+
+	<Figure
+		src={saveNoise}
+		alt="The Save Resource As dialog in res://art/ground with File edge_noise.tres."
+		caption="The noise as its own file."
+	/>
+
+5. Select `Dirt`, open its mesh and material, and load `edge_noise` into **Edge Noise** with **Quick Load...**. Do the same for `Sand`. Save the scene.
+
+</Steps>
+
+<Figure
+	src={piece2Tiles}
+	alt="The three tiles in the tiles scene, now with ragged, irregular edges, like torn paper."
+	caption="Piece 2: each tile's edge is ragged."
+/>
+
+Export the MeshLibrary again, as after piece 1, and look at the meadow.
+
+<Figure
+	src={piece2Meadow}
+	alt="The meadow up close: the dirt path's edges are now ragged and organic, with grass overlapping them unevenly."
+	caption="Ragged edges hide the grid."
+/>
+
+## Try it
+
+- Press <Kbd keys="F5" mac="Cmd+B" />. From the game camera, the path winds through the grass with no grid in sight.
+- In `edge_noise.tres`, try a **Frequency** of `0.08`. The edges turn jagged and busy. Set it back to `0.03`.
+- In the tiles scene, set the `Grass` material's **Overhang** to `0.1`, export, and look: the steps of the grid come back. Set it back to `0.2` and export again. The overhang and the mesh size must match: a tile 0.9 meters wide on a 0.5 meter cell reaches 0.2 meters past it.
+
+## If it does not work
+
+- **The tiles look the same as before.** The MeshLibrary was not exported again after the change. Export it from `ground_tiles.tscn`.
+- **There are holes in the ground.** **Size** is smaller than the cell plus twice the overhang, or the **Overhang** shader parameter is larger than the mesh allows. With 0.5 meter cells and an overhang of 0.2, the size is 0.9.
+- **Stripes flicker where two kinds of ground meet.** Two tiles have the same **Center Offset**. Give sand 0, dirt 0.004, and grass 0.008.
+- **The edges are perfectly straight.** **Edge Noise** is empty on that tile's material: an empty texture reads as white, so the whole overhang is drawn. Load `edge_noise` into it.
+- **The edges follow a visible repeating pattern.** The noise is not seamless. Check **Seamless** on `edge_noise.tres`.
+
+## Checkpoint
+
+Your project has one new file and an updated shader:
+
+<FileTree>
+- art
+  - ground
+    - **edge_noise.tres**
+    - **ground.gdshader** updated
+    - ground_tiles.meshlib
+    - ground_tiles.tscn
+</FileTree>
+
+<Solution label="Show the full ground.gdshader">
+	<Code code={groundShader} lang="gdshader" title="art/ground/ground.gdshader" />
+</Solution>
+
+Commit your work: `git add .` and `git commit -m "Soft tile edges"`. In the next lesson, you give each ground type data of its own, so the game knows grass from sand.
+
+<Checkpoint />

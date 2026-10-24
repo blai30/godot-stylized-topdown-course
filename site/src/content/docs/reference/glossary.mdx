@@ -9,6 +9,10 @@ Terms are in alphabetical order. Lessons link here the first time they use a ter
 
 The plain color of a surface before any light falls on it. A material's **Albedo** section sets it, as a color, a texture, or both multiplied together; in a shader you set it with `ALBEDO`.
 
+## Alpha scissor
+
+A way of drawing see-through parts: each pixel is either drawn fully or not at all, cut where its alpha falls below a threshold. Unlike blended transparency, it keeps a sharp edge, casts correct shadows, and costs little, which suits hand-drawn edges.
+
 ## Assembly
 
 A compiled library of code. Building your C# scripts produces one assembly for the whole project, named after the project, which Godot loads when the game starts.
@@ -81,6 +85,10 @@ The colored arrows, rings, and handles Godot and Blender draw on a selected obje
 
 An open file format for 3D models, made for games and apps. A `.glb` file is a glTF model packed into a single binary file. Blender exports it and Godot imports it.
 
+## GridMap
+
+A Godot node that places meshes in a 3D grid of cells, taking them from a MeshLibrary. You paint cells with the mouse in the GridMap editor, or set them from code. This course builds its ground with one.
+
 ## Hard-surface model
 
 A model of a solid object with firm edges and flat or gently curved faces, such as a rock, a crate, or a wall, as opposed to soft organic forms like skin or cloth.
@@ -141,6 +149,10 @@ A grid of numbers that stores a transform: a position, rotation, and scale toget
 
 The shape of a 3D object: a set of points (vertices) joined by edges into flat faces. In Godot, a `MeshInstance3D` node shows a mesh in the scene.
 
+## MeshLibrary
+
+A Godot resource that lists meshes by number and name, for a GridMap to place. You make one by exporting a scene of mesh nodes with Scene > Export As > MeshLibrary.
+
 ## Mipmap
 
 A smaller copy of a texture. A texture with mipmaps has a chain of copies, each half the size of the last, so a surface far from the camera samples a small copy and does not shimmer.
@@ -156,6 +168,10 @@ A family name for C# classes, written at the top of a file, such as `namespace T
 ## Node
 
 The building block of a Godot scene. Every light, camera, mesh, and script lives on a node, and nodes form a tree.
+
+## Noise texture
+
+An image of smooth random values, made by Godot from a noise generator such as FastNoiseLite. Shaders read it to vary things without a visible pattern, such as the ragged edge of a ground tile. A seamless one repeats with no visible edge.
 
 ## Normal
 
@@ -245,6 +261,10 @@ How many texture pixels (texels) cover one meter of a surface. This course uses 
 
 An image a shader reads colors or other values from. Reading from it is called sampling.
 
+## Tileable texture
+
+A texture whose opposite edges match, so copies laid side by side join with no visible line. Ground textures are tileable so one small image can cover any amount of ground. Krita's wrap-around mode helps you paint one.
+
 ## Tonemapping
 
 Turning the light the renderer computes, which can be far brighter than a screen shows, into colors a screen can show. AgX rolls bright colors gently toward white, as film does.
@@ -288,3 +308,7 @@ Positions measured in the coordinates of the whole level, rather than relative t
 ## X-ray
 
 A Blender view mode that makes the model see-through, so you can select vertices on its far side. Toggle it with Alt+Z.
+
+## Z-fighting
+
+Flickering stripes where two surfaces lie at the same height and the graphics card cannot tell which is in front. Lifting one surface a few millimeters fixes it.
