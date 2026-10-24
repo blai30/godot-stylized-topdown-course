@@ -1,0 +1,5 @@
+[gd_scene format=3 uid="uid://cggdefty5665l"]
+
+[ext_resource type="PackedScene" uid="uid://bdfe2x4bg1bge" path="res://art/nature/rock_large/rock_large.glb" id="1_2bdrh"]
+
+[node name="RockLarge" unique_id=1119493070 instance=ExtResource("1_2bdrh")]

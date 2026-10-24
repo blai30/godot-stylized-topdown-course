@@ -7,7 +7,7 @@ Terms are in alphabetical order. Lessons link here the first time they use a ter
 
 ## Albedo
 
-The plain color of a surface before any light falls on it. In a shader you set it with `ALBEDO`.
+The plain color of a surface before any light falls on it. A material's **Albedo** section sets it, as a color, a texture, or both multiplied together; in a shader you set it with `ALBEDO`.
 
 ## Assembly
 
@@ -33,9 +33,17 @@ The programming language this course uses for game code. You write it in your ID
 
 In C#, the description of a kind of object: its data (properties and fields) and what it can do (methods). Each Godot script is a class, such as `CameraRig`, that extends a node type, such as `Node3D`.
 
+## Color ramp
+
+A short row of colors for one material, from its shadow to its highlight, stepping evenly in value. Lesson 7's palette gives each material a ramp of four.
+
 ## Commit
 
 A saved version of your project in Git: a snapshot of every file at that moment, with a short message saying what changed. You can always go back to any commit.
+
+## Convex shape
+
+A shape with no dents or hollows, like a gift wrapped tightly in plastic. Convex collision shapes are cheap for the physics engine and fit rocks and other solid props well.
 
 ## Edit Mode
 
@@ -69,13 +77,33 @@ Git Large File Storage, an add-on for Git that stores big binary files, such as 
 
 The colored arrows, rings, and handles Godot and Blender draw on a selected object. Drag them to move, rotate, or scale it.
 
+## glTF
+
+An open file format for 3D models, made for games and apps. A `.glb` file is a glTF model packed into a single binary file. Blender exports it and Godot imports it.
+
 ## Hard-surface model
 
 A model of a solid object with firm edges and flat or gently curved faces, such as a rock, a crate, or a wall, as opposed to soft organic forms like skin or cloth.
 
+## Hue
+
+The kind of a color, such as red, yellow, or blue, measured as an angle around a color wheel from 0 to 360 degrees: red at 0, yellow at 60, green at 120, cyan at 180, blue at 240, and magenta at 300.
+
+## Hue shifting
+
+Changing a color's hue as its value changes: toward blue as it darkens and toward yellow as it lightens, the way warm light and cool shadow do. It makes painted colors look alive instead of mixed with black or white.
+
 ## IDE
 
 Integrated development environment: a code editor with tools built in, such as autocomplete, error checking, and debugging. Rider and VS Code are the IDEs this course supports.
+
+## Import
+
+What Godot does to a file it finds in the project, such as an image or a model: it converts the file into a form the game loads fast and stores the result in the hidden `.godot` folder. The settings for the conversion live in an `.import` file beside the original.
+
+## Inherited scene
+
+A scene built on top of another scene, its base. It contains everything in the base and can add nodes and change properties, while the base stays untouched. Models imported from Blender are used through inherited scenes, so a re-export updates them without losing your changes.
 
 ## Input action
 
@@ -89,9 +117,17 @@ Godot's panel, on the right by default, that shows every property of the selecte
 
 A copy of one scene placed inside another, such as the camera rig inside the meadow. An instance follows its scene: change the scene and every instance changes, except for the properties you overrode on the instance.
 
+## Layer
+
+In a painting program such as Krita, one sheet of an image. Layers stack on top of each other; you can paint on one without touching the others, hide one, or change how it blends with those below.
+
 ## Loop cut
 
 In Blender, a new ring of edges cut all the way around a mesh. It adds vertices you can move to shape the model.
+
+## Lossless compression
+
+Compression that makes a file smaller without changing any of its data, such as PNG. Lossy compression, such as the VRAM compression graphics cards use, changes colors slightly to save more space.
 
 ## Material
 
@@ -137,6 +173,10 @@ The single point an object is positioned and rotated around. In Blender it shows
 
 A camera projection that shows every object at the same size wherever it is, with no perspective: parallel lines stay parallel. Its `Size` is the height of the view in meters. Top-down and strategy games use it so the world reads like a tidy map.
 
+## Palette
+
+The fixed set of colors a game's art takes its colors from. In this course it is one small image of flat color swatches, `art/palette/palette.png`, so every model shares the same colors.
+
 ## Physics layer
 
 One of 32 groups a physics body can sit on. Each body also has a mask, the layers it collides with. Naming layers in Project Settings, such as `world` and `player`, makes them readable in the Inspector.
@@ -156,6 +196,10 @@ A piece of data Godot saves and shares, such as a mesh, a material, a texture, o
 ## Roughness
 
 How rough a surface is, from 0 (a mirror) to 1 (matte). Rough surfaces spread light out; smooth ones show sharp highlights. In a shader you set it with `ROUGHNESS`.
+
+## Saturation
+
+How strong a color is, from 0% (a gray) to 100% (the purest version of its hue). Natural materials look best muted, at low to middle saturation.
 
 ## Scene
 
@@ -187,7 +231,11 @@ A `.sln` file that lists one or more C# projects for a code editor to open toget
 
 ## sRGB
 
-The color space of ordinary images and screens. Color textures are stored in sRGB and must be converted before lighting math; the `source_color` hint tells Godot a texture is a color texture so it does this for you.
+The standard color space of ordinary images and screens. Godot reads color textures, such as your palette, as sRGB and converts them before it lights them. In a shader, the `source_color` hint marks a texture as a color texture so Godot does this for you.
+
+## Swatch
+
+One square of flat color in a palette image. Models take a color by pointing their UVs at a swatch.
 
 ## Texel density
 
@@ -203,7 +251,7 @@ Turning the light the renderer computes, which can be far brighter than a screen
 
 ## Triangle budget
 
-The most triangles a model may use. Graphics cards draw triangles, so the count decides how expensive a model is to draw. A budget keeps every model in proportion to how big it appears on screen.
+The range of triangles a model should use, such as 100 to 400 for a small rock: enough for its shape, and no more. Graphics cards draw triangles, so the count decides how expensive a model is to draw. A budget keeps every model in proportion to how big it appears on screen.
 
 ## Uniform
 
@@ -213,9 +261,17 @@ A value a shader reads that you set from outside, in the Inspector or from code.
 
 Two coordinates, U and V, that say where on a texture each point of a mesh reads its color. They are stored in the mesh.
 
+## Value
+
+How light or dark a color is, from 0% (black) to 100% (the brightest version of its hue and saturation). From a distance, players read shapes by value first.
+
 ## Varying
 
 A value a shader's vertex function calculates and hands to its fragment function. Each pixel receives a blend of the values from the vertices around it.
+
+## Vertex
+
+A point of a mesh. Two vertices joined make an edge, and three or more edges around a flat area make a face. In Blender's Edit Mode you select vertices, edges, or faces with the keys 1, 2, and 3.
 
 ## Vertex function
 

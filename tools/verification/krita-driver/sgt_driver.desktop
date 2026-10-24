@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Service
+ServiceTypes=Krita/PythonPlugin
+X-KDE-Library=sgt_driver
+X-Python-2-Compatible=false
+Name=SGT Driver
+Comment=Replays course lesson steps inside Krita and saves window captures.

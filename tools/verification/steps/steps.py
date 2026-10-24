@@ -315,3 +315,130 @@ editor.get_resource_filesystem().scan()
 '''),
         {'op': 'sleep', 'seconds': 2},
     ]
+
+
+def click_tab(title):
+    # Clicks a dock's tab by its title, at the tab's own position, as the reader does.
+    return eval_(f'''
+for bar in plugin._collect(plugin.get_tree().root, "TabBar", ""):
+	if not bar.is_visible_in_tree():
+		continue
+	for i in bar.tab_count:
+		if bar.get_tab_title(i) == "{title}":
+			var at: Vector2 = bar.get_global_transform_with_canvas() * bar.get_tab_rect(i).get_center()
+			for pressed in [true, false]:
+				var event := InputEventMouseButton.new()
+				event.button_index = MOUSE_BUTTON_LEFT
+				event.pressed = pressed
+				event.position = at
+				event.global_position = at
+				bar.get_viewport().push_input(event)
+				await plugin.get_tree().process_frame
+			return ""
+return "no tab {title}"
+''')
+
+
+def click_file(name):
+    # Clicks a file in the FileSystem dock's tree, as the reader does to select it.
+    return [{'op': 'click', 'find': {'class': 'FileSystemDock', 'type': 'Tree'}, 'item': name}, {'op': 'wait', 'frames': 30}]
+
+
+DUMP_IMPORT = eval_('''
+var dock = plugin._find_class(plugin.get_tree().root, "ImportDock")
+var out := []
+for row in plugin._collect(dock, "EditorProperty", ""):
+	if row.get_edited_object():
+		out.append("%s (%s) = %s" % [row.label, row.get_edited_property(), row.get_edited_object().get(row.get_edited_property())])
+print("[probe] import dock\\n", "\\n".join(out))
+''')
+
+
+def import_set(property, value):
+    # Changes one Import dock option, as picking it in its row does.
+    return eval_(f'''
+var dock = plugin._find_class(plugin.get_tree().root, "ImportDock")
+for row in plugin._collect(dock, "EditorProperty", ""):
+	if str(row.get_edited_property()) == "{property}":
+		row.emit_changed("{property}", {value})
+		return ""
+return "no import option {property}"
+''')
+
+
+def show_import_row(property):
+    return eval_(f'''
+var dock = plugin._find_class(plugin.get_tree().root, "ImportDock")
+for row in plugin._collect(dock, "EditorProperty", ""):
+	if str(row.get_edited_property()) == "{property}":
+		var scroll: ScrollContainer = plugin._collect(dock, "ScrollContainer", "")[0]
+		scroll.ensure_control_visible(row)
+		return ""
+return "no import option {property}"
+''')
+
+
+# The Reimport button's label changes when options change, so it is found by how its label starts.
+REIMPORT = eval_('''
+var dock = plugin._find_class(plugin.get_tree().root, "ImportDock")
+for button in plugin._collect(dock, "Button", ""):
+	if str(button.text).begins_with("Reimport"):
+		print("[probe] reimport button ", button.text)
+		button.pressed.emit()
+		return ""
+return "no Reimport button"
+''')
+
+
+def instantiate_under(parent, query, capture=None):
+    # Instantiate Child Scene with the parent selected: search the quick-open list and press Enter.
+    steps = [
+        {'op': 'select', 'path': parent},
+        {'op': 'press', 'find': {'class': 'SceneTreeDock', 'type': 'Button', 'text': 'tooltip:Instantiate a scene file'}},
+        {'op': 'wait', 'frames': 40},
+        eval_(f'''
+for window in plugin._windows(plugin.get_tree().root):
+	if window.visible and window.title.contains("Select Scene"):
+		var edit: LineEdit = plugin._collect(window, "LineEdit", "")[0]
+		edit.text = "{query}"
+		edit.text_changed.emit(edit.text)
+		return ""
+return "no Select Scene dialog"
+'''),
+        {'op': 'wait', 'frames': 30},
+    ]
+    if capture:
+        steps.append({'op': 'capture', 'name': capture, 'window': 'Select Scene'})
+    steps.append(eval_('''
+for window in plugin._windows(plugin.get_tree().root):
+	if window.visible and window.title.contains("Select Scene"):
+		var edit: LineEdit = plugin._collect(window, "LineEdit", "")[0]
+		edit.grab_focus()
+		for pressed in [true, false]:
+			var event := InputEventKey.new()
+			event.keycode = KEY_ENTER
+			event.pressed = pressed
+			window.push_input(event)
+			await plugin.get_tree().process_frame
+		return ""
+return "no Select Scene dialog"
+'''))
+    return steps + [{'op': 'wait', 'frames': 40}]
+
+
+def open_advanced():
+    # Presses Advanced... in the Import dock and waits for the window; the first press is sometimes lost while the
+    # dock is still updating after a file was selected, so it presses again.
+    return eval_('''
+var dock = plugin._find_class(plugin.get_tree().root, "ImportDock")
+for attempt in 4:
+	for button in plugin._collect(dock, "Button", "Advanced..."):
+		button.pressed.emit()
+	for frame in 90:
+		await plugin.get_tree().process_frame
+		for window in plugin._windows(plugin.get_tree().root):
+			if window.visible and window.title.contains("Advanced"):
+				print("[probe] advanced opened on attempt ", attempt + 1)
+				return ""
+return "Advanced Import Settings did not open"
+''')

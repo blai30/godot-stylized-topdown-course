@@ -1,0 +1,362 @@
+---
+title: Import the rock into Godot
+description: Bring the palette and the rock into Godot with the right import settings, share one palette material, generate collision on import, make the rock a reusable scene, and place rocks in your meadow.
+sidebar:
+  order: 11
+  label: 11. Import the rock
+lesson:
+  number: 11
+  minutes: 60
+  learn:
+    - How Godot imports images and models, and how to change their import settings
+    - Why every palette-colored model shares one material, and how to extract it
+    - How to generate collision when a model is imported
+    - What an inherited scene is, and how to place copies of a scene in a level
+  prerequisites: [6, 10]
+---
+
+import { Aside, Code, FileTree, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import Solution from '../../../components/Solution.astro';
+import paletteMaterial from '../../../checkpoints/11/files/art/palette/palette.tres?raw';
+import rockScene from '../../../checkpoints/11/files/art/nature/rock_small/rock_small.tscn?raw';
+import meadowScene from '../../../checkpoints/11/files/levels/meadow.tscn?raw';
+import result from '../../../assets/lessons/import-the-rock/result.png';
+import paletteImport from '../../../assets/lessons/import-the-rock/palette-import.png';
+import paletteDetectDisabled from '../../../assets/lessons/import-the-rock/palette-detect-disabled.png';
+import rockExtract from '../../../assets/lessons/import-the-rock/rock-extract.png';
+import materialBefore from '../../../assets/lessons/import-the-rock/material-before.png';
+import quickLoad from '../../../assets/lessons/import-the-rock/quick-load.png';
+import materialAlbedo from '../../../assets/lessons/import-the-rock/material-albedo.png';
+import materialRoughness from '../../../assets/lessons/import-the-rock/material-roughness.png';
+import materialFilter from '../../../assets/lessons/import-the-rock/material-filter.png';
+import advanced from '../../../assets/lessons/import-the-rock/advanced.png';
+import advancedPhysics from '../../../assets/lessons/import-the-rock/advanced-physics.png';
+import advancedConvex from '../../../assets/lessons/import-the-rock/advanced-convex.png';
+import extractFolder from '../../../assets/lessons/import-the-rock/extract-folder.png';
+import colorPicker from '../../../assets/lessons/import-the-rock/color-picker.png';
+import inheritDialog from '../../../assets/lessons/import-the-rock/inherit-dialog.png';
+import renamedRoot from '../../../assets/lessons/import-the-rock/renamed-root.png';
+import saveScene from '../../../assets/lessons/import-the-rock/save-scene.png';
+import selectScene from '../../../assets/lessons/import-the-rock/select-scene.png';
+import rockInspector from '../../../assets/lessons/import-the-rock/rock-inspector.png';
+import meadowRocks from '../../../assets/lessons/import-the-rock/meadow-rocks.png';
+import running from '../../../assets/lessons/import-the-rock/running.png';
+
+## What you will build
+
+Your rock in your game: four of them in the meadow, colored from your palette, solid enough that the player walks into them and stops.
+
+<Figure
+	src={result}
+	alt="The running game zoomed in: the gray player capsule with a rock right beside it, two small rocks farther up, and one larger rock at the lower left, all in warm stone colors on the light gray ground."
+	caption="The meadow with four rocks, in the running game. The player has walked into the nearest one."
+/>
+
+## How Godot imports files
+
+Godot cannot use a `.png` or `.glb` directly in a game. When it finds a new or changed file in your project, it [imports](/reference/glossary/#import) it: it converts the file into a form the game can load fast, and saves that in the hidden `.godot` folder. The **import settings** that control the conversion live in a small `.import` file beside each file, such as `palette.png.import`. You change them in the **Import** dock, which shares a tab with the Scene dock.
+
+## Keep the palette's colors exact
+
+<Steps>
+
+1. Open your project in Godot. Godot imports `palette.png` and `rock_small.glb` as it starts; they appear in the **FileSystem** dock under `art`.
+
+2. In the FileSystem dock, click `art/palette/palette.png`. Then click the **Import** tab at the top of the left dock, beside **Scene**.
+
+3. The palette imports with **Compress > Mode** set to **Lossless** and **Mipmaps > Generate** off ([mipmaps](/reference/glossary/#mipmap) are the smaller copies Godot can make for distant objects), which is right for it. Scroll to the bottom: **Detect 3D > Compress To** is **VRAM Compressed**.
+
+	<Figure
+		src={paletteImport}
+		alt="The Import dock for palette.png, scrolled down: the Process options, then Detect 3D with Compress To set to VRAM Compressed, and a Reimport button."
+		caption="Detect 3D: what Godot does the first time a 3D material uses this image."
+	/>
+
+4. Set **Compress To** to **Disabled** and click **Reimport (\*)** at the bottom of the dock.
+
+	<Figure
+		src={paletteDetectDisabled}
+		alt="The same dock with Compress To set to Disabled and the button reading Reimport (*)."
+		caption="The asterisk means a change waits to be applied."
+	/>
+
+</Steps>
+
+<Aside type="note" title="Why not VRAM Compressed">
+Graphics cards can store images compressed in their own memory, VRAM (video memory), which saves memory but changes colors slightly: it rounds them in small blocks. That is fine for a painted picture and wrong for a palette, whose whole point is exact colors. Godot switches any image a 3D material uses to **VRAM Compressed** with mipmaps, unless **Detect 3D** is **Disabled**. Your palette is a few kilobytes, so storing it [lossless](/reference/glossary/#lossless-compression) costs nothing.
+</Aside>
+
+## One shared palette material
+
+Your rock arrived with a [material](/reference/glossary/#material) named `palette`, made from the one in Blender. Every model you color from the palette will bring a material of the same name. Instead of each model keeping its own copy, you **extract** the first one into a file and let every model use that file. Change it once, and every rock, tree, and flower follows.
+
+<Steps>
+
+1. In the FileSystem dock, click `art/nature/rock_small/rock_small.glb`. The Import dock shows its settings.
+
+2. Scroll down to **Materials**. Set **Extract** to **Extract Once**. Leave **Extract Format** on **Text (\*.tres)**.
+
+3. Click the folder button at the right of **Extract Path**. In the folder dialog, double-click `art`, then `palette`, and click **Select Current Folder**. If it opens in another folder, click the **Go to parent folder** arrow until you are at `res://` first.
+
+	<Figure
+		src={extractFolder}
+		alt="Godot's folder dialog open in res://art/palette, showing palette.png, with the Select Current Folder and Cancel buttons at the bottom."
+		caption="Select Current Folder picks the folder you are in."
+	/>
+
+	<Figure
+		src={rockExtract}
+		alt="The Import dock for rock_small.glb: Materials with Extract set to Extract Once, Extract Format Text (*.tres), and Extract Path res://art/p..., with Advanced... and Reimport (*) buttons below."
+		caption="Extract the material once, into the palette folder."
+	/>
+
+4. Click **Reimport (\*)**. A new file appears beside your palette: `art/palette/palette.tres`, the material.
+
+</Steps>
+
+<Aside type="note" title="Why Extract Once">
+**Extract Once** writes the material only if no file of that name exists yet, and from then on the model uses the file. Your next models extract to the same folder, find `palette.tres` already there, and use it. **Extract and Overwrite** would replace your edited material on every reimport, and **Keep Internal** would give every model its own hidden copy.
+</Aside>
+
+## Set up the palette material
+
+The material came from glTF with five things to set: it has no image (you exported none), its color is Blender's default gray, it draws both sides of every face, it is a little shiny, and it smooths its image. Its **Albedo** section is the surface's plain color, its [albedo](/reference/glossary/#albedo).
+
+<Steps>
+
+1. Double-click `palette.tres` in the FileSystem dock. The **Inspector** shows the material.
+
+	<Figure
+		src={materialBefore}
+		alt="The Inspector showing palette.tres, a StandardMaterial3D, whose properties are listed under BaseMaterial3D: a preview sphere, Transparency with Cull Mode Disabled, Shading, Vertex Color, and Albedo with a light gray Color and an empty Texture."
+		caption="The extracted material, before your changes. Cull Mode is Disabled."
+	/>
+
+2. Under **Albedo**, click the arrow at the right of **Texture** and choose **Quick Load...** near the bottom of the menu. Type `palette`, and press <Kbd keys="Enter" /> to pick `palette.png`.
+
+	<Figure
+		src={quickLoad}
+		alt="The Select Texture2D dialog with palette typed in the search box and palette.png listed."
+		caption="Quick Load finds files by name."
+	/>
+
+3. Click the **Color** field under **Albedo**. A color picker opens. Click its hex field, which shows the gray as `e7e7e7`, select the text, type `ffffff`, and press <Kbd keys="Enter" />. Click outside the picker to close it. The material's color multiplies the image's, and Blender's default gray would darken every swatch.
+
+	<Figure
+		src={colorPicker}
+		alt="Godot's color picker with a color wheel, a brightness bar, sliders for the channels, and the hex field reading ffffff."
+		caption="The hex field set to white."
+	/>
+
+4. Under **Transparency**, set **Cull Mode** to **Back**. Culling skips drawing the faces that point away from the camera, the back of a solid object, which nobody can see.
+
+	<Figure
+		src={materialAlbedo}
+		alt="The Inspector: Cull Mode Back, and Albedo with a white Color and the palette image as Texture."
+		caption="White albedo and the palette texture. Back culling draws only the outside of each face, as solid objects need."
+	/>
+
+5. Under **Roughness**, set [Roughness](/reference/glossary/#roughness) to `1`: stone is not shiny.
+
+	<Figure
+		src={materialRoughness}
+		alt="The Inspector's Metallic and Roughness sections, with Roughness 1."
+		caption="Roughness 1: fully matte."
+	/>
+
+6. Under **Sampling**, set **Filter** to **Nearest**. This is Godot's version of Blender's **Closest** from lesson 10.
+
+	<Figure
+		src={materialFilter}
+		alt="The Inspector's Sampling section with Filter set to Nearest."
+		caption="Nearest reads each swatch's pixels as they are."
+	/>
+
+7. Click the save button at the top of the Inspector, a floppy disk (**Save the currently edited resource.**).
+
+</Steps>
+
+## Collision on import
+
+The player should bump into rocks. Godot can build a collision shape from the model while importing it, so re-exporting the rock from Blender updates its collision too.
+
+<Steps>
+
+1. Click `rock_small.glb` in the FileSystem dock and click **Advanced...** at the bottom of the Import dock. The **Advanced Import Settings** window opens, with the model's parts on the left, a preview in the middle, and options on the right.
+
+	<Figure
+		src={advanced}
+		alt="The Advanced Import Settings window as it opens: a tree on the left with Scene, rock_small, and rock_small_rock_small; a large preview of the rock in the middle; the scene's import options on the right; Reimport and Close buttons at the bottom."
+		caption="Advanced Import Settings for rock_small.glb. The preview shows the rock's shape without its texture."
+	/>
+
+2. In the tree on the left, click **rock_small**, the node with the mesh.
+
+3. On the right, under **Generate**, check **Physics**. A **Physics** section appears. Leave **Body Type** on **StaticBody3D**, a body that never moves, and set **Shape Type** to **Single Convex (Average)**. **Layer** and **Mask** stay on 1, your `world` layer from lesson 3.
+
+	<Figure
+		src={advancedPhysics}
+		alt="The options for the rock_small node: Generate with Physics checked, then Physics with Body Type StaticBody3D, Shape Type Single Convex, Layer 1, and Mask 1."
+		caption="A static body with one convex shape, on the world layer."
+	/>
+
+	<Figure
+		src={advancedConvex}
+		alt="The same window after the change: the preview now outlines the rock with the lines of its convex collision shape."
+		caption="The preview outlines the collision shape."
+	/>
+
+4. Click **Reimport** at the bottom of the window.
+
+</Steps>
+
+<Aside type="note" title="Why a single convex shape">
+A [convex shape](/reference/glossary/#convex-shape) has no dents: like a gift wrapped in plastic, it covers the outside of the rock. It is the cheapest kind of shape that still follows the rock's outline, and a rock has no hollows a player could walk into. **Trimesh** would follow every face exactly, at a higher cost; **Automatic**, the default, lets Godot choose. You could also add collision in Blender, with objects named with the suffixes `-col` or `-colonly`; Godot turns those into collision shapes on import. For simple props, the option here is less work.
+</Aside>
+
+## A scene for the rock
+
+Levels should not place the `.glb` itself. You make an [inherited scene](/reference/glossary/#inherited-scene) from it: a scene of your own that contains the imported model, which you can add to or change, while the `.glb` stays exactly as Blender exported it. When you re-export, the inherited scene picks up the new model and keeps your changes.
+
+<Steps>
+
+1. Choose **Scene > New Inherited Scene...**. An **Open Base Scene** dialog opens, often in another folder, such as `levels`.
+
+2. Click the **Go to parent folder** arrow until you are at `res://`, then double-click `art`, `nature`, and `rock_small`. Click `rock_small.glb` and click **Open**.
+
+	<Figure
+		src={inheritDialog}
+		alt="The Open Base Scene dialog in res://art/nature/rock_small with rock_small.glb selected."
+		caption="The .glb is the base of the new scene."
+	/>
+
+3. A new scene tab opens. The nodes inside come from the base scene, so the Scene dock shows their names in yellow. The root is named `rock_small2`: Godot added the `2` because the mesh node inside is also called `rock_small`. Double-click the root in the **Scene** dock, type `RockSmall`, and press <Kbd keys="Enter" />. Node names use PascalCase, as in Module 1.
+
+	<Figure
+		src={renamedRoot}
+		alt="The Scene dock with the root renamed RockSmall."
+		caption="The renamed root."
+	/>
+
+4. Choose **Scene > Save Scene** (<Kbd keys="Ctrl+S" mac="Cmd+S" />). The **Save Scene As...** dialog opens in the rock's folder with the name `rock_small.tscn`, made from the root's name. Click **Save**.
+
+	<Figure
+		src={saveScene}
+		alt="The Save Scene As dialog in res://art/nature/rock_small with the file name rock_small.tscn."
+		caption="The rock's scene beside its model."
+	/>
+
+</Steps>
+
+## Place rocks in the meadow
+
+<Steps>
+
+1. Double-click `levels/meadow.tscn` in the FileSystem dock to open your level.
+
+2. Add a node to hold the rocks: select **Meadow**, click **+** at the top of the Scene dock, search for `Node3D`, and click **Create**. Rename it `Rocks`.
+
+3. With **Rocks** selected, click **Instantiate Child Scene** (the chain link button at the top of the Scene dock, <Kbd keys="Ctrl+Shift+A" mac="Cmd+Shift+A" />). In **Select Scene**, type `rock_small.tscn`: the list shows the `.tscn`, the scene you want, not the `.glb`. Press <Kbd keys="Enter" />.
+
+	<Figure
+		src={selectScene}
+		alt="The Select Scene dialog with rock_small.tscn typed in the search box and the matching scene listed."
+		caption="Your rock's scene, found by name."
+	/>
+
+4. Godot selects the new rock. Click **Rocks** again, then instantiate the rock the same way; do this three more times, four rocks in all, clicking **Rocks** before each one, so every copy goes under **Rocks**. The copies are named `RockSmall`, `RockSmall2`, `RockSmall3`, and `RockSmall4`, all at the center of the meadow, where the player starts.
+
+5. Spread them out. Select each rock and set its **Transform** in the Inspector, or drag it with the move tool (<Kbd keys="W" />) and turn it with the rotate tool (<Kbd keys="E" />). One possible layout, with a lone rock in the player's way and two small groups:
+
+	| Rock | Position | Rotation Y | Scale |
+	|---|---|---|---|
+	| RockSmall | 3, 0, 0 | 0 | 1, 1, 1 |
+	| RockSmall2 | -3.5, 0, 2 | 35 | 1.3, 1.3, 1.3 |
+	| RockSmall3 | 1.5, 0, -4 | -60 | 0.8, 0.8, 0.8 |
+	| RockSmall4 | 0.6, 0, -4.6 | 120 | 1, 1, 1 |
+
+	Set all three **Scale** values. If typing one changes all three, they are linked by the chain icon at the right of **Scale**, which is what you want here.
+
+	<Figure
+		src={rockInspector}
+		alt="The Inspector for RockSmall2: Transform with Position -3.5, 0, 2, Rotation 0, 35, 0, and Scale 1.3 on each axis."
+		caption="Turning and scaling copies makes one rock look like several. Keep the Y position at 0, so the rocks stay on the ground."
+	/>
+
+6. Save the scene with <Kbd keys="Ctrl+S" mac="Cmd+S" />.
+
+	<Figure
+		src={meadowRocks}
+		alt="The editor with the meadow open: the Scene dock lists Rocks with RockSmall to RockSmall4, and the 3D view shows the player capsule with four rocks around it."
+		caption="The meadow with its rocks."
+	/>
+
+</Steps>
+
+## Try it
+
+Press <Kbd keys="F5" mac="Cmd+B" /> to run the game, and click inside the game so it takes your keys, as in lesson 6. Zoom in with the mouse wheel: the rocks show your palette's stone colors, lighter on top. Walk right with <Kbd keys="D" />: the player stops against the first rock instead of passing through it.
+
+<Figure
+	src={running}
+	alt="The editor with its Game tab open, showing the running game from above: the player capsule in the middle of the light gray meadow, with a rock to its right, two small rocks above, and one at the lower left."
+	caption="The running game in the editor's Game tab."
+/>
+
+## If it does not work
+
+- **The rock is white or gray in Godot.** `palette.tres` has no texture, or the rock does not use it. Check the Albedo **Texture**, and that the rock's **Extract** is **Extract Once** with **Extract Path** `res://art/palette`.
+- **The rock's colors look slightly off or blurry at the edges.** The material's **Filter** is not **Nearest**, or the palette's **Detect 3D > Compress To** is not **Disabled** and Godot compressed it. Fix the setting and reimport the palette.
+- **The rock is darker than in Blender.** The material's Albedo **Color** is still gray. Set it to white.
+- **There is no palette.tres after reimporting.** **Extract Path** was empty, so Godot extracted next to the `.glb`. Look in `art/nature/rock_small`, delete the extra material there, set the path, and reimport.
+- **The player walks through rocks.** **Physics** is not checked for the `rock_small` node in Advanced Import Settings, or you placed the `.glb` instead of `rock_small.tscn`.
+- **A rock floats or sinks.** Its Position Y is not 0.
+- **Changing import settings changes nothing.** Import settings apply only after **Reimport**. Click it in the Import dock, or in Advanced Import Settings.
+- **A rock is a child of another rock.** **Rocks** was not selected when you instantiated it. Drag the rock onto **Rocks** in the Scene dock.
+
+## Checkpoint
+
+Your project now contains:
+
+<FileTree>
+- art
+  - nature
+    - rock_small
+      - rock_small.glb
+      - rock_small.glb.import with Extract Once and Physics
+      - **rock_small.tscn**
+  - palette
+    - palette.png
+    - palette.png.import with Detect 3D disabled
+    - **palette.tres**
+- levels
+  - meadow.tscn with a Rocks node and four rocks
+</FileTree>
+
+The `RockSmall` scene's tree, imported from the `.glb`:
+
+<FileTree>
+- RockSmall (Node3D, inherited from rock_small.glb)
+  - rock_small (MeshInstance3D; its mesh uses palette.tres)
+    - StaticBody3D (layer 1, mask 1)
+      - CollisionShape3D (ConvexPolygonShape3D)
+</FileTree>
+
+<Solution label="Show the full palette.tres">
+	<Code code={paletteMaterial} lang="ini" title="art/palette/palette.tres" />
+</Solution>
+
+<Solution label="Show the full rock_small.tscn">
+	<Code code={rockScene} lang="ini" title="art/nature/rock_small/rock_small.tscn" />
+</Solution>
+
+<Solution label="Show the full meadow.tscn">
+	<Code code={meadowScene} lang="ini" title="levels/meadow.tscn" />
+</Solution>
+
+Commit your work: `git add .` and `git commit -m "Import the small rock and place rocks"`. In the next lesson, you make a large rock faster and learn to vary rocks so a few models fill a world.
+
+<Checkpoint />

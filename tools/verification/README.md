@@ -20,11 +20,24 @@ The editor plugin cannot run in the Project Manager. Start Godot with `--project
 
 ## Blender
 
-- `scripts/rock_gui.py` performs lesson 9 in Blender's real interface on a timer and saves each state with Blender's screenshot operator. `rock_proto.py`, `labels9.py`, and `hotkeys.py` read operator labels, defaults, and the default keymap from Blender itself.
+- `blender-steps/driver.py` replays a lesson's steps (`blender-steps/lessonNN.py`, a generator of delays) in Blender's real interface. Blender runs with `--enable-event-simulate`, so the steps press keys and click with `Window.event_simulate` while input from the system is ignored; nothing touches the system mouse or keyboard. Captures come from Blender's screenshot operator.
+- `scripts/run-blender.ps1 -Script lesson09 -User lesson-08 [-SaveUser lesson-09] [-Open file.blend]` runs a step script with Blender's user folder (preferences, startup file) in `%TEMP%\sgt-phase2\blender-user`, started from a saved folder in `%TEMP%\sgt-phase2\blender-users` or `fresh` (a first launch). Every `BLENDER_USER_*` folder is created first: for a missing one, Blender 5.2 falls back to the owner's own folder.
+- Simulated input has limits, and the lessons are written around them: there is no double-click (rename with F2), click-drag tool selection does not start (box select with B), a button takes a click only after the pointer has hovered it (`press()`), popups do not close when the pointer leaves (Esc), and after a file loads the first click only wakes the window (`wake()`). Positions are for Blender's default interface scale, 1.0, at 1920 by 1080.
+- `scripts/rock_gui.py` is Phase 1's lesson 9 run, which used operators instead of hotkeys; `rock_proto.py`, `labels9.py`, and `hotkeys.py` read labels, defaults, and the keymap from Blender itself.
+
+## Krita
+
+- `krita-driver/` is a Krita Python plugin that replays a lesson's steps (`krita-steps/lessonNN.py`) inside Krita: synthetic Qt events to Krita's own widgets, and window grabs. The canvas needs a FocusIn event before it takes input, and Krita's shape and selection tools finish a shape only on a spontaneous release, so the driver marks its mouse events spontaneous and delivers them with `QApplication.notify`. Canvas overlays (grid, selection outline) are captured with `capture-window.ps1 -Handle` (PrintWindow), and Windows' own file dialogs are filled with window messages (`file_dialog()`).
+- `scripts/run-krita.ps1 -Script lesson07` installs the plugin and runs Krita. Krita keeps its settings in fixed places (`%LOCALAPPDATA%\kritarc`, `%APPDATA%\krita`, and a few logs), so the script moves any existing ones to `%TEMP%\sgt-phase2\krita-backup`, runs, deletes everything the run created, and moves the originals back (owner approved). It refuses to run while an old backup exists.
+- Krita reads the real keyboard's modifier state during a canvas drag, so a key held on the computer during a run can spoil one selection; the lesson 7 script checks every swatch's selection and retries.
+
+## Module 2 chain
+
+- `scripts/run-module2.ps1 [-From 7]` replays lessons 7 to 12 in order across Krita, Blender, and Godot. Each lesson starts from the snapshot the lesson before it saved, and the chain stops at the first failure. Lesson 8 changes only Blender's user folder, which is saved for lesson 9; lessons 10 and 12 reuse the user folder of the lesson before.
 
 ## Assets and code
 
-- `scripts/make_assets.py` crops captures into `site/src/assets/lessons/`.
+- `scripts/make_assets.py` crops captures into `site/src/assets/lessons/`. Captures of Windows' and Blender's file dialogs are cropped to their path and name fields, because their folder views show the computer's own folders.
 - `scripts/export_pieces.py <lesson> [files...]` writes a lesson's code pieces from the same step script that typed them into the editor, and copies its checkpoint files from the lesson's snapshot, into `site/src/checkpoints/`.
 - `scripts/make_grass.py` makes the reference grass texture (512 pixels for 2 meters, seamless).
 

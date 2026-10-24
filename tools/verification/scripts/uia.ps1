@@ -3,12 +3,19 @@
 # the editor plugin cannot reach.
 # Usage: uia.ps1 -ProcessId 1234 -List | -Invoke "Create" | -SetValue "Project Name:" -Value "x" | -Toggle "Edit Now"
 #   -Select "Forward+" selects a radio button or list item. -Nth picks among elements with the same name, -Type
-#   narrows by control type (Edit, Button, ...).
-param([Parameter(Mandatory)][int]$ProcessId, [switch]$List, [string]$Invoke, [string]$SetValue, [string]$Value, [string]$Toggle, [string]$Select, [int]$Nth = 0, [string]$Type)
+#   narrows by control type (Edit, Button, ...). -Dialog limits the search to the window with that name.
+param([Parameter(Mandatory)][int]$ProcessId, [string]$Dialog, [switch]$List, [string]$Invoke, [string]$SetValue, [string]$Value, [string]$Toggle, [string]$Select, [int]$Nth = 0, [string]$Type)
 Add-Type -AssemblyName UIAutomationClient, UIAutomationTypes
 $automation = [System.Windows.Automation.AutomationElement]
 $condition = New-Object System.Windows.Automation.PropertyCondition ($automation::ProcessIdProperty), $ProcessId
 $windows = $automation::RootElement.FindAll('Children', $condition)
+if ($Dialog) {
+	# A native dialog (window class #32770), found by its title; searching the automation tree for it is slow.
+	Add-Type -Namespace Uia -Name Native -MemberDefinition '[DllImport("user32.dll", CharSet = CharSet.Unicode)] public static extern IntPtr FindWindow(string className, string title);'
+	$handle = [Uia.Native]::FindWindow('#32770', $Dialog)
+	if ($handle -eq [IntPtr]::Zero) { throw "No dialog named '$Dialog'." }
+	$windows = @($automation::FromHandle($handle))
+}
 
 function Find-Named([string]$name) {
 	$matches = @()

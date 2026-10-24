@@ -1,0 +1,342 @@
+---
+title: A large rock and variants
+description: Make a large rock fast by reusing the small one's file, check its silhouette from above, recolor it with a second ramp, and vary copies in the meadow so a few models fill a world.
+sidebar:
+  order: 12
+  label: 12. A large rock and variants
+lesson:
+  number: 12
+  minutes: 60
+  learn:
+    - How to start a new model from an old one's file, with its material, modifiers, and exporter
+    - How a silhouette check shows a model's outline from the game camera
+    - How to recolor a palette model by moving its UVs to another ramp
+    - How turning and scaling copies turns one model into many rocks
+  prerequisites: [11]
+---
+
+import { Aside, Code, FileTree, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import Solution from '../../../components/Solution.astro';
+import rockScene from '../../../checkpoints/12/files/art/nature/rock_large/rock_large.tscn?raw';
+import meadowScene from '../../../checkpoints/12/files/levels/meadow.tscn?raw';
+import result from '../../../assets/lessons/a-large-rock-and-variants/result.png';
+import renamed from '../../../assets/lessons/a-large-rock-and-variants/renamed.png';
+import dimensions from '../../../assets/lessons/a-large-rock-and-variants/dimensions.png';
+import bevel from '../../../assets/lessons/a-large-rock-and-variants/bevel.png';
+import shadingFlat from '../../../assets/lessons/a-large-rock-and-variants/shading-flat.png';
+import silhouetteBefore from '../../../assets/lessons/a-large-rock-and-variants/silhouette-before.png';
+import reshaped from '../../../assets/lessons/a-large-rock-and-variants/reshaped.png';
+import silhouetteAfter from '../../../assets/lessons/a-large-rock-and-variants/silhouette-after.png';
+import uvMoved from '../../../assets/lessons/a-large-rock-and-variants/uv-moved.png';
+import colored from '../../../assets/lessons/a-large-rock-and-variants/colored.png';
+import exporterPath from '../../../assets/lessons/a-large-rock-and-variants/exporter-path.png';
+import extract from '../../../assets/lessons/a-large-rock-and-variants/extract.png';
+import advanced from '../../../assets/lessons/a-large-rock-and-variants/advanced.png';
+import selectScene from '../../../assets/lessons/a-large-rock-and-variants/select-scene.png';
+import rockInspector from '../../../assets/lessons/a-large-rock-and-variants/rock-inspector.png';
+import meadowEditor from '../../../assets/lessons/a-large-rock-and-variants/meadow-editor.png';
+import running from '../../../assets/lessons/a-large-rock-and-variants/running.png';
+
+## What you will build
+
+A large rock, about 1.6 to 1.8 m across, in your palette's second stone ramp, and a meadow with three of them among the small rocks. Two models, seven rocks, and no two alike.
+
+<Figure
+	src={result}
+	alt="The running game zoomed in: the player capsule beside a large blue-gray rock, another large rock below with a small warm rock beside it, a large flattened rock at the top right near two small rocks, and a small rock on the right."
+	caption="Large rocks in the reference palette's cool stone ramp among the small warm ones. The player has walked into one."
+/>
+
+## Reuse, then vary
+
+A game world needs many rocks, but you do not need many rock models. Two ideas carry you far:
+
+- **Reuse.** A new model can start as a copy of a finished one, keeping everything you set up: the material, the modifiers, the exporter. You only change what makes it different.
+- **Variation.** Every copy you place can be turned, scaled, and even squashed a little. From the game camera, a rock turned 120 degrees and made 20% flatter looks like a different rock.
+
+What makes a rock read as a different rock from above is its **silhouette**, its outline as a flat shape. The top-down camera sees mostly the outline and the top, so you check the outline first.
+
+## Start from the small rock
+
+<Steps>
+
+1. Open `rock_small.blend` in Blender.
+
+2. Choose **File > Save As** (<Kbd keys="Ctrl+Shift+S" mac="Cmd+Shift+S" />). Click the path field at the top, press <Kbd keys="Ctrl+A" mac="Cmd+A" />, type the path of a new `art_source\nature\rock_large\` folder in your project, and press <Kbd keys="Enter" />. Blender asks **Create new directory?**; click **Create**.
+
+3. Click the file name field at the bottom, press <Kbd keys="Ctrl+A" mac="Cmd+A" />, type `rock_large.blend`, press <Kbd keys="Enter" />, and click **Save As**. You are now working in the new file; `rock_small.blend` stays as it was.
+
+4. Rename everything after the new model, as in lessons 9 and 10:
+
+	- the object: with the pointer over the 3D view, press <Kbd keys="F2" />, press <Kbd keys="Ctrl+A" mac="Cmd+A" /> to select the old name, type `rock_large`, and press <Kbd keys="Enter" />;
+	- the mesh: click the name field at the top of the **Data** tab (the green triangle), press <Kbd keys="Ctrl+A" mac="Cmd+A" />, type `rock_large`, and press <Kbd keys="Enter" />;
+	- the collection: click it in the Outliner, press <Kbd keys="F2" /> over the Outliner, press <Kbd keys="Ctrl+A" mac="Cmd+A" />, type `rock_large`, and press <Kbd keys="Enter" />.
+
+	<Figure
+		src={renamed}
+		alt="The Outliner: the collection rock_large containing the object rock_large."
+		caption="Collection, object, and mesh all named rock_large."
+	/>
+
+5. Clicking the collection deselected the rock. Click the rock in the 3D view to select it again.
+
+6. Press <Kbd keys="N" /> for the Sidebar and set **Dimensions** to `1.6`, `1.3`, and `0.9`, clicking each field, pressing <Kbd keys="Ctrl+A" mac="Cmd+A" />, typing, and pressing <Kbd keys="Enter" />. Then press <Kbd keys="Ctrl+A" /> over the 3D view and choose **Scale**, so the size becomes the mesh's own. Press <Kbd keys="N" /> to close the Sidebar and <Kbd keys="Numpad ." /> to frame the rock.
+
+	<Figure
+		src={dimensions}
+		alt="The Sidebar: Scale X 2.420, Y 2.273, Z 2.519, and Dimensions X 1.6 m, Y 1.3 m, Z 0.9 m."
+		caption="The new size, before applying it. The scale differs on each axis because the new proportions differ from the small rock's."
+	/>
+
+7. A bevel of 4 cm looks sharp on a rock this big. On the **Modifiers** tab, set the **Bevel**'s **Amount** to `0.08`. A rule of thumb: scale the bevel with the model.
+
+	<Figure
+		src={bevel}
+		alt="The Bevel modifier with Amount 0.08 m and Segments 2."
+		caption="A bigger rock, a wider bevel."
+	/>
+
+</Steps>
+
+## Check the silhouette from above
+
+<Steps>
+
+1. At the top right of the 3D view, open the **Viewport Shading** panel (the small arrow right of the four round shading buttons). Under **Lighting**, click **Flat**. The panel shortens; under **Color**, in the **Object** row, click **Custom**. Press <Kbd keys="Esc" />.
+
+	<Figure
+		src={shadingFlat}
+		alt="The Viewport Shading panel with Lighting Flat and the Object color set to Custom, a light gray color field below."
+		caption="Flat lighting and one color: no shading, only the outline."
+	/>
+
+2. Press <Kbd keys="Numpad 7" /> to look from the top and <Kbd keys="Numpad ." /> to frame the rock. You see a flat light shape: the rock's silhouette.
+
+	<Figure
+		src={silhouetteBefore}
+		alt="The rock from the top in flat shading: a light gray, nearly rectangular shape with rounded corners."
+		caption="Before: the outline from lesson 9, stretched to the new size. Its corners are still close to a box's."
+	/>
+
+3. Make the outline irregular. Press <Kbd keys="Tab" /> for Edit Mode, <Kbd keys="1" /> for vertices, and <Kbd keys="Alt+Z" /> for X-ray. From the top, each corner of the outline is two vertices stacked on top of each other, one on the base and one around the middle. For three or four corners and the middle of one long side: press <Kbd keys="Alt+A" />, press <Kbd keys="B" /> and drag a small box around the stack, then press <Kbd keys="G" />, move the mouse to push it out or pull it in, and click. Be bold: push some by 5 to 10 cm.
+
+	<Figure
+		src={reshaped}
+		alt="The rock from the top in Edit Mode with X-ray: the outline now has uneven corners and one side pushed out."
+		caption="The outline after moving four stacks of vertices."
+	/>
+
+4. Select everything with <Kbd keys="A" /> and choose **Mesh > Transform > Randomize**. Set **Amount** to `0.04` and pick a **Random Seed** different from the one you used in lesson 9, so the two rocks get different bumps.
+
+5. Randomize moved the base off the ground. Look from the front (<Kbd keys="Numpad 1" />), press <Kbd keys="G" /> then <Kbd keys="Z" />, and move the rock until its lowest point touches the red line, as in lesson 9. Press <Kbd keys="Alt+Z" /> to turn X-ray off and <Kbd keys="Tab" /> for Object Mode.
+
+6. Look from the top again (<Kbd keys="Numpad 7" />). The silhouette should look like a stone, not a box.
+
+	<Figure
+		src={silhouetteAfter}
+		alt="The rock's silhouette from the top after reshaping: an irregular shape with many uneven sides."
+		caption="After: an outline no box would have."
+	/>
+
+7. Put the shading back: in the **Viewport Shading** panel, click **Studio** under **Lighting** and **Texture** in the **Object** row.
+
+</Steps>
+
+<Aside type="tip" title="Squint at it">
+A silhouette check works best with a quick glance, or with your eyes half closed. If you can tell your rocks apart that way, players will too. The same check works for trees and characters later in the course.
+</Aside>
+
+## A second ramp in one move
+
+Your rock still reads the stone ramp's swatches. Your second stone ramp sits exactly four swatches to the right, half the image across, so you can move every UV at once.
+
+<Steps>
+
+1. Click the **UV Editing** tab. Over the 3D view on the right, press <Kbd keys="3" /> for faces and <Kbd keys="A" /> to select them all.
+
+2. Move the pointer over the UV Editor and press <Kbd keys="A" /> to select all the UVs there. Press <Kbd keys="G" />, then <Kbd keys="X" />, type `0.5`, and press <Kbd keys="Enter" />. Every UV moves half the image to the right: the shadow, dark, and light swatches of the first stone ramp become those of the second.
+
+	<Figure
+		src={uvMoved}
+		alt="The UV Editor with the palette: the UV points sit on the second stone ramp in the top row's right half, and the Sidebar shows UV Vertex X 0.688, Y 0.938."
+		caption="All UVs moved 0.5 to the right, onto the second ramp of the row."
+	/>
+
+3. Click the **Layout** tab, press <Kbd keys="Tab" /> if the header says **Edit Mode**, and orbit around your large rock.
+
+	<Figure
+		src={colored}
+		alt="The large rock in Blender in blue-gray colors: a lighter top and darker sides."
+		caption="The large rock in the reference palette's second ramp, a cool stone."
+	/>
+
+</Steps>
+
+<Aside type="note" title="Why a different ramp">
+Two kinds of stone side by side give a world variety for free: a warmer one and a cooler one tell the eye there is more than one rock type, even before their shapes differ. Because your palette lays ramps out in the same pattern, any ramp is one move away.
+</Aside>
+
+## Export the large rock
+
+The exporter came along with the file, and so did its **File Path**: it still points to `rock_small.glb`. Exporting now would overwrite the small rock, so change the path first.
+
+<Steps>
+
+1. On the **Collection** tab, click the folder button of the exporter's **File Path**.
+
+2. Click the path field at the top, press <Kbd keys="Ctrl+A" mac="Cmd+A" />, type the path of your project's `art\nature\rock_large\` folder, and press <Kbd keys="Enter" />. Click **Create**.
+
+3. Click the file name field, press <Kbd keys="Ctrl+A" mac="Cmd+A" />, type `rock_large.glb`, press <Kbd keys="Enter" />, and click **Accept**.
+
+	<Figure
+		src={exporterPath}
+		alt="The Exporters panel with the glTF 2.0 exporter, its File Path ending in rock_large.glb."
+		caption="Check the path ends in rock_large.glb before you export."
+	/>
+
+4. Click the exporter's export button, the arrow at the right end of its **glTF 2.0** title. The other settings are the ones you chose in lesson 10.
+
+5. Press <Kbd keys="Ctrl+S" mac="Cmd+S" /> to save `rock_large.blend`.
+
+</Steps>
+
+## Bring it into Godot
+
+The same steps as lesson 11, faster this time. Switch to Godot; it imports `rock_large.glb` by itself.
+
+<Steps>
+
+1. Click `art/nature/rock_large/rock_large.glb` in the FileSystem dock and open the **Import** tab.
+
+2. Set **Materials > Extract** to **Extract Once**.
+
+3. Click the folder button at the right of **Extract Path**, double-click `art` and `palette`, and click **Select Current Folder**, as in lesson 11. If it opens in another folder, click the **Go to parent folder** arrow until you are at `res://` first.
+
+4. Click **Reimport (\*)**. No new file appears in `art/palette`: `palette.tres` is already there, so the large rock uses it.
+
+	<Figure
+		src={extract}
+		alt="The Import dock for rock_large.glb: Extract Once, Text (*.tres), and Extract Path res://art/p..., with the Reimport (*) button."
+		caption="Same settings as the small rock: one shared material."
+	/>
+
+5. Click **Advanced...**. In the tree on the left, click the **rock_large** node.
+
+6. Under **Generate**, check **Physics**, then set **Shape Type** to **Single Convex (Average)**. Click **Reimport**.
+
+	<Figure
+		src={advanced}
+		alt="The Advanced Import Settings window for rock_large.glb with the rock_large node selected and its collision shape outlined in the preview."
+		caption="Collision for the large rock."
+	/>
+
+7. Choose **Scene > New Inherited Scene...**. In **Open Base Scene**, click the **Go to parent folder** arrow until you are at `res://`, double-click `art`, `nature`, and `rock_large`, click `rock_large.glb`, and click **Open**.
+
+8. Double-click the root, `rock_large2`, in the Scene dock, type `RockLarge`, and press <Kbd keys="Enter" />.
+
+9. Press <Kbd keys="Ctrl+S" mac="Cmd+S" /> and click **Save** to keep the suggested `rock_large.tscn`.
+
+10. Open `levels/meadow.tscn`. Click **Rocks**, press <Kbd keys="Ctrl+Shift+A" mac="Cmd+Shift+A" />, type `rock_large.tscn`, and press <Kbd keys="Enter" />.
+
+	<Figure
+		src={selectScene}
+		alt="The Select Scene dialog with rock_large.tscn typed in its search box."
+		caption="The large rock's scene."
+	/>
+
+11. Do it twice more, clicking **Rocks** before each one, because Godot selects each new rock.
+
+</Steps>
+
+## Vary the copies
+
+Place the three large rocks among the small ones, and give each a different turn and scale. Scaling one axis less than the others **squashes** a copy into a new shape: a large rock scaled to 70% height reads as a low, flat slab.
+
+Select each rock in the Scene dock and set its **Transform** in the Inspector, as in lesson 11:
+
+| Rock | Position | Rotation Y | Scale |
+|---|---|---|---|
+| RockLarge | -5, 0, 0 | 20 | 1, 1, 1 |
+| RockLarge2 | 3.2, 0, -4.8 | -110 | 1.1, 0.7, 1.1 |
+| RockLarge3 | -3.6, 0, 3.4 | -160 | 0.9, 0.8, 0.9 |
+
+If typing one **Scale** value changes all three, the values are linked: click the chain icon at the right of **Scale** in the Inspector to unlink them, then type each one.
+
+<Figure
+	src={rockInspector}
+	alt="The Inspector for RockLarge2: Position 3.2, 0, -4.8, Rotation 0, -110, 0, and Scale 1.1, 0.7, 1.1."
+	caption="The squashed copy: 70% of its height, 110% of its width."
+/>
+
+<Aside type="note" title="Rules for variation">
+- **Turn freely** around Y; every angle shows a new outline from above.
+- **Scale between about 0.7 and 1.3.** Further, and the bevels and the collision look wrong for the size.
+- **Squash, do not stretch, the height.** A flatter rock looks natural; a taller one starts to look like a pillar.
+- **Group them.** Rocks look natural in clusters of two or three, a large one with small ones at its foot, not spread evenly.
+- **Keep Position Y at 0**, and leave Rotation X and Z at 0, so the base stays on the ground.
+</Aside>
+
+Save the meadow with <Kbd keys="Ctrl+S" mac="Cmd+S" />.
+
+<Figure
+	src={meadowEditor}
+	alt="The editor with the meadow: the Scene dock lists Rocks with four small and three large rocks, and the 3D view shows large blue-gray rocks and small warm rocks around the player capsule."
+	caption="Seven rocks from two models."
+/>
+
+## Try it
+
+Press <Kbd keys="F5" mac="Cmd+B" />, click inside the game, and look at the meadow from the game camera. No two rocks should look like copies of each other. Walk left with <Kbd keys="A" /> into the first large rock: the player stops against it.
+
+<Figure
+	src={running}
+	alt="The editor with its Game tab open, showing the running game: the meadow from above, with the player in the middle and large and small rocks in small groups around it."
+	caption="The running game in the editor's Game tab."
+/>
+
+## If it does not work
+
+- **The small rock in Godot changed into the large one.** The exporter still pointed to `rock_small.glb` when you exported. Open `rock_small.blend` and export it again with its own exporter, then fix the large rock's **File Path** and export again.
+- **Ctrl+A > Scale did nothing.** The rock was not selected after you clicked the collection. Click the rock and apply again.
+- **The bevels look sharper than the small rock's.** The **Amount** is still 4 cm; set it to `0.08`.
+- **The large rock has the same colors as the small one.** The UVs did not move: in the UV Editor, select all with <Kbd keys="A" /> before <Kbd keys="G" />, <Kbd keys="X" />, `0.5`.
+- **Part of the rock turned white or green.** Only some UVs moved, or they moved by the wrong amount. Undo and move all of them by exactly `0.5` along X.
+- **A new material file appeared next to rock_large.glb.** **Extract Path** was not set; delete that file, set the path to `art/palette`, and reimport.
+- **The silhouette view stays shaded.** **Lighting** must be **Flat**; with **Studio**, the shape still has light and dark sides.
+
+## Checkpoint
+
+Your project now contains:
+
+<FileTree>
+- art
+  - nature
+    - rock_large
+      - **rock_large.glb**
+      - rock_large.glb.import with Extract Once and Physics
+      - **rock_large.tscn**
+    - rock_small
+- art_source
+  - nature
+    - rock_large
+      - **rock_large.blend**
+- levels
+  - meadow.tscn with four small and three large rocks
+</FileTree>
+
+Module 2 is done: you have a palette, two rock models made and colored by hand, one shared material, and a meadow you can walk around in, bumping into your own rocks.
+
+<Solution label="Show the full rock_large.tscn">
+	<Code code={rockScene} lang="ini" title="art/nature/rock_large/rock_large.tscn" />
+</Solution>
+
+<Solution label="Show the full meadow.tscn">
+	<Code code={meadowScene} lang="ini" title="levels/meadow.tscn" />
+</Solution>
+
+Commit your work: `git add .` and `git commit -m "Add the large rock and vary the rocks"`. In the next module, you paint the ground.
+
+<Checkpoint />

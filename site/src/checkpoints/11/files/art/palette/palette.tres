@@ -1,0 +1,8 @@
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://jsmrd2aqdexa"]
+
+[ext_resource type="Texture2D" uid="uid://cp4gllfo88l1n" path="res://art/palette/palette.png" id="1_tam67"]
+
+[resource]
+resource_name = "palette"
+albedo_texture = ExtResource("1_tam67")
+texture_filter = 0

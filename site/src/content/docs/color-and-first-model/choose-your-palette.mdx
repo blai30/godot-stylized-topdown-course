@@ -1,0 +1,334 @@
+---
+title: Choose your palette
+description: Learn how value, hue, and saturation make a stylized palette, then build your own palette image in Krita and export it for your models.
+sidebar:
+  order: 7
+  label: 7. Choose your palette
+lesson:
+  number: 7
+  minutes: 60
+  learn:
+    - What hue, saturation, and value are, and which one matters most
+    - How to build color ramps that shift hue from shadow to light
+    - How to make a swatch image in Krita with a snapping grid and selections
+    - How to check your colors in grayscale and export a PNG
+  prerequisites: [2]
+---
+
+import { Aside, FileTree, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import palette from '../../../assets/lessons/choose-your-palette/palette.png';
+import newDimensions from '../../../assets/lessons/choose-your-palette/new-dimensions.png';
+import newContent from '../../../assets/lessons/choose-your-palette/new-content.png';
+import grid from '../../../assets/lessons/choose-your-palette/grid.png';
+import gridDocker from '../../../assets/lessons/choose-your-palette/grid-docker.png';
+import firstSelection from '../../../assets/lessons/choose-your-palette/first-selection.png';
+import toolbar from '../../../assets/lessons/choose-your-palette/toolbar.png';
+import colorHsv from '../../../assets/lessons/choose-your-palette/color-hsv.png';
+import firstSwatch from '../../../assets/lessons/choose-your-palette/first-swatch.png';
+import ramps from '../../../assets/lessons/choose-your-palette/ramps.png';
+import filterLayer from '../../../assets/lessons/choose-your-palette/filter-layer.png';
+import valueCheck from '../../../assets/lessons/choose-your-palette/value-check.png';
+import layersHidden from '../../../assets/lessons/choose-your-palette/layers-hidden.png';
+import exportDialog from '../../../assets/lessons/choose-your-palette/export-dialog.png';
+import pngOptions from '../../../assets/lessons/choose-your-palette/png-options.png';
+
+## What you will build
+
+Your [palette](/reference/glossary/#palette): one small image of flat color squares, made in Krita. Every model you make in this course takes its colors from it, starting with the rock you color in lesson 10, so your whole world shares one set of colors that belong together.
+
+<Figure
+	src={palette}
+	alt="A square image with three rows of colored squares at the top and white space below. Row one: four warm grays from dark to light, then four blue grays. Row two: four greens from dark to light yellow-green, then four darker blue-greens. Row three: four browns, then four sand colors. Each group of four goes from dark to light."
+	caption="The reference palette, shown at twice its size: six ramps of four swatches, with room below for later lessons. It is one possible answer; yours will have your own colors."
+/>
+
+## Color in three numbers
+
+Every color can be described by three numbers. Painting programs, Krita included, let you type them directly:
+
+- **[Hue](/reference/glossary/#hue)** is the kind of color: red, yellow, green, blue, and everything between. It is an angle around a color wheel, from 0 to 360 degrees: red at 0, yellow at 60, green at 120, cyan at 180, blue at 240, magenta at 300, and back to red.
+- **[Saturation](/reference/glossary/#saturation)** is how strong the color is, from 0% (gray) to 100% (the purest version of that hue).
+- **[Value](/reference/glossary/#value)** is how light or dark the color is, from 0% (black) to 100% (the brightest it can be).
+
+Value matters most. From a distance, and from a high camera like yours, players read shapes by their light and dark long before they notice hue. A rock reads as a rock because its top is lighter than its sides and its underside is darker, whatever its exact color.
+
+## Rules for a stylized palette
+
+A stylized look comes from limits. These four rules give natural colors that sit well together under your game's light:
+
+1. **Build in [ramps](/reference/glossary/#color-ramp).** Each material gets four colors from dark to light: a shadow, a dark, a light, and a highlight. Space their values evenly, about 12 to 14 points apart, so each step is clearly different.
+2. **Shift the hue along the ramp.** Real light is warm and shadows are cool, so a ramp turns toward blue as it darkens and toward yellow as it lightens. Move the hue 5 to 10 degrees per step, the short way around the wheel. This is [hue shifting](/reference/glossary/#hue-shifting), and it is what makes painted colors look alive instead of mixed with black.
+3. **Keep nature muted.** Stone, earth, and plants look best at 10% to 50% saturation, a little higher in the middle of a ramp than at its ends. Strong saturation is for small things you want noticed, such as flowers.
+4. **No pure black or white.** Keep values between about 25% and 90%. The game's light adds the deepest shadows and the brightest highlights; if the colors already use them up, nothing is left for the light.
+
+FactoryGame, the game whose look this template rebuilds by hand, follows rules 1, 3, and 4. Its rock ramp runs from `#6F685C` through `#928976` and `#B3A893` to `#D1C6B3`: a muted warm gray, evenly stepped, never black or white.
+
+## The palette's layout
+
+Your palette is a 256 by 256 pixel image divided into an 8 by 8 grid of 32 pixel squares, called [swatches](/reference/glossary/#swatch). Each row holds two ramps of four, from dark at the left to light at the right.
+
+<Aside type="note" title="Why this layout">
+In lesson 10 you color the rock by pointing each part of it at one swatch. Where a dark part meets a light part, the model's narrow rounded edge reads the colors between the two swatches, so the two steps of a ramp sit side by side and that edge only ever sees colors of the same ramp. A swatch of 32 pixels stays a clean, flat color even when Godot shrinks the image for distant objects, and 256 is a power of two (2 multiplied by itself: 2, 4, 8, 16, and so on), the size graphics cards handle best.
+</Aside>
+
+In this lesson you fill the top three rows with six ramps. The other rows stay white until later lessons need them: bark and leaves for the trees, flowers, and your character's colors.
+
+| Row | Left ramp | Right ramp |
+|---|---|---|
+| 1 | Stone | A second stone, cooler or warmer than the first |
+| 2 | Grass | Moss or dark foliage |
+| 3 | Dirt | Sand |
+
+Here are the reference values as hue, saturation, and value. Use them as a starting point, or pick your own by the rules above. Each ramp's value climbs by 13, its hue moves 6 to 8 degrees per step toward yellow as it gets lighter, and its saturation is highest in the two middle swatches.
+
+Each line lists a ramp's four swatches from shadow to highlight:
+
+- **Stone**: 28, 14, 40; 34, 18, 53; 40, 17, 66; 46, 12, 79
+- **Cool stone**: 225, 12, 38; 218, 16, 51; 211, 15, 64; 204, 10, 77
+- **Grass**: 120, 44, 33; 112, 50, 46; 104, 48, 59; 96, 40, 72
+- **Moss**: 150, 32, 28; 142, 38, 41; 134, 36, 54; 126, 30, 67
+- **Dirt**: 16, 36, 30; 22, 42, 43; 28, 40, 56; 34, 32, 69
+- **Sand**: 30, 26, 50; 36, 32, 63; 42, 30, 76; 48, 22, 89
+
+## Create the image
+
+<Steps>
+
+1. Open Krita. It starts on a welcome page with **New Image** and **Open Image** on the left.
+
+2. Choose **File > New...** (<Kbd keys="Ctrl+N" mac="Cmd+N" />). The **Create new document** dialog opens with **Custom Document** selected on the left.
+
+3. On the **Dimensions** tab, set **Width** to `256` and **Height** to `256`, both in **Pixels (px)**. Leave the rest: the **Color** section's **Model** is **RGB/Alpha**, **Depth** is **8-bit integer/channel**, and **Profile** is **sRGB-elle-V2-srgbtrc.icc (Default)**. **Resolution** only matters for printing.
+
+	<Figure
+		src={newDimensions}
+		alt="Krita's Create new document dialog on the Dimensions tab: Width 256 and Height 256 in Pixels, Resolution 300 Pixels/Inch, and the Color section with Model RGB/Alpha, Depth 8-bit integer/channel, Profile sRGB-elle-V2-srgbtrc.icc (Default)."
+		caption="A 256 by 256 pixel image in standard [sRGB](/reference/glossary/#srgb) color, the color space Godot expects for color textures."
+	/>
+
+4. Click the **Content** tab and set **Name** to `palette`. Leave **Background Color** white and **Background** on **As raster layer**.
+
+	<Figure
+		src={newContent}
+		alt="The Content tab: Name palette, Layers 2, Background Color white, Background Opacity 100%, and Background set to As raster layer."
+		caption="The image named palette."
+	/>
+
+5. Click **Create**. A white square fills the middle of the window. Krita's side panels are called **dockers**; the **Layers** docker at the right lists the image's [layers](/reference/glossary/#layer), **Paint Layer 1** above **Background**. You paint on Paint Layer 1.
+
+</Steps>
+
+<Aside type="note" title="Dockers">
+Every docker can be opened from **Settings > Dockers**, moved, or closed with the cross on its title bar.
+</Aside>
+
+## Show a snapping grid
+
+<Steps>
+
+1. Choose **Settings > Dockers > Grid and Guides**. The **Grid and Guides** docker opens at the bottom right.
+
+2. Set **X spacing** to `32` and press <Kbd keys="Tab" />. **Y spacing** follows, because the chain icon beside them links the two.
+
+3. Set **Subdivision** to `1`. With the default of 2, Krita draws a dashed line through the middle of every cell, which makes your 32 pixel cells look like 16 pixel ones.
+
+4. Check **Show grid** and **Snap to grid**. Lines now divide the image into 8 by 8 squares.
+
+	<Figure
+		src={gridDocker}
+		alt="The Grid and Guides docker: Show grid and Snap to grid checked, Type Rectangle, X spacing and Y spacing 32 px, Subdivision 1, Main Style Lines."
+		caption="A 32 pixel grid, shown and snapping."
+	/>
+
+	<Figure
+		src={grid}
+		alt="Krita's whole window: the toolbox on the left, the white image divided by thin lines into an 8 by 8 grid in the middle, and dockers on the right, with Grid and Guides at the bottom."
+		caption="The image with its 8 by 8 grid. The Grid and Guides docker is at the bottom right."
+	/>
+
+</Steps>
+
+<Aside type="note" title="Why snap">
+A swatch must be one flat color right to its edges. If a selection misses the grid by a pixel, a thin line of white or of the neighbor's color is left at the edge, and in lesson 10 that line can show up on your model. Snapping pulls a selection's corners onto the grid when you start and end near a grid point.
+</Aside>
+
+## Paint your first swatch
+
+<Steps>
+
+1. Press <Kbd keys="Ctrl+R" mac="Cmd+R" /> for the **Rectangular Selection Tool**, the dashed square in the toolbox at the left.
+
+2. Point the mouse slightly inside the top left corner of the first cell, press the left button, drag to slightly inside the cell's bottom right corner, and release. The selection snaps to the cell: a dashed outline runs around it, called marching ants.
+
+	<Figure
+		src={firstSelection}
+		alt="The top left grid cell outlined by a dashed selection line, with a small floating bar of selection buttons below it."
+		caption="The first cell selected. A small bar of selection buttons appears near it; you can ignore it."
+	/>
+
+3. Find the two overlapping color squares in the toolbar at the top, to the right of the gradient and pattern buttons. The square at the top left is the **foreground color**, the color Krita paints and fills with. Click it. The **Select a Color** dialog opens.
+
+	<Figure
+		src={toolbar}
+		alt="Krita's toolbar: buttons for new, open, save, undo, and redo, a gradient and a pattern button, then a black square overlapping a white square, then the brush settings."
+		caption="The foreground color is the black square at the top left of the pair; the white one behind it is the background color."
+	/>
+
+4. Click the **HSV** tab below the color wheel. Type your shadow color's three numbers into **Hue**, **Saturation**, and **Value**, pressing <Kbd keys="Tab" /> after each so Krita takes it. The large patch at the bottom left shows the new color beside the old one.
+
+	<Figure
+		src={colorHsv}
+		alt="The Select a Color dialog on its HSV tab: Hue 28 degrees, Saturation 14%, Value 40%. The patch below shows a dark warm gray beside black, and the Color name field reads #665e57."
+		caption="The stone ramp's shadow: hue 28, saturation 14%, value 40%. The Color name field shows the same color as a hex code."
+	/>
+
+5. Click **OK**.
+
+6. Choose **Edit > Fill with Foreground Color** (<Kbd keys="Shift+Backspace" />). The cell fills with your color.
+
+	<Figure
+		src={firstSwatch}
+		alt="The top left cell filled with a dark warm gray, still outlined by the dashed selection."
+		caption="Your first swatch."
+	/>
+
+7. Choose **Select > Deselect** (<Kbd keys="Ctrl+Shift+A" mac="Cmd+Shift+A" />). The marching ants disappear.
+
+</Steps>
+
+<Aside type="caution" title="Deselect before the next swatch">
+If a selection is still active and you start your next drag near its outline, Krita moves the old selection instead of making a new one. Deselect after every fill.
+</Aside>
+
+## Fill the other swatches
+
+<Steps>
+
+1. Repeat the four actions for the next cell to the right: select the cell, set the foreground color, fill, deselect. Work along the row from left to right: the first four cells are your first ramp, the next four your second.
+
+2. Fill rows 2 and 3 the same way.
+
+	<Figure
+		src={ramps}
+		alt="The top three rows of the grid filled: warm grays and blue grays, greens and blue-greens, browns and sands, each group of four going from dark to light."
+		caption="Six ramps of four. Each ramp gets lighter and warmer from left to right."
+	/>
+
+</Steps>
+
+<Aside type="tip" title="Working faster">
+Within one ramp, start from the color you set for the swatch before it and change only what moves: add about 13 to the value and nudge the hue a few degrees toward yellow. The dialog opens with your last color, so most swatches take two edits.
+</Aside>
+
+## Check your values in grayscale
+
+<Steps>
+
+1. Choose **Layer > New > Add Filter Layer...**. A filter layer changes how the layers below it look without changing their pixels, and you can hide it again. The **New Filter Layer** dialog opens with a list of filters on the left.
+
+2. Under **Adjust**, click **Desaturate**. On the right, under **Desaturation method**, choose **Luminosity (ITU-R BT.709)**, then click **OK**.
+
+	<Figure
+		src={filterLayer}
+		alt="The New Filter Layer dialog: Layer Name Filter Layer 2 (Desaturate), the filter list with Adjust open and Desaturate selected, and the Desaturation method options with Luminosity (ITU-R BT.709) selected."
+		caption="Luminosity (ITU-R BT.709) turns each color into the gray that looks as bright to the eye as the color does."
+	/>
+
+3. Your swatches turn gray. Look at each ramp: its four grays should step evenly from dark to light, and no two swatches next to each other should look the same.
+
+	<Figure
+		src={valueCheck}
+		alt="The same three rows of swatches in grays only: each group of four steps evenly from dark gray to light gray."
+		caption="The reference palette in grayscale. Every ramp steps evenly."
+	/>
+
+4. In the **Layers** docker, click the eye at the left of **Filter Layer 2 (Desaturate)** to hide it. Your colors come back. Keep the layer, hidden, so you can check again whenever you add colors. Then click **Paint Layer 1** in the docker, so the next fill lands on it and not on the filter layer.
+
+	<Figure
+		src={layersHidden}
+		alt="The Layers docker: Filter Layer 2 (Desaturate) at the top with its eye icon dimmed, above Paint Layer 1."
+		caption="The filter layer hidden: its eye is dim."
+	/>
+
+</Steps>
+
+<Aside type="note" title="Why check in gray">
+Hue and saturation can fool your eye into seeing a difference that is not there in value. Two greens of different hue but equal value melt into one shape from the game camera. In gray, only value is left, so uneven steps stand out at once. Krita's **Value** number is only a rough guide too: a yellow and a blue with the same value do not look equally bright. The gray check is the real test.
+</Aside>
+
+## Save and export
+
+You keep two files: the Krita file with its layers, which you edit later, and a flat PNG for Godot.
+
+<Steps>
+
+1. Choose **File > Save As...** (<Kbd keys="Ctrl+Shift+S" mac="Cmd+Shift+S" />). Windows' **Saving As** dialog opens.
+
+2. Go to your project's `art_source` folder, such as `C:\Users\<your name>\Documents\top-down-template\art_source`: click the address bar at the top, type that path, and press <Kbd keys="Enter" />. Click **New folder**, name it `palette`, and double-click it to go into it.
+
+3. Set **File name** to `palette.kra` and click **Save**. The `.kra` file keeps your layers and grid.
+
+4. Choose **File > Export...**. The **Exporting** dialog opens.
+
+5. Go to your project's `art` folder the same way: click the address bar, type its path, such as `C:\Users\<your name>\Documents\top-down-template\art`, and press <Kbd keys="Enter" />. Click **New folder**, name it `palette`, and double-click it to go into it.
+
+6. Set **File name** to `palette.png` and click **Save**. Krita picks the PNG format from the name.
+
+	<Figure
+		src={exportDialog}
+		alt="The bottom of the Exporting dialog: a File name box, a Save as type list showing All supported formats, and the Save and Cancel buttons."
+		caption="The bottom of the Exporting dialog. Your folder list above it shows your own computer's folders."
+	/>
+
+7. The **PNG image** dialog opens with options. Leave them as they are, with **Force convert to sRGB** and **Store alpha channel (transparency)** checked, and click **OK**.
+
+	<Figure
+		src={pngOptions}
+		alt="The PNG image options dialog: Compression (Lossless) 3; Force convert to sRGB and Store alpha channel (transparency) checked; the other options unchecked."
+		caption="PNG compression is [lossless](/reference/glossary/#lossless-compression) at every level, so your colors stay exact."
+	/>
+
+</Steps>
+
+<Aside type="note" title="Why two files">
+Godot cannot read `.kra` files, and the `art_source` folder is hidden from Godot on purpose (lesson 2). The export is a flat copy of what you see: hidden layers, like your filter layer, are left out. From now on, <Kbd keys="Ctrl+S" mac="Cmd+S" /> saves the `.kra`, and Krita keeps the previous version as `palette.kra~` (lesson 2's `.gitignore` leaves it out of Git). Whenever you change the palette, save the `.kra` and export the PNG again over the old one.
+</Aside>
+
+## Try it
+
+- Show the filter layer again with its eye, and check each ramp steps evenly in gray. Hide it again.
+- Open `art/palette/palette.png` in any image viewer, such as the Windows Photos app. It shows your colored swatches on white, with no grid lines and no gray.
+
+## If it does not work
+
+- **Dragging moved the old selection instead of making a new one.** The old selection was still active. Press <Kbd keys="Ctrl+Z" mac="Cmd+Z" />, choose **Select > Deselect**, and drag again.
+- **A swatch has a thin white or colored line along one edge.** The selection did not snap. Check **Snap to grid** in the Grid and Guides docker, and start and end your drag close to the cell's corners.
+- **Fill colored the whole image.** Nothing was selected. Undo with <Kbd keys="Ctrl+Z" mac="Cmd+Z" />, select the cell, and fill again.
+- **The swatch is the wrong color.** The Select a Color dialog takes a typed number when you leave the field. Press <Kbd keys="Tab" /> after typing each value, then click **OK**.
+- **The grid shows dashed lines through the middle of every cell.** Set **Subdivision** to `1`.
+- **The exported PNG is gray.** The filter layer was visible when you exported. Hide it with its eye and export again over the old file.
+- **You cannot find the Grid and Guides docker or the Layers docker.** Open it from **Settings > Dockers**.
+
+## Checkpoint
+
+Your project now has two new files:
+
+<FileTree>
+- art
+  - palette
+    - **palette.png**
+- art_source
+  - palette
+    - **palette.kra**
+</FileTree>
+
+Your palette has six ramps of four swatches in its top three rows, each ramp stepping evenly from dark to light in the grayscale check. Git LFS stores both files, because lesson 2's `.gitattributes` sends every `.png` and `.kra` to it.
+
+If Godot is open with your project, it also imports the new image and writes `art/palette/palette.png.import` beside it; commit that file too.
+
+Commit your work: `git add .` and `git commit -m "Add the palette"`. In the next lesson, you set up Blender for making models for Godot.
+
+<Checkpoint />

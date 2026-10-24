@@ -126,6 +126,12 @@
     "vsync",
     "Deadzone",
     "AZERTY",
-    "oversaturated"
+    "oversaturated",
+    "Desaturate",
+    "Desaturation",
+    "srgbtrc",
+    "elle",
+    "Spacebar",
+    "BSDF"
   ]
 }

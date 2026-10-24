@@ -1,0 +1,332 @@
+---
+title: Color the rock and export it
+description: Give the rock its colors from your palette by pointing its UVs at swatches, then export it as a .glb file Godot can read.
+sidebar:
+  order: 10
+  label: 10. Color the rock and export it
+lesson:
+  number: 10
+  minutes: 60
+  learn:
+    - How a model takes flat colors from a palette image through its UVs
+    - How to give the top, sides, and base of a model different values
+    - How to set up a collection exporter for one-click glTF exports
+    - Which glTF export settings a static prop needs, and why
+  prerequisites: [7, 9]
+---
+
+import { Aside, FileTree, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import result from '../../../assets/lessons/color-and-export-the-rock/result.png';
+import meshName from '../../../assets/lessons/color-and-export-the-rock/mesh-name.png';
+import materialTab from '../../../assets/lessons/color-and-export-the-rock/material-tab.png';
+import baseColorMenu from '../../../assets/lessons/color-and-export-the-rock/base-color-menu.png';
+import imageTexture from '../../../assets/lessons/color-and-export-the-rock/image-texture.png';
+import openImage from '../../../assets/lessons/color-and-export-the-rock/open-image.png';
+import openImageButton from '../../../assets/lessons/color-and-export-the-rock/open-image-button.png';
+import interpolation from '../../../assets/lessons/color-and-export-the-rock/interpolation.png';
+import shadingPopover from '../../../assets/lessons/color-and-export-the-rock/shading-popover.png';
+import beforeUvs from '../../../assets/lessons/color-and-export-the-rock/before-uvs.png';
+import uvWorkspace from '../../../assets/lessons/color-and-export-the-rock/uv-workspace.png';
+import syncOff from '../../../assets/lessons/color-and-export-the-rock/sync-off.png';
+import uvCollapsed from '../../../assets/lessons/color-and-export-the-rock/uv-collapsed.png';
+import selectTop from '../../../assets/lessons/color-and-export-the-rock/select-top.png';
+import colored from '../../../assets/lessons/color-and-export-the-rock/colored.png';
+import renameCollection from '../../../assets/lessons/color-and-export-the-rock/rename-collection.png';
+import addExporter from '../../../assets/lessons/color-and-export-the-rock/add-exporter.png';
+import exporterPanel from '../../../assets/lessons/color-and-export-the-rock/exporter-panel.png';
+import exportFolder from '../../../assets/lessons/color-and-export-the-rock/export-folder.png';
+import exportName from '../../../assets/lessons/color-and-export-the-rock/export-name.png';
+import imagesMenu from '../../../assets/lessons/color-and-export-the-rock/images-menu.png';
+import exporterSettings from '../../../assets/lessons/color-and-export-the-rock/exporter-settings.png';
+
+## What you will build
+
+Your rock, colored from your palette: a light top, darker sides, and a darkest base, so it looks lit from above even before Godot's sun touches it. Then you export it as `rock_small.glb`, the file Godot imports in the next lesson.
+
+<Figure
+	src={result}
+	alt="The rock in Blender's viewport in warm stone colors: a light gray-beige top and mid gray-brown sides, with soft rounded edges."
+	caption="The reference rock after this lesson, colored from the stone ramp."
+/>
+
+## How a model takes colors from the palette
+
+A [UV](/reference/glossary/#uv) is a point on an image that a point of the model reads its color from. Normally UVs spread a model's surface over a painted picture. Your palette is not a picture but a set of flat swatches, so you do the opposite: you squeeze all the UVs of a group of faces into **one point** and put that point in the middle of a swatch. Every face in the group then takes that swatch's color, exactly.
+
+You use three swatches of your first ramp, the stone:
+
+| Faces | Swatch | Why |
+|---|---|---|
+| The sides | Dark, the second swatch | Most of what you see from the game camera |
+| The top | Light, the third swatch | Faces the sky, so it reads lighter, as painted stone does |
+| The base | Shadow, the first swatch | Barely seen; a darker foot sets the rock into the ground |
+
+Swatch positions are given as numbers from 0 to 1 across the image (the glossary calls them U and V; Blender's UV Editor labels them X and Y), measured from its **bottom left** corner. For your 8 by 8 palette, the middle of the swatch in column `c` and row `r`, both counted from 1 at the top left, is at:
+
+- **X** = (`c` - 0.5) / 8
+- **Y** = 1 - (`r` - 0.5) / 8
+
+So the first row's swatches are at X `0.0625`, `0.1875`, `0.3125`, `0.4375`, and so on, all at Y `0.9375`.
+
+## Open the rock and name its mesh
+
+<Steps>
+
+1. Open `rock_small.blend` in Blender: choose **File > Open Recent** and pick it, or open it from its folder.
+
+2. An object holds a **mesh**, the shape data, and the mesh has its own name, still `Cube` from the startup file. Godot builds the names of the imported mesh from it, so make it match: in the **Properties** editor, click the **Data** tab (the green triangle, near the bottom of the column of tabs). Click the name field at its top, press <Kbd keys="Ctrl+A" mac="Cmd+A" />, type `rock_small`, and press <Kbd keys="Enter" />.
+
+	<Figure
+		src={meshName}
+		alt="The Data tab of the Properties editor: the path rock_small, then a mesh named rock_small, with the name field at the top reading rock_small."
+		caption="The mesh named after its object."
+	/>
+
+</Steps>
+
+## A palette material
+
+<Steps>
+
+1. Click the **Material** tab, the last one, a red and white checkered ball. The cube you started from came with Blender's default material, named **Material**.
+
+	<Figure
+		src={materialTab}
+		alt="The Material tab: a material slot named Material, the name field Material, and the Surface panel with Surface Principled BSDF and Base Color light gray."
+		caption="The material your startup cube carried along."
+	/>
+
+2. Click the material's name field (beside the round icon below the list), press <Kbd keys="Ctrl+A" mac="Cmd+A" />, type `palette`, and press <Kbd keys="Enter" />. Every model you color from the palette uses a material of this name, and in lesson 11 they all share one material in Godot.
+
+3. Find **Base Color** in the **Surface** panel. Click the small yellow dot to the left of its color field. A menu of node types opens; under **Texture**, click **Image Texture**.
+
+	<Figure
+		src={baseColorMenu}
+		alt="A wide menu beside the Base Color row, in columns: Input, Texture, Color, and Converter. The Texture column lists Brick Texture, Checker Texture, Environment Texture, Gradient Texture, Image Texture, and more."
+		caption="Image Texture is in the Texture column."
+	/>
+
+4. Base Color now reads **Image Texture**, with **New** and **Open** buttons below it. Click **Open**. Blender's File Browser opens.
+
+	<Figure
+		src={imageTexture}
+		alt="The Surface panel: Base Color set to Image Texture, with New and Open buttons, and below them Linear, Flat, and Repeat."
+		caption="The image texture, waiting for an image."
+	/>
+
+5. Click the path field at the top, press <Kbd keys="Ctrl+A" mac="Cmd+A" />, type the path of your project's `art\palette\` folder, and press <Kbd keys="Enter" />. Click `palette.png` in the list, then **Open Image** at the bottom right.
+
+	<Figure
+		src={openImage}
+		alt="The top of the File Browser: the path field ending in art\palette\, and the file list with palette.png."
+		caption="Your palette in the File Browser. Blender stores the path relative to the .blend file, so the project can move."
+	/>
+
+	<Figure
+		src={openImageButton}
+		alt="The bottom of the File Browser: the file name palette.png, and the Open Image and Cancel buttons."
+		caption="Clicking the file fills in its name; then click Open Image."
+	/>
+
+6. Below the image's name, the first menu reads **Linear**. Click it and choose **Closest**.
+
+	<Figure
+		src={interpolation}
+		alt="The Interpolation menu open under the image: Linear, Closest, Cubic, and Smart."
+		caption="Closest reads each pixel as it is, with no blending."
+	/>
+
+	<Aside type="note" title="Why Closest">
+	**Linear** blends neighboring pixels to smooth a picture. On a palette, it would mix two swatches wherever a model reads near their border. **Closest** keeps every swatch pure. Godot's material gets the same choice in the next lesson.
+	</Aside>
+
+7. Show textures in the viewport: at the top right of the 3D view, click the small arrow to the right of the four round shading buttons. In the **Viewport Shading** panel, under **Color**, in the **Object** row, click **Texture**. Press <Kbd keys="Esc" /> to close the panel.
+
+	<Figure
+		src={shadingPopover}
+		alt="The Viewport Shading panel: Lighting Studio, then Color with Wireframe options and Object options Material, Object, Random, Attribute, Texture, and Custom."
+		caption="Color: Texture shows each object's image in the viewport."
+	/>
+
+</Steps>
+
+The rock now shows patches of your palette in strange places. Its UVs are still the cube's original layout, spread across the whole image, so every face reads a different part of it.
+
+<Figure
+	src={beforeUvs}
+	alt="The rock in the viewport covered in patches of the palette: a beige top, a white patch on the left side, and green and dark blue-gray patches."
+	caption="Before: the cube's old UVs land on many swatches and on the white below them."
+/>
+
+## Point the UVs at swatches
+
+<Steps>
+
+1. Click the **UV Editing** tab at the top of the window. Blender switches to Edit Mode. The **UV Editor** on the left shows your palette with the rock's UVs drawn over it; the 3D view is on the right.
+
+	<Figure
+		src={uvWorkspace}
+		alt="The UV Editing workspace: on the left the UV Editor shows the palette image with the cube's UV layout drawn over it as a cross of squares; on the right a 3D view in Edit Mode shows the small rock."
+		caption="The UV Editor shows the image the material uses."
+	/>
+
+2. At the left of the UV Editor's header, click the blue button with two arrows, **UV Sync Selection**, to turn it off; it turns gray. With it on, selecting faces also selects the corners they share with their neighbors, and the next steps would drag those neighbors' colors along.
+
+	<Figure
+		src={syncOff}
+		alt="The left end of the UV Editor's header: the editor type menu, then the UV Sync Selection button with two arrows, now gray, then the selection mode buttons."
+		caption="UV Sync Selection off: the UV Editor now shows and moves only the UVs of the faces selected in the 3D view."
+	/>
+
+3. Move the pointer over the 3D view on the right. Press <Kbd keys="3" /> for face selection and <Kbd keys="A" /> to select every face.
+
+4. Move the pointer over the UV Editor and press <Kbd keys="A" /> to select all the UVs it shows. Press <Kbd keys="S" />, type `0`, and press <Kbd keys="Enter" />. Scaling by zero squeezes all the UVs into one point.
+
+5. Still over the UV Editor, press <Kbd keys="N" /> to open its Sidebar. On its **Image** tab, under **UV Vertex**, click **X**, press <Kbd keys="Ctrl+A" mac="Cmd+A" />, type `0.1875`, and press <Kbd keys="Enter" />. Set **Y** to `0.9375` the same way. The point jumps to the middle of the stone ramp's dark swatch. The rock now takes that color; you see it when you go back to the Layout workspace.
+
+	<Figure
+		src={uvCollapsed}
+		alt="The UV Editor with its Sidebar: UV Vertex X 0.188 and Y 0.938, and the palette image with one small point on the second swatch of the top row."
+		caption="All the UVs in one point, in the middle of the dark stone swatch. The fields show three decimals; the value you typed is kept."
+	/>
+
+6. Now the top. Move the pointer over the 3D view, press <Kbd keys="Numpad 7" /> to look from above and <Kbd keys="Numpad ." /> to zoom in. Click one of the four faces on top of the rock, then hold <Kbd keys="Shift" /> and click the other three.
+
+	<Figure
+		src={selectTop}
+		alt="The rock from the top in Edit Mode, with the four faces of its top selected and highlighted."
+		caption="The four top faces selected, shown in a full-width 3D view; yours is the narrower one beside the UV Editor."
+	/>
+
+7. Over the UV Editor, press <Kbd keys="A" />, then <Kbd keys="S" />, type `0`, and press <Kbd keys="Enter" />. Set **X** to `0.3125` and **Y** to `0.9375`: the light swatch.
+
+8. Now the base. Over the 3D view, press <Kbd keys="Ctrl+Numpad 7" /> to look from below, then <Kbd keys="Numpad ." />. Click one of the four faces of the base and <Kbd keys="Shift" />-click the other three.
+
+9. Over the UV Editor, select them with <Kbd keys="A" /> and collapse them with <Kbd keys="S" />, `0`, <Kbd keys="Enter" />, and set **X** to `0.0625` and **Y** to `0.9375`: the shadow swatch.
+
+10. Click the **Layout** tab. If the 3D view's header says **Edit Mode**, press <Kbd keys="Tab" /> for Object Mode. Orbit around your colored rock.
+
+	<Figure
+		src={colored}
+		alt="The rock in the Layout workspace: light warm gray top and darker sides, with the color change running along the rounded edges."
+		caption="Where two colors meet, the change runs along the rounded edge. At a corner, where three faces meet, it can wander, as at the front left here; from the game camera it does not show."
+	/>
+
+</Steps>
+
+<Aside type="note" title="Why the bevels look right">
+The Bevel modifier builds its rounded edges after your UVs, and blends the UVs of the two faces it joins. The light and dark swatches sit side by side in your palette (lesson 7 made sure of that), so a bevel between them only ever reads those two colors, with the change halfway across.
+</Aside>
+
+## A collection exporter
+
+[glTF](/reference/glossary/#gltf) is the open file format for 3D models that Godot reads best; a `.glb` file is a glTF model packed into one file. Blender can remember export settings per **collection**, the folders in the Outliner, so re-exporting later is one click.
+
+<Steps>
+
+1. In the **Outliner**, click **Collection**, press <Kbd keys="F2" /> with the pointer over the Outliner, press <Kbd keys="Ctrl+A" mac="Cmd+A" />, type `rock_small`, and press <Kbd keys="Enter" />. One collection per exported model keeps every export separate.
+
+	<Figure
+		src={renameCollection}
+		alt="The Outliner with the collection's name being edited to rock_small, and the rock_small object inside it."
+		caption="The collection named after the model."
+	/>
+
+2. In the **Properties** editor, click the **Collection** tab, a white box icon. Find the **Exporters** panel and click the **+** at its right. Choose **glTF 2.0**.
+
+	<Figure
+		src={addExporter}
+		alt="The Exporters panel with its add menu open: Alembic, Universal Scene Description, Wavefront OBJ, Stanford PLY, STL, FBX, and glTF 2.0."
+		caption="Exporters, +, glTF 2.0."
+	/>
+
+	<Figure
+		src={exporterPanel}
+		alt="The new glTF 2.0 exporter: File Path //rock_small.glb, Format glTF Binary (.glb), Copyright, and closed sections Collection, Include, Transform, Data, and Animation with its box checked. An Export All button sits above."
+		caption="The exporter starts with the file beside the .blend and the GLB format."
+	/>
+
+3. The **File Path** points next to your `.blend` (`//` means the folder of the `.blend`), but the exported model belongs in `art`. Click the folder button at the right of **File Path**. In the File Browser, click the path field, press <Kbd keys="Ctrl+A" mac="Cmd+A" />, type the path of your project's `art\nature\rock_small\` folder, and press <Kbd keys="Enter" />. Blender asks **Create new directory?**; click **Create**.
+
+	<Figure
+		src={exportFolder}
+		alt="A box asking Create new directory? with Create and Cancel buttons."
+		caption="The folder in art does not exist yet."
+	/>
+
+4. Click the file name field at the bottom, press <Kbd keys="Ctrl+A" mac="Cmd+A" />, type `rock_small.glb`, press <Kbd keys="Enter" />, and click **Accept**.
+
+	<Figure
+		src={exportName}
+		alt="The bottom of the File Browser: the file name rock_small.glb, and the Accept and Cancel buttons."
+		caption="Accept sets the exporter's file path."
+	/>
+
+5. Open the exporter's **Data** section, then **Mesh** inside it (roll the mouse wheel over the Properties editor to scroll down). Check **Apply Modifiers**. Leave **UVs** and **Normals** checked.
+
+6. Uncheck the box beside **Animation**: the rock has none.
+
+7. Open **Material** in the **Data** section. Set **Images** to **None**.
+
+	<Figure
+		src={imagesMenu}
+		alt="The Material section with the Images menu open: Automatic, JPEG Format (.jpg), WebP Format, and None."
+		caption="Images: None."
+	/>
+
+	<Figure
+		src={exporterSettings}
+		alt="The exporter's settings after the changes: File Path pointing into art, Mesh with Apply Modifiers, UVs, and Normals checked, Material with Materials Export and Images None, and Animation unchecked."
+		caption="The finished exporter."
+	/>
+
+8. Click the export button at the right end of the exporter's **glTF 2.0** title, an arrow pointing up out of a tray. The status bar at the bottom says the file was exported.
+
+9. Press <Kbd keys="Ctrl+S" mac="Cmd+S" /> to save the `.blend`, with its exporter.
+
+</Steps>
+
+<Aside type="note" title="Why these settings">
+- **Apply Modifiers** exports the rock as you see it, bevels and weighted normals included. Without it, Godot gets the blocky mesh under the modifiers.
+- **Images: None** leaves the palette out of the file. Every model would otherwise carry its own copy of it, and those copies would not change when you repaint the palette. In the next lesson Godot gives every model one shared palette material instead.
+- **Animation** off: a rock has no animation, so there is nothing to export.
+- Everything else stays at Blender's defaults, including **+Y Up** under **Transform**, which turns Blender's Z up into Godot's Y up, as lesson 8 described.
+</Aside>
+
+## Try it
+
+- Open your project's `art\nature\rock_small` folder in File Explorer. `rock_small.glb` is there, a few kilobytes in size.
+- In Blender, look at the **Exporters** panel: the **Export All** button above your exporter runs every exporter of this collection. When you change the rock later, one click there updates the `.glb`. **File > Export All Collections** does the same for every collection in the file.
+
+## If it does not work
+
+- **The rock shows white or gray instead of palette colors.** The viewport's **Color** is not **Texture**, or the image is not loaded in the material. Check both.
+- **A side face is half light or half dark.** **UV Sync Selection** was on when you collapsed the top or base, so the side faces' shared corners moved too. Undo back to before the collapse, turn it off, and collapse again.
+- **A swatch's edge or a neighbor's color shows on the rock.** The image's interpolation is **Linear**; set it to **Closest**. Or a UV point is not in a swatch's middle: check the X and Y values.
+- **Scaling by 0 squeezed the whole rock.** The pointer was over the 3D view, so you scaled the mesh. Undo with <Kbd keys="Ctrl+Z" mac="Cmd+Z" />, move the pointer over the UV Editor, and try again.
+- **The UV Editor shows nothing.** No faces are selected in the 3D view, or the 3D view is not in Edit Mode. With UV Sync Selection off, the UV Editor shows only the selected faces' UVs.
+- **Clicking a face selected a different one.** In the top and bottom views, click near the middle of a face. Check the four highlighted faces before you collapse them.
+- **The .glb is in `art_source` instead of `art`.** The file path still starts with `//rock_small.glb`. Set it with the folder button again and export.
+- **Godot later shows the rock without bevels.** **Apply Modifiers** was off; check it and export again.
+
+## Checkpoint
+
+<FileTree>
+- art
+  - nature
+    - rock_small
+      - **rock_small.glb**
+- art_source
+  - nature
+    - rock_small
+      - rock_small.blend now has the palette material, the UVs, and the exporter
+</FileTree>
+
+Your rock's top, sides, and base each take one swatch of your stone ramp, and `rock_small.glb` holds the beveled rock with its UVs and a material named `palette`, but no image.
+
+Commit your work: `git add .` and `git commit -m "Color and export the small rock"`. In the next lesson, you bring the rock into Godot and place it in your meadow.
+
+<Checkpoint />

@@ -2,6 +2,8 @@
 
 [ext_resource type="PackedScene" uid="uid://b60qe1fx138cc" path="res://world/camera/camera_rig.tscn" id="1_1sye5"]
 [ext_resource type="PackedScene" uid="uid://da4v4dtydqec2" path="res://world/player/player.tscn" id="2_fbj5a"]
+[ext_resource type="PackedScene" uid="uid://pq60ng2nyl31" path="res://art/nature/rock_small/rock_small.tscn" id="3_k6xl7"]
+[ext_resource type="PackedScene" uid="uid://cggdefty5665l" path="res://art/nature/rock_large/rock_large.tscn" id="4_wedpq"]
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_uor45"]
 size = Vector2(20, 20)
@@ -40,3 +42,26 @@ shadow_enabled = true
 Target = NodePath("../Player")
 
 [node name="Player" parent="." unique_id=1368437750 instance=ExtResource("2_fbj5a")]
+
+[node name="Rocks" type="Node3D" parent="." unique_id=1203303629]
+
+[node name="RockSmall" parent="Rocks" unique_id=388470486 instance=ExtResource("3_k6xl7")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, 0)
+
+[node name="RockSmall2" parent="Rocks" unique_id=1565826278 instance=ExtResource("3_k6xl7")]
+transform = Transform3D(1.0648977, 0, 0.74564934, 0, 1.3, 0, -0.74564934, 0, 1.0648977, -3.5, 0, 2)
+
+[node name="RockSmall3" parent="Rocks" unique_id=1219355834 instance=ExtResource("3_k6xl7")]
+transform = Transform3D(0.39999998, 0, -0.69282037, 0, 0.8, 0, 0.69282037, 0, 0.39999998, 1.5, 0, -4)
+
+[node name="RockSmall4" parent="Rocks" unique_id=185138248 instance=ExtResource("3_k6xl7")]
+transform = Transform3D(-0.50000006, 0, 0.8660254, 0, 1, 0, -0.8660254, 0, -0.50000006, 0.6, 0, -4.6)
+
+[node name="RockLarge" parent="Rocks" unique_id=1119493070 instance=ExtResource("4_wedpq")]
+transform = Transform3D(0.9396926, 0, 0.34202012, 0, 1, 0, -0.34202012, 0, 0.9396926, -5, 0, 0)
+
+[node name="RockLarge2" parent="Rocks" unique_id=639046425 instance=ExtResource("4_wedpq")]
+transform = Transform3D(-0.37622213, 0, -1.0336618, 0, 0.7, 0, 1.0336618, 0, -0.37622213, 3.2, 0, -4.8)
+
+[node name="RockLarge3" parent="Rocks" unique_id=1159581768 instance=ExtResource("4_wedpq")]
+transform = Transform3D(-0.84572333, 0, -0.30781817, 0, 0.8, 0, 0.30781817, 0, -0.84572333, -3.6, 0, 3.4)

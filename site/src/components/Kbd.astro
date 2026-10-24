@@ -9,10 +9,12 @@ const { keys, mac } = Astro.props;
 const split = (combo: string) => combo.split('+').map((key) => key.trim());
 ---
 
-<span class="hotkey">{split(keys).map((key, i) => <>{i > 0 && <span class="plus">+</span>}<kbd>{key}</kbd></>)}{mac && <span class="mac">(macOS: {split(mac).map((key, i) => <>{i > 0 && <span class="plus">+</span>}<kbd>{key}</kbd></>)})</span>}</span>
+<span class="hotkey"><span class="keys">{split(keys).map((key, i) => <>{i > 0 && <span class="plus">+</span>}<kbd>{key}</kbd></>)}</span>{mac && <span class="mac">(macOS: {split(mac).map((key, i) => <>{i > 0 && <span class="plus">+</span>}<kbd>{key}</kbd></>)})</span>}</span>
 
 <style>
-	.hotkey {
+	/* Each combination stays on one line; on a narrow screen the macOS keys may move to the next. */
+	.keys,
+	.mac {
 		white-space: nowrap;
 	}
 

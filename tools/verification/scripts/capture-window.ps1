@@ -1,6 +1,6 @@
 # Saves a PNG of a top-level window, found by process id or by a title substring, using PrintWindow so the window
-# need not be in front. Usage: capture-window.ps1 -Title "Godot" -Out C:\path\shot.png [-ProcessId 1234]
-param([string]$Title, [int]$ProcessId, [Parameter(Mandatory)][string]$Out)
+# need not be in front. Usage: capture-window.ps1 -Title "Godot" -Out C:\path\shot.png [-ProcessId 1234] [-Handle 0x1234]
+param([string]$Title, [int]$ProcessId, [long]$Handle, [Parameter(Mandatory)][string]$Out)
 Add-Type -AssemblyName System.Drawing
 Add-Type @'
 using System;
@@ -31,7 +31,7 @@ $callback = [WindowCapture+EnumProc]{
     if ($titleOk -and $pidOk -and $text.Length -gt 0) { $script:found = $hwnd; return $false }
     return $true
 }
-[void][WindowCapture]::EnumWindows($callback, [IntPtr]::Zero)
+if ($Handle) { $found = [IntPtr]$Handle } else { [void][WindowCapture]::EnumWindows($callback, [IntPtr]::Zero) }
 if ($found -eq [IntPtr]::Zero) { throw "No visible window matched title '$Title' pid $ProcessId." }
 $rect = New-Object WindowCapture+RECT
 [void][WindowCapture]::GetWindowRect($found, [ref]$rect)

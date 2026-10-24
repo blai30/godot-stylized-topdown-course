@@ -1,0 +1,280 @@
+---
+title: Blender for Godot
+description: Find your way around Blender, learn how its units and axes become Godot's, save a startup file made for game models, and learn the hotkeys you will use every day.
+sidebar:
+  order: 8
+  label: 8. Blender for Godot
+lesson:
+  number: 8
+  minutes: 45
+  learn:
+    - How Blender's screen is laid out, and how to move around the 3D view
+    - Why one Blender unit is one meter in Godot, and how Blender's axes become Godot's
+    - Which way a model faces so it faces forward in Godot
+    - How to save a startup file, and the hotkeys you will use every day
+  prerequisites: [1]
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import result from '../../../assets/lessons/blender-for-godot/result.png';
+import quickSetup from '../../../assets/lessons/blender-for-godot/quick-setup.png';
+import layout from '../../../assets/lessons/blender-for-godot/layout.png';
+import viewPie from '../../../assets/lessons/blender-for-godot/view-pie.png';
+import viewpointMenu from '../../../assets/lessons/blender-for-godot/viewpoint-menu.png';
+import units from '../../../assets/lessons/blender-for-godot/units.png';
+import sidebar from '../../../assets/lessons/blender-for-godot/sidebar.png';
+import frontView from '../../../assets/lessons/blender-for-godot/front-view.png';
+import outlinerSelected from '../../../assets/lessons/blender-for-godot/outliner-selected.png';
+import statistics from '../../../assets/lessons/blender-for-godot/statistics.png';
+import defaultsMenu from '../../../assets/lessons/blender-for-godot/defaults-menu.png';
+import overwrite from '../../../assets/lessons/blender-for-godot/overwrite.png';
+import newMenu from '../../../assets/lessons/blender-for-godot/new-menu.png';
+import saveChanges from '../../../assets/lessons/blender-for-godot/save-changes.png';
+
+## What you will build
+
+Blender, set up for making game models. You learn your way around it, see how its sizes and directions turn into Godot's, and save a **startup file**: the scene every new Blender file starts from. Yours will hold a single cube to model from, with the scene's triangle count always on screen.
+
+<Figure
+	src={result}
+	alt="Blender's Layout workspace with a single selected cube in the 3D view and, at its top left, the statistics: Objects 1/1, Vertices 8/8, Edges 12/12, Faces 6/6, Triangles 12/12. The Outliner at the top right lists only Collection and Cube."
+	caption="A new file from your startup file: one cube, and the statistics in the top left corner."
+/>
+
+## The first launch
+
+<Steps>
+
+1. Open Blender. The first time, a **Quick Setup** window appears over the splash picture, with **Language**, **Theme**, **Keymap**, **Mouse Select**, and **Spacebar Action**. If you clicked **Continue** there when you opened Blender in lesson 1, Blender shows the normal splash instead; go to step 3.
+
+	<Figure
+		src={quickSetup}
+		alt="Blender's Quick Setup: Language English (US), Theme Blender Dark, Keymap Blender, Mouse Select Left, Spacebar Action Play, and a Continue button."
+		caption="The defaults are what this course uses: the Blender keymap and selecting with the left mouse button."
+	/>
+
+2. Leave every option as it is and click **Continue**. Blender saves your preferences, says **Preferences saved** at the bottom, and shows the normal splash with **New File** and **Getting Started** lists.
+
+3. Press <Kbd keys="Esc" /> to close the splash. From now on Blender saves your preferences by itself when you quit.
+
+</Steps>
+
+## The screen
+
+Blender opens on the **Layout** workspace. A **workspace** is a screen layout for one kind of work; their tabs run along the top (Layout, Modeling, Sculpting, UV Editing, and more). Layout has four areas:
+
+- The **3D Viewport** in the middle, where you see and edit the scene. Its **header** along the top has the menus **View**, **Select**, **Add**, and **Object**, and at its left edge sits the **toolbar** of tools.
+- The **Outliner** at the top right, a list of everything in the scene.
+- The **Properties** editor at the bottom right, with a column of tabs for the selected object, its modifiers, its material, the scene, and more.
+- The **Timeline** at the bottom, for animation, which game props do not need.
+
+<Figure
+	src={layout}
+	alt="Blender's whole window: workspace tabs along the top, the 3D Viewport in the middle with a cube, a camera, and a light, the Outliner at the top right listing Camera, Cube, and Light, the Properties editor below it showing the cube's Transform, and the Timeline along the bottom."
+	caption="The Layout workspace on a first launch, with Blender's own default scene: a cube, a camera, and a light."
+/>
+
+<Aside type="tip" title="Hotkeys follow the mouse">
+A Blender hotkey acts on the area under the mouse pointer, not on the area you clicked last. When a hotkey does nothing, or something unexpected, check where the pointer is.
+</Aside>
+
+## Moving around the 3D view
+
+Move the mouse pointer over the 3D Viewport and try each of these:
+
+- Orbit around the scene: drag with the middle mouse button (press the wheel)
+- Pan: <Kbd keys="Shift" /> and drag with the middle mouse button
+- Zoom: roll the mouse wheel
+- Show everything: <Kbd keys="Home" />
+- Show the selected object: <Kbd keys="Numpad ." />
+- Look from the front, the right, the top: <Kbd keys="Numpad 1" />, <Kbd keys="Numpad 3" />, <Kbd keys="Numpad 7" />
+- Look from the back, the left, the bottom: <Kbd keys="Ctrl+Numpad 1" />, <Kbd keys="Ctrl+Numpad 3" />, <Kbd keys="Ctrl+Numpad 7" />
+- Switch between perspective and orthographic: <Kbd keys="Numpad 5" />
+
+The front, side, and top views are [orthographic](/reference/glossary/#orthographic-projection), flat like your game camera, so the label in the top left corner of the view changes to, for example, **Front Orthographic**. Orbiting turns the view back to perspective.
+
+No number pad on your keyboard? Use either of these instead:
+
+- Press <Kbd keys="`" />, the key left of <Kbd keys="1" />, for the **View** pie menu, a round menu that opens around the pointer, and click a direction. The small numbers in it pick a slice from the number row; they are not the number pad keys.
+- Use the 3D Viewport's **View > Viewpoint** menu, which also lists each view's number pad key.
+
+On a Mac keyboard without **Home** or forward **Delete** keys, press <Kbd keys="Fn+Left" /> for Home, and <Kbd keys="X" /> instead of Delete.
+
+<Figure
+	src={viewPie}
+	alt="The View pie menu around the pointer: Top, Bottom, Front, Back, Left, Right, View Camera, and View Selected."
+	caption="The View pie menu."
+/>
+
+<Figure
+	src={viewpointMenu}
+	alt="The 3D Viewport's View menu with Viewpoint open: Camera Numpad 0, Top Numpad 7, Bottom Ctrl Numpad 7, Front Numpad 1, Back Ctrl Numpad 1, Right Numpad 3, Left Ctrl Numpad 3."
+	caption="View > Viewpoint, with each view's hotkey."
+/>
+
+<Aside type="note" title="No middle mouse button?">
+On a laptop touchpad, choose **Edit > Preferences**, open the **Input** section, and check **Emulate 3 Button Mouse**. <Kbd keys="Alt" /> and a left drag then orbits. The small axis gizmo at the top right of the 3D view also orbits when you drag it, and clicking one of its colored circles looks along that axis.
+</Aside>
+
+## One unit is one meter
+
+Godot measures everything in meters: your player capsule is 1.8 m tall and the meadow is 20 m across. Blender can work in any unit, so check that its units match.
+
+<Steps>
+
+1. In the **Properties** editor, click the **Scene** tab: the white icon of a cone and two balls, fifth from the top in the column of tabs at its left.
+
+2. Click **Units** to open the panel. **Unit System** is **Metric**, **Unit Scale** is `1.000000`, and **Length** is **Meters**. These are Blender's defaults; leave them.
+
+	<Figure
+		src={units}
+		alt="The Scene tab of the Properties editor with the Units panel open: Unit System Metric, Unit Scale 1.000000, Separate Units unchecked, Rotation Degrees, Length Meters, Mass Kilograms, Time Seconds, Temperature Kelvin."
+		caption="Metric units at scale 1: one Blender unit is one meter, the same as one Godot unit."
+	/>
+
+3. Move the pointer over the 3D view and press <Kbd keys="N" /> to open the **Sidebar**. Its **Item** tab shows the selected cube's **Location**, **Rotation**, **Scale**, and **Dimensions**: the default cube is 2 m on each side. Press <Kbd keys="N" /> again to close it.
+
+	<Figure
+		src={sidebar}
+		alt="The Sidebar's Item tab: Location X, Y, and Z 0 m, Rotation 0 degrees, Mode XYZ Euler, Scale 1.000, and Dimensions X 2 m."
+		caption="The Sidebar shows sizes in meters."
+	/>
+
+</Steps>
+
+<Aside type="note" title="Why scale 1 matters">
+With metric units at scale 1, a 0.6 m rock in Blender arrives in Godot as a 0.6 m rock. Any other scale would make every model arrive too big or too small, and you would have to fix each one by hand.
+</Aside>
+
+## Axes and the model front
+
+Blender and Godot point their axes differently. In Blender, **Z** points up and the ground is the X and Y plane. In Godot, **Y** points up and the ground is X and Z. You never convert by hand: the [glTF](/reference/glossary/#gltf) exporter you use in lesson 10 turns Blender's Z up into Godot's Y up, with its **+Y Up** option, which is on by default.
+
+Facing matters too. Godot calls **+Z** the **model front**, the way a model faces when it is not rotated; your player's nose in lesson 6 points along +Z, because `LookAt` with `useModelFront` turns +Z toward where the player walks. Blender's **front** view (<Kbd keys="Numpad 1" />) looks at a model from its **-Y** side, and the exporter turns Blender's -Y into Godot's +Z.
+
+So the rule is: **model everything facing you in Blender's front view.** Whatever faces you there faces forward in Godot.
+
+<Figure
+	src={frontView}
+	alt="Blender's 3D view from the front, labeled Front Orthographic, with the cube in the middle and the axis gizmo at the top right showing X to the right and Z up; the green Y axis points away from the viewer."
+	caption="The front view looks along +Y, so you see the model's -Y side, which becomes its front in Godot."
+/>
+
+Rocks have no front, so this rule waits until the character in Module 7. The two other rules you use from the next lesson on are about the **origin**, the point an object is placed and turned by: put it at the center of the model's base, and keep the model resting on the ground at zero height, so it sits on the ground wherever Godot places it.
+
+## A startup file for game models
+
+Blender's default scene has a camera and a light for rendering pictures. Game models need neither: Godot has its own camera and lights. You will also check the triangle count of every model, so keep it on screen.
+
+<Steps>
+
+1. In the **Outliner**, click **Camera**, then hold <Kbd keys="Ctrl" mac="Cmd" /> and click **Light**. Both are selected.
+
+	<Figure
+		src={outlinerSelected}
+		alt="The Outliner with Camera and Light highlighted and Cube not."
+		caption="Camera and Light selected in the Outliner."
+	/>
+
+2. Move the pointer over the 3D view and press <Kbd keys="Delete" />. The Outliner now lists only **Cube**.
+
+3. At the top right of the 3D view, find the icon of two overlapping circles, **Viewport Overlays**, and click the small arrow to its right. In the panel that opens, under **Text**, check **Statistics**. Press <Kbd keys="Esc" /> to close the panel. The scene's counts appear in the top left corner of the 3D view.
+
+	<Figure
+		src={statistics}
+		alt="The Viewport Overlays panel: under Text, General Info and Statistics are checked."
+		caption="Statistics, under Text in the Viewport Overlays panel."
+	/>
+
+4. Click the cube in the 3D view to select it, so every new file starts with it selected. Then press <Kbd keys="Home" /> to frame it: the startup file keeps the view too. If you are looking at the cube from below the grid, first orbit with the middle mouse button until you look down at it from above.
+
+5. Choose **File > Defaults > Save Startup File**.
+
+	<Figure
+		src={defaultsMenu}
+		alt="Blender's File menu with Defaults open, showing Save Startup File and Load Factory Settings."
+		caption="File > Defaults > Save Startup File."
+	/>
+
+6. Blender asks **Overwrite Startup File**. Click **Overwrite**. The status bar says **Startup file saved**.
+
+	<Figure
+		src={overwrite}
+		alt="A confirmation box: Overwrite Startup File. Blender will start next time as it is now. Buttons Overwrite and Cancel."
+		caption="Blender saves the scene, the view, and the open panels as they are now."
+	/>
+
+</Steps>
+
+<Aside type="note" title="What the startup file keeps">
+The startup file is a whole Blender scene: objects, the view angle, open panels, and overlays. Blender opens it when it starts and whenever you choose **File > New > General**. If you ever save a startup file you do not want, **File > Defaults > Load Factory Settings** brings back Blender's own defaults.
+</Aside>
+
+## Hotkeys you will use every day
+
+Keep the pointer over the 3D view. Object Mode is where you move whole objects, and Edit Mode is where you change a [mesh](/reference/glossary/#mesh)'s points; the list says where a key works in only one of them.
+
+- <Kbd keys="Tab" />: switch between Object Mode and Edit Mode
+- <Kbd keys="G" />, <Kbd keys="R" />, <Kbd keys="S" />: move (grab), rotate, scale. Then press <Kbd keys="X" />, <Kbd keys="Y" />, or <Kbd keys="Z" /> to lock to an axis, type an amount, and press <Kbd keys="Enter" />; right-click or <Kbd keys="Esc" /> cancels
+- <Kbd keys="A" />, <Kbd keys="Alt+A" />: select all, select nothing
+- <Kbd keys="Shift+D" />: duplicate
+- <Kbd keys="Delete" /> or <Kbd keys="X" />: delete (in Object Mode, <Kbd keys="X" /> asks first; in Edit Mode, both open a menu of what to delete)
+- <Kbd keys="Ctrl+Z" mac="Cmd+Z" />, <Kbd keys="Ctrl+Shift+Z" mac="Cmd+Shift+Z" />: undo, redo
+- <Kbd keys="N" />, <Kbd keys="T" />: show or hide the Sidebar, the toolbar
+- <Kbd keys="1" />, <Kbd keys="2" />, <Kbd keys="3" />: select vertices, edges, or faces (in Edit Mode)
+- <Kbd keys="Ctrl+R" />: loop cut (in Edit Mode)
+- <Kbd keys="Alt+Z" />: X-ray, to see and select through a model
+- <Kbd keys="Ctrl+A" />: apply a transform, such as the scale, to the mesh (in Object Mode)
+- <Kbd keys="Shift+A" />: add an object, or a mesh part in Edit Mode
+- <Kbd keys="F3" />: search for any command by name
+- <Kbd keys="Ctrl+S" mac="Cmd+S" />, <Kbd keys="Ctrl+Shift+S" mac="Cmd+Shift+S" />: save, save as
+
+You do not need to learn them now; each lesson names the hotkeys it uses, and this list is here to come back to.
+
+## Try it
+
+<Steps>
+
+1. Press <Kbd keys="Ctrl+N" mac="Cmd+N" /> with the pointer over the 3D view. The **New File** menu opens; click **General**.
+
+	<Figure
+		src={newMenu}
+		alt="The New File menu: General, 2D Animation, Sculpting, Storyboarding, VFX, and Video Editing."
+		caption="General starts a new file from your startup file."
+	/>
+
+2. You changed the scene since Blender started, so Blender asks **Save changes before closing?** Click **Don't Save**. Your startup file is already saved; this scene is only an untitled copy of it.
+
+	<Figure
+		src={saveChanges}
+		alt="A box asking Save changes before closing? Untitled.blend, with Save, Don't Save, and Cancel buttons."
+		caption="Don't Save: the startup file is already saved."
+	/>
+
+3. Check that the new file has only the cube, already selected, and the statistics in the top left corner.
+
+4. Press <Kbd keys="G" />, then <Kbd keys="X" />, type `2`, and press <Kbd keys="Enter" />. The cube moves 2 m along X: press <Kbd keys="N" /> and the Sidebar's **Location X** reads `2 m`.
+
+5. Press <Kbd keys="R" />, <Kbd keys="Z" />, type `45`, and press <Kbd keys="Enter" />. Then press <Kbd keys="S" />, type `0.5`, and press <Kbd keys="Enter" />. The cube turns 45 degrees and shrinks to half its size.
+
+6. Press <Kbd keys="Ctrl+Z" mac="Cmd+Z" /> three times. The cube is back at the center, unrotated, at its full size.
+
+</Steps>
+
+## If it does not work
+
+- **A hotkey does nothing or does something else.** The pointer was over another area, or a text field still had the keyboard. Move the pointer over the 3D view and press the key again.
+- **The number pad keys type numbers or do nothing.** Num Lock is off on some keyboards; turn it on. Or use the <Kbd keys="`" /> pie menu.
+- **You cannot orbit.** Your mouse has no middle button, or you are on a touchpad: turn on **Emulate 3 Button Mouse** (see above).
+- **Pressing Delete deleted the cube too.** The cube was selected along with the camera and light. Press <Kbd keys="Ctrl+Z" mac="Cmd+Z" />, then click only Camera and <Kbd keys="Ctrl" mac="Cmd" />-click Light in the Outliner.
+- **A new file still has a camera and light.** The startup file was not saved, or you clicked **Cancel**. Delete them again and choose **File > Defaults > Save Startup File**, then **Overwrite**.
+- **The statistics are missing in a new file.** Statistics was turned on after saving. Turn it on and save the startup file again.
+
+## Checkpoint
+
+Your project has no new files in this lesson: everything you changed lives in Blender's own settings. **File > New > General** opens a scene with only a selected cube, with the statistics shown in the top left of the 3D view, and Blender's units are metric at scale 1. In the next lesson, you model a rock from that cube.
+
+<Checkpoint />
