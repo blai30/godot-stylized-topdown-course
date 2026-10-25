@@ -1,0 +1,190 @@
+---
+title: The sun and its shadows
+description: Add one directional light as the sun, place it where top-down games put it, and tune its shadows for an orthographic camera so rocks and the player sit on the ground.
+sidebar:
+  order: 20
+  label: 20. The sun and its shadows
+lesson:
+  number: 20
+  minutes: 45
+  learn:
+    - Why the template's sun is a pale warm light from the top left
+    - Why an orthographic camera needs its far plane pulled in and Orthogonal shadows
+    - What shadow bias, normal bias, and blur do, and what goes wrong when they are off
+    - Why the same light will also be the moon
+  prerequisites: [4, 19]
+---
+
+import { Aside, FileTree, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import result from '../../../assets/lessons/the-sun/result.png';
+import resultClose from '../../../assets/lessons/the-sun/result-close.png';
+import newLight from '../../../assets/lessons/the-sun/new-light.png';
+import lightRows from '../../../assets/lessons/the-sun/light-rows.png';
+import sun from '../../../assets/lessons/the-sun/sun.png';
+import cameraFar from '../../../assets/lessons/the-sun/camera-far.png';
+import shadowModeRows from '../../../assets/lessons/the-sun/shadow-mode-rows.png';
+import orthogonal from '../../../assets/lessons/the-sun/orthogonal.png';
+import biasRows from '../../../assets/lessons/the-sun/bias-rows.png';
+
+## What you will build
+
+One sun, in the environment scene next to the sky, with soft shadows that fall down and to the right of everything, as they do in top-down game art.
+
+<Figure
+	src={result}
+	alt="The running game from above: the rocks and the player each cast a soft shadow down and to the right onto the grass and the path."
+	caption="The meadow with its sun."
+/>
+
+## The idea
+
+Lesson 4 gave the meadow a sun, a `DirectionalLight3D` with its shadows on, and lesson 19 put the sky in its own scene. Now the sun joins the sky, so the whole look of the world lives in one scene, and you tune it for the template.
+
+- **One light is the sun and the moon.** At night, lesson 21 turns this same light blue and dim, and points it somewhere else. Its shadows never switch off, because switching shadows from one light to another makes Godot build new shaders while the game runs, and the game stutters.
+- **The sun comes from the top left.** Top-down games light from the top left of the screen, so shadows fall toward you and to the right, where the camera sees them best, and the sides of things you see take the sky's blue.
+- **The sun is pale and warm.** A cream `#FFE2AD`, at energy `0.85`, a little below the full strength of white. The sky does the rest of the lighting.
+
+## Move the sun
+
+<Steps>
+
+1. Open `meadow.tscn`, select `Sun`, and press <Kbd keys="Delete" mac="Cmd+Backspace" />. Click **Delete** and save the meadow with <Kbd keys="Ctrl+S" mac="Cmd+S" />.
+
+2. Switch to the `world_environment` tab and select the root node. Click the **+** button at the top of the Scene dock, search for `DirectionalLight3D`, and click **Create**. Rename the new node `Sun`.
+
+3. In the Inspector, open **Shadow** and check **On**. Save the scene and switch to the meadow, then run the game with <Kbd keys="F5" mac="Cmd+B" />.
+
+	<Figure
+		src={newLight}
+		alt="The running game: the whole meadow is a dark green, the path almost black, the sand a dull gray, with no visible shadows."
+		caption="A new light points at the horizon, so it barely lights the ground."
+	/>
+
+</Steps>
+
+A new light points straight toward the horizon, so its light only grazes the ground, as you saw in lesson 4. The next step aims it.
+
+## Direction, color, and energy
+
+Select `Sun` in the `world_environment` tab. Set:
+
+- **Transform > Rotation** to `-62`, `225`, `0`. The first number tilts the light down by 62 degrees from the horizon, and the second turns it to come from the top left of the screen. Godot may show the second number as `-135`, the same direction;
+- **Light > Color** to `#FFE2AD`;
+- **Light > Energy** to `0.85`.
+
+<Figure
+	src={lightRows}
+	alt="The Inspector with the Sun's Directional Shadow, then Light with Color cream, Energy 0.85, and Shadow On."
+	caption="The sun's color and energy."
+/>
+
+Save the scene and run the game.
+
+<Figure
+	src={sun}
+	alt="The running game, zoomed in: a lit meadow, with a faint dark shadow beside the player and almost none beside the rocks."
+	caption="The meadow in sunlight, but the shadows are weak."
+/>
+
+The meadow is lit, and the grass is the calm green you want. The shadows are not good: the player's is faint, and the rocks' shadows hardly show. This is the orthographic camera at work, and the next two steps fix it.
+
+## Shadows under an orthographic camera
+
+Godot draws a directional light's shadow into a picture, the [shadow map](/reference/glossary/#shadow-map), that covers the area in front of the camera, out to a distance. By default it splits that area into four slices, to give shadows near a perspective camera more detail, and, under an orthographic camera, FactoryGame found that Godot sizes it to the camera's **Far** plane, which is 4000 meters by default. An orthographic camera has no use for splits, because everything is the same size on screen, and a shadow map stretched over a long range has little detail left.
+
+There are two changes:
+
+<Steps>
+
+1. Open `world/camera/camera_rig.tscn`, select `Camera3D`, and set **Far** to `100`. The camera is 60 meters from the ground along its view, so 100 covers the whole view with room to spare for tall trees. Save the scene with <Kbd keys="Ctrl+S" mac="Cmd+S" />.
+
+	<Figure
+		src={cameraFar}
+		alt="The Inspector with the Camera3D's Projection Orthogonal, Size 20, Near 0.05, and Far 100."
+		caption="A camera that only looks as far as it needs to."
+	/>
+
+2. Back in the `world_environment` tab, select `Sun`. Under **Directional Shadow**, set **Mode** to **Orthogonal** and **Fade Start** to `1.0`. Orthogonal uses one slice for the whole view, and a fade start of 1 keeps shadows at full strength to the end of the view. **Max Distance** is already `100`, the same as the camera's **Far**, so leave it.
+
+	<Figure
+		src={shadowModeRows}
+		alt="The Inspector's Directional Shadow section with Mode Orthogonal, Fade Start 1.0, Max Distance 100.0, and Pancake Size 20.0."
+		caption="One slice, no fade."
+	/>
+
+</Steps>
+
+Save the scene and run the game.
+
+<Figure
+	src={orthogonal}
+	alt="The running game, zoomed in: the player and each rock cast a crisp dark shadow down and to the right."
+	caption="The same view with the camera's far plane and Orthogonal shadows."
+/>
+
+<Aside type="note" title="Why not a bigger shadow map">
+You could raise the shadow map's size in Project Settings instead. That costs more memory and graphics-card time on every frame, and the shadows would still be spread over a needlessly long range. Pulling the camera's far plane in costs nothing.
+</Aside>
+
+## Bias and softness
+
+A shadow map is a picture of distances, and comparing a surface to it can go wrong in two ways. If the surface is judged to be behind its own shadow, it is striped with dark lines: this is shadow acne. If the correction is too strong, shadows detach from their objects and things look as if they float. The settings below move the correction.
+
+Under **Shadow**, set:
+
+- **Bias** to `0.03`: how far a surface is pushed toward the light before it is compared, in meters. The default is `0.1`, and the tighter value keeps shadows against their objects;
+- **Normal Bias** to `1.0`: how far it is pushed along its own surface direction. The default is `2.0`;
+- **Blur** to `1.5`: how soft the shadow's edge is;
+
+and under **Light**, set **Angular Distance** to `0.25`: the sun's apparent size in degrees, which softens a shadow more the farther it falls from its object. Keep it small: FactoryGame found that wide values made the shadows of small things vanish.
+
+<Figure
+	src={biasRows}
+	alt="The Inspector with the Sun's Light Angular Distance 0.25, and Shadow On with Bias 0.03, Normal Bias 1.0, and Blur 1.5."
+	caption="Shadow settings for this look."
+/>
+
+Save the scene and run the game, then zoom in with the mouse wheel.
+
+<Figure
+	src={resultClose}
+	alt="The running game, zoomed in: the rocks and the player sit on the ground, each with a soft shadow down and to the right."
+	caption="Soft shadows that keep their objects on the ground."
+/>
+
+The values are starting points that follow FactoryGame. If you change the sun's angle in a later lesson and see stripes or floating objects, these are the settings to nudge, a little at a time.
+
+## Try it
+
+- Change **Rotation**'s second number to `45` and run: the shadows swing to the left. Put it back to `225`.
+- Set **Bias** to `0` and run, then look for dark stripes on the rocks' faces. Put it back to `0.03`.
+- Set **Blur** to `4.0` and see the shadow edges soften. Put it back to `1.5`.
+
+## If it does not work
+
+- **The meadow has no shadows at all.** Check that **Shadow** is **On**, and that you saved the `world_environment` scene before running.
+- **The meadow is almost black.** The light still points at the horizon. Set its **Rotation**.
+- **The shadows are blurry and faint.** The camera's **Far** is still 4000, or the shadow **Mode** is still **PSSM 4 Split**.
+- **The shadows fade out toward the edges of the screen.** **Fade Start** is below `1.0`, or **Max Distance** is smaller than the camera's **Far**.
+- **The meadow has two suns.** The meadow still has its own `Sun`. Delete it.
+
+## Checkpoint
+
+Your project has these changes:
+
+<FileTree>
+- levels
+  - meadow.tscn updated
+- world
+  - camera
+    - camera_rig.tscn updated
+  - environment
+    - world_environment.tscn updated
+</FileTree>
+
+Commit your work: `git add .` and `git commit -m "The sun and its shadows"`. In lesson 21 you animate the sun, the sky, and the environment into a day.
+
+<Checkpoint />

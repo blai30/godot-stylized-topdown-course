@@ -1,0 +1,40 @@
+[gd_scene format=3 uid="uid://dpo347bmep5qf"]
+
+[ext_resource type="Shader" uid="uid://5nmk0h81vx0k" path="res://world/environment/sky.gdshader" id="1_m84nq"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_2jvpj"]
+shader = ExtResource("1_m84nq")
+shader_parameter/zenith_color = Color(0.31, 0.66, 1, 1)
+shader_parameter/horizon_color = Color(0.56, 0.78, 1, 1)
+shader_parameter/ground_darkening = 0.5
+
+[sub_resource type="Sky" id="Sky_f2x53"]
+sky_material = SubResource("ShaderMaterial_2jvpj")
+radiance_size = 2
+
+[sub_resource type="Environment" id="Environment_h2o67"]
+background_mode = 2
+background_energy_multiplier = 0.65
+sky = SubResource("Sky_f2x53")
+ambient_light_source = 3
+reflected_light_source = 2
+tonemap_mode = 4
+ssao_enabled = true
+ssao_radius = 1.5
+ssao_intensity = 1.0
+ssao_power = 1.0
+ssao_detail = 0.0
+glow_enabled = true
+glow_intensity = 0.45
+glow_bloom = 0.05
+glow_blend_mode = 2
+glow_hdr_threshold = 0.9
+fog_enabled = true
+fog_light_color = Color(0.72156864, 0.85882354, 1, 1)
+fog_sun_scatter = 0.15
+fog_density = 0.0006
+fog_aerial_perspective = 0.5
+fog_sky_affect = 0.0
+
+[node name="WorldEnvironment" type="WorldEnvironment" unique_id=756480353]
+environment = SubResource("Environment_h2o67")

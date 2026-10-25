@@ -1,0 +1,207 @@
+---
+title: 'DayClock: dusk, dawn, and moonlight'
+description: Write a small script that sets the day animation from a time of day, so the game can run a day, hold an hour, or jump to dusk, and see the sun and the moon trade places.
+sidebar:
+  order: 22
+  label: '22. DayClock: dusk, dawn, and moonlight'
+lesson:
+  number: 22
+  minutes: 40
+  learn:
+    - Why the game keeps the time of day as one number and lets an animation draw it
+    - How a script drives an AnimationPlayer by seeking, and why it never plays it
+    - How a tool script lets the editor scrub the day with a slider
+    - Why the sun and the moon can share one light without a visible jump
+  prerequisites: [5, 21]
+---
+
+import { Aside, Code, FileTree, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Solution from '../../../components/Solution.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import piece1 from '../../../checkpoints/22/pieces/piece-1.cs?raw';
+import attachScript from '../../../assets/lessons/day-clock/attach-script.png';
+import exportsRows from '../../../assets/lessons/day-clock/exports.png';
+import editorDusk from '../../../assets/lessons/day-clock/editor-dusk.png';
+import output from '../../../assets/lessons/day-clock/output.png';
+import dawn from '../../../assets/lessons/day-clock/dawn.png';
+import dusk from '../../../assets/lessons/day-clock/dusk.png';
+import moon from '../../../assets/lessons/day-clock/moon.png';
+import noon from '../../../assets/lessons/day-clock/noon.png';
+
+## What you will build
+
+A clock for the meadow. The game starts at noon, and the day then passes at the speed you choose. You can also hold any hour, which is what a slider, a save file, or a cutscene needs.
+
+<Figure
+	src={dusk}
+	alt="The running game at dusk: the meadow in warm olive and rose, the sky peach, and long dark shadows of the rocks and the player falling to the right."
+	caption="Dusk, held by the clock."
+/>
+
+## The idea
+
+The animation from lesson 21 is a one-minute day, and it can play, but a game does not want a one-minute day it plays by itself. It wants to say "it is 18:00". A save file stores the hour, a cutscene jumps to dawn, and a pause holds still. All of these are one number, the **time of day**, from 0 at midnight to 1 at the next midnight, with noon at 0.5.
+
+`DayClock` keeps that number and shows it. Every time it changes, the clock **seeks** the day animation to the matching moment: it never plays the animation, it just asks "where are all the properties at this time?" and puts them there. The animation is the table of how the world looks at each hour. The clock is the hour.
+
+This is also why dusk, dawn, and moonlight cost the script nothing. They are already in the animation:
+
+| Time of day | Hour | What the animation does |
+|---|---|---|
+| `0.00` to `0.11` | 00:00 to 02:38 | The moon, a cyan-blue light at energy `0.45`. |
+| `0.11` to `0.15` | 02:38 to 03:36 | The moon fades to 0. |
+| `0.15` to `0.1501` | about 03:36 | Energy is 0, so the light turns from the moon into the sun without showing it. |
+| `0.1501` to `0.27` | 03:36 to 06:29 | Dawn: a pink sun, rising to energy 3 at `0.20`, then settling to `0.75`. |
+| `0.27` to `0.73` | 06:29 to 17:31 | Day. |
+| `0.73` to `0.85` | 17:31 to 20:24 | Dusk: the sun turns orange and sets. |
+| `0.85` to `0.89` | 20:24 to 21:21 | The light turns back into the moon at energy 0, then the moon fades in. |
+
+## Piece 1: the clock
+
+<Steps>
+
+1. In the FileSystem dock, make a folder `World` inside `src`.
+
+2. Open `world_environment.tscn`, select `Day`, and click **Attach Script** at the top of the Scene dock. Set **Language** to **C#** and **Path** to `res://src/World/DayClock.cs`. **Inherits** is `AnimationPlayer`, and **Template** is **Node: Default**. Click **Create**.
+
+	<Figure
+		src={attachScript}
+		alt="The Attach Node Script dialog: Language C#, Inherits AnimationPlayer, Template Node: Default, Path res://src/World/DayClock.cs."
+		caption="A script for the animation player."
+	/>
+
+</Steps>
+
+Open the file in your code editor. Replace its contents so that:
+
+- it has `using Godot;` and the namespace `TopDownTemplate.World;`, with a comment above the class: it drives the day animation from a time of day, so a slider, a save file, or a cutscene can set the hour. `[Tool]` is on the line above `public partial class DayClock : AnimationPlayer`, so the script also runs in the editor;
+- a `private static readonly StringName DayAnimation = "day";` names the animation, and two private fields hold `_timeOfDay` (a `float`, starting at `0.5f`, noon) and `_hour` (an `int`, starting at `-1`);
+- an exported `float` property `TimeOfDay` has `[Export(PropertyHint.Range, "0,1,0.001")]`, which gives it a slider, and a comment: the time of day from 0 (midnight) to 1, with noon at 0.5. Its `get` returns `_timeOfDay`. Its `set` stores `Mathf.PosMod(value, 1f)`, which wraps any number into 0 to 1 (so `1.2` is `0.2` and `-0.1` is `0.9`), and calls `Apply()`;
+- three more exported properties, each with a one-line comment above it: `DayLengthSeconds`, a `float` defaulting to `600f`, how many real seconds a whole day takes at speed 1; `Speed`, a `float` defaulting to `1f`, a multiplier on how fast the day passes; and `Running`, a `bool` defaulting to `true`, whether the day passes at all;
+- `_Ready()` calls `Apply()`;
+- `_Process(double delta)` returns at once if `Engine.IsEditorHint() || !Running`. The editor hint is true while the script runs inside the editor, where the day should not move by itself. Otherwise it adds `(float)delta * Speed / DayLengthSeconds` to `TimeOfDay`, which sets it, and calls `PrintHour()`;
+- `Apply()` returns at once if `!IsInsideTree() || !HasAnimation(DayAnimation)`, because Godot sets exported values while it loads the scene, before the animation exists. Otherwise it sets `AssignedAnimation = DayAnimation;`, and calls `Seek(_timeOfDay * GetAnimation(DayAnimation).Length, true);`. The `true` makes the seek apply the animation's values at once. The method has a comment: puts every animated property where the day animation has it at the current time of day;
+- `PrintHour()` works out `var hour = (int)(_timeOfDay * 24f);`, returns if it equals `_hour`, otherwise stores it in `_hour` and prints it with `GD.Print($"{hour:00}:00");`. The format `00` pads a one-digit hour with a zero.
+
+<Solution>
+	<Code code={piece1} lang="csharp" title="src/World/DayClock.cs" />
+</Solution>
+
+Save the file and click **Build Project**.
+
+<Aside type="note" title="Why seek, and not play">
+Playing an animation advances it by itself, at its own speed, and the script would have to stop it, rewind it, and keep two clocks in step. Seeking sets the world to one moment and nothing else. A day that runs, a day that is held, and a day that was loaded from a save are then the same code, and the animation stays a plain table.
+</Aside>
+
+## Let the clock be in charge
+
+The animation player still has **Autoplay on Load** switched on from lesson 21, and it would play the animation on top of the clock. Select `Day`, look at the Animation panel, and click the **Autoplay on Load** button again to switch it off.
+
+The Inspector now shows the clock's four properties at the top. **Time Of Day** is a slider.
+
+<Figure
+	src={exportsRows}
+	alt="The Inspector's DayClock section: Time Of Day 0.5 with a slider, Day Length Seconds 600.0, Speed 1.0, and Running on."
+	caption="The clock, with its four properties."
+/>
+
+Drag **Time Of Day**, or type `0.8` into it. The sky and the fog in the 3D view turn to dusk, and the sun moves. This works in the editor because the script is a tool script, and it runs on the same animation you built.
+
+<Figure
+	src={editorDusk}
+	alt="The 3D view of the environment scene: a peach sky and fog over the grid, with the sun icon in the middle."
+	caption="Time Of Day at 0.8."
+/>
+
+Set **Time Of Day** back to `0.5` and save the scene. The scene is saved at noon, and the meadow opens at noon.
+
+<Aside type="caution" title="Save at noon">
+The slider changes real properties of the sun, the Environment, and the sky. Whatever hour it is on when you save is the one the scene keeps. If your scene seems stuck at night, check **Time Of Day**.
+</Aside>
+
+## Run the day
+
+Switch to the meadow and press <Kbd keys="F5" mac="Cmd+B" />. The game opens at noon, and the day moves very slowly: a whole day takes ten minutes at the default `600` seconds. The Output panel prints the hour each time it changes. To watch faster, set **Day Length Seconds** on `Day` to `12` and run again, so a day takes twelve seconds.
+
+<Figure
+	src={output}
+	alt="The Output panel listing the hours, 17:00 through 23:00 and 00:00 through 02:00, one per line."
+	caption="The clock prints each hour as it comes."
+/>
+
+Set **Day Length Seconds** back to `600` when you are done. The animation's own **Length** stays 60: the clock scales real time to it. To hold an hour, uncheck **Running** and set **Time Of Day**. From code, any script can do the same: `clock.TimeOfDay = 0.8f;`.
+
+## Dawn, dusk, and moonlight
+
+You do not have to wait for the day to reach an hour. With **Running** unchecked, set **Time Of Day** and run the game. Here are four hours.
+
+<Figure
+	src={dawn}
+	alt="The game at 0.2: a pink sky and pink-purple light, long shadows falling left, the grass olive and the sand rose."
+	caption="0.2, early morning. The sun is low in the east, so the shadows fall left."
+/>
+
+<Figure
+	src={noon}
+	alt="The game at noon: soft blue sky, fresh green grass, short shadows."
+	caption="0.5, noon."
+/>
+
+<Figure
+	src={dusk}
+	alt="The game at dusk: warm olive and rose, the sky peach, long dark shadows falling right."
+	caption="0.8, late sunset. The sun is low in the west, so the shadows fall right."
+/>
+
+<Figure
+	src={moon}
+	alt="The game at 0.95: a deep blue-violet sky, the meadow dark teal, small cool shadows."
+	caption="0.95, night, by the light of the moon."
+/>
+
+The light changes from the sun to the moon without a jump, because it changes while it gives no light. Reading the sun's values back in the running game, around sunrise:
+
+| Time of day | Color | Energy | Rotation |
+|---|---|---|---|
+| `0.1499` | `#78B8FF` | `0.001` | -50, 200, 0 |
+| `0.1501` | `#FFA8C7` | `0.0` | 0, 90, 0 |
+
+At the first line it is the moon, with its color and its direction, almost out. At the second it is the sun, in the east, with no light yet. Between them the energy is about a thousandth, far too dim to see: the swap is invisible. At sunset it happens the other way, at `0.8499` and `0.8501`, where the energy is a few thousandths.
+
+<Aside type="note" title="Why one light">
+Shadows come from the one light, and a shadow-casting light costs graphics-card work every frame. A second light for the moon would need its own shadows, or no shadows at night. And turning a light's shadows on or off while the game runs makes Godot build new shaders, which causes a stutter. One light, with shadows always on, has neither problem.
+</Aside>
+
+## Try it
+
+- Set **Speed** to `-1` and run: the day runs backward. The wrap in `TimeOfDay` makes midnight work.
+- Make the day last two minutes: set **Day Length Seconds** to `120`.
+- Uncheck **Running**, set **Time Of Day** to `0.1501`, and run: this is the moment the sun takes over, a pink light just rising in the east.
+
+## If it does not work
+
+- **The meadow is always night.** **Time Of Day** was saved near `0`. Set it to `0.5` and save the scene.
+- **Nothing changes when you set Time Of Day.** The script did not build. Click **Build Project** and read the MSBuild tab, and check that the script is attached to `Day`.
+- **The day does not move in the game.** **Running** is off, or **Day Length Seconds** is huge, or **Speed** is `0`.
+- **The day jumps back to a fixed time at the start.** **Autoplay on Load** is still on, and the animation plays itself. Switch it off.
+- **The editor says `GetAnimation` is null.** The `day` animation is missing. Check the Animation panel, and run `BuildDay` again if its tracks are gone.
+- **The first line of the Output panel is `12:00`.** That is right: the game starts at noon.
+
+## Checkpoint
+
+Your project has these changes:
+
+<FileTree>
+- src
+  - World
+    - **DayClock.cs**
+- world
+  - environment
+    - world_environment.tscn updated
+</FileTree>
+
+Commit your work: `git add .` and `git commit -m "DayClock"`. In lesson 23 you write the lighting shader that makes the rocks follow the day.
+
+<Checkpoint />

@@ -1,0 +1,16 @@
+[gd_scene format=3 uid="uid://b60qe1fx138cc"]
+
+[ext_resource type="Script" uid="uid://dhmv1o3u1j67u" path="res://src/Camera/CameraRig.cs" id="1_50l4g"]
+
+[node name="CameraRig" type="Node3D" unique_id=1372657056 node_paths=PackedStringArray("Camera")]
+script = ExtResource("1_50l4g")
+Camera = NodePath("Pivot/Camera3D")
+
+[node name="Pivot" type="Node3D" parent="." unique_id=1258536617]
+transform = Transform3D(1, 0, 0, 0, 0.57357645, 0.81915206, 0, -0.81915206, 0.57357645, 0, 0, 0)
+
+[node name="Camera3D" type="Camera3D" parent="Pivot" unique_id=955781207]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 60)
+projection = 1
+size = 20.0
+far = 100.0

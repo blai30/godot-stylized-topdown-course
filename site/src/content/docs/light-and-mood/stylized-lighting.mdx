@@ -1,0 +1,322 @@
+---
+title: Stylized lighting in a shared shader include
+description: Write one shader include that gives every surface soft wrapped light and a faint rim tinted by the time of day, then use it on the ground and the rocks.
+sidebar:
+  order: 23
+  label: 23. Stylized lighting
+lesson:
+  number: 23
+  minutes: 60
+  learn:
+    - How a light function changes how a surface answers to light
+    - Why wrapped diffuse light keeps the shadow side soft and never black
+    - How a shader include shares code, and how shader globals share values
+    - How a day animation can drive a value that shaders read
+  prerequisites: [15, 17, 21, 22]
+---
+
+import { Aside, Code, FileTree, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Solution from '../../../components/Solution.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import piece1 from '../../../checkpoints/23/pieces/piece-1.gdshaderinc?raw';
+import piece2 from '../../../checkpoints/23/pieces/piece-2.gdshader?raw';
+import piece3 from '../../../checkpoints/23/pieces/piece-3.gdshader?raw';
+import piece4 from '../../../checkpoints/23/pieces/piece-4.cs?raw';
+import piece5 from '../../../checkpoints/23/pieces/piece-5.cs?raw';
+import dayAfter from '../../../assets/lessons/stylized-lighting/day.png';
+import duskBefore from '../../../assets/lessons/stylized-lighting/dusk-before.png';
+import duskAfter from '../../../assets/lessons/stylized-lighting/dusk-after.png';
+import noonBefore from '../../../assets/lessons/stylized-lighting/noon-before.png';
+import noonAfter from '../../../assets/lessons/stylized-lighting/noon-after.png';
+import globals from '../../../assets/lessons/stylized-lighting/globals.png';
+import createInclude from '../../../assets/lessons/stylized-lighting/create-include.png';
+import includeEditor from '../../../assets/lessons/stylized-lighting/include-editor.png';
+import createPaletteShader from '../../../assets/lessons/stylized-lighting/create-palette-shader.png';
+import rockMaterial from '../../../assets/lessons/stylized-lighting/rock-material.png';
+import saveMaterial from '../../../assets/lessons/stylized-lighting/save-material.png';
+import clockRim from '../../../assets/lessons/stylized-lighting/clock-rim.png';
+import rockEdge from '../../../assets/lessons/stylized-lighting/rock-edge.png';
+
+## What you will build
+
+The last piece of the look: surfaces that answer to the light in a soft, hand-painted way. The side of a rock that faces away from the sun stays softly lit instead of going dark, and a faint rim along its edge, tinted by the time of day, separates it from the ground behind it.
+
+<Figure
+	src={rockEdge}
+	alt="A large rock seen from above at dusk, twice as large as in the game. On the left, a hard, dark purple edge along the side away from the sun. On the right, the same side is lighter and softer, with a thin light edge along the silhouette."
+	caption="A rock at dusk: before on the left, after on the right."
+/>
+
+## The idea
+
+Godot lights a surface with a formula for every light. The default formula, **diffuse**, is the dot product of the surface's normal and the direction to the light, written `N · L`. It is 1 where the surface faces the light, 0 where it is edge-on, and below 0, which counts as 0, where it faces away. The line where the light reaches 0 is the **terminator**, and on a rock it is a hard edge between a bright side and a dark side.
+
+Painted art does not do that. Shadows in a painting are colored and soft, and nothing is black. **Wrapped diffuse** moves the formula over: `(N · L + 0.5) / 1.5` is 1 where the surface faces the light, still 0.33 where it is edge-on, and reaches 0 only at `N · L = -0.5`, well past edge-on. The terminator becomes a wide gradient.
+
+A **rim** is a faint light along the silhouette, where the surface turns away from the camera. It separates a rock from the ground at its foot, and from its own shadow.
+
+Both go into one **shader include**: a `.gdshaderinc` file of shared code that any shader can paste in with `#include`, so the ground, the rocks, and later the trees all light the same way. The rim's color and strength come from two **shader globals**: values set once, for the whole project, that every shader can read. The day animation keys them, so dusk gets a warm rim and night a cool one.
+
+## The shader globals
+
+<Steps>
+
+1. Choose **Project > Project Settings...** and open the **Globals** tab, then **Shader Globals**.
+
+2. Type `rim_color` in **Name**, set **Type** to `color`, and click **Add**. Then type `rim_strength`, set **Type** to `float`, and click **Add**. Both rows appear, black and `0.0`. Leave the values: the day animation sets them.
+
+	<Figure
+		src={globals}
+		alt="The Project Settings window on Globals, Shader Globals, listing rim_color as a black color and rim_strength as 0.0, each with a remove button."
+		caption="The two shader globals."
+	/>
+
+3. Click **Close**.
+
+</Steps>
+
+## Piece 1: the include
+
+<Steps>
+
+1. In the FileSystem dock, make a folder `shaders` inside `art`.
+
+2. Click **Shader Editor** at the bottom of the window. In its **File** menu, choose **New Shader Include...**. Set **Path** to `res://art/shaders/stylized_lit.gdshaderinc` and click **Create**.
+
+	<Figure
+		src={createInclude}
+		alt="The Create Shader dialog: Type ShaderInclude, Path res://art/shaders/stylized_lit.gdshaderinc, and the messages Shader path/name is valid and Will create a new shader file."
+		caption="A new shader include."
+	/>
+
+</Steps>
+
+Type into the new file so that:
+
+- a comment on the first line says it is the lighting shared by the template's stylized surfaces: wrapped diffuse light and a soft rim. An include has no `shader_type`: it takes the type of the shader that includes it;
+- `global uniform vec4 rim_color : source_color;` and `global uniform float rim_strength;` read the globals, with a comment: the rim's color and strength, which `DayClock` sets from the day animation. A color global is a `vec4` in a shader, and you use its `.rgb`;
+- `const float WRAP = 0.5;` has a comment: how far the light wraps around a surface, where 0 is plain diffuse and 1 reaches the far side;
+- `const float RIM_POWER = 3.0;` has a comment: how narrow the rim is, where a higher power keeps it closer to the silhouette;
+- a function `vec3 soft_rim(vec3 view_normal, mat4 inverse_view)` has a comment: a faint glow along the silhouette that separates a surface from the ground behind it. In it, `float edge = pow(1.0 - clamp(view_normal.z, 0.0, 1.0), RIM_POWER);` is 0 where a surface faces the camera and 1 at the silhouette. The comment above says the camera looks along -Z in view space, so a normal turned away from +Z is near the silhouette;
+- then `float world_up = (inverse_view * vec4(view_normal, 0.0)).y;` turns the normal back into world space, to read how far it faces up, and `float sky = clamp(0.5 + world_up, 0.0, 1.0);` is 1 for faces looking up, a half for upright faces, and 0 for faces looking down, so the underside of a rock never glows. The comment says that;
+- the function returns `rim_color.rgb * rim_strength * edge * sky`;
+- `void light()` is Godot's per-light function. A comment says plain diffuse is the dot product alone, and wrapping shifts it so the side facing away from the light stays softly lit. It computes `float wrapped = clamp((dot(NORMAL, LIGHT) + WRAP) / (1.0 + WRAP), 0.0, 1.0);` and adds `wrapped * ATTENUATION * LIGHT_COLOR / PI` to `DIFFUSE_LIGHT`. `ATTENUATION` carries the shadow, so a cast shadow is still dark.
+
+<Solution>
+	<Code code={piece1} lang="gdshader" title="art/shaders/stylized_lit.gdshaderinc" />
+</Solution>
+
+Save it with <Kbd keys="Ctrl+Alt+S" mac="Cmd+Option+S" />.
+
+<Figure
+	src={includeEditor}
+	alt="The Shader Editor showing stylized_lit.gdshaderinc: the comment, the two global uniforms, and WRAP and RIM_POWER with their comments."
+	caption="The include in the Shader Editor."
+/>
+
+<Aside type="note" title="Why the rim uses the view-space normal">
+Under a perspective camera, Godot gives a shader `VIEW`, the direction to the camera. Under the orthographic camera every ray is parallel, so a `VIEW` that points at one spot would slide the rim across the screen. FactoryGame found the same and uses the view axis instead. In view space the camera looks along -Z everywhere, so the view-space normal's `z` is the answer on both kinds of camera.
+</Aside>
+
+## The ground includes it
+
+Open `art/ground/ground.gdshader` in the Shader Editor, as in lesson 17, and change it so that:
+
+- `#include "res://art/shaders/stylized_lit.gdshaderinc"` is under `shader_type spatial;`, with a blank line before it and after it;
+- the last line of `fragment()` is `EMISSION += soft_rim(NORMAL, INV_VIEW_MATRIX);`. `EMISSION` is light a surface gives out by itself, so the rim shows in shadow too. `NORMAL` is the normal in view space, and `INV_VIEW_MATRIX` takes it back to world space.
+
+<Solution>
+	<Code code={piece3} lang="gdshader" title="art/ground/ground.gdshader" />
+</Solution>
+
+Save it. Nothing else in the file changes: the include's `light()` takes over the lighting of the whole shader. The `roughness` uniform stays, but it no longer does anything.
+
+## Piece 2: a shader for the rocks
+
+The rocks use a standard material with the palette texture, which cannot include a shader file. Give them a small shader of their own.
+
+In the Shader Editor, choose **File > New Shader...**, set **Path** to `res://art/palette/palette_lit.gdshader`, keep **Mode** on **Spatial**, and click **Create**.
+
+<Figure
+	src={createPaletteShader}
+	alt="The Create Shader dialog: Type Shader, Mode Spatial, Template Default, Path res://art/palette/palette_lit.gdshader."
+	caption="A shader for the palette."
+/>
+
+Type into it so that:
+
+- it starts with `shader_type spatial;` and a blank line, then the same `#include`;
+- `palette` is a `sampler2D` uniform with `source_color` and `filter_nearest`, with a comment: the palette, one swatch for each color of the rocks. Nearest filtering keeps each swatch a flat color;
+- `fragment()` sets `ALBEDO = texture(palette, UV).rgb;` and then `EMISSION += soft_rim(NORMAL, INV_VIEW_MATRIX);`.
+
+<Solution>
+	<Code code={piece2} lang="gdshader" title="art/palette/palette_lit.gdshader" />
+</Solution>
+
+Save it. Now give each rock scene a material that uses it.
+
+<Steps>
+
+1. Open `art/nature/rock_small/rock_small.tscn` and select its `rock_small` node. In the Inspector, under **Geometry**, click **Material Override**'s empty field and choose **ShaderMaterial** under **New**. Click the material, click its **Shader** field, choose **Quick Load...**, and pick `palette_lit.gdshader`.
+
+2. Under **Shader Parameters**, click **Palette**'s empty field, choose **Quick Load...**, and pick `palette.png`, the same texture the old material used.
+
+	<Figure
+		src={rockMaterial}
+		alt="The Inspector for rock_small with Geometry's Material Override set to a ShaderMaterial, its Shader palette_lit.gdshader, and its Palette parameter showing the palette's colored swatches."
+		caption="A material override with the palette shader and the palette."
+	/>
+
+3. Click the down arrow at the right of the **Material Override** row and choose **Save As...**. Save it as `palette_lit.tres` in `art/palette`.
+
+	<Figure
+		src={saveMaterial}
+		alt="The Save Resource As dialog in res://art/palette with File palette_lit.tres."
+		caption="The material as its own file, shared by every rock."
+	/>
+
+4. Save the scene with <Kbd keys="Ctrl+S" mac="Cmd+S" />. Open `rock_large.tscn`, select its `rock_large` node, click **Material Override**'s field, choose **Quick Load...**, pick `palette_lit.tres`, and save.
+
+</Steps>
+
+<Aside type="note" title="Why an override on the scene, not a new import">
+The `.glb` files keep their material, `palette.tres`. A **Material Override** on the mesh in the inherited scene replaces it for every instance of that rock, and leaves the imported file and the original material alone, so you can switch back by clearing the override.
+</Aside>
+
+## Piece 3: DayClock sets the rim
+
+The animation can key a property of any node. The rim's globals are not a node's property, so `DayClock` gets two properties of its own, and sets the globals when they change. The animation keys the properties.
+
+Open `src/World/DayClock.cs` and change it so that:
+
+- two more `StringName` constants, `RimColorGlobal` (`"rim_color"`) and `RimStrengthGlobal` (`"rim_strength"`), sit under `DayAnimation`, and two private fields hold `_rimColor` (starting at `new("C6E4FF")`, the noon rim) and `_rimStrength` (starting at `0.3f`);
+- under `Running`, an exported `Color` property `RimColor` returns `_rimColor`, and its `set` stores the value and calls `RenderingServer.GlobalShaderParameterSet(RimColorGlobal, value);`. A comment above says it is the color of the soft rim on surfaces, that the day animation keys it, and that it goes to the `rim_color` shader global;
+- an exported `float` property `RimStrength` has `[Export(PropertyHint.Range, "0,1,0.01")]` and the same shape with `RimStrengthGlobal`.
+
+<Solution>
+	<Code code={piece4} lang="csharp" title="src/World/DayClock.cs" />
+</Solution>
+
+Now `BuildDay` keys them. Open `src/Tools/BuildDay.cs` and change it so that:
+
+- the `LookKey` record has two more values at the end, `string RimColor` and `float RimStrength`, and its comment mentions the rim;
+- each row of `Looks` gets two more values at the end, from this table. The rim is a little paler than the sky at noon, pink at dawn, orange at the golden hour, and violet at night:
+
+	| Time | Rim color | Strength |
+	|---|---|---|
+	| 0.00 | `#8FA3E0` | 0.25 |
+	| 0.12 | `#A99BD6` | 0.25 |
+	| 0.15 | `#FFADCC` | 0.40 |
+	| 0.20 | `#FFB8DB` | 0.40 |
+	| 0.27 | `#CFE6FF` | 0.30 |
+	| 0.50 | `#C6E4FF` | 0.30 |
+	| 0.73 | `#D2E8FF` | 0.30 |
+	| 0.80 | `#FF9E66` | 0.45 |
+	| 0.85 | `#B79AD0` | 0.30 |
+	| 1.00 | `#8FA3E0` | 0.25 |
+
+- `_Run()` has two more lines at the end of the `Looks` loop: `Insert(animation, "Day:RimColor", key.Time, Color.FromHtml(key.RimColor));` and `Insert(animation, "Day:RimStrength", key.Time, key.RimStrength);`. The track path starts with `Day`, the animation player itself, which holds the properties.
+
+<Solution label="Show the full BuildDay.cs">
+	<Code code={piece5} lang="csharp" title="src/Tools/BuildDay.cs" />
+</Solution>
+
+Save both files and click **Build Project**. Open `world_environment.tscn`, open `BuildDay.cs` in the Script editor, and choose **File > Run**. The Animation panel now has 15 tracks. Select `Day`: **Rim Color** and **Rim Strength** are in the Inspector under **Day Clock**, and they change as you move **Time Of Day**. Set **Time Of Day** back to `0.5` and save the scene.
+
+<Figure
+	src={clockRim}
+	alt="The Inspector for Day with Time Of Day, Day Length Seconds, Speed, Running, Rim Color pale blue, and Rim Strength 0.3."
+	caption="The clock's two new properties."
+/>
+
+## See it
+
+Press <Kbd keys="F5" mac="Cmd+B" /> and compare with the game at the end of lesson 22. Hold the day at `0.8` as in lesson 22, and zoom in on a rock.
+
+<Figure
+	src={duskBefore}
+	alt="The game at dusk, zoomed in: the rocks have hard, dark purple sides away from the sun, and a dark cast shadow beside each."
+	caption="Dusk before: a dark side with a hard edge."
+/>
+
+<Figure
+	src={duskAfter}
+	alt="The game at dusk, zoomed in: the rocks' sides away from the sun are lighter and rose, softly shaded, with a faint orange edge along their silhouettes."
+	caption="Dusk after: the shadow side is soft, and the edge has a light rim."
+/>
+
+The cast shadows on the ground stayed dark: `ATTENUATION` carries them. What changed is the shading *on* the rocks, and the ground, which now takes a little more light at dusk. At noon the change is small, because the sun is high and every surface faces it.
+
+<Figure
+	src={noonBefore}
+	alt="The game at noon, zoomed in: the rocks' tops are lit and their sides are dark blue-gray."
+	caption="Noon before."
+/>
+
+<Figure
+	src={noonAfter}
+	alt="The game at noon, zoomed in: the rocks look the same, with slightly lighter blue-gray sides and a faint pale edge."
+	caption="Noon after: a lighter shadow side."
+/>
+
+Here is the whole day with the rim, at dawn, noon, dusk, and night:
+
+<Figure
+	src={dayAfter}
+	alt="Four frames of the meadow: a pink dawn, a calm green noon, a warm olive dusk, and a deep blue night."
+	caption="Dawn, noon, dusk, and night."
+/>
+
+<Aside type="note" title="What the custom light function gives up">
+A `light()` function replaces Godot's default lighting for that surface, including the shiny highlight, so these surfaces are matte: roughness has no effect on them. That suits ground and rocks. A glossy material, such as water or a metal machine, would add its own specular term in `light()`.
+</Aside>
+
+## Try it
+
+- Raise `WRAP` to `1.0` in the include and run: the shadow side gets even lighter, flatter, and softer. Put it back.
+- Set `RIM_POWER` to `1.0`: the rim widens into a glow. At `8.0` it nearly disappears.
+- In the `Looks` table of `BuildDay`, change the noon rim strength (`0.50`) from `0.30` to `1.0`, run `BuildDay` again, hold the day at `0.5`, and run: the rim shows plainly on every rock. Then put it back. The day animation sets the rim on every seek, so a value typed into **Rim Strength** by hand would be overwritten.
+
+## If it does not work
+
+- **The shader reports that `rim_color` must be a `vec4`.** A color global is a `vec4`. Declare it as `global uniform vec4 rim_color : source_color;` and use `.rgb`.
+- **The shader says it cannot find the global.** The globals are missing, or their names differ. Check **Project Settings > Globals > Shader Globals**.
+- **The rocks are white or have no texture.** The material's **Palette** is empty. Quick-load `palette.png` into it.
+- **There is no rim.** `rim_strength` is 0 until the clock sets it. Check that `Day` has the `DayClock` script, that the project is built, and that **Rim Strength** is above 0 at the hour you look at.
+- **Only some rocks changed.** Each rock scene needs the override. Do `rock_large.tscn` too.
+- **The ground looks the same.** The include was added to the shader but the shader did not save. Save it with <Kbd keys="Ctrl+Alt+S" mac="Cmd+Option+S" />.
+
+## Checkpoint
+
+Your project has these changes:
+
+<FileTree>
+- art
+  - ground
+    - ground.gdshader updated
+  - nature
+    - rock_large
+      - rock_large.tscn updated
+    - rock_small
+      - rock_small.tscn updated
+  - palette
+    - **palette_lit.gdshader**
+    - **palette_lit.tres**
+  - shaders
+    - **stylized_lit.gdshaderinc**
+- project.godot updated
+- src
+  - Tools
+    - BuildDay.cs updated
+  - World
+    - DayClock.cs updated
+- world
+  - environment
+    - world_environment.tscn updated
+</FileTree>
+
+Commit your work: `git add .` and `git commit -m "Stylized lighting"`. Module 4 is done: the meadow has its light and its mood. Module 5 grows trees to stand in it.
+
+<Checkpoint />

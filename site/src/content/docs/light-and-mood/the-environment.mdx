@@ -1,0 +1,368 @@
+---
+title: The Environment resource
+description: Build the meadow's atmosphere in its own scene, with a sky from a small shader, light from that sky, AgX tonemapping, contact shadows, glow, and fog tuned for an orthographic camera.
+sidebar:
+  order: 19
+  label: 19. The Environment resource
+lesson:
+  number: 19
+  minutes: 60
+  learn:
+    - How a sky shader draws a gradient, and how the sky lights the whole scene
+    - What ambient light, reflected light, and tonemapping each do to the picture
+    - How ambient occlusion, glow, and fog change the look, and when to keep them gentle
+    - Why fog density depends on how far the camera is from the ground
+  prerequisites: [4, 15]
+---
+
+import { Aside, Code, FileTree, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Solution from '../../../components/Solution.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import piece1 from '../../../checkpoints/19/pieces/piece-1.gdshader?raw';
+import environmentScene from '../../../checkpoints/19/files/world/environment/world_environment.tscn?raw';
+import result from '../../../assets/lessons/the-environment/result.png';
+import gameBefore from '../../../assets/lessons/the-environment/game-before.png';
+import createRoot from '../../../assets/lessons/the-environment/create-root.png';
+import newEnvironment from '../../../assets/lessons/the-environment/new-environment.png';
+import saveScene from '../../../assets/lessons/the-environment/save-scene.png';
+import instantiate from '../../../assets/lessons/the-environment/instantiate.png';
+import empty from '../../../assets/lessons/the-environment/empty.png';
+import createShader from '../../../assets/lessons/the-environment/create-shader.png';
+import shaderEditor from '../../../assets/lessons/the-environment/shader-editor.png';
+import skyParameters from '../../../assets/lessons/the-environment/sky-parameters.png';
+import sky from '../../../assets/lessons/the-environment/sky.png';
+import ambientRows from '../../../assets/lessons/the-environment/ambient-rows.png';
+import ambient from '../../../assets/lessons/the-environment/ambient.png';
+import tonemapRows from '../../../assets/lessons/the-environment/tonemap-rows.png';
+import tonemap from '../../../assets/lessons/the-environment/tonemap.png';
+import ssaoRows from '../../../assets/lessons/the-environment/ssao-rows.png';
+import ssaoOff from '../../../assets/lessons/the-environment/ssao-off.png';
+import ssaoOn from '../../../assets/lessons/the-environment/ssao-on.png';
+import glowRows from '../../../assets/lessons/the-environment/glow-rows.png';
+import fogRows from '../../../assets/lessons/the-environment/fog-rows.png';
+import fogDefault from '../../../assets/lessons/the-environment/fog-default.png';
+import fogDensityRows from '../../../assets/lessons/the-environment/fog-density-rows.png';
+
+## What you will build
+
+The meadow's atmosphere, in a scene of its own: a sky that colors every shadow, gentle contact shadows, a soft haze, and a tone mapper that keeps colors from burning out. You put all of it in `world/environment/world_environment.tscn`, so every level can share it and the next lessons can animate it.
+
+<Figure
+	src={result}
+	alt="The running game from above: the meadow under a soft blue haze, the grass a calm green, the rocks tinted blue by the sky."
+	caption="The meadow with its own environment. The sun is still Godot's default; you tune it in lesson 20."
+/>
+
+## The idea
+
+The [Environment](/reference/glossary/#environment) resource holds everything about the world that is not a model or a light. You met it in lesson 4. Now you tune each part for the look of the template, which is soft, a little hazy, and lit mostly by the sky.
+
+| Part | What it does | Value you set |
+|---|---|---|
+| Sky | Draws the background and, more importantly, is the source of ambient and reflected light. | A gradient from a horizon color to a zenith color, from a shader you write. |
+| [Ambient light](/reference/glossary/#ambient-light) | Light that arrives from the whole sky, so shadows are never black. | Taken from the sky, scaled to 0.65. |
+| Reflected light | What shiny surfaces mirror. | Taken from the sky. |
+| [Tonemapping](/reference/glossary/#tonemapping) | Squeezes bright light into what a screen can show. | AgX, with its defaults. |
+| [Ambient occlusion](/reference/glossary/#ambient-occlusion) | Darkens creases and the foot of things, where the sky is blocked. | On, radius 1.5, intensity 1.0. |
+| [Glow](/reference/glossary/#glow) | A soft halo around bright spots. | Soft light, intensity 0.45. Only visible at night. |
+| [Fog](/reference/glossary/#fog) | A veil that grows with distance and lifts the darkest colors toward the sky's color. | Exponential, density 0.0006. |
+
+The camera never sees much of the sky: it looks down at the ground. The sky still matters, because Godot lights every surface from it.
+
+## Make the scene
+
+<Steps>
+
+1. In the **FileSystem** dock, make a folder `environment` inside `world`, as you made `player` in lesson 6.
+
+2. Choose **Scene > New Scene**. In the Scene dock, click **Other Node**, search for `WorldEnvironment`, select it, and click **Create**.
+
+	<Figure
+		src={createRoot}
+		alt="The Create New Node dialog with WorldEnvironment typed in the search field and WorldEnvironment highlighted under Node."
+		caption="The root of the new scene is a WorldEnvironment."
+	/>
+
+3. In the Inspector, the **Environment** row already holds a new Environment, as in lesson 4. Click the Environment to open its properties below the row. They are in sections: **Background**, **Sky**, **Ambient Light**, and so on. A section with an **On** checkbox at its right end, such as **SSAO**, is off until you check it.
+
+	<Figure
+		src={newEnvironment}
+		alt="The Inspector with the WorldEnvironment's Environment open: Background Mode Clear Color, Ambient Light, Reflected Light, Tonemap Mode Linear, and the SSR, SSAO, SSIL, SDFGI, Glow, Fog, Volumetric Fog, and Adjustments sections, all off."
+		caption="A new Environment: a plain background, Linear tonemapping, and every effect off."
+	/>
+
+4. Save the scene with <Kbd keys="Ctrl+S" mac="Cmd+S" /> as `world_environment.tscn` in `world/environment`.
+
+	<Figure
+		src={saveScene}
+		alt="The Save Scene As dialog in res://world/environment, with File world_environment.tscn."
+		caption="The environment as its own scene."
+	/>
+
+5. Switch to `meadow.tscn` with its tab at the top of the 3D view. Select the old `WorldEnvironment` node, which lesson 4 added, and press <Kbd keys="Delete" mac="Cmd+Backspace" />. Click **Delete** when Godot asks.
+
+6. With `Meadow` selected, click the **Instantiate Child Scene** button (the chain link) at the top of the Scene dock, type `world_environment`, and press <Kbd keys="Enter" />.
+
+	<Figure
+		src={instantiate}
+		alt="The Select Scene dialog with world_environment typed, listing world_environment.tscn in res://world/environment."
+		caption="Instantiate the environment into the meadow."
+	/>
+
+7. Save the meadow with <Kbd keys="Ctrl+S" mac="Cmd+S" />.
+
+</Steps>
+
+Look at the 3D view. The meadow now has no sky and no ambient light at all, only the sun, because the new Environment has none yet. The next steps fill it in. From here on, change the environment in the `world_environment` tab, save it with <Kbd keys="Ctrl+S" mac="Cmd+S" />, and switch to the `meadow` tab to see the result: a saved scene updates everywhere it is instanced.
+
+<Figure
+	src={empty}
+	alt="The meadow in the 3D view under a dark gray background. The rocks and the player are lit only by the sun, and the sides facing away from it are almost black."
+	caption="No sky and no ambient light: shadows are nearly black."
+/>
+
+## Piece 1: a sky shader
+
+Godot ships a `ProceduralSkyMaterial` that you used in lesson 4. Here you write the sky yourself, with the technique of lesson 15, so that later lessons can animate its two colors.
+
+<Steps>
+
+1. Switch to the `world_environment` tab and select the root node. In the Environment, set **Background > Mode** to **Sky**.
+
+2. In the **Sky** section, click the **Sky** row's empty field and under **New** choose **Sky**. Click the new Sky to open it. Its **Sky Material** row already holds a `PanoramaSkyMaterial`. Click the down arrow at the right end of the row and, under **New**, choose **ShaderMaterial**.
+
+3. Click the new material to open it. Click its **Shader** field and choose **New Shader...**. In the **Create Shader** dialog, **Mode** is already **Sky**, because Godot knows what the material is for. Set **Path** to `res://world/environment/sky.gdshader` and click **Create**.
+
+	<Figure
+		src={createShader}
+		alt="The Create Shader dialog: Type Shader, Mode Sky, Template Default, Built-in Shader unchecked, Path res://world/environment/sky.gdshader."
+		caption="The Create Shader dialog. The Mode is Sky."
+	/>
+
+</Steps>
+
+A sky shader is not like the ground shader. It has no `fragment()` function. It has `sky()`, which Godot runs for every direction you could look in, and `EYEDIR` is that direction. `EYEDIR.y` is 1 straight up, 0 at the horizon, and negative below it.
+
+Replace the shader's contents so that:
+
+- it starts with `shader_type sky;`;
+- it has two `vec3` uniforms with `source_color`, `zenith_color` and `horizon_color`, defaulting to `vec3(0.31, 0.66, 1.0)` and `vec3(0.56, 0.78, 1.0)`, a deeper and a paler daytime blue, with a short comment above them;
+- it has a `float` uniform `ground_darkening` with `hint_range(0.0, 1.0)`, defaulting to `0.5`, with a comment: how much darker the sky gets looking down from the horizon;
+- `sky()` first sets `float height = clamp(EYEDIR.y, 0.0, 1.0);`, with a comment that it is 0 at the horizon and 1 straight up;
+- then it sets `COLOR = mix(horizon_color, zenith_color, height);`. `mix` blends from the first color to the second, by `height`;
+- then it multiplies `COLOR` by `1.0 - ground_darkening * clamp(-EYEDIR.y, 0.0, 1.0)`, so looking down darkens the sky and the light that comes from below stays dim.
+
+<Solution>
+	<Code code={piece1} lang="gdshader" title="world/environment/sky.gdshader" />
+</Solution>
+
+Save it with <Kbd keys="Ctrl+Alt+S" mac="Cmd+Option+S" />.
+
+<Figure
+	src={shaderEditor}
+	alt="The Shader Editor showing sky.gdshader: shader_type sky, the two color uniforms, and the start of the sky function."
+	caption="The sky shader in the Shader Editor."
+/>
+
+Select the root node again. Under **Sky > Sky Material > Shader Parameters**, the two colors and the darkening are rows, as they were for the ground. Then, in the **Sky** resource's own properties, set **Radiance Size** to **128**. It is the size of the picture Godot makes of the sky to light the scene, and a smaller one costs less and lights just as well.
+
+<Figure
+	src={skyParameters}
+	alt="The Inspector with the Sky open: the ShaderMaterial's Shader Parameters Zenith Color, Horizon Color, and Ground Darkening, then Process Mode Automatic and Radiance Size 256."
+	caption="The sky's parameters, and the Radiance Size to lower."
+/>
+
+Save the scene and switch to the meadow. The ambient light is still **Background**, which is the sky now, so the meadow is lit blue from above and from every side.
+
+<Figure
+	src={sky}
+	alt="The meadow in the 3D view under a light blue sky. The rocks and the player are tinted blue, and the grass looks brighter."
+	caption="The sky shader lights the meadow."
+/>
+
+## Ambient and reflected light
+
+Both the ambient and the reflected light take the sky as their **Source**. You set it explicitly, so the lighting no longer depends on the **Background** being the sky. The sky is also too bright: it is as strong as the sun. Scale it with **Background > Energy Multiplier**, which scales the sky's light, and set it to `0.65`.
+
+Set:
+
+- **Ambient Light > Source** to **Sky**;
+- **Reflected Light > Source** to **Sky**;
+- **Background > Energy Multiplier** to `0.65`.
+
+<Figure
+	src={ambientRows}
+	alt="The Inspector with Background Energy Multiplier 0.65, Ambient Light Source Sky, and Reflected Light Source Sky."
+	caption="Light from the sky, at 0.65."
+/>
+
+<Figure
+	src={ambient}
+	alt="The meadow a little darker than before, with the rocks and the player a deeper blue and the grass a calmer green."
+	caption="Ambient light at 0.65."
+/>
+
+<Aside type="note" title="Why 0.65">
+By day, the template keeps the sky's light well below the sun's, so sunlit grass is several times brighter than grass in shade. Too much ambient light flattens the picture. The value comes from FactoryGame, the game this look follows, and lesson 21 animates it through the day.
+</Aside>
+
+## Tonemapping
+
+The default, **Linear**, shows the renderer's light as it is and clips what is too bright. Set **Tonemap > Mode** to **AgX**, which eases bright colors toward white. Leave **Exposure**, **Agx White**, and **Agx Contrast** at their defaults.
+
+<Figure
+	src={tonemapRows}
+	alt="The Inspector's Tonemap section with Mode AgX, Exposure 1.0, Agx White 16.29, and Agx Contrast 1.25."
+	caption="AgX with its defaults."
+/>
+
+<Figure
+	src={tonemap}
+	alt="The meadow under AgX: the colors are calmer and the greens less bright, with softer contrast."
+	caption="AgX calms the colors."
+/>
+
+AgX looks flat next to Linear. That is on purpose: the template's colors come from the palette and the light, not from the tone mapper, and a calm base leaves room for dusk and night to change the mood.
+
+## Ambient occlusion
+
+Where a rock meets the ground, the sky cannot reach, and the ground there should be a little darker. [Ambient occlusion](/reference/glossary/#ambient-occlusion) (SSAO) darkens those spots from the picture on screen. Check **SSAO > On**, and set:
+
+- **Radius** to `1.5`: how far from a surface it looks for blockers, in meters;
+- **Intensity** to `1.0`: the default is 2.0, which is heavy for this look;
+- **Power** to `1.0`: the default is 1.5;
+- **Detail** to `0.0`: detail darkens small cracks, and the soft models have none.
+
+<Figure
+	src={ssaoRows}
+	alt="The Inspector's SSAO section, on, with Radius 1.5, Intensity 1.0, Power 1.0, Detail 0.0, Horizon 0.06, Sharpness 0.98."
+	caption="Gentle SSAO."
+/>
+
+Save, and look at the foot of a large rock in the meadow.
+
+<Figure
+	src={ssaoOff}
+	alt="The foot of a large rock on the dirt path, the ground right at its base the same color as the ground beside it."
+	caption="Without SSAO."
+/>
+
+<Figure
+	src={ssaoOn}
+	alt="The same rock with the ground at its base a little darker, a soft contact shadow."
+	caption="With SSAO, a soft contact shadow. The change is small on purpose."
+/>
+
+The effect is gentle on purpose. It costs graphics-card time on every frame, and the template defaults to it on. If your project must run on weak hardware, this is the first thing to turn off.
+
+## Glow
+
+Check **Glow > On**. Glow makes the brightest spots bleed a soft halo. Set:
+
+- **Blend Mode** to **Soft Light**, which never brightens past white, and so suits a calm picture;
+- **Intensity** to `0.45`;
+- **Bloom** to `0.05`, a slight haze;
+- **HDR Threshold** to `0.9`: only things brighter than this glow.
+
+<Figure
+	src={glowRows}
+	alt="The Inspector's Glow section, on, with Levels, Intensity 0.45, Strength 1.0, Bloom 0.05, Blend Mode Soft Light, and HDR Threshold 0.9."
+	caption="Glow, set for soft light."
+/>
+
+You will see little change by day: nothing in the meadow is bright enough to cross the threshold. Glow is for the night, when lamps and the moon do. Lesson 21 keys its intensity so that it is 0 by day.
+
+## Fog
+
+[Fog](/reference/glossary/#fog) hides distance and lifts the darkest colors toward the fog's color, so a shadow is never black but a deep sky blue. Check **Fog > On**, and set:
+
+- **Light Color** to `#B8DBFF`, the pale blue of the horizon;
+- **Aerial Perspective** to `0.5`, which tints the fog with the sky's color;
+- **Sky Affect** to `0.0`, so the fog does not cover the sky;
+- **Sun Scatter** to `0.15`, a little glow in the fog toward the sun.
+
+Leave **Mode** on **Exponential**. Do not touch **Density** yet.
+
+<Figure
+	src={fogRows}
+	alt="The Inspector's Fog section, on, with Mode Exponential, Light Color pale blue, Light Energy 1.0, and Sun Scatter 0.15."
+	caption="Fog, with Godot's own density."
+/>
+
+Save the scene and press <Kbd keys="F5" mac="Cmd+B" />.
+
+<Figure
+	src={fogDefault}
+	alt="The running game: the whole meadow is under a thick pale blue-gray haze, the grass and rocks barely visible."
+	caption="Density 0.01 buries the meadow."
+/>
+
+Godot's default density, 0.01, is far too much. Fog thickens with the distance between the camera and what it sees, and this camera is 60 meters from the ground. Exponential fog hides `1 - e^(-density × distance)` of the view: at 0.01 and 60 meters, 45 percent.
+
+The template wants about 3.5 percent at the ground, a veil you feel more than see. Solve for the density: 0.035 / 60 is about `0.0006`. Set **Density** to `0.0006`.
+
+<Figure
+	src={fogDensityRows}
+	alt="The Inspector's Fog section with Density 0.0006."
+	caption="Density for a camera 60 meters away."
+/>
+
+<Aside type="note" title="If you move the camera">
+The density depends on the camera's distance from the ground, not on its zoom. The camera rig in lesson 5 zooms by changing the view's size, so its distance stays 60 and one density fits every zoom. If you set the camera farther away, divide 0.035 by the new distance.
+</Aside>
+
+Save the scene and the meadow, and run the game once more.
+
+<Figure
+	src={result}
+	alt="The running game from above: the meadow under a soft blue haze, the grass a calm green, the rocks tinted blue by the sky."
+	caption="The finished environment."
+/>
+
+Compare it with the game at the start of the lesson, under Godot's procedural sky:
+
+<Figure
+	src={gameBefore}
+	alt="The game from lesson 18: the same meadow under a gray-blue sky with a dark brown ground below the horizon, the grass a saturated green."
+	caption="Before: lesson 18."
+/>
+
+The meadow is calmer and bluer, and the contrast is lower. That is the base the sun, the day, and the shaders of the next lessons build on.
+
+<Solution label="Show the full world_environment.tscn">
+	<Code code={environmentScene} lang="ini" title="world/environment/world_environment.tscn" />
+</Solution>
+
+## Try it
+
+- Set the sky's **Zenith Color** to a pink and its **Horizon Color** to an orange, save, and look at the meadow. Lesson 21 animates exactly these two colors.
+- Set **Ambient Light > Source** to **Disabled** and look: only the sun lights the meadow.
+- Raise SSAO's **Intensity** to `3.0` and see how dark a contact shadow can get. Then put it back.
+
+## If it does not work
+
+- **The meadow stays dark and gray.** The meadow still has no instance of the environment, or the environment's **Background > Mode** is still **Clear Color**. Check the Scene dock for `WorldEnvironment` with the scene icon, and the mode.
+- **The instance does not show your changes.** Save the `world_environment` scene with <Kbd keys="Ctrl+S" mac="Cmd+S" />, then switch to the meadow tab.
+- **The sky is black or pink.** The shader failed to compile. Open the **Shader Editor** and read its message, which names the line. The first line must be `shader_type sky;`.
+- **There is no SSAO.** SSAO needs the Forward+ renderer. A project made in lesson 3 uses it.
+- **The meadow is a flat haze.** The fog **Density** is still `0.01`.
+- **The editor says the Environment's changes were not saved.** The Environment is part of the scene file, so save the scene.
+
+## Checkpoint
+
+Your project has these changes:
+
+<FileTree>
+- levels
+  - meadow.tscn updated
+- world
+  - environment
+    - **sky.gdshader**
+    - **world_environment.tscn**
+</FileTree>
+
+Commit your work: `git add .` and `git commit -m "The environment scene"`. In lesson 20 you tune the sun and its shadows.
+
+<Checkpoint />

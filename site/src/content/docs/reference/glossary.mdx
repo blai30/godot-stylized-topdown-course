@@ -13,6 +13,14 @@ The plain color of a surface before any light falls on it. A material's **Albedo
 
 A way of drawing see-through parts: each pixel is either drawn fully or not at all, cut where its alpha falls below a threshold. Unlike blended transparency, it keeps a sharp edge, casts correct shadows, and costs little, which suits hand-drawn edges.
 
+## Ambient light
+
+Light that arrives from every direction at once, so surfaces facing away from the sun are not black. In an Environment it comes from the sky, a color, or the background.
+
+## Ambient occlusion
+
+Darkening where light from the sky is blocked, such as at the foot of a rock or in a crease. Godot's SSAO estimates it from the picture on screen.
+
 ## Assembly
 
 A compiled library of code. Building your C# scripts produces one assembly for the whole project, named after the project, which Godot loads when the game starts.
@@ -36,6 +44,10 @@ The programming language this course uses for game code. You write it in your ID
 ## Class
 
 In C#, the description of a kind of object: its data (properties and fields) and what it can do (methods). Each Godot script is a class, such as `CameraRig`, that extends a node type, such as `Node3D`.
+
+## Color grade
+
+A change to the colors of the finished picture, such as tinting the shadows and the highlights differently. Games use it to give dusk and night a mood that light alone cannot.
 
 ## Color ramp
 
@@ -69,6 +81,10 @@ Godot's resource for how a scene's world looks as a whole: the background and sk
 
 In a Godot script, marking a property with `[Export]` so it appears in the Inspector and its value is saved in the scene. Tunable numbers and references to other nodes are exported, so you can change them without editing code.
 
+## Fog
+
+A veil of color that thickens with distance from the camera. It hides far things and lifts the darkest colors toward the fog's color.
+
 ## Fragment function
 
 The part of a shader that runs once for every pixel a surface covers on screen, and decides that pixel's color and other surface properties. In Godot it is written `void fragment()`.
@@ -92,6 +108,10 @@ The colored arrows, rings, and handles Godot and Blender draw on a selected obje
 ## glTF
 
 An open file format for 3D models, made for games and apps. A `.glb` file is a glTF model packed into a single binary file. Blender exports it and Godot imports it.
+
+## Glow
+
+A soft halo around the brightest parts of the picture, added after the scene is drawn.
 
 ## GridMap
 
@@ -132,6 +152,10 @@ Godot's panel, on the right by default, that shows every property of the selecte
 ## Instance
 
 A copy of one scene placed inside another, such as the camera rig inside the meadow. An instance follows its scene: change the scene and every instance changes, except for the properties you overrode on the instance.
+
+## Keyframe
+
+A time and a value on an animation's track. Between two keyframes, the animation sets the property to a value in between.
 
 ## Layer
 

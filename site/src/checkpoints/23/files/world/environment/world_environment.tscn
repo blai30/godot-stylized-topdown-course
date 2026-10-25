@@ -1,0 +1,283 @@
+[gd_scene format=3 uid="uid://dpo347bmep5qf"]
+
+[ext_resource type="Shader" uid="uid://5nmk0h81vx0k" path="res://world/environment/sky.gdshader" id="1_m84nq"]
+[ext_resource type="Shader" uid="uid://cr6316canktqg" path="res://world/environment/color_grade.gdshader" id="2_j2kc3"]
+[ext_resource type="Script" uid="uid://c8yok5x684e63" path="res://src/World/DayClock.cs" id="3_o6obe"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_2jvpj"]
+shader = ExtResource("1_m84nq")
+shader_parameter/zenith_color = Color(0.30980393, 0.6627451, 1, 1)
+shader_parameter/horizon_color = Color(0.56078434, 0.78039217, 1, 1)
+shader_parameter/ground_darkening = 0.5
+
+[sub_resource type="Sky" id="Sky_f2x53"]
+sky_material = SubResource("ShaderMaterial_2jvpj")
+radiance_size = 2
+
+[sub_resource type="Environment" id="Environment_h2o67"]
+background_mode = 2
+background_energy_multiplier = 0.65
+sky = SubResource("Sky_f2x53")
+ambient_light_source = 3
+reflected_light_source = 2
+tonemap_mode = 4
+ssao_enabled = true
+ssao_radius = 1.5
+ssao_intensity = 1.0
+ssao_power = 1.0
+ssao_detail = 0.0
+glow_enabled = true
+glow_intensity = 0.0
+glow_bloom = 0.05
+glow_blend_mode = 2
+glow_hdr_threshold = 0.9
+fog_enabled = true
+fog_light_color = Color(0.72156864, 0.85882354, 1, 1)
+fog_sun_scatter = 0.15
+fog_density = 0.0006
+fog_aerial_perspective = 0.5
+fog_sky_affect = 0.0
+adjustment_enabled = true
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_dy5ym"]
+shader = ExtResource("2_j2kc3")
+shader_parameter/shadow_tint = Color(1, 1, 1, 1)
+shader_parameter/highlight_tint = Color(1, 1, 1, 1)
+shader_parameter/strength = 0.0
+shader_parameter/saturation = 1.0
+
+[sub_resource type="Animation" id="Animation_j2kc3"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:environment:background_energy_multiplier")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [0.65]
+}
+
+[sub_resource type="Animation" id="Animation_o6obe"]
+resource_name = "day"
+length = 60.0
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:environment:background_energy_multiplier")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 7.2, 9, 12, 16.2, 43.8, 48, 51, 60),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [1.5, 1.5, 1.0, 1.0, 0.65, 0.65, 1.1, 1.0, 1.5]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Sun:light_color")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 6.6, 9, 9.006, 12, 16.2, 30, 43.800003, 48, 51, 51.006, 53.399998, 60),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Color(0.47058824, 0.72156864, 1, 1), Color(0.47058824, 0.72156864, 1, 1), Color(0.47058824, 0.72156864, 1, 1), Color(1, 0.65882355, 0.78039217, 1), Color(1, 0.7411765, 0.8, 1), Color(1, 0.85490197, 0.6431373, 1), Color(1, 0.8862745, 0.6784314, 1), Color(1, 0.84705883, 0.63529414, 1), Color(1, 0.56078434, 0.29803923, 1), Color(1, 0.56078434, 0.29803923, 1), Color(0.47058824, 0.72156864, 1, 1), Color(0.47058824, 0.72156864, 1, 1), Color(0.47058824, 0.72156864, 1, 1)]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("Sun:light_energy")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 6.6, 9, 9.006, 12, 16.2, 30, 43.800003, 48, 51, 51.006, 53.399998, 60),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [0.45, 0.45, 0.0, 0.0, 3.0, 0.75, 0.85, 0.8, 4.3, 0.0, 0.0, 0.45, 0.45]
+}
+tracks/3/type = "value"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("Sun:rotation_degrees")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0, 9, 9.006, 12, 16.2, 21, 30, 39, 43.800003, 48, 51, 51.006, 60),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Vector3(-50, 200, 0), Vector3(-50, 200, 0), Vector3(0, 90, 0), Vector3(-13.8, 109.3, 0), Vector3(-31.8, 136.3, 0), Vector3(-48.5, 167.1, 0), Vector3(-62, 225, 0), Vector3(-48.5, 244.3, 0), Vector3(-31.8, 254.6, 0), Vector3(-13.8, 263.6, 0), Vector3(0, 270, 0), Vector3(-50, 200, 0), Vector3(-50, 200, 0)]
+}
+tracks/4/type = "value"
+tracks/4/imported = false
+tracks/4/enabled = true
+tracks/4/path = NodePath(".:environment:sky:sky_material:shader_parameter/zenith_color")
+tracks/4/interp = 1
+tracks/4/loop_wrap = true
+tracks/4/keys = {
+"times": PackedFloat32Array(0, 7.2, 9, 12, 16.2, 30, 43.800003, 48, 51, 60),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Color(0.078431375, 0.16078432, 0.38039216, 1), Color(0.16078432, 0.21960784, 0.45882353, 1), Color(0.24705882, 0.30588236, 0.61960787, 1), Color(0.35686275, 0.47058824, 0.7882353, 1), Color(0.34509805, 0.6509804, 0.9490196, 1), Color(0.30980393, 0.6627451, 1, 1), Color(0.3529412, 0.65882355, 0.9607843, 1), Color(0.47843137, 0.4392157, 0.8509804, 1), Color(0.34901962, 0.29803923, 0.6509804, 1), Color(0.078431375, 0.16078432, 0.38039216, 1)]
+}
+tracks/5/type = "value"
+tracks/5/imported = false
+tracks/5/enabled = true
+tracks/5/path = NodePath(".:environment:sky:sky_material:shader_parameter/horizon_color")
+tracks/5/interp = 1
+tracks/5/loop_wrap = true
+tracks/5/keys = {
+"times": PackedFloat32Array(0, 7.2, 9, 12, 16.2, 30, 43.800003, 48, 51, 60),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Color(0.12156863, 0.2509804, 0.4509804, 1), Color(0.5019608, 0.4392157, 0.65882355, 1), Color(1, 0.6392157, 0.8392157, 1), Color(1, 0.6784314, 0.85882354, 1), Color(0.65882355, 0.81960785, 1, 1), Color(0.56078434, 0.78039217, 1, 1), Color(0.6784314, 0.81960785, 0.98039216, 1), Color(1, 0.72156864, 0.6392157, 1), Color(0.9490196, 0.6, 0.5019608, 1), Color(0.12156863, 0.2509804, 0.4509804, 1)]
+}
+tracks/6/type = "value"
+tracks/6/imported = false
+tracks/6/enabled = true
+tracks/6/path = NodePath(".:environment:fog_light_color")
+tracks/6/interp = 1
+tracks/6/loop_wrap = true
+tracks/6/keys = {
+"times": PackedFloat32Array(0, 7.2, 9, 12, 16.2, 30, 43.800003, 48, 51, 60),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Color(0.101960786, 0.2, 0.36078432, 1), Color(0.29803923, 0.32156864, 0.52156866, 1), Color(0.81960785, 0.61960787, 0.8, 1), Color(0.9490196, 0.72156864, 0.85882354, 1), Color(0.7411765, 0.85882354, 1, 1), Color(0.72156864, 0.85882354, 1, 1), Color(0.7607843, 0.85882354, 0.98039216, 1), Color(0.81960785, 0.65882355, 0.6392157, 1), Color(0.6, 0.4509804, 0.54901963, 1), Color(0.101960786, 0.2, 0.36078432, 1)]
+}
+tracks/7/type = "value"
+tracks/7/imported = false
+tracks/7/enabled = true
+tracks/7/path = NodePath(".:environment:adjustment_saturation")
+tracks/7/interp = 1
+tracks/7/loop_wrap = true
+tracks/7/keys = {
+"times": PackedFloat32Array(0, 7.2, 9, 12, 16.2, 30, 43.800003, 48, 51, 60),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [0.85, 0.85, 1.0, 1.0, 1.0, 1.0, 1.0, 0.78, 0.95, 0.85]
+}
+tracks/8/type = "value"
+tracks/8/imported = false
+tracks/8/enabled = true
+tracks/8/path = NodePath(".:environment:glow_intensity")
+tracks/8/interp = 1
+tracks/8/loop_wrap = true
+tracks/8/keys = {
+"times": PackedFloat32Array(0, 7.2, 9, 12, 16.2, 30, 43.800003, 48, 51, 60),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [0.45, 0.45, 0.45, 0.45, 0.0, 0.0, 0.0, 0.45, 0.45, 0.45]
+}
+tracks/9/type = "value"
+tracks/9/imported = false
+tracks/9/enabled = true
+tracks/9/path = NodePath("Grade/Screen:material:shader_parameter/shadow_tint")
+tracks/9/interp = 1
+tracks/9/loop_wrap = true
+tracks/9/keys = {
+"times": PackedFloat32Array(0, 7.2, 9, 12, 16.2, 30, 43.800003, 48, 51, 60),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Color(0.12156863, 0.6784314, 1, 1), Color(0.4509804, 0.5019608, 1, 1), Color(0.78039217, 0.61960787, 1, 1), Color(0.78039217, 0.61960787, 1, 1), Color(1, 1, 1, 1), Color(1, 1, 1, 1), Color(1, 1, 1, 1), Color(0.8509804, 0.6, 0.9490196, 1), Color(0.8, 0.54901963, 1, 1), Color(0.12156863, 0.6784314, 1, 1)]
+}
+tracks/10/type = "value"
+tracks/10/imported = false
+tracks/10/enabled = true
+tracks/10/path = NodePath("Grade/Screen:material:shader_parameter/highlight_tint")
+tracks/10/interp = 1
+tracks/10/loop_wrap = true
+tracks/10/keys = {
+"times": PackedFloat32Array(0, 7.2, 9, 12, 16.2, 30, 43.800003, 48, 51, 60),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Color(0.6, 0.7490196, 1, 1), Color(0.8, 0.69803923, 1, 1), Color(1, 0.4509804, 0.7490196, 1), Color(1, 0.4509804, 0.7490196, 1), Color(1, 1, 1, 1), Color(1, 1, 1, 1), Color(1, 1, 1, 1), Color(1, 0.54901963, 0.2784314, 1), Color(1, 0.65882355, 0.4, 1), Color(0.6, 0.7490196, 1, 1)]
+}
+tracks/11/type = "value"
+tracks/11/imported = false
+tracks/11/enabled = true
+tracks/11/path = NodePath("Grade/Screen:material:shader_parameter/strength")
+tracks/11/interp = 1
+tracks/11/loop_wrap = true
+tracks/11/keys = {
+"times": PackedFloat32Array(0, 7.2, 9, 12, 16.2, 30, 43.800003, 48, 51, 60),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [0.6, 0.55, 0.55, 0.5, 0.0, 0.0, 0.0, 0.3, 0.4, 0.6]
+}
+tracks/12/type = "value"
+tracks/12/imported = false
+tracks/12/enabled = true
+tracks/12/path = NodePath("Grade/Screen:material:shader_parameter/saturation")
+tracks/12/interp = 1
+tracks/12/loop_wrap = true
+tracks/12/keys = {
+"times": PackedFloat32Array(0, 7.2, 9, 12, 16.2, 30, 43.800003, 48, 51, 60),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [0.3, 0.45, 1.0, 1.0, 1.0, 1.0, 1.0, 0.9, 0.95, 0.3]
+}
+tracks/13/type = "value"
+tracks/13/imported = false
+tracks/13/enabled = true
+tracks/13/path = NodePath("Day:RimColor")
+tracks/13/interp = 1
+tracks/13/loop_wrap = true
+tracks/13/keys = {
+"times": PackedFloat32Array(0, 7.2, 9, 12, 16.2, 30, 43.800003, 48, 51, 60),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [Color(0.56078434, 0.6392157, 0.8784314, 1), Color(0.6627451, 0.60784316, 0.8392157, 1), Color(1, 0.6784314, 0.8, 1), Color(1, 0.72156864, 0.85882354, 1), Color(0.8117647, 0.9019608, 1, 1), Color(0.7764706, 0.89411765, 1, 1), Color(0.8235294, 0.9098039, 1, 1), Color(1, 0.61960787, 0.4, 1), Color(0.7176471, 0.6039216, 0.8156863, 1), Color(0.56078434, 0.6392157, 0.8784314, 1)]
+}
+tracks/14/type = "value"
+tracks/14/imported = false
+tracks/14/enabled = true
+tracks/14/path = NodePath("Day:RimStrength")
+tracks/14/interp = 1
+tracks/14/loop_wrap = true
+tracks/14/keys = {
+"times": PackedFloat32Array(0, 7.2, 9, 12, 16.2, 30, 43.800003, 48, 51, 60),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 0,
+"values": [0.25, 0.25, 0.4, 0.4, 0.3, 0.3, 0.3, 0.45, 0.3, 0.25]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_l6h8v"]
+_data = {
+&"RESET": SubResource("Animation_j2kc3"),
+&"day": SubResource("Animation_o6obe")
+}
+
+[node name="WorldEnvironment" type="WorldEnvironment" unique_id=756480353]
+environment = SubResource("Environment_h2o67")
+
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=790099094]
+transform = Transform3D(-0.7071068, 0.62433815, -0.33196652, 0, 0.4694716, 0.88294756, 0.7071067, 0.62433827, -0.33196658, 0, 0, 0)
+light_color = Color(1, 0.8862745, 0.6784314, 1)
+light_energy = 0.85
+light_angular_distance = 0.25
+shadow_enabled = true
+shadow_bias = 0.03
+shadow_normal_bias = 1.0
+shadow_blur = 1.5
+directional_shadow_mode = 0
+directional_shadow_fade_start = 1.0
+
+[node name="Grade" type="CanvasLayer" parent="." unique_id=1652646622]
+
+[node name="Screen" type="ColorRect" parent="Grade" unique_id=1222502962]
+material = SubResource("ShaderMaterial_dy5ym")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Day" type="AnimationPlayer" parent="." unique_id=931471828]
+libraries/ = SubResource("AnimationLibrary_l6h8v")
+script = ExtResource("3_o6obe")

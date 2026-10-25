@@ -1,0 +1,334 @@
+---
+title: Keyframing the day
+description: Write a small color grade shader, then animate the sun, the sky, the fog, and the grade through a one-minute day with an AnimationPlayer.
+sidebar:
+  order: 21
+  label: 21. Keyframing the day
+lesson:
+  number: 21
+  minutes: 90
+  learn:
+    - How a canvas shader reads the finished frame and grades its colors
+    - How an AnimationPlayer keys the properties of nodes and resources
+    - How to key a track by hand, and how a tool script fills in the rest from a table
+    - How one light is the sun by day and the moon by night without a visible jump
+  prerequisites: [15, 19, 20]
+---
+
+import { Aside, Code, FileTree, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Solution from '../../../components/Solution.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import piece1 from '../../../checkpoints/21/pieces/piece-1.gdshader?raw';
+import piece2 from '../../../checkpoints/21/pieces/piece-2.cs?raw';
+import day from '../../../assets/lessons/keyframing-the-day/day.png';
+import canvasLayer from '../../../assets/lessons/keyframing-the-day/canvas-layer.png';
+import fullRect from '../../../assets/lessons/keyframing-the-day/full-rect.png';
+import createShader from '../../../assets/lessons/keyframing-the-day/create-shader.png';
+import shaderEditor from '../../../assets/lessons/keyframing-the-day/shader-editor.png';
+import gradeParameters from '../../../assets/lessons/keyframing-the-day/grade-parameters.png';
+import gradeOff from '../../../assets/lessons/keyframing-the-day/grade-off.png';
+import gradeDuskRows from '../../../assets/lessons/keyframing-the-day/grade-dusk-rows.png';
+import gradeDusk from '../../../assets/lessons/keyframing-the-day/grade-dusk.png';
+import animationPanel from '../../../assets/lessons/keyframing-the-day/animation-panel.png';
+import newAnimation from '../../../assets/lessons/keyframing-the-day/new-animation.png';
+import animationRows from '../../../assets/lessons/keyframing-the-day/animation-rows.png';
+import ambientKeyed from '../../../assets/lessons/keyframing-the-day/ambient-keyed.png';
+import tracks from '../../../assets/lessons/keyframing-the-day/tracks.png';
+import noon from '../../../assets/lessons/keyframing-the-day/noon.png';
+import lateSunset from '../../../assets/lessons/keyframing-the-day/late-sunset.png';
+import midnight from '../../../assets/lessons/keyframing-the-day/midnight.png';
+
+## What you will build
+
+A day that lasts one minute. The sun rises pink, burns pale and warm at noon, sets orange, and gives way to a blue moon, while the sky, the fog, and the colors of the whole picture follow.
+
+<Figure
+	src={day}
+	alt="Six frames of the meadow from above: night in deep blue, an early morning in pink and purple, noon in calm green and blue, an afternoon in pale blue-gray with green grass, a late sunset with a gold meadow under a peach sky, and a sunset in dim rose."
+	caption="The meadow at midnight, early morning, noon, afternoon, late sunset, and sunset."
+/>
+
+You do it in two parts. First, a color grade: light alone cannot turn green grass mauve at dusk or blue at night, and games that want that look grade the finished picture. Then the animation that turns the dials.
+
+## The idea: a color grade
+
+Look at a painting of dusk: the shadows are purple and the highlights orange, and the green of the grass is hardly green at all. A light can warm the lit side of a rock, but it cannot do that to shadows, because shadows are lit by the sky. A **color grade** works on the finished picture instead: it shifts the dark pixels toward one tint, the bright pixels toward another, and changes how colorful everything is. It is the same step a film colorist does.
+
+Godot can apply a grade in its tonemapping, through a 3D look-up table. The template uses a small shader that you can read, change, and animate. It is a canvas shader on a `ColorRect` that covers the screen, and it reads the frame Godot has drawn, after tonemapping, through `hint_screen_texture`.
+
+The formula is FactoryGame's. For each pixel of color `c` with brightness `L`:
+
+`graded = L + (c - L) × saturation + (1 - L)² × shadow chroma + L² × highlight chroma`
+
+The first part changes saturation around the pixel's gray. The shadow tint counts most for dark pixels, because `(1 - L)²` is large when `L` is small. The highlight tint counts most for bright pixels. A tint's **chroma** is the tint less its own gray, so a white tint adds nothing, and the grade can shift color without changing brightness. A **strength** from 0 to 1 mixes the graded pixel with the original.
+
+## Make the grade
+
+<Steps>
+
+1. Open `world_environment.tscn`, select the root node, and add a `CanvasLayer`. Rename it `Grade`. A canvas layer draws on top of the 3D world. Godot switches to the 2D view for a canvas node. Click **3D** at the top when you want the 3D view back.
+
+	<Figure
+		src={canvasLayer}
+		alt="The Scene dock listing WorldEnvironment with Sun and Grade under it."
+		caption="The Grade layer."
+	/>
+
+2. With `Grade` selected, add a `ColorRect` under it and rename it `Screen`. In the Inspector, under **Layout**, set **Anchors Preset** to **Full Rect**, so it covers the whole screen. Under **Mouse**, set **Filter** to **Ignore**, so it never catches a click meant for the game.
+
+	<Figure
+		src={fullRect}
+		alt="The Inspector for the Screen ColorRect with Anchors Preset Full Rect and Mouse Filter Ignore."
+		caption="A rectangle that covers the screen and ignores the mouse."
+	/>
+
+3. Scroll to **CanvasItem > Material**. Click the empty field, choose **ShaderMaterial** under **New**, click the new material, and click its **Shader** field. Choose **New Shader...**, set the path to `res://world/environment/color_grade.gdshader`, and click **Create**. **Mode** is **Canvas Item**, because Godot knows the material belongs to a canvas node.
+
+	<Figure
+		src={createShader}
+		alt="The Create Shader dialog: Type Shader, Mode Canvas Item, Template Default, path res://world/environment/color_grade.gdshader."
+		caption="A canvas shader."
+	/>
+
+</Steps>
+
+Replace the shader's contents so that:
+
+- it starts with `shader_type canvas_item;`;
+- `screen_texture` is a `sampler2D` with `hint_screen_texture` and `filter_nearest`, with a comment: the frame Godot has drawn, after tonemapping. `hint_screen_texture` makes Godot fill the sampler with the screen behind this rectangle;
+- `shadow_tint` and `highlight_tint` are `vec3` uniforms with `source_color`, both `vec3(1.0)`, with a comment above them: the tint lifted into the shadows and the tint gained in the highlights, where only their color counts and not their brightness;
+- `strength` is a `float` with `hint_range(0.0, 1.0)`, defaulting to `0.0`, with a comment: how much of the grade shows, where 0 leaves the frame as it is;
+- `saturation` is a `float` with `hint_range(0.0, 2.0)`, defaulting to `1.0`, with a comment: the graded color's saturation, where 1 keeps it;
+- a function `float luma(vec3 color)` returns `dot(color, vec3(0.2126, 0.7152, 0.0722))`, with a comment: how bright a color looks to the eye. The three numbers are how much the eye counts red, green, and blue;
+- `fragment()` reads `vec3 color = texture(screen_texture, SCREEN_UV).rgb;` and `float light = luma(color);`;
+- it makes `shadow_chroma` and `highlight_chroma`, each a tint less its own `luma`, with a comment that white has none;
+- `graded` adds up the formula above, in one statement over three lines: `light + (color - light) * saturation`, then `(1.0 - light) * (1.0 - light) * shadow_chroma`, then `light * light * highlight_chroma`;
+- it ends with `COLOR = vec4(clamp(mix(color, graded, strength), 0.0, 1.0), 1.0);`. `mix` takes the original at strength 0 and the graded color at 1, and `clamp` keeps each channel between 0 and 1.
+
+<Solution>
+	<Code code={piece1} lang="gdshader" title="world/environment/color_grade.gdshader" />
+</Solution>
+
+Save it with <Kbd keys="Ctrl+Alt+S" mac="Cmd+Option+S" />.
+
+<Figure
+	src={shaderEditor}
+	alt="The Shader Editor showing the start of color_grade.gdshader."
+	caption="The grade shader."
+/>
+
+Select `Screen` again. Under **Shader Parameters**, the two tints, the strength, and the saturation are rows. The defaults change nothing. Save the scene and run the game: the picture is as it was.
+
+<Figure
+	src={gradeParameters}
+	alt="The Inspector with the Screen's Material: Shader Parameters Shadow Tint white, Highlight Tint white, Strength 0.0, Saturation 1.0."
+	caption="A neutral grade."
+/>
+
+<Figure
+	src={gradeOff}
+	alt="The running game under the neutral grade: the meadow in calm daytime colors."
+	caption="Strength 0: the frame is untouched."
+/>
+
+Now try a dusk grade. Set **Shadow Tint** to `#D999F2`, **Highlight Tint** to `#FF8C47`, **Strength** to `0.3`, and **Saturation** to `0.9`. Save, run the game, and look.
+
+<Figure
+	src={gradeDuskRows}
+	alt="The Inspector with Shadow Tint lilac, Highlight Tint orange, Strength 0.3, and Saturation 0.9."
+	caption="A dusk grade."
+/>
+
+<Figure
+	src={gradeDusk}
+	alt="The running game: the same meadow with the grass shifted toward warm olive, the shadows purple, the whole picture a little duller."
+	caption="Lilac shadows and orange highlights at strength 0.3."
+/>
+
+The grass is no longer the same green, and neither are the shadows. The sun did not change. Put the values back (white tints, strength 0, saturation 1) and save: by day the grade is off, and the animation turns it on.
+
+<Aside type="note" title="Why after tonemapping">
+The grade reads the frame after Godot has tone mapped it, so its colors are the ones the player sees, from 0 to 1, and a tint of 0.3 means 30 percent of a visible change. Before tonemapping the values are light energies with no top, and the same numbers would mean something different in every scene.
+</Aside>
+
+## The idea: an animation of the day
+
+An **AnimationPlayer** holds animations, and an animation holds **tracks**. A property track names one property of one node or resource, such as `Sun:light_energy`, and holds **keyframes**: a time and a value. At any time, the player sets the property to the value between its two nearest keyframes. One player can drive the sun, the Environment, the sky shader's colors, and the grade at once, and one number, the time, picks the hour.
+
+Your `day` animation is 60 seconds long. Noon is at 30 seconds, midnight at 0 and at 60, and everything between is keyed from FactoryGame's keyframe table.
+
+## Make the animation
+
+<Steps>
+
+1. Select the root node of `world_environment.tscn` and add an `AnimationPlayer`. Rename it `Day`. The **Animation** panel opens at the bottom of the window.
+
+	<Figure
+		src={animationPanel}
+		alt="The Animation panel at the bottom of the window: playback buttons, a time box showing 0.0, an Animation menu, and an empty list of animations."
+		caption="The Animation panel, with no animation yet."
+	/>
+
+2. Click the **Animation** menu and choose **New...**. Name the animation `day` and click **OK**.
+
+	<Figure
+		src={newAnimation}
+		alt="The Create New Animation dialog with the name field new_animation."
+		caption="A new animation."
+	/>
+
+3. Click **Animation** again and choose **Open in Inspector**. Set **Length** to `60` and **Loop Mode** to **Linear**, so that the day starts again after midnight.
+
+	<Figure
+		src={animationRows}
+		alt="The Inspector with the Animation resource: Length 60.0 s, Loop Mode Linear, Step 0.033 s, and Name day."
+		caption="One minute, looping."
+	/>
+
+</Steps>
+
+## Key a track by hand
+
+The easiest property to key is the ambient light, the energy of the sky that you set in lesson 19. Its values through the day, from FactoryGame: bright at night, dimmer by day.
+
+| Time of day | Seconds | Ambient energy |
+|---|---|---|
+| Morning, held through noon | `16.2` | `0.65` |
+| Midnight, and until pre-dawn | `0` and `7.2` | `1.5` |
+| Sunrise and early morning | `9` and `12` | `1.0` |
+| Afternoon | `43.8` | `0.65` |
+| Late sunset | `48` | `1.1` |
+| Sunset | `51` | `1.0` |
+| Midnight again | `60` | `1.5` |
+
+<Steps>
+
+1. Select the root node and open the Environment in the Inspector, as in lesson 19. Switch on **Adjustments > On**, which the day's saturation needs later.
+
+2. Type `16.2` into the time box at the top left of the Animation panel, the one that reads `0.0`. This is where the key will go.
+
+3. In the Inspector, set **Background > Energy Multiplier** to `0.65`. Click the small key button at the right of its row. Godot asks **Create new track for property 'environment:background_energy_multiplier' and insert key?** Accept it.
+
+	<Aside type="note" title="Key the daytime value first">
+	When you first key a property, Godot also makes a `RESET` animation that holds the value of the property right then. Saving the scene sets every property back to its `RESET` value, so the value you first key is the one that is saved. Starting with the daytime value means the scene is saved as noon, and the editor looks like noon when you open it.
+	</Aside>
+
+4. For each other row of the table, type its time into the time box, set **Energy Multiplier** to its value, and click the key button. Do this for each time in the table: `0`, `7.2`, `9`, `12`, `43.8`, `48`, `51`, and `60`. No question this time: the track exists.
+
+	<Figure
+		src={ambientKeyed}
+		alt="The Animation panel showing the track environment:ba with its first diamond keyframes in view at the left of the timeline."
+		caption="The ambient track, with its keys."
+	/>
+
+</Steps>
+
+Type `0` into the time box and watch the Energy Multiplier change in the Inspector. The track works.
+
+## The rest of the tracks, from a table
+
+The day has twelve more tracks. Placing about a hundred and twenty keys by hand teaches nothing more than the first track did. A short tool script adds them from tables of values, as `GrassDetail` drew the grass in lesson 13.
+
+Make a script `res://src/Tools/BuildDay.cs` that inherits `EditorScript`, as in lesson 13. Change it so that:
+
+- it has `using Godot;`, the namespace `TopDownTemplate.Tools;`, and a comment above the class: it adds the day animation's tracks from the tables below, and you run it from the Script editor with **File > Run**. `[Tool]` is on the line above `public partial class BuildDay : EditorScript`;
+- it has the constants `AnimationName` (`"day"`) and `DayLength` (`60.0`);
+- three `readonly record struct` types describe a row of each table: `LightKey` has a `Time`, a `Color` as text, and an `Energy`; `DirectionKey` has a `Time` and a `Vector3` `Rotation`; and `LookKey` has a `Time`, the colors `Zenith`, `Horizon`, and `Fog`, the numbers `Saturation` and `Glow`, the grade's `ShadowTint` and `HighlightTint`, and its `GradeStrength` and `GradeSaturation`. A record struct is a small bundle of named values, with a constructor for free;
+- three static arrays hold the tables: `Lights`, `Directions`, and `Looks`. Fill `Looks` from the table below, and copy `Lights` and `Directions` from the solution. Times are from 0 to 1 and noon is 0.5;
+- `_Run()` gets the player with `GetScene().GetNode<AnimationPlayer>("Day")` and its animation with `GetAnimation(AnimationName)`. It loops over each table and calls `Insert` for each property, using the track paths in the solution. It ends by marking the scene unsaved with `EditorInterface.Singleton.MarkSceneAsUnsaved()`, so Godot offers to save, and prints how many tracks the animation has;
+- `Insert` finds the track for a path with `FindTrack`, adds it with `AddTrack` and `TrackSetPath` the first time, and puts a key at `time * DayLength` with `TrackInsertKey`.
+
+The values are FactoryGame's Meridian keyframes, trimmed to what Godot animates directly. The script adds one more row at `1.00` that repeats midnight, so the day loops without a jump:
+
+| Time | Name | Zenith | Horizon | Fog | Saturation | Glow | Shadow tint | Highlight tint | Strength | Grade saturation |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 0.00 | Midnight | `#142961` | `#1F4073` | `#1A335C` | 0.85 | 0.45 | `#1FADFF` | `#99BFFF` | 0.60 | 0.30 |
+| 0.12 | Pre-dawn | `#293875` | `#8070A8` | `#4C5285` | 0.85 | 0.45 | `#7380FF` | `#CCB2FF` | 0.55 | 0.45 |
+| 0.15 | Sunrise | `#3F4E9E` | `#FFA3D6` | `#D19ECC` | 1.00 | 0.45 | `#C79EFF` | `#FF73BF` | 0.55 | 1.00 |
+| 0.20 | Early morning | `#5B78C9` | `#FFADDB` | `#F2B8DB` | 1.00 | 0.45 | `#C79EFF` | `#FF73BF` | 0.50 | 1.00 |
+| 0.27 | Morning | `#58A6F2` | `#A8D1FF` | `#BDDBFF` | 1.00 | 0.00 | white | white | 0.00 | 1.00 |
+| 0.50 | Noon | `#4FA9FF` | `#8FC7FF` | `#B8DBFF` | 1.00 | 0.00 | white | white | 0.00 | 1.00 |
+| 0.73 | Afternoon | `#5AA8F5` | `#ADD1FA` | `#C2DBFA` | 1.00 | 0.00 | white | white | 0.00 | 1.00 |
+| 0.80 | Late sunset | `#7A70D9` | `#FFB8A3` | `#D1A8A3` | 0.78 | 0.45 | `#D999F2` | `#FF8C47` | 0.30 | 0.90 |
+| 0.85 | Sunset | `#594CA6` | `#F29980` | `#99738C` | 0.95 | 0.45 | `#CC8CFF` | `#FFA866` | 0.40 | 0.95 |
+
+<Solution>
+	<Code code={piece2} lang="csharp" title="src/Tools/BuildDay.cs" />
+</Solution>
+
+The sun's rows deserve a word. The same light is the sun from sunrise to sunset and the moon the rest of the time. The moon is a cyan-blue `#78B8FF` at energy `0.45`, pointing from the north-northwest. Its energy fades to 0 over the 4 percent of the day before sunrise, and the light turns into the sun *while the energy is 0*: the rows at `0.15` and `0.1501` (six thousandths of a second apart in the animation) hold the moon's color and direction, then the sun's, both at energy 0. Nothing is lit when the swap happens, so the player never sees it. Sunset does the same in reverse at `0.85` and `0.8501`. The shadows never switch off, as lesson 20 said, so this costs nothing.
+
+The sun's rotation rows come from its path: it rises in the east at `0.15`, reaches 62 degrees above the horizon at noon, from the top left of the screen as in lesson 20, and sets in the west at `0.85`.
+
+<Aside type="note" title="Why a script and not more clicking">
+The key button is the way to key one property while you work on how it feels. A hundred and twenty keys from a table are data, and data belongs in a table you can read and change, not in clicks you cannot see. If you change the table, run the script again: a key put at the same time as an existing one replaces it.
+</Aside>
+
+Save the script and click **Build Project**. Make sure `world_environment.tscn` is the scene in the editor, then choose **File > Run** in the Script editor with `BuildDay.cs` open. The Output panel prints that the animation has 13 tracks. Switch back to the 3D view, and look at the Animation panel: the tracks are listed under the root node, grouped by what they animate.
+
+<Figure
+	src={tracks}
+	alt="The Animation panel showing the first tracks of the day animation under WorldEnvironment, with keys along the timeline."
+	caption="The day's tracks. Drag the panel's top edge up to see more of them."
+/>
+
+## Scrub through the day
+
+Type a time into the time box and look at the 3D view. The sky, the fog, and the sun change. Try `0`, `12`, `30`, `48`, and `51`. The grade does not show in the 3D view, because the `Screen` rectangle is a canvas node that the 3D editor does not draw. It shows in the game.
+
+Set the time to `30` and save the scene: it is saved as noon.
+
+Click the **Autoplay on Load** button, the one at the right of the animation's name in the panel, so the `day` animation plays when the scene starts. Press <Kbd keys="F5" mac="Cmd+B" /> and watch a day: it starts at midnight and takes a minute.
+
+<Figure
+	src={midnight}
+	alt="The running game at midnight: a deep blue picture, the meadow dark teal and blue, the sky a strong blue, a small shadow under the blue moon."
+	caption="Midnight."
+/>
+
+<Figure
+	src={noon}
+	alt="The running game at noon: calm greens and a soft blue sky, the shadows short and cool."
+	caption="Noon."
+/>
+
+<Figure
+	src={lateSunset}
+	alt="The running game at late sunset: the meadow olive and warm, the sky peach, the shadows long and dark."
+	caption="Late sunset."
+/>
+
+## Try it
+
+- At `30` seconds, change the Sun's **Energy** by hand and key it with the key button. Run the game: the noon is brighter. Run `BuildDay` again to put it back.
+- In the table, raise the grade's **Strength** at late sunset from `0.30` to `0.8`, run `BuildDay`, and look at the sunset. FactoryGame started there, and found it too strong.
+- Change **Length** from `60` to `20` and watch the day pass three times faster. Put it back: lesson 22 makes the length a number you set.
+
+## If it does not work
+
+- **The tracks show a red icon.** The path does not match a node or property. Track paths are relative to the AnimationPlayer's **Root Node**, which is the default `..`, the parent, here `WorldEnvironment`. Check that the nodes are named `Sun`, `Grade`, and `Screen`.
+- **The sky does not change when you scrub.** The Environment's sky colors are shader parameters, and the track path is `.:environment:sky:sky_material:shader_parameter/zenith_color`. If you replaced the sky material since lesson 19, run `BuildDay` again.
+- **The grade never shows.** Check that `Screen` covers the screen, is below `Grade`, and has its material set, and that **Strength** is above 0 in the tracks.
+- **Everything looks gray at noon in the game.** The grade's **Saturation** is not `1.0`, or the Environment's **Adjustments** saturation is not `1.0` at noon.
+- **The scene is saved at midnight.** You saved with the time box on `0`, so the properties took the midnight values. Set the time to `30` and save again.
+- **BuildDay prints nothing.** The `Day` animation player does not exist, or the animation is not called `day`. Godot reports the error in the Output panel.
+
+## Checkpoint
+
+Your project has these changes:
+
+<FileTree>
+- src
+  - Tools
+    - **BuildDay.cs**
+- world
+  - environment
+    - **color_grade.gdshader**
+    - world_environment.tscn updated
+</FileTree>
+
+Commit your work: `git add .` and `git commit -m "A color grade and the day animation"`. In lesson 22 you drive the day from a number of your own.
+
+<Checkpoint />
