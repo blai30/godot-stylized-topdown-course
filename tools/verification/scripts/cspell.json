@@ -136,6 +136,8 @@
     "Spacebar",
     "BSDF",
     "MSAA",
-    "msaa"
+    "msaa",
+    "PSSM",
+    "cutscene"
   ]
 }

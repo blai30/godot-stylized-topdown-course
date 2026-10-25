@@ -10,8 +10,8 @@ import tempfile
 
 TEMP = os.environ.get('TEMP', tempfile.gettempdir())
 
-STEPS = {13: 'lesson13', 18: 'lesson18', 15: 'lesson15', 17: 'lesson17', 5: 'lesson05', 6: 'lesson06'}
-EXTENSIONS = {13: '.cs', 18: '.cs', 15: '.gdshader', 17: '.gdshader', 5: '.cs', 6: '.cs'}
+STEPS = {13: 'lesson13', 18: 'lesson18', 15: 'lesson15', 17: 'lesson17', 19: 'lesson19', 21: 'lesson21', 22: 'lesson22', 23: 'lesson23', 5: 'lesson05', 6: 'lesson06'}
+EXTENSIONS = {13: '.cs', 18: '.cs', 15: '.gdshader', 17: '.gdshader', 19: '.gdshader', 21: ['.gdshader', '.cs'], 22: '.cs', 23: ['.gdshaderinc', '.gdshader', '.gdshader', '.cs', '.cs'], 5: '.cs', 6: '.cs'}
 verification = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 site = os.path.join(os.path.dirname(os.path.dirname(verification)), 'site', 'src', 'checkpoints')
 lesson = int(sys.argv[1])
@@ -30,7 +30,8 @@ if lesson in STEPS:
     pieces = getattr(module, 'PIECES', None) or [getattr(module, f'piece{i}') for i in range(1, 10) if hasattr(module, f'piece{i}')]
     os.makedirs(os.path.join(target, 'pieces'), exist_ok=True)
     for number, code in enumerate(pieces, 1):
-        out = os.path.join(target, 'pieces', f'piece-{number}{EXTENSIONS[lesson]}')
+        extension = EXTENSIONS[lesson][number - 1] if isinstance(EXTENSIONS[lesson], list) else EXTENSIONS[lesson]
+        out = os.path.join(target, 'pieces', f'piece-{number}{extension}')
         open(out, 'w', encoding='utf-8', newline='\n').write(code)
         print('wrote', out)
 

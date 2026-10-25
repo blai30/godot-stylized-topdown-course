@@ -350,6 +350,51 @@ return "no tab {title}"
 ''')
 
 
+def close_bottom_panel():
+    # Collapses the bottom panel by clicking its current tab again, as the reader does; nothing happens if it is closed.
+    return eval_('''
+for bar in plugin._collect(plugin.get_tree().root, "TabBar", ""):
+	var titles := []
+	for i in bar.tab_count:
+		titles.append(bar.get_tab_title(i))
+	if bar.current_tab >= 0 and "Output" in titles:
+		var at: Vector2 = bar.get_global_transform_with_canvas() * bar.get_tab_rect(bar.current_tab).get_center()
+		for pressed in [true, false]:
+			var event := InputEventMouseButton.new()
+			event.button_index = MOUSE_BUTTON_LEFT
+			event.pressed = pressed
+			event.position = at
+			event.global_position = at
+			bar.get_viewport().push_input(event)
+			await plugin.get_tree().process_frame
+''')
+
+
+def open_bottom_panel(title):
+    # Opens a bottom panel by its tab, unless it is already the open one (a second click would collapse it).
+    return eval_(f'''
+for bar in plugin._collect(plugin.get_tree().root, "TabBar", ""):
+	var titles := []
+	for i in bar.tab_count:
+		titles.append(bar.get_tab_title(i))
+	if "Output" in titles:
+		var index := titles.find("{title}")
+		if bar.current_tab == index:
+			return ""
+		var at: Vector2 = bar.get_global_transform_with_canvas() * bar.get_tab_rect(index).get_center()
+		for pressed in [true, false]:
+			var event := InputEventMouseButton.new()
+			event.button_index = MOUSE_BUTTON_LEFT
+			event.pressed = pressed
+			event.position = at
+			event.global_position = at
+			bar.get_viewport().push_input(event)
+			await plugin.get_tree().process_frame
+		return ""
+return "no bottom panel tab"
+''')
+
+
 def click_file(name):
     # Clicks a file in the FileSystem dock's tree, as the reader does to select it.
     return [{'op': 'click', 'find': {'class': 'FileSystemDock', 'type': 'Tree'}, 'item': name}, {'op': 'wait', 'frames': 30}]
