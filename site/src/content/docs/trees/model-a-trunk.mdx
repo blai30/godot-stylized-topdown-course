@@ -1,0 +1,439 @@
+---
+title: Model a trunk and branches
+description: Grow a tree's trunk and limbs in Blender from a few vertices, give them bark with the Skin modifier, color them from the palette, and plant the result in the meadow.
+sidebar:
+  order: 24
+  label: 24. Model a trunk and branches
+lesson:
+  number: 24
+  minutes: 90
+  learn:
+    - How a skeleton of a few vertices becomes a trunk and limbs with the Skin modifier
+    - What a trunk needs to read as a tree, with a flared foot, a taper, and uneven forks
+    - How to reuse one material between two Blender files with Append
+    - How to bring a model into Godot, give it the shared palette material, and plant it
+  prerequisites: [9, 10, 11, 23]
+---
+
+import { Aside, Code, FileTree, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Solution from '../../../components/Solution.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import treeScene from '../../../checkpoints/24/files/art/nature/tree_oak/tree_oak.tscn?raw';
+import meadowScene from '../../../checkpoints/24/files/levels/meadow.tscn?raw';
+import final from '../../../assets/lessons/model-a-trunk/final.png';
+import trunk from '../../../assets/lessons/model-a-trunk/trunk.png';
+import limbs from '../../../assets/lessons/model-a-trunk/limbs.png';
+import skeleton from '../../../assets/lessons/model-a-trunk/skeleton.png';
+import addModifier from '../../../assets/lessons/model-a-trunk/add-modifier.png';
+import skinThick from '../../../assets/lessons/model-a-trunk/skin-thick.png';
+import skinTransform from '../../../assets/lessons/model-a-trunk/skin-transform.png';
+import radii from '../../../assets/lessons/model-a-trunk/radii.png';
+import subdivision from '../../../assets/lessons/model-a-trunk/subdivision.png';
+import objectMenu from '../../../assets/lessons/model-a-trunk/object-menu.png';
+import applied from '../../../assets/lessons/model-a-trunk/applied.png';
+import fileMenu from '../../../assets/lessons/model-a-trunk/file-menu.png';
+import appendSelected from '../../../assets/lessons/model-a-trunk/append-selected.png';
+import materialSearch from '../../../assets/lessons/model-a-trunk/material-search.png';
+import uvMaps from '../../../assets/lessons/model-a-trunk/uv-maps.png';
+import uvCollapsed from '../../../assets/lessons/model-a-trunk/uv-collapsed.png';
+import exporterSettings from '../../../assets/lessons/model-a-trunk/exporter-settings.png';
+import treeInScene from '../../../assets/lessons/model-a-trunk/tree-scene.png';
+import meadowEditor from '../../../assets/lessons/model-a-trunk/meadow-editor.png';
+import result from '../../../assets/lessons/model-a-trunk/result.png';
+
+## What you will build
+
+A bare oak: a flared trunk that forks about two meters up into two limbs and a leader, and two side branches off the leader, about 4.3 meters tall. It has no leaves yet. In the next lessons you paint leaves, hang them on cards over this skeleton, and write the shader that makes them move. First the wood has to be right, because it shows through the canopy from every side.
+
+<Figure
+	src={final}
+	alt="A bare brown tree in Blender's viewport: a straight trunk that widens at the foot, forking into several limbs that spread and rise, the thinnest ending in blunt tips."
+	caption="The reference trunk: about 2,700 triangles and 4.3 meters tall. Yours will have its own shape."
+/>
+
+## What a tree needs from its bark
+
+Once the leaves are on, most of the twigs disappear behind them. What stays visible, from the game camera and from every side, is the trunk, the fork, and the first few limbs. Three things make a trunk read as a tree rather than a pole:
+
+- **A flared foot and a taper.** A real trunk is widest where it meets the ground and thins as it rises. The flare sets the tree into the ground, the way a bevel sets a rock down.
+- **Forks that leave at different heights and angles.** A trunk that splits into evenly spaced, identical limbs looks like a candelabra. Let one limb rise steeply, let another reach out low, and let the thinnest ones lean.
+- **An uneven line.** No part of a trunk is perfectly straight. A small lean at each joint is enough.
+
+You will not sculpt any of this. A trunk is a tube whose radius changes, and Blender can build a tube around a line for you: you place a few points joined by edges, the **skeleton**, and give each point a radius. The [Skin modifier](/reference/glossary/#skin-modifier) wraps faces around it. A dozen well-placed points make a whole tree, and moving one point reshapes a whole limb.
+
+<Aside type="note" title="Where the budget goes">
+The rocks took 100 to 400 triangles. This tree takes about 2,700, because the Skin modifier joins limbs with many small faces and the Subdivision Surface modifier splits every face again. That is fine for one tree. For a grove, lesson 28 shows how Godot draws a simpler copy of a tree from far away.
+</Aside>
+
+## Start the file
+
+<Steps>
+
+1. Choose **File > New > General**. If Blender asks **Save changes before closing?**, click **Don't Save**. The cube is your starting point, as in lesson 9.
+
+2. With the pointer over the 3D view, press <Kbd keys="F2" />, press <Kbd keys="Ctrl+A" mac="Cmd+A" />, type `tree_oak`, and press <Kbd keys="Enter" />.
+
+3. Save right away: choose **File > Save As** (<Kbd keys="Ctrl+Shift+S" mac="Cmd+Shift+S" />). In the File Browser, click the path field, press <Kbd keys="Ctrl+A" mac="Cmd+A" />, and type the path to a new `nature\tree_oak` folder in your project's `art_source` folder, ending with a backslash. Blender asks **Create new directory?**; click **Create**. Type `tree_oak.blend` as the file name and click **Save As**.
+
+</Steps>
+
+## One vertex
+
+A skeleton starts from a single point, the foot of the trunk, and every other point is pulled out of the one before it. You will turn the cube into that point.
+
+<Steps>
+
+1. With the pointer over the 3D view, press <Kbd keys="Tab" /> for Edit Mode, <Kbd keys="1" /> for vertex selection, and <Kbd keys="A" /> to select all eight corners.
+
+2. Press <Kbd keys="M" /> and choose **At Center** in the Merge menu. The eight corners become one [vertex](/reference/glossary/#vertex) at the scene's center, which is the ground.
+
+3. The foot of the trunk should sit a little below the ground, so the trunk can never float above it. Press <Kbd keys="G" />, <Kbd keys="Z" />, type `-0.1`, and press <Kbd keys="Enter" />. Press <Kbd keys="N" /> to open the Sidebar if you want to check: on its **Item** tab, **Vertex** reads X `0`, Y `0`, Z `-0.1`. Press <Kbd keys="N" /> again to close it.
+
+</Steps>
+
+## Grow the trunk
+
+To [extrude](/reference/glossary/#extrude) a vertex is to pull a new vertex out of it, joined to it by an edge. You will type how far to pull it, so the lesson's numbers land exactly where yours do: after <Kbd keys="E" />, the three numbers are the distance along X, Y, and Z, and <Kbd keys="Tab" /> moves from one to the next.
+
+<Steps>
+
+1. With the vertex selected, press <Kbd keys="E" />. Type `0`, press <Kbd keys="Tab" />, type `0`, press <Kbd keys="Tab" />, type `0.35`, and press <Kbd keys="Enter" />. A second vertex appears 35 centimeters above the first, joined to it by an edge, and it is the selected one.
+
+2. Because the new vertex is selected, the next extrusion grows from it. Press <Kbd keys="E" /> and type `0.05`, <Kbd keys="Tab" />, `0`, <Kbd keys="Tab" />, `0.75`, <Kbd keys="Enter" />. Then press <Kbd keys="E" /> once more with `-0.05`, <Kbd keys="Tab" />, `0.05`, <Kbd keys="Tab" />, `0.9`, <Kbd keys="Enter" />. The small sideways numbers are the lean that keeps the trunk from being a pole.
+
+	<Figure
+		src={trunk}
+		alt="Edit Mode: four vertices joined by three edges climbing from the origin, the second only 35 centimeters above the first, the others spaced further apart, with a faint lean."
+		caption="The trunk skeleton, framed with Numpad . (View Selected) so it fills the view. The top vertex is the fork, 1.9 meters up."
+	/>
+
+3. Zoom out a little with the mouse wheel to leave room for the limbs.
+
+</Steps>
+
+## Grow the limbs
+
+Every limb is a short chain of extrusions that starts at a vertex you choose. Click a vertex to select it (it is the only vertex there, so the click is easy), then extrude from it. This table lists the whole tree, trunk included, so you can check your work. The columns are the vertex's name, the vertex it grows from, the three numbers you type after <Kbd keys="E" />, and where the vertex ends up.
+
+| Vertex | Grows from | Type (X, Y, Z) | Ends at |
+|---|---|---|---|
+| Foot | | | 0, 0, -0.1 |
+| Flare | Foot | 0, 0, 0.35 | 0, 0, 0.25 |
+| Middle | Flare | 0.05, 0, 0.75 | 0.05, 0, 1.0 |
+| Fork | Middle | -0.05, 0.05, 0.9 | 0, 0.05, 1.9 |
+| A1 | Fork | -0.6, 0.05, 0.6 | -0.6, 0.1, 2.5 |
+| A2 | A1 | -0.5, 0.1, 0.6 | -1.1, 0.2, 3.1 |
+| A3 | A2 | -0.2, 0.1, 0.5 | -1.3, 0.3, 3.6 |
+| B1 | Fork | 0.7, -0.25, 0.7 | 0.7, -0.2, 2.6 |
+| B2 | B1 | 0.5, -0.1, 0.6 | 1.2, -0.3, 3.2 |
+| B3 | B2 | 0.2, 0.1, 0.5 | 1.4, -0.2, 3.7 |
+| L1 | Fork | 0.05, 0.05, 0.9 | 0.05, 0.1, 2.8 |
+| L2 | L1 | 0.05, 0.1, 0.8 | 0.1, 0.2, 3.6 |
+| L3 | L2 | -0.05, -0.1, 0.6 | 0.05, 0.1, 4.2 |
+| C1 | L1 | -0.35, 0.6, 0.5 | -0.3, 0.7, 3.3 |
+| C2 | C1 | -0.2, 0.4, 0.5 | -0.5, 1.1, 3.8 |
+| D1 | L1 | 0.45, -0.8, 0.6 | 0.5, -0.7, 3.4 |
+| D2 | D1 | 0.3, -0.3, 0.5 | 0.8, -1.0, 3.9 |
+
+<Steps>
+
+1. Click the fork, the top vertex of the trunk. Extrude A1, A2, and A3 in turn with the numbers in the table: after each <Kbd keys="E" /> the new vertex is selected, so the chain grows from the one before. Each limb ends in a vertex that is a tip.
+
+	<Figure
+		src={limbs}
+		alt="Edit Mode: the trunk with two thin limbs leaving its top, the last extruded vertex highlighted in orange."
+		caption="After the first two limbs, A and B."
+	/>
+
+2. Click the fork again and extrude B1, B2, and B3. Click the fork a third time and extrude L1, L2, and L3, the leader: the limb that continues the trunk upward.
+
+3. Click L1, the first vertex of the leader, and extrude C1 and C2. Click L1 again and extrude D1 and D2. These two side branches leave the leader low and lean the other way, which breaks up its line.
+
+4. Press <Kbd keys="A" /> and then <Kbd keys="Numpad ." /> to frame everything, and <Kbd keys="Alt+A" mac="Option+A" /> to select nothing.
+
+	<Figure
+		src={skeleton}
+		alt="Edit Mode: the whole skeleton, black dots and thin lines: a trunk with a fork, three limbs spreading from the fork, and two small branches leaving the middle one."
+		caption="The finished skeleton: 17 vertices and 16 edges."
+	/>
+
+</Steps>
+
+<Aside type="tip" title="Make it yours">
+The table is one possible tree. To change it, select a vertex and press <Kbd keys="G" /> to move it: everything grown from it does not follow, so move the tip first, then the vertices below it. Keep the fork between 1.5 and 2.5 meters, so the trunk shows under the canopy, and keep the tips inside a circle about 1.5 meters from the trunk, because lesson 26 builds the leaf canopy around them.
+</Aside>
+
+## Give it bark
+
+<Steps>
+
+1. Click the **Modifiers** tab in the **Properties** editor, the blue wrench. Click **Add Modifier**, point at **Generate**, and choose **Skin**. (You can also type `skin` in the menu's search.)
+
+	<Figure
+		src={addModifier}
+		alt="The Add Modifier menu: a Search field, then Edit, Generate, Deform, Normals, Physics, Geometry, Hair, Instances, Simulation, and Geometry Nodes."
+		caption="Add Modifier, Generate, Skin."
+	/>
+
+2. Every vertex now has a tube around it, as thick as the default radius, 25 centimeters. The tree is a lumpy club. The modifier has a **Symmetry** row with **X** turned on; the tree is not symmetric, so click **X** to turn it off.
+
+	<Figure
+		src={skinThick}
+		alt="The tree as a thick, lumpy mass of boxes in Edit Mode, with the Skin modifier's panel on the right: Branch Smoothing 0, Symmetry X, Y, Z, Smooth Shading, and buttons for Mark Loose, Clear Loose, Mark Root, and Equalize Radii."
+		caption="Every vertex starts at radius 0.25 m. The Symmetry X button is on until you click it."
+	/>
+
+3. Turn on [X-ray](/reference/glossary/#x-ray) with <Kbd keys="Alt+Z" mac="Option+Z" />, so you can click the vertices inside the thick shape.
+
+4. The radius at each vertex is what shapes the wood. Select the vertices that share a radius, then choose **Mesh > Transform > Skin Resize** (<Kbd keys="Ctrl+A" mac="Cmd+A" />), type a number, and press <Kbd keys="Enter" />. The number is a factor: it multiplies the radius the vertex has now, which is still 0.25, so each factor in the table is the radius you want divided by 0.25.
+
+	<Figure
+		src={skinTransform}
+		alt="The Mesh menu open in Edit Mode: Transform at the top, then Mirror, Snap, Duplicate, Extrude, Merge, Split, Separate, Bisect, Knife Project, Knife Topology Tool, Convex Hull, Symmetrize, and Snap to Symmetry."
+		caption="Skin Resize is inside the Transform submenu at the top."
+	/>
+
+	| Vertices | Radius | Type |
+	|---|---|---|
+	| Foot | 0.26 m | `1.04` |
+	| Flare | 0.20 m | `0.8` |
+	| Middle | 0.17 m | `0.68` |
+	| Fork | 0.15 m | `0.6` |
+	| A1, B1, L1 | 0.10 m | `0.4` |
+	| A2, B2, L2, C1, D1 | 0.06 m | `0.24` |
+	| A3, B3, L3, C2, D2 | 0.03 m | `0.12` |
+
+	Click the first vertex of a group, <Kbd keys="Shift" />-click the others, press <Kbd keys="Ctrl+A" mac="Cmd+A" />, type the number, and press <Kbd keys="Enter" />. Do the groups from the top of the table down, and press <Kbd keys="Alt+A" mac="Option+A" /> between groups.
+
+5. Press <Kbd keys="Alt+A" mac="Option+A" /> and look at the result. A thick foot, a taper up the trunk, and limbs that thin to a point.
+
+	<Figure
+		src={radii}
+		alt="The tree in X-ray view: a trunk widest at the foot and thinning up, forking into limbs that end in blunt points, drawn over the skeleton's thin lines."
+		caption="The tree after the radii. The skeleton shows through in X-ray."
+	/>
+
+</Steps>
+
+The twig radius of 3 centimeters is the thinnest the bark goes. Everything finer will be a leaf card.
+
+## Round it and make it real
+
+The Skin modifier builds tubes with four sides, and they look it. One level of Subdivision Surface turns each four-sided tube into an eight-sided one and rounds the joints. Then you apply both modifiers: the exporter could apply them for you, but the Skin modifier writes no UVs, and you need a UV map for the next part.
+
+<Steps>
+
+1. Press <Kbd keys="Alt+Z" mac="Option+Z" /> to turn X-ray off, and <Kbd keys="Tab" /> to return to Object Mode.
+
+2. In the modifier panel, click **Add Modifier**, point at **Generate**, and choose **Subdivision Surface**. Leave **Levels Viewport** at `1`.
+
+	<Figure
+		src={subdivision}
+		alt="The tree rounded and smooth in the viewport, with the modifier panel showing the collapsed Skin modifier and a Subdivision modifier with two buttons for the subdivision type, Levels Viewport 1, Render 2, and Optimal Display."
+		caption="Subdivision Surface at level 1: eight-sided limbs and soft joints."
+	/>
+
+3. Choose **Object > Shade Smooth**, so the faces light as a smooth surface, as lesson 9 did for the rock.
+
+	<Figure
+		src={objectMenu}
+		alt="The Object menu, open, with Shade Smooth, Shade Auto Smooth, and Shade Flat in a group near the bottom."
+		caption="Object > Shade Smooth."
+	/>
+
+4. Apply the modifiers in order, the Skin first. Point at the Skin modifier's panel and press <Kbd keys="Ctrl+A" mac="Cmd+A" />. The panel disappears and the Subdivision panel moves up. Point at it and press <Kbd keys="Ctrl+A" mac="Cmd+A" /> again. The modifier list is empty, and the mesh is the tree.
+
+5. Check the model. With the pointer over the viewport, open the **Statistics** overlay if you like (the **Overlays** popover). The reference tree has 2,724 triangles, is about 2.7 meters wide and 4.3 meters tall, and its lowest point is 7 centimeters below the ground.
+
+	<Figure
+		src={applied}
+		alt="The smooth tree in Object Mode, outlined in orange, with an empty modifier panel."
+		caption="The applied tree: no modifiers left."
+	/>
+
+</Steps>
+
+## Color it from the palette
+
+The tree needs the palette material that the rocks use. You could rebuild it as in lesson 10, but Blender can copy it out of the rock's file: **Append** brings a piece of a file, here a material and its image, from another `.blend`.
+
+<Steps>
+
+1. Choose **File > Append**.
+
+	<Figure
+		src={fileMenu}
+		alt="Blender's File menu open with New highlighted and its submenu beside it: General, 2D Animation, Sculpting, Storyboarding, VFX, and Video Editing. Further down are Open, Save, Save As, Link, Append, Import, and Export."
+		caption="File > Append."
+	/>
+
+2. In the File Browser, click the path field, press <Kbd keys="Ctrl+A" mac="Cmd+A" />, and type the path of `rock_small.blend` in your project's `art_source\nature\rock_small` folder, followed by a backslash, `Material`, and a backslash: `...\rock_small.blend\Material\`. Blender treats the `.blend` as a folder, and the **Material** folder inside it lists the file's materials. Press <Kbd keys="Enter" />.
+
+3. Click **palette**, then click **Append**. Blender copies the material with its palette image. The image's path is kept relative to the new file, so it still points at your project's `art\palette\palette.png`.
+
+	<Figure
+		src={appendSelected}
+		alt="The File Browser inside rock_small.blend, in its Material folder, listing one material, palette, selected, with the Append and Cancel buttons at the bottom and Localize All checked."
+		caption="Appending the palette material from the rock's file."
+	/>
+
+4. Click the **Material** tab, the last one in the Properties editor. The tree has the cube's default material, **Material**. Click the small sphere button to the left of its name, type `palette` in the search field at the bottom of the list, and press <Kbd keys="Enter" />. The list shows `0 palette`, because no object uses it yet; the tree now does. The old **Material** has no users, and Blender drops it when you save.
+
+	<Figure
+		src={materialSearch}
+		alt="The Material tab: the list of materials open under the slot's name, showing Material and 0 palette, with a search field at the bottom."
+		caption="Choosing the palette material for the slot."
+	/>
+
+5. The mesh is still named **Cube**, and Godot shows the mesh's name. Click the **Data** tab, the green triangle, click the name field at its top, press <Kbd keys="Ctrl+A" mac="Cmd+A" />, type `tree_oak`, and press <Kbd keys="Enter" />.
+
+</Steps>
+
+Now the UVs. Applying the Skin modifier left the mesh without any, so first give it a UV map, then collapse every UV onto one swatch, as lesson 10 did for each part of the rock.
+
+<Steps>
+
+1. On the **Data** tab, open the **UV Maps** panel and click the **+** at its right. A map named **UVMap** appears.
+
+	<Figure
+		src={uvMaps}
+		alt="The Data tab's UV Maps panel, with the list showing UVMap selected and plus and minus buttons beside it."
+		caption="One click on + adds a UV map."
+	/>
+
+2. Click the **UV Editing** tab at the top of the window. Blender switches to Edit Mode, and the UV Editor on the left shows your palette. At the left of the UV Editor's header, click the **UV Sync Selection** button to turn it off.
+
+3. Over the 3D view, press <Kbd keys="3" /> for face selection and <Kbd keys="A" /> to select every face. Over the UV Editor, press <Kbd keys="A" />, then <Kbd keys="S" />, type `0`, and press <Kbd keys="Enter" />. Every UV is now a single point.
+
+4. Press <Kbd keys="N" /> over the UV Editor. On the **Image** tab, under **UV Vertex**, set **X** to `0.1875` and **Y** to `0.6875`. The point moves to the second swatch of the third row, the dark brown of the browns ramp. One swatch is enough: the shader will vary the wood's color in the next lessons.
+
+	<Figure
+		src={uvCollapsed}
+		alt="The UV Editor with its Sidebar: UV Vertex X 0.188 and Y 0.688, a point on the second swatch of the palette's third row, and the palette's colors below."
+		caption="Every UV on the dark brown swatch."
+	/>
+
+5. Click the **Layout** tab, and press <Kbd keys="Tab" /> with the pointer over the 3D view to return to Object Mode. In the **Viewport Shading** popover (the small arrow beside the shading buttons), set **Color** to **Texture**, as lesson 10 did, and orbit with <Kbd keys="Numpad 4" /> until you like the view.
+
+	<Figure
+		src={final}
+		alt="The tree in the Layout workspace in dark brown, lit from above, with the fork and limbs spreading against the gray grid."
+		caption="The bark in the palette's brown."
+	/>
+
+</Steps>
+
+## Export
+
+Export the tree as you exported the rock in lesson 10: one collection per model, with a glTF exporter that points into `art`.
+
+<Steps>
+
+1. In the **Outliner**, click **Collection**, press <Kbd keys="F2" />, press <Kbd keys="Ctrl+A" mac="Cmd+A" />, type `tree_oak`, and press <Kbd keys="Enter" />.
+
+2. In the **Properties** editor, click the **Collection** tab. In the **Exporters** panel, click **+** and choose **glTF 2.0**.
+
+3. Click the folder button at the right of **File Path**. In the File Browser, type the path of your project's `art\nature\tree_oak\` folder, press <Kbd keys="Enter" />, and click **Create** when Blender offers to create the folder. Type `tree_oak.glb` as the file name, press <Kbd keys="Enter" />, and click **Accept**.
+
+4. Open **Data** and then **Mesh**: **Apply Modifiers**, **UVs**, and **Normals** stay checked. Uncheck **Animation**. Under **Material**, set **Images** to **None**.
+
+	<Figure
+		src={exporterSettings}
+		alt="The exporter's settings: File Path pointing into art, Mesh with Apply Modifiers, UVs, and Normals checked, Material with Materials Export and Images None, and Animation unchecked."
+		caption="The same settings as the rock's exporter."
+	/>
+
+5. Click the export button at the right end of the exporter's **glTF 2.0** title, an arrow pointing up out of a tray. Then save the file with <Kbd keys="Ctrl+S" mac="Cmd+S" />.
+
+</Steps>
+
+## Bring it into Godot
+
+<Steps>
+
+1. Open your project in Godot. It imports `tree_oak.glb` as it starts. The tree keeps the palette material from Blender, named `palette`, but you want it to use the shared material from lesson 23, the one with the wrapped light and the rim, so the bark answers to the day as the rocks do.
+
+2. Choose **Scene > New Inherited Scene...** and pick `art/nature/tree_oak/tree_oak.glb`, as you did for the rock in lesson 11. Rename the root `TreeOak`: double-click it in the Scene dock, type, and press <Kbd keys="Enter" />.
+
+3. Select the `tree_oak` node, the one with the mesh. In the Inspector, under **Geometry**, find **Material Override**, click the arrow at the right of its field, choose **Quick Load...**, type `palette_lit`, and press <Kbd keys="Enter" /> to pick `palette_lit.tres`.
+
+	<Figure
+		src={treeInScene}
+		alt="The Godot editor with a tree_oak scene open: the Scene dock showing TreeOak and its tree_oak child, and the 3D viewport showing the brown tree on a dark grid."
+		caption="The tree scene in Godot, with its material override."
+	/>
+
+4. Save the scene with <Kbd keys="Ctrl+S" mac="Cmd+S" />. In the **Save Scene As** dialog, leave the name `tree_oak.tscn` and click **Save**.
+
+5. Open `levels/meadow.tscn`. Select **Meadow**, click **+** at the top of the Scene dock, search for `Node3D`, click **Create**, and rename it `Trees`. With **Trees** selected, click **Instantiate Child Scene**, type `tree_oak.tscn`, and press <Kbd keys="Enter" />.
+
+6. Select **TreeOak**. In the Inspector, set **Position** to `-5, 0, -3`. Save the scene.
+
+	<Figure
+		src={meadowEditor}
+		alt="The Godot editor showing the meadow in the 3D viewport: the brown tree standing on the grass beside the dirt patch with its long shadow on the ground, a gray rock at the lower left, and Trees and TreeOak in the Scene dock."
+		caption="The tree stands in the meadow and casts its shadow."
+	/>
+
+</Steps>
+
+Press <Kbd keys="F5" mac="Cmd+B" /> to run. The tree stands by the dirt patch, and its limbs throw a shadow across the grass.
+
+<Figure
+	src={result}
+	alt="The running game from above: the player capsule in the meadow, a bare brown tree to its upper left with a long shadow, a dirt path, and gray rocks."
+	caption="The tree at the game's own camera."
+/>
+
+The player still walks through the trunk. Collision is part of the tree scene in lesson 28, with the leaves, the shadows, and the grove.
+
+## Try it
+
+- Repeat the lesson in a new file with your own table: a fork at 2.4 meters, a limb that leans far out, or a leader that bends. Name it `tree_oak_b`. Lesson 28 plants more than one tree, and two shapes make a grove look planted rather than copied.
+- While the Skin modifier is still on, before you apply it, change **Branch Smoothing** and look at how the joints between limbs change. Put it back at `0` if you do not like it.
+- Look at your tree from the top with <Kbd keys="Numpad 7" />. The game camera sees it this way: do the limbs spread in different directions, or all one way?
+
+## If it does not work
+
+- **The tree looks like a mirror image of itself.** The Skin modifier's **Symmetry X** is still on. Click **X** to turn it off, before you apply the modifier.
+- **Skin Resize did nothing, or the limbs are not the thickness in the table.** The vertices were not selected, or you typed the radius instead of the factor. Press <Kbd keys="Ctrl+Z" mac="Cmd+Z" /> and select again; the number you type is the radius divided by `0.25`.
+- **A limb grew from the wrong vertex.** Something else was selected when you pressed <Kbd keys="E" />. Press <Kbd keys="Ctrl+Z" mac="Cmd+Z" /> and click the vertex you want to grow from. If it is hidden behind another, turn on X-ray with <Kbd keys="Alt+Z" mac="Option+Z" />.
+- **A typed number was added to the old one.** Press <Kbd keys="Esc" /> and extrude again. Typing a minus sign first makes the number negative.
+- **Blender says the applied modifier was not first.** You applied Subdivision Surface before the Skin. Undo and apply the Skin first.
+- **The tree is gray, not brown, in the viewport.** **Color** in the **Viewport Shading** popover is not **Texture**.
+- **The tree is white or gray in Godot.** The material override is missing. Select the `tree_oak` node in `tree_oak.tscn` and set **Material Override** to `palette_lit.tres`.
+- **The tree floats above the ground.** Its position's Y is not `0`, or the foot vertex is not 10 centimeters below the origin.
+- **The File Browser shows no `palette`.** The path must end at the `Material` folder inside `rock_small.blend`, as in `rock_small.blend\Material\`.
+
+## Checkpoint
+
+Your project now contains:
+
+<FileTree>
+- art
+  - nature
+    - tree_oak
+      - **tree_oak.glb**
+      - tree_oak.glb.import
+      - **tree_oak.tscn**
+- art_source
+  - nature
+    - tree_oak
+      - **tree_oak.blend**
+- levels
+  - meadow.tscn with a `Trees` node holding one `TreeOak`
+</FileTree>
+
+<Solution label="Show the full tree_oak.tscn">
+	<Code code={treeScene} lang="ini" title="art/nature/tree_oak/tree_oak.tscn" />
+</Solution>
+
+<Solution label="Show the full meadow.tscn">
+	<Code code={meadowScene} lang="ini" title="levels/meadow.tscn" />
+</Solution>
+
+Commit your work: `git add .` and `git commit -m "Model the oak's trunk and branches"`. In the next lesson you open Krita and paint the leaves.
+
+<Checkpoint />

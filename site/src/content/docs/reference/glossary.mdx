@@ -81,6 +81,10 @@ Godot's resource for how a scene's world looks as a whole: the background and sk
 
 In a Godot script, marking a property with `[Export]` so it appears in the Inspector and its value is saved in the scene. Tunable numbers and references to other nodes are exported, so you can change them without editing code.
 
+## Extrude
+
+In Blender, pulling new geometry out of a selection: extruding a vertex adds a new vertex joined to it by an edge, which you then move. Press <kbd>E</kbd> in Edit Mode.
+
 ## Fog
 
 A veil of color that thickens with distance from the camera. It hides far things and lifts the darkest colors toward the fog's color.
@@ -269,6 +273,10 @@ A small program that runs on the graphics card and decides how a surface is draw
 
 How Godot draws shadows: the light renders the scene from its own point of view to find what it can reach, and anything it cannot reach is in shadow. Turn it on with the light's **Shadow** setting.
 
+## Skin modifier
+
+A Blender modifier that wraps a tube of faces around a skeleton of vertices and edges, with a radius you set at each vertex. It builds trunks, branches, and tentacles from a few points.
+
 ## Smooth shading
 
 Lighting a mesh as if its surface were curved between vertices, instead of flat on every face. It makes a few faces look round.
@@ -280,6 +288,10 @@ A `.sln` file that lists one or more C# projects for a code editor to open toget
 ## sRGB
 
 The standard color space of ordinary images and screens. Godot reads color textures, such as your palette, as sRGB and converts them before it lights them. In a shader, the `source_color` hint marks a texture as a color texture so Godot does this for you.
+
+## Subdivision surface
+
+A Blender modifier that splits every face into smaller ones and rounds the result, so a blocky shape becomes smooth. One level turns a four-sided tube into an eight-sided one.
 
 ## Swatch
 

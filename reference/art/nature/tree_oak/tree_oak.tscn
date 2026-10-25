@@ -1,0 +1,9 @@
+[gd_scene format=3 uid="uid://cq7tmg6gvhpss"]
+
+[ext_resource type="PackedScene" uid="uid://cnacd0jrfs0cj" path="res://art/nature/tree_oak/tree_oak.glb" id="1_gsu0v"]
+[ext_resource type="Material" uid="uid://dfwjs7hb3bs1e" path="res://art/palette/palette_lit.tres" id="2_hjhm8"]
+
+[node name="TreeOak" unique_id=642112219 instance=ExtResource("1_gsu0v")]
+
+[node name="tree_oak" parent="." index="0" unique_id=1624608355]
+material_override = ExtResource("2_hjhm8")

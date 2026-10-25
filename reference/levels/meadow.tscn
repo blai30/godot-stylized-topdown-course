@@ -8,6 +8,7 @@
 [ext_resource type="Script" uid="uid://cdd7jprpql65p" path="res://src/Ground/GroundMap.cs" id="6_l3whd"]
 [ext_resource type="Resource" uid="uid://bbfxix0y17o25" path="res://art/ground/ground_tile_set.tres" id="7_4wctf"]
 [ext_resource type="PackedScene" uid="uid://dpo347bmep5qf" path="res://world/environment/world_environment.tscn" id="8_4wctf"]
+[ext_resource type="PackedScene" uid="uid://cq7tmg6gvhpss" path="res://art/nature/tree_oak/tree_oak.tscn" id="9_x3fdv"]
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_uor45"]
 size = Vector2(20, 20)
@@ -66,3 +67,8 @@ script = ExtResource("6_l3whd")
 Tiles = ExtResource("7_4wctf")
 
 [node name="WorldEnvironment" parent="." unique_id=756480353 instance=ExtResource("8_4wctf")]
+
+[node name="Trees" type="Node3D" parent="." unique_id=917682018]
+
+[node name="TreeOak" parent="Trees" unique_id=642112219 instance=ExtResource("9_x3fdv")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0, -3)
