@@ -7,22 +7,13 @@
 [ext_resource type="MeshLibrary" uid="uid://okg07q7uxdq1" path="res://art/ground/ground_tiles.meshlib" id="5_pkshm"]
 [ext_resource type="Script" uid="uid://cdd7jprpql65p" path="res://src/Ground/GroundMap.cs" id="6_l3whd"]
 [ext_resource type="Resource" uid="uid://bbfxix0y17o25" path="res://art/ground/ground_tile_set.tres" id="7_4wctf"]
+[ext_resource type="PackedScene" uid="uid://dpo347bmep5qf" path="res://world/environment/world_environment.tscn" id="8_4wctf"]
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_uor45"]
 size = Vector2(20, 20)
 
 [sub_resource type="ConcavePolygonShape3D" id="ConcavePolygonShape3D_k6xl7"]
 data = PackedVector3Array(10, 0, 10, -10, 0, 10, 10, 0, -10, -10, 0, 10, -10, 0, -10, 10, 0, -10)
-
-[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_wedpq"]
-
-[sub_resource type="Sky" id="Sky_fbj5a"]
-sky_material = SubResource("ProceduralSkyMaterial_wedpq")
-
-[sub_resource type="Environment" id="Environment_uor45"]
-background_mode = 2
-sky = SubResource("Sky_fbj5a")
-tonemap_mode = 4
 
 [node name="Meadow" type="Node3D" unique_id=1957612478]
 
@@ -34,13 +25,6 @@ mesh = SubResource("PlaneMesh_uor45")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Ground/StaticBody3D" unique_id=1559433823]
 shape = SubResource("ConcavePolygonShape3D_k6xl7")
-
-[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=870309231]
-environment = SubResource("Environment_uor45")
-
-[node name="Sun" type="DirectionalLight3D" parent="." unique_id=754535464]
-transform = Transform3D(0.70710677, -0.579228, 0.4055798, 0, 0.57357645, 0.81915206, -0.70710677, -0.579228, 0.4055798, 0, 0, 0)
-shadow_enabled = true
 
 [node name="CameraRig" parent="." unique_id=1372657056 node_paths=PackedStringArray("Target") instance=ExtResource("1_1sye5")]
 Target = NodePath("../Player")
@@ -80,3 +64,5 @@ data = {
 }
 script = ExtResource("6_l3whd")
 Tiles = ExtResource("7_4wctf")
+
+[node name="WorldEnvironment" parent="." unique_id=756480353 instance=ExtResource("8_4wctf")]

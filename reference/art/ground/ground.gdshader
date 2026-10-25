@@ -1,5 +1,7 @@
 shader_type spatial;
 
+#include "res://art/shaders/stylized_lit.gdshaderinc"
+
 // The ground textures from lessons 13 and 14.
 uniform sampler2D albedo_texture : source_color, filter_linear_mipmap, repeat_enable;
 // The ground's color: the texture is multiplied by it, and white leaves the texture as it is.
@@ -36,4 +38,5 @@ void fragment() {
 	float tone = texture(edge_noise, world_position.xz * edge_noise_scale * 0.25).r;
 	ALBEDO *= 0.75 + 0.5 * tone;
 	ALPHA_SCISSOR_THRESHOLD = 0.5;
+	EMISSION += soft_rim(NORMAL, INV_VIEW_MATRIX);
 }

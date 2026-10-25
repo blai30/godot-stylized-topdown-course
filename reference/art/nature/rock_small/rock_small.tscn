@@ -1,5 +1,9 @@
 [gd_scene format=3 uid="uid://pq60ng2nyl31"]
 
 [ext_resource type="PackedScene" uid="uid://fnos2c3u4wfv" path="res://art/nature/rock_small/rock_small.glb" id="1_exkmk"]
+[ext_resource type="Material" uid="uid://dfwjs7hb3bs1e" path="res://art/palette/palette_lit.tres" id="2_ab5e8"]
 
 [node name="RockSmall" unique_id=1198000824 instance=ExtResource("1_exkmk")]
+
+[node name="rock_small" parent="." index="0" unique_id=247508247]
+material_override = ExtResource("2_ab5e8")
