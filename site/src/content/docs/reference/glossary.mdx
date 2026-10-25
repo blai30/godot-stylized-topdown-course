@@ -49,6 +49,14 @@ A saved version of your project in Git: a snapshot of every file at that moment,
 
 A shape with no dents or hollows, like a gift wrapped tightly in plastic. Convex collision shapes are cheap for the physics engine and fit rocks and other solid props well.
 
+## Custom resource
+
+A resource you define with your own C# class, so the data you keep in it (a name, a number, a list) shows up in the Inspector and saves to a file. Mark the class with `[GlobalClass]` and Godot lists it in the Create New Resource dialog.
+
+## Detail texture
+
+A gray picture that holds only a surface's light and dark, such as grass blades, with no color of its own. A shader multiplies it by a color, so one detail picture serves any color: the ground is the color times the detail.
+
 ## Edit Mode
 
 Blender's mode for changing a mesh's vertices, edges, and faces. Press <kbd>Tab</kbd> to switch between Edit Mode and Object Mode.
@@ -255,7 +263,7 @@ One square of flat color in a palette image. Models take a color by pointing the
 
 ## Texel density
 
-How many texture pixels (texels) cover one meter of a surface. This course uses 256 pixels per meter everywhere, so textures on different objects look equally sharp side by side.
+How many texture pixels (texels) cover one meter of a surface. This course uses 256 pixels per meter for hand-painted textures, and 512 for the grass detail, so textures on different objects look about equally sharp side by side.
 
 ## Texture
 
@@ -264,6 +272,10 @@ An image a shader reads colors or other values from. Reading from it is called s
 ## Tileable texture
 
 A texture whose opposite edges match, so copies laid side by side join with no visible line. Ground textures are tileable so one small image can cover any amount of ground. Krita's wrap-around mode helps you paint one.
+
+## Tool script
+
+A script that runs in the Godot editor, not in the game. In C# it carries the `[Tool]` attribute; an `EditorScript` is a tool script with one method, `_Run()`, that runs when you choose File > Run in the Script editor.
 
 ## Tonemapping
 

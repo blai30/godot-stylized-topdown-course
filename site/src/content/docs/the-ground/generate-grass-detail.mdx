@@ -1,329 +1,197 @@
 ---
-title: Paint a tileable grass texture
-description: Paint a hand-painted grass texture in Krita that repeats with no visible seam, by making your own blade and tuft brushes, then import it into Godot with the settings a repeating 3D texture needs.
+title: Draw the grass detail with code
+description: Write a short C# tool script that draws a tileable grass detail picture, a gray image of overlapping blades, and import it into Godot with the settings a repeating 3D texture needs.
 sidebar:
   order: 13
-  label: 13. Paint a tileable grass texture
+  label: 13. Draw the grass detail with code
 lesson:
   number: 13
   minutes: 60
   learn:
-    - What a tileable texture is, and what texel density means
-    - How Krita's wrap-around mode hides the seams while you paint
-    - How to make a brush that tapers without a pen, and a stamp brush from your own painting
-    - How hand-painted texture artists build a surface from shapes, back to front
+    - Why a ground is a flat color times a gray detail picture, and what that buys you
+    - How to write a C# tool script that runs in the editor and saves an image
+    - How to draw a curved, tapering shape one pixel at a time, and how drawing back to front builds depth
+    - Why a picture that wraps at its edges tiles with no seam
     - Which import settings a repeating 3D texture needs in Godot
-  prerequisites: [7, 11]
+  prerequisites: [5, 6, 11]
 ---
 
-import { Aside, FileTree, Steps } from '@astrojs/starlight/components';
+import { Aside, Code, FileTree, Steps } from '@astrojs/starlight/components';
 import Figure from '../../../components/Figure.astro';
+import Solution from '../../../components/Solution.astro';
 import Checkpoint from '../../../components/Checkpoint.astro';
 import Kbd from '../../../components/Kbd.astro';
-import result from '../../../assets/lessons/paint-a-grass-texture/result.png';
-import newDimensions from '../../../assets/lessons/paint-a-grass-texture/new-dimensions.png';
-import colorShadow from '../../../assets/lessons/paint-a-grass-texture/color-shadow.png';
-import presetSearch from '../../../assets/lessons/paint-a-grass-texture/preset-search.png';
-import bladeSettings from '../../../assets/lessons/paint-a-grass-texture/blade-settings.png';
-import saveNewPreset from '../../../assets/lessons/paint-a-grass-texture/save-new-preset.png';
-import savePreset from '../../../assets/lessons/paint-a-grass-texture/save-preset.png';
-import tufts from '../../../assets/lessons/paint-a-grass-texture/tufts.png';
-import stamp from '../../../assets/lessons/paint-a-grass-texture/stamp.png';
-import tuftTip from '../../../assets/lessons/paint-a-grass-texture/tuft-tip.png';
-import tuftRotation from '../../../assets/lessons/paint-a-grass-texture/tuft-rotation.png';
-import tuftSize from '../../../assets/lessons/paint-a-grass-texture/tuft-size.png';
-import tuftScatter from '../../../assets/lessons/paint-a-grass-texture/tuft-scatter.png';
-import toolbarSliders from '../../../assets/lessons/paint-a-grass-texture/toolbar-sliders.png';
-import passDark from '../../../assets/lessons/paint-a-grass-texture/pass-dark.png';
-import passLight from '../../../assets/lessons/paint-a-grass-texture/pass-light.png';
-import passHighlight from '../../../assets/lessons/paint-a-grass-texture/pass-highlight.png';
-import far from '../../../assets/lessons/paint-a-grass-texture/far.png';
-import pngOptions from '../../../assets/lessons/paint-a-grass-texture/png-options.png';
-import importBefore from '../../../assets/lessons/paint-a-grass-texture/import-before.png';
-import importSet from '../../../assets/lessons/paint-a-grass-texture/import-set.png';
+import piece1 from '../../../checkpoints/13/pieces/piece-1.cs?raw';
+import piece2 from '../../../checkpoints/13/pieces/piece-2.cs?raw';
+import piece3 from '../../../checkpoints/13/pieces/piece-3.cs?raw';
+import piece4 from '../../../checkpoints/13/pieces/piece-4.cs?raw';
+import result from '../../../assets/lessons/generate-grass-detail/result.png';
+import newScript from '../../../assets/lessons/generate-grass-detail/new-script.png';
+import pieceTwo from '../../../assets/lessons/generate-grass-detail/piece-2.png';
+import pieceThree from '../../../assets/lessons/generate-grass-detail/piece-3.png';
+import pieceFour from '../../../assets/lessons/generate-grass-detail/piece-4.png';
+import importBefore from '../../../assets/lessons/generate-grass-detail/import-before.png';
+import importSet from '../../../assets/lessons/generate-grass-detail/import-set.png';
 
 ## What you will build
 
-A hand-painted grass texture: dense tufts of tapered blades, darker at the back and lit at the tips, in light and shadowed patches. It is [tileable](/reference/glossary/#tileable-texture): copies laid side by side join with no visible edge, so it can cover any amount of ground. In lesson 15 your ground shader repeats it across the meadow, and in a later module real 3D grass grows on top of it.
+A 1024 by 1024 gray picture of grass: hundreds of large curved blades, flat in tone, crisp at the edges, each with a faint shadow, drawn by a script you write. It repeats with no seam in every direction. In lesson 15 a shader gives it a color, and in a later module real 3D grass grows on top of it.
 
 <Figure
 	src={result}
-	alt="Nine copies of a square grass texture in a three by three grid, joined with no visible edges: many overlapping tufts of tapered green blades with pale yellow-green tips, in lighter and darker patches."
-	caption="Your texture repeated three by three. You cannot see where one copy ends and the next begins."
+	alt="A gray square picture of overlapping curved grass blades fanning up and sideways, each a flat tone a little lighter or darker than its neighbors, on a darker gray ground, with a faint shadow under each blade."
+	caption="The grass detail: gray, flat, and tileable."
 />
 
-## A texture that repeats
+## The idea
 
-Ground is too big for one picture. Instead, one small square image repeats across it like floor tiles. For that to work, whatever leaves the image at its right edge must come back in at its left edge, and the same at the top and bottom. Paint a stroke that stops at the edge, and every copy shows a hard line there, a **seam**.
+A hand-painted game ground is often a **flat color** multiplied by a [detail texture](/reference/glossary/#detail-texture), a picture in grays. The color says what the ground is: grass green, dirt brown. The detail says how its surface looks: where the blades are, which parts are lit, which are in shadow. A white pixel in the detail leaves the color as it is, a darker one darkens it, so one picture serves any color: you can make the meadow lusher, or autumn, by changing one number, without redrawing anything.
 
-Krita's **wrap-around mode** solves this while you paint. It shows copies of your image all around it, and a stroke that runs off one edge continues on the opposite edge. You paint on the copies as if they were one endless surface, and the seams never appear.
+The detail can be drawn by hand in a painting program, as you do for dirt and sand in the next lesson. Grass is different. It needs hundreds of nearly identical shapes, with only their position, direction, and size varied, and no seam where the picture repeats. A script does that well, and it runs the same on every operating system. Most of this ground will be covered by the 3D grass of Module 6, so what shows through is calm, soft in tone, and low in contrast, and a script can hold that evenness better than a hand.
 
-Your texture is 512 by 512 pixels and covers 2 by 2 meters of ground, so each meter gets 256 pixels. That number is the [texel density](/reference/glossary/#texel-density), and this course keeps it the same for every texture, so grass, dirt, and sand look equally sharp side by side.
+The script draws every blade in a few steps:
 
-## How hand-painted textures are made
+1. A blade is a curved shape that is widest near its root and tapers to a point. For each pixel near the blade, the script works out how much of the pixel the blade covers.
+2. Blades come in clusters of four to six that fan out from one root, drawn back to front, so each blade overlaps the one behind it, a little lighter.
+3. Each blade also darkens the ground a little down and to the right of it, a faint shadow that makes the blades stand out.
+4. The picture wraps at its edges: a blade that runs off the right edge continues from the left. That is what makes it tile.
 
-Stylized games such as Breath of the Wild, Genshin Impact, and Tiny Glade paint their surfaces as clean shapes, not blurry noise. Each feature, here a tuft of grass, is drawn as a crisp shape with a darker side, a middle tone, and a lit edge, and features overlap back to front, so the ones in front look closer.
+## Make the tool script
 
-Painting thousands of grass blades one by one would take days. Texture artists paint a few good tufts by hand and turn them into a **stamp brush** that prints the tuft over and over, turned and sized a little differently each time. That is what you do here, in three parts: a brush that paints one tapered blade, three tufts painted with it, and a stamp brush made from your best tuft.
-
-The colors are your palette's grass ramp from lesson 7. The reference values, as hue, saturation, and value, are below; use your own ramp in their place:
-
-- **Shadow**: 104, 52, 38
-- **Dark**: 96, 56, 51
-- **Light**: 89, 56, 64
-- **Highlight**: 82, 50, 77
-
-## Create the image
+You write the script as a C# [tool script](/reference/glossary/#tool-script): a script that runs in the editor, not in the game.
 
 <Steps>
 
-1. Open Krita and choose **File > New...** (<Kbd keys="Ctrl+N" mac="Cmd+N" />). On the **Dimensions** tab, set **Width** and **Height** to `512` pixels.
+1. In the FileSystem dock, make a folder `Tools` inside `src`, as you made `Player` in lesson 6, and a folder `ground` inside `art`.
+
+2. Click **Script** at the top to open the Script editor, and choose **File > New Script...**. Set **Language** to **C#**, **Inherits** to `EditorScript`, and **Path** to `res://src/Tools/GrassDetail.cs`. Any **Template** will do, because you replace the contents. Click **Create**.
 
 	<Figure
-		src={newDimensions}
-		alt="Krita's Create new document dialog on the Dimensions tab: Width 512 and Height 512 in Pixels, Resolution 300 Pixels/Inch, Model RGB/Alpha, Depth 8-bit integer/channel, and an sRGB profile."
-		caption="512 by 512 pixels: 2 meters of ground at 256 pixels per meter."
-	/>
-
-2. Click the **Content** tab, set **Name** to `grass_albedo`, and click **Create**. [Albedo](/reference/glossary/#albedo) is a surface's plain color; the name says what the texture is for.
-
-3. Click the **foreground color** square in the toolbar, as in lesson 7. On the **HSV** tab, type the **shadow** swatch, `104`, `52`, `38`, pressing <Kbd keys="Tab" /> after each, and click **OK**.
-
-	<Figure
-		src={colorShadow}
-		alt="The Select a Color dialog on its HSV tab: Hue 104 degrees, Saturation 52%, Value 38%, a dark green in the patch at the bottom left."
-		caption="The shadow green: whatever shows between the tufts."
-	/>
-
-4. Choose **Edit > Fill with Foreground Color** (<Kbd keys="Shift+Backspace" />). With nothing selected, Krita fills the whole layer, **Paint Layer 1**.
-
-5. Choose **View > Wrap Around Mode** (<Kbd keys="Shift+W" />), then zoom out a step with <Kbd keys="Ctrl+-" mac="Cmd+-" />. Krita now draws copies of the image all around it; while the image is one flat color, you cannot see them yet.
-
-</Steps>
-
-## Make a blade brush
-
-A pen tablet makes a stroke thin where you press lightly. A mouse presses evenly, so its strokes are the same width from end to end. Krita's brushes can taper by another rule instead: **Fade** shrinks the brush as the stroke gets longer.
-
-<Steps>
-
-1. Press <Kbd keys="B" /> for the **Freehand Brush Tool**.
-
-2. In the **Brush Presets** docker at the bottom right, click the **Search** box at the bottom and type `Basic-5 Size`. Two brushes are left; hold the pointer over each to see its name, and click **b) Basic-5 Size**, not **Basic-5 Size Opacity**.
-
-	<Figure
-		src={presetSearch}
-		alt="The Brush Presets docker with a search typed into its Search box at the bottom and the matching brushes in the list."
-		caption="Search narrows the list."
-	/>
-
-3. Press <Kbd keys="F5" /> to open the **Brush Editor**. At its bottom, uncheck **Temporarily Save Tweaks To Presets**. With it checked, Krita remembers every change you make to a built-in brush until you close Krita, so the next time you pick that brush it is not the one you expect. Unchecked, your changes live only in the brushes you save. Krita remembers this setting.
-
-4. The editor's middle column lists the brush's options. Click **Size** in that list. In the list of inputs that appears, check **Fade**, then uncheck **Pressure**. (Krita keeps at least one input checked, so check the new one first.)
-
-5. Click the word **Fade** to show its settings below the list. Right-click the **Length** field, type `45`, and press <Kbd keys="Enter" />.
-
-6. Above the curve, click the second button, the line falling from top left to bottom right. The curve now starts at 100% and falls to 0%: the brush starts at full size and shrinks to a point by the end of the length.
-
-	<Figure
-		src={bladeSettings}
-		alt="The Brush Editor showing the Size option: Fade checked in the inputs list and Pressure unchecked, Length 45 below the list, and a curve falling in a straight line from 100% at the top left to 0% at the bottom right."
-		caption="Size driven by Fade: full size at the start of a stroke, a point after 45."
-	/>
-
-7. Click **Save New Brush Preset...** at the top right of the editor. Set the name to `Grass Blade` and click **Save**. Your brush now has its own entry in the Brush Presets docker. Press <Kbd keys="F5" /> again to close the editor.
-
-	<Figure
-		src={savePreset}
-		alt="The Save New Brush Preset dialog with the name Grass Blade typed in and a preview of the brush stroke."
-		caption="A brush of your own, saved with your Krita settings."
+		src={newScript}
+		alt="The Create Script dialog: Language C#, Inherits EditorScript, Template EditorScript: Basic Editor Script, Path res://src/Tools/GrassDetail.cs."
+		caption="A script that extends EditorScript."
 	/>
 
 </Steps>
 
-<Aside type="tip" title="Typing into Krita's slider fields">
-Fields such as **Size**, **Opacity**, and **Length** are sliders: a left click or drag changes the value by where you click. To type an exact number, right-click the field, type, and press <Kbd keys="Enter" />.
+An `EditorScript` has one method, `_Run()`, which Godot calls when you choose **File > Run** in the Script editor with the script open. The `[Tool]` line above the class tells Godot to load it in the editor.
+
+## Piece 1: a gray picture
+
+Open the file in your code editor and change it so that:
+
+- it has `using System;` and `using Godot;`, the namespace line `namespace TopDownTemplate.Tools;`, and a comment above the class: it draws the grass detail, a gray image of overlapping blades that the ground shader tints, and runs from the Script editor with File > Run. `[Tool]` is on the line above `public partial class GrassDetail : EditorScript`;
+- two `private const` constants: an `int` `Size` of `1024`, the picture's width and height in pixels, and a `string` `Path` of `"res://art/ground/grass_detail.png"`;
+- a `private readonly float[]` field named `_values` (an underscore, like other private fields) holds a new array of `Size * Size` floats: one gray value from 0 (black) to 1 (white) for every pixel;
+- `public override void _Run()` fills the array with `0.72f`, with `Array.Fill`, and calls `Save()`. A comment says the gaps between the blades start darker than the blades;
+- `private void Save()` turns each value into a byte, `(byte)(Math.Clamp(_values[i], 0f, 1f) * 255f)`, in a `byte[]`; makes an image with `Image.CreateFromData(Size, Size, false, Image.Format.L8, bytes)`, where `L8` means one gray byte per pixel; saves it with `image.SavePng(ProjectSettings.GlobalizePath(Path))`, which turns `res://` into a real file path; then calls `EditorInterface.Singleton.GetResourceFilesystem().Scan()`, so the FileSystem dock notices the new file, and prints `Saved` and the path with `GD.Print`.
+
+<Solution>
+	<Code code={piece1} lang="csharp" title="src/Tools/GrassDetail.cs" />
+</Solution>
+
+Save the file and click **Build Project**. Then, with the script open in the Script editor, choose **File > Run**. The Output panel prints `Saved res://art/ground/grass_detail.png`, and the file appears in the FileSystem dock: a flat gray square.
+
+<Aside type="note" title="Why the picture is a float array">
+Painting into an array of numbers and saving once at the end is faster than changing an image pixel by pixel, and it keeps the values as decimals, so the blending in the next pieces does not round away. `Clamp` keeps a value between 0 and 1 before it becomes a byte.
 </Aside>
 
-## Paint three tufts
+## Piece 2: one blade
 
-You paint the tufts in grays, not green. The stamp brush you make next keeps their light and dark but takes its color from the foreground color, so one tuft can print in every green of your ramp.
+Add three small helper methods and one that draws a blade, and draw a single blade in the middle to see it.
 
-<Steps>
+Change the script so that:
 
-1. Choose **Layer > New > Add Paint Layer** (<Kbd keys="Insert" />). **Paint Layer 2** appears above Paint Layer 1, empty and see-through.
+- `Range(Random random, float low, float high)` is a `private static float` method, used from piece 3 on, returning a random number between `low` and `high`: `low + random.NextSingle() * (high - low)`;
+- `Smooth(float low, float high, float x)` is a `private static float` method that eases from 0 to 1 as `x` goes from `low` to `high`, with an S-shaped curve: `var t = Math.Clamp((x - low) / (high - low), 0f, 1f);` and `return t * t * (3f - 2f * t);`;
+- `Cover(float dx, float dy, float heading, float length, float width, float bend)` is a `private static` method returning two numbers, `(float Cover, float Tip)`: how much of the pixel the blade covers, 0 to 1, and how far along the blade the pixel is, 0 at the root and 1 at the point. `dx` and `dy` are the pixel's distance from the blade's root. It first turns the pixel's position into blade coordinates: `along`, the distance along the blade's direction, is `dx * MathF.Cos(heading) + dy * MathF.Sin(heading)`, and `across`, the distance to the side, is `dy * MathF.Cos(heading) - dx * MathF.Sin(heading) - bend * along * along / length`; the last term curves the blade. `tip` is `along / length`. A pixel well behind the root or past the point is not covered: when `tip is < -0.1f or >= 1f`, return `(0f, tip)`. `half`, the blade's half width, is `width / 2f * MathF.Pow(Math.Clamp(1f - tip, 0f, 1f), 0.8f) * Smooth(-0.1f, 0.12f, tip)`: full width near the root, shrinking to nothing at the point. `edge` is `1f - MathF.Abs(across) / MathF.Max(half, 1e-6f)`, which is 1 on the blade's middle line and 0 at its side, and the method returns `(Smooth(0f, 0.1f, edge), tip)`: the soft ramp over the last tenth is what makes the edge crisp but not jagged;
+- `DrawBlade(float rootX, float rootY, float heading, float length, float width, float bend, float shade)` is a `private void` method. It loops `y` and `x` over the square of pixels within `reach`, `(int)length + 6`, of the root, asks `Cover` about each with `var (cover, tip) = Cover(x + 0.5f - rootX, y + 0.5f - rootY, heading, length, width, bend);`, which unpacks the two numbers it returns, skips pixels where `cover <= 0f`, and finds the pixel's place in the array with `var index = (((y % Size) + Size) % Size) * Size + ((x % Size) + Size) % Size;`. The `%` wraps a position past an edge back to the other side, and the extra `+ Size` keeps a negative position positive; a comment says the picture wraps at its edges, so it tiles. It mixes the blade's gray into the pixel by its cover: `var color = shade * (0.97f + 0.06f * Math.Clamp(tip, 0f, 1f));` makes the tip a little lighter than the root, and `_values[index] = _values[index] * (1f - cover) + color * cover;`;
+- `_Run()` calls `DrawBlade(Size / 2f, Size / 2f, -MathF.PI / 2f, 150f, 40f, 0.15f, 0.9f);` after the fill and before `Save()`: a blade at the middle, pointing up the screen (`-MathF.PI / 2f` is straight up, since y grows downward), 150 pixels long and 40 wide.
 
-2. In the toolbar, right-click **Size**, type `15`, and press <Kbd keys="Enter" />.
+<Solution>
+	<Code code={piece2} lang="csharp" title="src/Tools/GrassDetail.cs" />
+</Solution>
 
-3. Set the foreground color to a dark gray: **Hue** `0`, **Saturation** `0`, **Value** `35`. Pick three spots for tufts, well apart, such as two near the top of the image and one near the bottom. At each spot, paint three **back blades**: press at the root, drag upward about a fifth of the image's height with a slight curve, and let go. Fan them out a little to the left and right. The brush ends each blade in a point.
-
-4. Set the color to a mid gray, value `55`, and paint four **front blades** from the same roots, fanned out the same way. They cover the back blades' lower parts.
-
-5. Set **Size** to `9` and the color to a light gray, value `72`. On two front blades of each tuft, start a third of the way up and stroke out to the tip again: the light catches the blades' ends.
-
-	<Figure
-		src={tufts}
-		alt="Three gray tufts on Krita's checkered transparency pattern, each a fan of tapered blades: darker blades behind, mid-gray blades in front, and lighter tips."
-		caption="Three tufts in grays, shown here with the layers below hidden. Pick the best one for your stamp."
-	/>
-
-</Steps>
-
-## Turn a tuft into a brush
-
-<Steps>
-
-1. In the **Layers** docker, click the eye of **Paint Layer 1** and of **Background** to hide them. Only your tufts show, on Krita's gray and white checkers, which mean see-through. The stamp copies what you see, so the green below must be hidden.
-
-2. Press <Kbd keys="Ctrl+R" mac="Cmd+R" /> for the **Rectangular Selection Tool** and drag a box around your best tuft, close to it but not cutting any blade.
-
-3. Press <Kbd keys="B" />, search the Brush Presets docker for `Basic-2 Opacity`, and click it. It is a plain brush to build on.
-
-4. Press <Kbd keys="F5" />, click **Brush Tip** in the options list, and click the **Predefined** tab. Click **Stamp** below the list of brush tips.
-
-5. In the **Stamp** dialog, set **Name** to `Grass Tuft` and uncheck **Create mask from color**, so the tip keeps its grays. Click **Save**.
-
-	<Figure
-		src={stamp}
-		alt="The Stamp dialog: a preview of the gray tuft, Name Grass Tuft, Spacing Auto, Create mask from color unchecked, Preserve alpha channel unchecked, and Style Regular."
-		caption="A brush tip made from your own painting."
-	/>
-
-6. **Grass Tuft** is now the brush tip. Under **Brush mode**, choose **Lightness map**: the tip's middle gray paints the foreground color, darker grays paint darker, and lighter grays lighter. Right-click **Spacing**, type `0.6`, and press <Kbd keys="Enter" />, so the tufts print a little apart along a stroke.
-
-	<Figure
-		src={tuftTip}
-		alt="The Brush Tip page on its Predefined tab: Grass Tuft selected among the brush tips, Image (181 x 126), Spacing Auto 0.60, and Brush mode Lightness map."
-		caption="Lightness map: your tuft's shading in whatever color you paint with."
-	/>
-
-7. Turn each tuft with the stroke: in the options list, check the box beside **Rotation** and click its name. Check **Drawing angle** and uncheck **Pressure**.
-
-	<Figure
-		src={tuftRotation}
-		alt="The Rotation option checked in the options list, with Drawing angle checked and Pressure unchecked in its inputs."
-		caption="Tufts follow the direction you paint in, like grass combed by the wind."
-	/>
-
-8. Vary their size: check the box beside **Size** and click its name. Check **Fuzzy Dab**, which picks a random value for each print, and uncheck **Pressure**. Click the point at the left end of the curve, then type `50` in the percentage field to the right of the curve and press <Kbd keys="Tab" />: each tuft prints at a random size from half to full.
-
-	<Figure
-		src={tuftSize}
-		alt="The Size option: Fuzzy Dab checked and Pressure unchecked, and a curve rising from 50% at the left to 100% at the right."
-		caption="A random size between half and full for every tuft."
-	/>
-
-9. Spread them out: check the box beside **Scatter** and leave its settings as they are.
-
-	<Figure
-		src={tuftScatter}
-		alt="The Scatter option checked, with Axis X and Axis Y and a Scatter amount curve."
-		caption="Scatter moves each print a little off the stroke's line."
-	/>
-
-10. Click **Save New Brush Preset...**, name it `Grass Tuft`, and click **Save**. Press <Kbd keys="F5" /> to close the editor.
-
-11. Choose **Select > Deselect** (<Kbd keys="Ctrl+Shift+A" mac="Cmd+Shift+A" />). In the Layers docker, click the eyes of **Paint Layer 1** and **Background** to show them again, click the eye of **Paint Layer 2** to hide your tufts, and click **Paint Layer 1** to paint on it.
-
-</Steps>
-
-## Stamp the grass
-
-Paint back to front: first a dense layer of the darker green, then lighter patches on top, then a few highlights. Set **Size** in the toolbar to `110` first.
+Save, build, and run the script again. In the middle of the picture, one blade stands on the gray: pointed, slightly curved, a hair lighter toward its tip.
 
 <Figure
-	src={toolbarSliders}
-	alt="Krita's toolbar fields: Opacity 100% and Size 110.00 px."
-	caption="Size 110 px sets how big a full-size tuft prints."
+	src={pieceTwo}
+	alt="A close view of the middle of the picture: one light gray blade on a darker gray ground, widest near its root, curving slightly, and tapering to a point at the top."
+	caption="One blade, with a crisp, smooth edge."
 />
 
-<Steps>
+## Piece 3: a field of blades
 
-1. Set the foreground color to the **dark** swatch, `96`, `56`, `51`. Paint about twelve long, gently wandering strokes across the whole image, in different directions, and let some run off the edges. Leave a few small gaps where the shadow green shows: they read as the ground between the tufts.
+Replace the one blade with clusters. Change `_Run()` so that:
 
-	<Figure
-		src={passDark}
-		alt="The canvas covered in overlapping dark green tufts flowing in gently curving directions, with some dark gaps between them."
-		caption="The dark pass covers the image and sets the direction of the grass."
-	/>
+- it starts with `var random = new Random(404);`. A random generator with a fixed number, a seed, gives the same picture every time, so you can run the script again and get the picture you saw;
+- after the fill, `for (var cluster = 0; cluster < 150; cluster++)` picks a root with `random.NextSingle() * Size` for `rootX` and `rootY`, and a `heading` of `-MathF.PI / 2f + Range(random, -0.9f, 0.9f)`: mostly up, tilted up to about 50 degrees each way. A comment says blades point up the screen, fanned out;
+- inside it, `var blades = random.Next(4, 7);` and a `for` loop over `order` from 0 to `blades` calls `DrawBlade` with a root within 13 pixels of the cluster's (`rootX + Range(random, -13f, 13f)` and the same for y), a heading within 0.45 radians of the cluster's, a length from `114f` to `176f`, a width from `31f` to `44f`, a bend from `-0.25f` to `0.25f`, and a shade of `0.88f`;
+- `Save();` comes last.
 
-2. Set the color to the **light** swatch, `89`, `56`, `64`. Pick four or five places for lighter patches and paint short strokes there, about a third of the image long, all around each place. Leave the rest dark.
+<Solution>
+	<Code code={piece3} lang="csharp" title="src/Tools/GrassDetail.cs" />
+</Solution>
 
-	<Figure
-		src={passLight}
-		alt="The same canvas with patches of lighter green tufts on top of the dark ones."
-		caption="Light patches give the ground its large shapes, which read from far away."
-	/>
+Save, build, and run. The script takes a few seconds, and the picture fills with grass.
 
-3. Set the color to the **highlight** swatch, `82`, `50`, `77`, and add a few short strokes in the middle of each light patch.
+<Figure
+	src={pieceThree}
+	alt="The gray picture covered in overlapping curved blades in clusters, all one flat gray, so the blades show only by their outlines against the darker gaps."
+	caption="150 clusters. Every blade is the same gray, so it is hard to tell them apart."
+/>
 
-	<Figure
-		src={passHighlight}
-		alt="The canvas with a few pale yellow-green tufts in the middle of the light patches."
-		caption="Highlights only in the lightest places."
-	/>
+## Piece 4: tone and shadow
 
-</Steps>
+The blades merge because they share one gray. Give each some depth. Change the script so that:
 
-## Check the repeat
+- inside the cluster loop, before the blades, `var tone = Range(random, -0.04f, 0.04f);` is a small difference for the whole cluster: some clusters are a touch lighter, some darker;
+- inside the blade loop, `var shade = 0.84f + 2f * tone + 0.05f * order / 5f;` replaces the `0.88f`, with a comment: drawn back to front, each blade a little lighter than the one behind it. `DrawBlade` is given `shade`;
+- `DrawBlade` runs its loop twice, `for (var pass = 0; pass < 2; pass++)`, and has `offsetX` and `offsetY` of `4f` and `9f` on pass 0 and `0f` on pass 1, with a comment: pass 0 darkens the gaps a little down and right of the blade, a faint shadow, and pass 1 paints the blade. `Cover` is asked about `x + 0.5f - rootX - offsetX` and `y + 0.5f - rootY - offsetY`. On pass 0 a covered pixel is darkened, `_values[index] *= 1f - 0.07f * cover;`, and on pass 1 it is painted as before.
 
-<Steps>
+<Solution>
+	<Code code={piece4} lang="csharp" title="src/Tools/GrassDetail.cs" />
+</Solution>
 
-1. Zoom out with <Kbd keys="Ctrl+-" mac="Cmd+-" /> until you see about three copies of the image across the canvas.
+Save, build, and run once more.
 
-	<Figure
-		src={far}
-		alt="The grass texture zoomed out, repeated across the canvas: tufts and light patches join into one surface with no edges."
-		caption="Zoomed out, the copies join into one surface."
-	/>
+<Figure
+	src={pieceFour}
+	alt="The gray picture covered in overlapping curved blades, now in slightly different grays, lighter toward their tips, with a faint darker shadow below and to the right of each, so the blades read as layers."
+	caption="Tone and a faint shadow separate the blades."
+/>
 
-2. Look at the whole. If one spot catches your eye, such as a single very light or very dark tuft, it repeats every 2 meters and gives the pattern away. Stamp over it with the **dark** green.
+<Aside type="note" title="Flat, not blurry">
+The picture follows three rules. Each blade is **flat**: one tone with only a slight lightening toward its tip. The edges are **crisp**: the soft ramp is only the outer tenth of each side, enough to avoid jagged steps. The **contrast is low**: the lightest and darkest grays are close together. That keeps the ground calm from far away and still readable close up, and the shader can raise or lower the contrast later without a redraw.
+</Aside>
 
-</Steps>
-
-## Save and export
-
-<Steps>
-
-1. Choose **File > Save As...** (<Kbd keys="Ctrl+Shift+S" mac="Cmd+Shift+S" />). Go to your project's `art_source` folder as in lesson 7: click the address bar, type its path, and press <Kbd keys="Enter" />. Click **New folder**, name it `ground`, double-click it, set **File name** to `grass_albedo.kra`, and click **Save**.
-
-2. Choose **File > Export...**. Go to your project's `art` folder the same way, make a `ground` folder there, double-click it, set **File name** to `grass_albedo.png`, and click **Save**. In the **PNG image** dialog, leave the options as they are and click **OK**.
-
-	<Figure
-		src={pngOptions}
-		alt="The PNG image options dialog: Compression (Lossless) 3; Force convert to sRGB and Store alpha channel (transparency) checked; the other options unchecked."
-		caption="The same PNG options as for the palette. Your hidden tufts layer is left out of the export."
-	/>
-
-</Steps>
-
-<Aside type="note" title="Your brushes stay">
-**Grass Blade** and **Grass Tuft** are saved with Krita's settings, not with this image, so they are there in every image you open. In the next lesson you make a pebble brush the same way.
+<Aside type="note" title="Why it tiles">
+A blade near an edge writes to the other side too, because of the `%` in the index. So the right edge of the picture continues into its left edge, and the bottom into the top. Put copies side by side and the blades carry across every seam.
 </Aside>
 
 ## Import it into Godot
 
-The palette in lesson 11 needed exact colors, so it stayed lossless. Grass is different: it is big, repeated everywhere, and seen from afar, so it can use the settings Godot gives most 3D textures.
+The palette in lesson 11 needed exact colors, so it stayed lossless. This picture is big, repeated everywhere, and seen from afar, so it can use the settings Godot gives most 3D textures.
 
 <Steps>
 
-1. Open your project in Godot. Click `art/ground/grass_albedo.png` in the FileSystem dock and click the **Import** tab next to **Scene**.
+1. Click `art/ground/grass_detail.png` in the FileSystem dock and click the **Import** tab next to **Scene**.
 
 	<Figure
 		src={importBefore}
-		alt="The Import dock for grass_albedo.png: Import As Texture2D, Compress Mode Lossless, Mipmaps Generate off."
+		alt="The Import dock for grass_detail.png: Import As Texture2D, Compress Mode Lossless, Mipmaps Generate off."
 		caption="The defaults: lossless and no mipmaps."
 	/>
 
-2. Set **Compress > Mode** to **VRAM Compressed**. Graphics cards can keep this kind of texture compressed in their own memory, VRAM, at a quarter of the size or less. The loss is too small to see on painted grass.
+2. Set **Compress > Mode** to **VRAM Compressed**. Graphics cards can keep this kind of texture compressed in their own memory, VRAM, at a quarter of the size or less. The loss is too small to see on soft, flat shapes.
 
-3. Under **Mipmaps**, check **Generate**. [Mipmaps](/reference/glossary/#mipmap) are the smaller copies Godot draws for ground far from the camera; without them, the tufts shimmer as the camera moves.
+3. Under **Mipmaps**, check **Generate**. [Mipmaps](/reference/glossary/#mipmap) are the smaller copies Godot draws for ground far from the camera; without them, the blades shimmer as the camera moves.
 
 4. Click **Reimport (\*)**.
 
 	<Figure
 		src={importSet}
-		alt="The Import dock for grass_albedo.png: Compress Mode VRAM Compressed and Mipmaps Generate checked, with the Reimport (*) button below."
+		alt="The Import dock for grass_detail.png: Compress Mode VRAM Compressed and Mipmaps Generate checked, with the Reimport (*) button below."
 		caption="VRAM Compressed with mipmaps, the usual settings for a 3D texture."
 	/>
 
@@ -331,35 +199,35 @@ The palette in lesson 11 needed exact colors, so it stayed lossless. Grass is di
 
 ## Try it
 
-- In Krita, paint a stroke with **Grass Tuft** in a bright red, then undo it. The same tufts print in any color, with your shading.
-- Try the **Grass Blade** brush with **Size** `30`. Longer strokes still end in a point, because the size falls to nothing after the Fade length.
-- In Godot, double-click `grass_albedo.png` in the FileSystem dock. The Inspector shows the texture and its size, 512 by 512.
+- Change the number of clusters from `150` to `80`, build and run the script, and look: a thinner, calmer grass with more of the gaps showing. Set it back to `150`.
+- Change the seed in `new Random(404)` to another number and run again: the same kind of grass, arranged differently. The picture is always the same for the same seed.
+- Make the blades `Range(random, 60f, 90f)` long and `Range(random, 16f, 22f)` wide, and the clusters `400`, for a finer, shorter lawn, then set them back.
+- In Godot, double-click `grass_detail.png` in the FileSystem dock. The Inspector shows the picture and its size, 1024 by 1024.
 
 ## If it does not work
 
-- **Every tuft prints as a solid green rectangle.** The layers below were visible when you clicked **Stamp**. Hide them, select the tuft again, and make the stamp again.
-- **The tufts print in one flat color with no shading.** **Create mask from color** was checked in the Stamp dialog, or **Brush mode** is not **Lightness map**.
-- **Blades do not taper.** **Pressure** is still checked under **Size**, or the curve rises instead of falling. Open the editor with <Kbd keys="F5" /> and check both.
-- **A typed number turned into something else, or the canvas turned.** Some number keys are Krita shortcuts. Right-click a slider field before you type into it; if the canvas turned, choose **View > Zoom, Rotate, and Mirror > Reset Canvas Rotation**.
-- **Tufts are all the same size.** **Size** is not checked in the options list, or **Fuzzy Dab** is not checked under it.
-- **A hard line runs across the texture when you zoom out.** Wrap-around mode was off for some strokes. Stamp over the line with it on.
-- **The export shows gray tufts.** Paint Layer 2 was visible. Hide it and export again.
+- **The File > Run item does nothing, or the Output says the script is not loaded.** The project has not been built since the last change. Click **Build Project**, then run it again.
+- **The Output prints a build error.** Compare the line it names with the solution for that piece. A missing `using System;` is the usual cause of `Random` and `Math` errors.
+- **The picture is flat gray.** The loop that draws the blades is not called: check that `_Run()` calls `DrawBlade`, or the cluster loop, before `Save()`.
+- **The picture shows a blade cut off at the picture's edge, with no continuation on the other side.** The index line is missing its `%` wrapping, or its `+ Size`.
+- **The Output shows a save error.** The `art/ground` folder does not exist yet. Make it in the FileSystem dock, and run again.
+- **The picture looks different from the figure.** The seed is not `404`, or a number in a piece differs. The solution for each piece is the exact script.
 
 ## Checkpoint
 
-Your project now has two new files:
+Your project has two new files and a folder:
 
 <FileTree>
 - art
   - ground
-    - **grass_albedo.png**
-- art_source
-  - ground
-    - **grass_albedo.kra**
+    - **grass_detail.png**
+- src
+  - Tools
+    - **GrassDetail.cs**
 </FileTree>
 
-Godot also writes `art/ground/grass_albedo.png.import` beside the image, with **VRAM Compressed** and mipmaps on; commit it too. The `.kra` keeps your tufts on their hidden layer, so you can make the stamp again any time.
+Godot also writes `art/ground/grass_detail.png.import` beside the picture, with **VRAM Compressed** and mipmaps on; commit it too. The script stays in the project: run it again any time you change a number.
 
-Commit your work: `git add .` and `git commit -m "Paint the grass texture"`. In the next lesson, you paint dirt and sand to match.
+Commit your work: `git add .` and `git commit -m "Draw the grass detail"`. In the next lesson, you hand-paint the dirt and sand the grass will border.
 
 <Checkpoint />

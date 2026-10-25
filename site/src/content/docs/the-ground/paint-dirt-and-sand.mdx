@@ -1,6 +1,6 @@
 ---
 title: Paint dirt and sand to match
-description: Paint tileable dirt and sand textures in Krita that sit beside your grass, with a pebble stamp brush built from clean shapes, then import them into Godot.
+description: Paint tileable dirt and sand textures in Krita that sit beside your grass, with your own taper and pebble brushes built from clean shapes, then import them into Godot.
 sidebar:
   order: 14
   label: 14. Paint dirt and sand to match
@@ -8,11 +8,12 @@ lesson:
   number: 14
   minutes: 60
   learn:
+    - What a tileable texture is, and how Krita's wrap-around mode hides the seams while you paint
     - How to paint a clean, stylized object from three shapes, a contact shadow, a body, and a lit rim
     - How a selection keeps paint inside a shape
-    - How to make a second stamp brush and reuse your blade brush for twigs
+    - How to make a stamp brush from your own painting and a brush that tapers without a pen
     - How to keep a set of textures matching in scale, value, and style
-  prerequisites: [13]
+  prerequisites: [7, 13]
 ---
 
 import { Aside, FileTree, Steps } from '@astrojs/starlight/components';
@@ -20,13 +21,18 @@ import Figure from '../../../components/Figure.astro';
 import Checkpoint from '../../../components/Checkpoint.astro';
 import Kbd from '../../../components/Kbd.astro';
 import result from '../../../assets/lessons/paint-dirt-and-sand/result.png';
+import newDimensions from '../../../assets/lessons/paint-dirt-and-sand/new-dimensions.png';
 import blotches from '../../../assets/lessons/paint-dirt-and-sand/blotches.png';
 import pebbleBody from '../../../assets/lessons/paint-dirt-and-sand/pebble-body.png';
 import pebble from '../../../assets/lessons/paint-dirt-and-sand/pebble.png';
 import pebbleTip from '../../../assets/lessons/paint-dirt-and-sand/pebble-tip.png';
 import pebbleSize from '../../../assets/lessons/paint-dirt-and-sand/pebble-size.png';
 import pebbles from '../../../assets/lessons/paint-dirt-and-sand/pebbles.png';
+import presetSearch from '../../../assets/lessons/paint-dirt-and-sand/preset-search.png';
+import taperSettings from '../../../assets/lessons/paint-dirt-and-sand/taper-settings.png';
+import savePreset from '../../../assets/lessons/paint-dirt-and-sand/save-preset.png';
 import twigs from '../../../assets/lessons/paint-dirt-and-sand/twigs.png';
+import pngOptions from '../../../assets/lessons/paint-dirt-and-sand/png-options.png';
 import dirtFar from '../../../assets/lessons/paint-dirt-and-sand/dirt-far.png';
 import damp from '../../../assets/lessons/paint-dirt-and-sand/damp.png';
 import ripples from '../../../assets/lessons/paint-dirt-and-sand/ripples.png';
@@ -36,21 +42,29 @@ import importSand from '../../../assets/lessons/paint-dirt-and-sand/import-sand.
 
 ## What you will build
 
-Two more ground textures beside your grass: dirt, with pebbles in three sizes and a few twigs, and sand, with soft ripples, damp patches, and a scatter of small stones and shell bits. In lesson 17 the three meet with soft edges on the ground.
+Two ground textures to sit beside your grass: dirt, with pebbles of many sizes and a few twigs, and sand, with soft ripples, damp patches, and a scatter of small stones and shell bits. You paint them by hand in Krita, with brushes you make yourself. In lesson 17 the three meet with soft edges on the ground.
 
 <Figure
 	src={result}
-	alt="Three square textures side by side: dense green grass tufts; brown dirt with soft darker and lighter patches, light chipped pebbles with dark contact shadows, and thin dark twigs; and golden sand with wavy pale ripples, faint damp patches, and small scattered stones."
-	caption="Grass, dirt, and sand: one set, painted the same way."
+	alt="Two square textures side by side: light brown dirt with soft darker and lighter patches, a few pale chipped pebbles with faint shadows, and thin darker twigs; and golden sand with wavy pale ripples, faint damp patches, and small scattered stones."
+	caption="Dirt and sand, painted the same way."
 />
+
+## A texture that repeats
+
+Ground is too big for one picture. Instead, one small square image repeats across it like floor tiles. For that to work, whatever leaves the image at its right edge must come back in at its left edge, and the same at the top and bottom. Paint a stroke that stops at the edge, and every copy shows a hard line there, a **seam**. A texture that avoids this is [tileable](/reference/glossary/#tileable-texture).
+
+Krita's **wrap-around mode** solves this while you paint. It shows copies of your image all around it, and a stroke that runs off one edge continues on the opposite edge. You paint on the copies as if they were one endless surface, and the seams never appear.
+
+Your texture is 512 by 512 pixels and covers 2 by 2 meters of ground, so each meter gets 256 pixels. That number is the [texel density](/reference/glossary/#texel-density). The grass detail from lesson 13 is 1024 pixels for the same 2 meters, so it is twice as fine; the hand-painted textures use bolder shapes, which suit that density.
 
 ## How to make textures match
 
 Textures that sit side by side must look like one world. Three things keep them together:
 
-- **The same scale.** Every texture covers 2 meters in 512 pixels, so a pebble and a grass blade are drawn at sizes that make sense next to each other: a large pebble about 20 cm, 50 pixels across.
+- **The same scale.** Every texture covers 2 meters, so a pebble and a grass blade are drawn at sizes that make sense next to each other: a large pebble about 20 cm, 50 pixels across.
 - **The same value range.** Each texture uses its own four-step ramp from your palette, from shadow to highlight, so none looks much darker or brighter than the others.
-- **The same style.** Every feature is a clean shape with a darker base and a lit edge, painted back to front, as in lesson 13.
+- **The same style.** Every feature is a clean shape with a darker base and a lit edge, painted back to front, like the blades of the grass detail.
 
 The reference ramps from lesson 7, as hue, saturation, and value:
 
@@ -61,13 +75,23 @@ The reference ramps from lesson 7, as hue, saturation, and value:
 
 <Steps>
 
-1. Choose **File > New...**, keep **Width** and **Height** at `512`, set **Name** on the **Content** tab to `dirt_albedo`, and click **Create**.
+1. Open Krita and choose **File > New...** (<Kbd keys="Ctrl+N" mac="Cmd+N" />). On the **Dimensions** tab, set **Width** and **Height** to `512` pixels.
 
-2. Set the foreground color to the dirt ramp's **dark** swatch, `26`, `46`, `53`, and choose **Edit > Fill with Foreground Color** (<Kbd keys="Shift+Backspace" />). Turn on **View > Wrap Around Mode** (<Kbd keys="Shift+W" />) and zoom out a step (<Kbd keys="Ctrl+-" mac="Cmd+-" />).
+	<Figure
+		src={newDimensions}
+		alt="Krita's Create new document dialog on the Dimensions tab: Width 512 and Height 512 in Pixels, Resolution 300 Pixels/Inch, Model RGB/Alpha, Depth 8-bit integer/channel, and an sRGB profile."
+		caption="512 by 512 pixels: 2 meters of ground at 256 pixels per meter."
+	/>
 
-3. Press <Kbd keys="B" />, search the Brush Presets docker for `Basic-2 Opacity`, and click it. It paints a hard-edged round dab. Set **Size** to `90` and **Opacity** to `25`, right-clicking each field, typing, and pressing <Kbd keys="Enter" />.
+2. Click the **Content** tab, set **Name** to `dirt_albedo`, and click **Create**. [Albedo](/reference/glossary/#albedo) is a surface's plain color; the name says what the texture is for.
 
-4. Set the color to the **shadow** swatch, `20`, `44`, `40`, and paint about six short, wandering strokes, each about a quarter of the image long. Then set the **light** swatch, `32`, `44`, `66`, and paint six more between them. Each see-through dab keeps its hard edge, so overlapping dabs build flat, painted blotches instead of a blurry smudge.
+3. Click the **foreground color** square in the toolbar, as in lesson 7. On the **HSV** tab, type the dirt ramp's **light** swatch, `32`, `44`, `66`, pressing <Kbd keys="Tab" /> after each, and click **OK**. Choose **Edit > Fill with Foreground Color** (<Kbd keys="Shift+Backspace" mac="Shift+Delete" />). With nothing selected, Krita fills the whole layer, **Paint Layer 1**.
+
+4. Choose **View > Wrap Around Mode**, then zoom out a step with <Kbd keys="Ctrl+-" mac="Cmd+-" />. Krita now draws copies of the image all around it; while the image is one flat color, you cannot see them yet.
+
+5. Press <Kbd keys="B" /> for the **Freehand Brush Tool**, search the Brush Presets docker for `Basic-2 Opacity`, and click it. It paints a hard-edged round dab. Set **Size** to `90` and **Opacity** to `25`. Fields such as **Size** and **Opacity** are sliders: a left click or drag changes the value by where you click. To type an exact number, right-click the field, type, and press <Kbd keys="Enter" />.
+
+6. Set the color to the **dark** swatch, `26`, `46`, `53`, and paint about six short, wandering strokes, each about a quarter of the image long. Then set the **highlight** swatch, `38`, `38`, `79`, and paint six more between them. Each see-through dab keeps its hard edge, so overlapping dabs build flat, painted blotches instead of a blurry smudge.
 
 	<Figure
 		src={blotches}
@@ -79,15 +103,15 @@ The reference ramps from lesson 7, as hue, saturation, and value:
 
 ## Paint a pebble
 
-A stylized pebble has three parts, each a clean shape: a dark **contact shadow** where it sits on the ground, the stone's **body**, and a **lit rim** along its top edge, where the light catches it. You paint it once, in grays, and make it a stamp brush, as with the grass tufts.
+A stylized pebble has three parts, each a clean shape: a dark **contact shadow** where it sits on the ground, the stone's **body**, and a **lit rim** along its top edge, where the light catches it. You paint it once, in grays, and make it a **stamp brush**, a brush that prints your painting over and over. Texture artists paint a few good shapes by hand and let a stamp repeat them, turned and sized a little differently each time.
 
 <Steps>
 
-1. Add a new paint layer (<Kbd keys="Insert" />).
+1. Choose **Layer > New > Add Paint Layer**.
 
-2. **The shadow.** Choose the **Elliptical Selection Tool** (<Kbd keys="J" />) and drag a flat oval near the middle of the image, about 90 pixels wide and 35 tall. Set the color to a dark gray, value `30`, and fill the selection (<Kbd keys="Shift+Backspace" />). Choose **Select > Deselect** (<Kbd keys="Ctrl+Shift+A" mac="Cmd+Shift+A" />).
+2. **The shadow.** Choose the **Elliptical Selection Tool** (<Kbd keys="J" />) and drag a flat oval near the middle of the image, about 90 pixels wide and 35 tall. Set the color to a gray a little darker than the stone (Saturation `0`, Value `48`), and fill the selection (<Kbd keys="Shift+Backspace" mac="Shift+Delete" />). Choose **Select > Deselect** (<Kbd keys="Ctrl+Shift+A" mac="Cmd+Shift+A" />).
 
-3. **The body.** Choose the **Polygonal Selection Tool**, the selection tool with a many-sided outline in the toolbox. Click seven points around a stone shape about 90 pixels wide, sitting on the upper part of the shadow so the shadow peeks out below it, and press <Kbd keys="Enter" /> to close the shape. Uneven corners make it look chipped, like a real stone. Set the color to a mid gray, value `55`, and fill.
+3. **The body.** Choose the **Polygonal Selection Tool**: click and hold the selection tool button in the toolbox, and pick it from the group that opens. Click seven points around a stone shape about 90 pixels wide, sitting on the upper part of the shadow so the shadow peeks out below it, and press <Kbd keys="Enter" /> to close the shape. Uneven corners make it look chipped, like a real stone. Set the color to a mid gray (Saturation `0`, Value `55`), and fill.
 
 	<Figure
 		src={pebbleBody}
@@ -95,9 +119,9 @@ A stylized pebble has three parts, each a clean shape: a dark **contact shadow**
 		caption="The body, still selected, on its shadow."
 	/>
 
-4. **The rim.** Keep the stone selected: a selection keeps paint inside it, so you can paint along its edge without going over. Press <Kbd keys="B" />, pick **Basic-2 Opacity**, set **Size** to `16` and **Opacity** to `100`, and set a light gray, value `75`. Drag one stroke along the stone's upper edges, close inside the outline.
+4. **The rim.** Keep the stone selected: a selection keeps paint inside it, so you can paint along its edge without going over. Press <Kbd keys="B" />, pick **Basic-2 Opacity**, set **Size** to `16` and **Opacity** to `100`, and set a light gray, value `60`. Drag one stroke along the stone's upper edges, close inside the outline.
 
-5. **The shine.** Set **Size** to `8` and a lighter gray, value `90`, and add one short stroke near the top left. Then deselect.
+5. **The shine.** Set **Size** to `8` and a lighter gray, value `64`, and add one short stroke near the top left. Then deselect.
 
 	<Figure
 		src={pebble}
@@ -108,7 +132,7 @@ A stylized pebble has three parts, each a clean shape: a dark **contact shadow**
 </Steps>
 
 <Aside type="note" title="Why this works">
-Light comes from above in your game, so tops are lit and the ground under an object is shaded. You do not paint light and shadow on every pebble by hand: you paint them once into the stamp, and every printed pebble carries them.
+Light comes from above in your game, so tops are lit and the ground under an object is shaded. You do not paint light and shadow on every pebble by hand: you paint them once into the stamp, and every printed pebble carries them. The brush will also turn each pebble to a random angle, so its lit side faces a different way each time; at this size that reads as variety, not as a second light.
 </Aside>
 
 ## Make the pebble brush
@@ -117,9 +141,11 @@ Light comes from above in your game, so tops are lit and the ground under an obj
 
 1. Hide **Paint Layer 1** and **Background** with their eyes, draw a rectangle selection (<Kbd keys="Ctrl+R" mac="Cmd+R" />) around the pebble and its shadow, press <Kbd keys="B" />, and pick **Basic-2 Opacity**.
 
-2. Press <Kbd keys="F5" />, click **Brush Tip**, the **Predefined** tab, and **Stamp**. Name it `Pebble`, uncheck **Create mask from color**, and click **Save**.
+2. Press <Kbd keys="F5" mac="Fn+F5" /> to open the **Brush Editor**. At its bottom, uncheck **Temporarily Save Tweaks To Presets**. With it checked, Krita remembers every change you make to a built-in brush until you close Krita, so the next time you pick that brush it is not the one you expect. Unchecked, your changes live only in the brushes you save. Krita remembers this setting.
 
-3. Set **Brush mode** to **Lightness map** and **Spacing** to `5`: pebbles print far apart along a stroke.
+3. Click **Brush Tip** in the editor's middle column, the **Predefined** tab, and **Stamp**. Name it `Pebble`, uncheck **Create mask from color**, and click **Save**.
+
+4. Set **Brush mode** to **Lightness map**, so the tip's middle gray paints the foreground color, darker grays paint darker, and lighter grays lighter. Right-click **Spacing**, type `5`, and press <Kbd keys="Enter" />: pebbles print far apart along a stroke.
 
 	<Figure
 		src={pebbleTip}
@@ -127,19 +153,55 @@ Light comes from above in your game, so tops are lit and the ground under an obj
 		caption="Your pebble as a brush tip."
 	/>
 
-4. Check **Rotation**, then in its inputs check **Fuzzy Dab** and uncheck **Pressure**: each pebble lies at a random angle.
+5. Check the box beside **Rotation** and click its name, then in its inputs check **Fuzzy Dab** and uncheck **Pressure**: each pebble lies at a random angle.
 
-5. Check **Size**, check **Fuzzy Dab** and uncheck **Pressure**, click the curve's left point, and type `33` in the percentage field to its right: pebbles print from a third of full size to full, from small gravel to big stones.
+6. Check the box beside **Size** and click its name, check **Fuzzy Dab** and uncheck **Pressure**, click the curve's left point, and type `33` in the percentage field beside the curve and press <Kbd keys="Tab" />: pebbles print from a third of full size to full, from small gravel to big stones.
 
 	<Figure
 		src={pebbleSize}
 		alt="The Size option with Fuzzy Dab checked and a curve rising from 33% at the left to 100% at the right."
-		caption="Three sizes and everything between."
+		caption="From a third of full size to full."
 	/>
 
-6. Check **Scatter**. Click **Save New Brush Preset...**, name it `Pebble`, click **Save**, and close the editor with <Kbd keys="F5" />.
+7. Check **Scatter**. Click **Save New Brush Preset...**, name it `Pebble`, click **Save**, and close the editor with <Kbd keys="F5" mac="Fn+F5" />.
 
-7. Deselect, show **Paint Layer 1** and **Background** again, hide **Paint Layer 2**, and click **Paint Layer 1**.
+8. Deselect, show **Paint Layer 1** and **Background** again, hide **Paint Layer 2**, and click **Paint Layer 1**.
+
+</Steps>
+
+## Make a twig brush
+
+A pen tablet makes a stroke thin where you press lightly. A mouse presses evenly, so its strokes are the same width from end to end. Krita's brushes can taper by another rule instead: **Fade** shrinks the brush as the stroke gets longer. You use it for twigs and small roots.
+
+<Steps>
+
+1. In the **Brush Presets** docker, click the **Search** box at the bottom and type `Basic-5 Size`. Two brushes are left; hold the pointer over each to see its name, and click **b) Basic-5 Size**, not **Basic-5 Size Opacity**.
+
+	<Figure
+		src={presetSearch}
+		alt="The Brush Presets docker with Basic-5 Size typed into its Search box at the bottom and two brushes left in the list: hold the pointer over each to read its name."
+		caption="Search narrows the list."
+	/>
+
+2. Press <Kbd keys="F5" mac="Fn+F5" /> to open the Brush Editor. Click **Size** in the options list. In the list of inputs that appears, check **Fade**, then uncheck **Pressure**. (Krita keeps at least one input checked, so check the new one first.)
+
+3. Click the word **Fade** to show its settings below the list. Right-click the **Length** field, type `45`, and press <Kbd keys="Enter" />. The number sets how long a stroke runs before the brush has shrunk to a point.
+
+4. Above the curve, click the second button, the line falling from top left to bottom right. The curve now starts at 100% and falls to 0%: the brush starts at full size and shrinks to a point by the end of the length.
+
+	<Figure
+		src={taperSettings}
+		alt="The Brush Editor showing the Size option: Fade checked in the inputs list and Pressure unchecked, Length 45 below the list, and a curve falling in a straight line from 100% at the top left to 0% at the bottom right."
+		caption="Size driven by Fade: full size at the start of a stroke, a point at the end of a short stroke."
+	/>
+
+5. Click **Save New Brush Preset...** at the top right of the editor. Set the name to `Twig` and click **Save**. Your brush now has its own entry in the Brush Presets docker. Press <Kbd keys="F5" mac="Fn+F5" /> again to close the editor.
+
+	<Figure
+		src={savePreset}
+		alt="The Save New Brush Preset dialog with the name Twig typed in and a preview of the brush stroke."
+		caption="A brush of your own, saved with your Krita settings."
+	/>
 
 </Steps>
 
@@ -147,23 +209,23 @@ Light comes from above in your game, so tops are lit and the ground under an obj
 
 <Steps>
 
-1. Set **Size** to `60` and **Opacity** to `100`. Set the dirt ramp's **light** swatch and paint about five long, wandering strokes across the image. Then set the **highlight** swatch and add two shorter ones. Pebbles should cover only a small part of the dirt; leave most of it bare.
+1. Pick your **Pebble** brush in the Brush Presets docker, set **Size** to `60` and **Opacity** to `100`. Set the dirt ramp's **highlight** swatch and paint about three long, wandering strokes across the image. Pebbles should cover only a small part of the dirt; leave most of it bare.
 
 	<Figure
 		src={pebbles}
-		alt="The brown dirt with scattered light pebbles of many sizes and angles, each with a dark contact shadow."
+		alt="The light brown dirt with a few scattered pale pebbles of many sizes and angles, each with a faint shadow, most of the ground bare."
 		caption="Pebbles in light and highlight colors."
 	/>
 
-2. Pick your **Grass Blade** brush from lesson 13, set **Size** to `7`, and set the **shadow** swatch. Paint about ten short, slightly curved strokes in different directions, each about a tenth of the image long: twigs and small roots. The blade brush tapers them to a point.
+2. Pick your **Twig** brush, set **Size** to `7`, and set the **dark** swatch. Paint about ten short, slightly curved strokes in different directions, each about a tenth of the image long: twigs and small roots. The brush tapers them to a point.
 
 	<Figure
 		src={twigs}
 		alt="The dirt with thin, dark, tapering twig strokes among the pebbles."
-		caption="Twigs, painted with the blade brush."
+		caption="Twigs, painted with the Twig brush."
 	/>
 
-3. Zoom out to about three copies across and look for a spot that repeats, as in lesson 13.
+3. Zoom out with <Kbd keys="Ctrl+-" mac="Cmd+-" /> until you see about three copies of the image across the canvas, and look for a spot that repeats. A single very light or very dark pebble repeats every 2 meters and gives the pattern away; pick **Basic-2 Opacity**, set **Opacity** to `100`, and paint over it with the dirt ramp's **dark** swatch.
 
 	<Figure
 		src={dirtFar}
@@ -171,7 +233,17 @@ Light comes from above in your game, so tops are lit and the ground under an obj
 		caption="Dirt, repeated."
 	/>
 
-4. Save it as `art_source/ground/dirt_albedo.kra` and export it as `art/ground/dirt_albedo.png`, as in lesson 13. Then choose **File > Close**, so the sand is the only image open.
+4. Choose **File > Save As...** (<Kbd keys="Ctrl+Shift+S" mac="Cmd+Shift+S" />). Go to your project's `art_source` folder as in lesson 7: click the address bar, type its path, and press <Kbd keys="Enter" />. Click **New folder**, name it `ground`, double-click it, set **File name** to `dirt_albedo.kra`, and click **Save**.
+
+5. Choose **File > Export...**. Go to your project's `art` folder the same way, open the `ground` folder, which you make with **New folder** if it is not there, set **File name** to `dirt_albedo.png`, and click **Save**. In the **PNG image** dialog, leave the options as they are and click **OK**.
+
+	<Figure
+		src={pngOptions}
+		alt="The PNG image options dialog: Compression (Lossless) 3; Force convert to sRGB and Store alpha channel (transparency) checked; the other options unchecked."
+		caption="The same PNG options as for the palette. Your hidden pebble layer is left out of the export."
+	/>
+
+6. Choose **File > Close**, so the sand is the only image open.
 
 </Steps>
 
@@ -179,7 +251,7 @@ Light comes from above in your game, so tops are lit and the ground under an obj
 
 <Steps>
 
-1. Create a new image named `sand_albedo` the same way, fill it with the sand ramp's **light** swatch, `42`, `36`, `78`, and turn on wrap-around mode.
+1. Create a new image named `sand_albedo` the same way, 512 by 512, fill it with the sand ramp's **light** swatch, `42`, `36`, `78`, and turn on wrap-around mode.
 
 2. **Damp patches.** Pick **Basic-2 Opacity**, set **Size** to `110` and **Opacity** to `20`, set the **dark** swatch, `36`, `40`, `65`, and paint about five short, wandering strokes.
 
@@ -205,7 +277,7 @@ Light comes from above in your game, so tops are lit and the ground under an obj
 		caption="Small stones and shell bits."
 	/>
 
-5. Zoom out and check the repeat, then save it as `art_source/ground/sand_albedo.kra` and export it as `art/ground/sand_albedo.png`.
+5. Zoom out and check the repeat, then save it as `art_source/ground/sand_albedo.kra` and export it as `art/ground/sand_albedo.png`, the same way as the dirt.
 
 	<Figure
 		src={sandFar}
@@ -219,7 +291,7 @@ Light comes from above in your game, so tops are lit and the ground under an obj
 
 <Steps>
 
-1. In Godot, click `art/ground/dirt_albedo.png`, open the **Import** tab, set **Compress > Mode** to **VRAM Compressed**, check **Mipmaps > Generate**, and click **Reimport (\*)**, as for the grass.
+1. In Godot, click `art/ground/dirt_albedo.png`, open the **Import** tab, set **Compress > Mode** to **VRAM Compressed**, check **Mipmaps > Generate**, and click **Reimport (\*)**, as for the grass detail in lesson 13.
 
 2. Do the same for `art/ground/sand_albedo.png`.
 
@@ -234,7 +306,8 @@ Light comes from above in your game, so tops are lit and the ground under an obj
 ## Try it
 
 - In the dirt image, try your **Pebble** brush with the grass ramp's colors. The same stamp makes green moss-covered stones.
-- Set the Pebble brush's **Spacing** lower, such as `1`, and paint one stroke. The pebbles pile into a gravel path.
+- Try the **Twig** brush with **Size** `30`. Longer strokes still end in a point, because the size falls to nothing after the Fade length.
+- Set the Pebble brush's **Spacing** lower, such as `0.3`, and paint one stroke. The pebbles pile into a gravel path.
 
 ## If it does not work
 
@@ -252,17 +325,16 @@ Your project now has four new files:
 - art
   - ground
     - **dirt_albedo.png**
-    - grass_albedo.png
+    - grass_detail.png
     - **sand_albedo.png**
 - art_source
   - ground
     - **dirt_albedo.kra**
-    - grass_albedo.kra
     - **sand_albedo.kra**
 </FileTree>
 
-Godot writes a `.import` file beside each image, with **VRAM Compressed** and mipmaps on; commit them too.
+Godot writes a `.import` file beside each image, with **VRAM Compressed** and mipmaps on; commit them too. Krita keeps your **Twig** and **Pebble** brushes with its own settings, not with the images.
 
-Commit your work: `git add .` and `git commit -m "Paint dirt and sand"`. In the next lesson, you write your first shader and put the grass on the ground.
+Commit your work: `git add .` and `git commit -m "Paint dirt and sand"`. In the next lesson, you write your first shader and put the grass detail and the dirt on the ground.
 
 <Checkpoint />

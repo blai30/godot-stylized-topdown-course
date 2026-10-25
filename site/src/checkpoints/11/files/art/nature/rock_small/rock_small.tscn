@@ -1,5 +1,5 @@
 [gd_scene format=3 uid="uid://pq60ng2nyl31"]
 
-[ext_resource type="PackedScene" uid="uid://cx2a1lq6fsfkt" path="res://art/nature/rock_small/rock_small.glb" id="1_exkmk"]
+[ext_resource type="PackedScene" uid="uid://fnos2c3u4wfv" path="res://art/nature/rock_small/rock_small.glb" id="1_exkmk"]
 
-[node name="RockSmall" unique_id=388470486 instance=ExtResource("1_exkmk")]
+[node name="RockSmall" unique_id=1198000824 instance=ExtResource("1_exkmk")]

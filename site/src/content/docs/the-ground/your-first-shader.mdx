@@ -1,6 +1,6 @@
 ---
 title: Your first shader
-description: Write a ground shader that samples your grass texture in world space, so tiles join seamlessly however they are placed.
+description: Write a ground shader that multiplies your grass detail by a color and samples it in world space, so tiles join seamlessly however they are placed.
 sidebar:
   order: 15
   label: 15. Your first shader
@@ -12,7 +12,7 @@ lesson:
     - How uniforms let you set a shader's values in the Inspector
     - How to sample a texture, and what the texture hints do
     - Why the ground samples its texture in world space instead of by UV
-  prerequisites: [4, 13]
+  prerequisites: [4, 11, 13]
 ---
 
 import { Aside, Code, FileTree, Steps } from '@astrojs/starlight/components';
@@ -39,11 +39,11 @@ import worldSpaceIcons from '../../../assets/lessons/your-first-shader/world-spa
 
 ## What you will build
 
-Two ground tiles, one turned at an angle and overlapping the other, covered by your grass texture with no seam where they meet. The [shader](/reference/glossary/#shader) you write here becomes the ground shader for the whole template: in lesson 17 it learns to draw soft edges between grass, dirt, and sand.
+Two ground tiles, one turned at an angle and overlapping the other, covered by your grass detail, tinted green, with no seam where they meet. The [shader](/reference/glossary/#shader) you write here becomes the ground shader for the whole template: in lesson 17 it learns to draw soft edges between grass, dirt, and sand.
 
 <Figure
 	src={worldSpaceGrass}
-	alt="Two overlapping square tiles in the Godot editor, the second one rotated about 30 degrees, both covered by one continuous grass texture with no visible seam between them."
+	alt="Two overlapping square tiles in the Godot editor, the second one rotated about 30 degrees, both covered by one continuous green grass surface with no visible seam between them."
 	caption="Two tiles, one rotated, sharing one seamless grass surface."
 />
 
@@ -76,7 +76,7 @@ You need a surface to put the shader on. A flat square, called a `PlaneMesh`, is
 
 4. Double-click the new node's name, type `TestTile`, and press <Kbd keys="Enter" />.
 
-5. Look at the **Inspector** on the right. A new `MeshInstance3D` starts with a box shape in its **Mesh** property. Click the small down arrow at the right end of the **Mesh** row and, under **New**, choose **PlaneMesh**. The box becomes a flat square, 2 by 2 meters.
+5. Look at the **Inspector** on the right. A new `MeshInstance3D` starts with a box shape in its **Mesh** property. Click the small down arrow at the right end of the **Mesh** row and, under **New**, choose **PlaneMesh**. The box becomes a flat square, 2 by 2 meters. It lies at the middle of the meadow, under the player capsule. To look at it, move the pointer over the 3D view and press <Kbd keys="F" /> to frame the selected node, then orbit until you look down at the tile: drag with the middle mouse button, or on a laptop click and drag the axis gizmo at the top right of the 3D view.
 
 	<Figure
 		src={meshMenu}
@@ -158,14 +158,15 @@ Save the shader. The tile turns a soft green, lit by your sun.
 
 ### Piece 2: a texture
 
-Now read the color from your grass [texture](/reference/glossary/#texture) instead. A [uniform](/reference/glossary/#uniform) is written as the word `uniform`, then its type, then its name. After the name you can add a colon and hints, separated by commas, and the line ends with a semicolon. Add, between `shader_type spatial;` and `fragment()`:
+Now read the color from your grass detail, a gray [texture](/reference/glossary/#texture) from lesson 13, instead. A [uniform](/reference/glossary/#uniform) is written as the word `uniform`, then its type, then its name. After the name you can add a colon and hints, separated by commas, and the line ends with a semicolon. Add, between `shader_type spatial;` and `fragment()`:
 
-- a uniform named `albedo_texture` of type `sampler2D` (a texture the shader can read), with the hints `source_color`, `filter_linear_mipmap`, and `repeat_enable`
+- a uniform named `albedo_texture` of type `sampler2D` (a texture the shader can read), with the hints `source_color`, `filter_linear_mipmap`, and `repeat_enable`;
+- a uniform named `albedo_tint` of type `vec3` with the hint `source_color` and the default `vec3(1.0)` (one number fills all three channels, so this is white), with a comment: the ground's color, which multiplies the texture, and white leaves the texture as it is
 
-and change `fragment()` so it sets `ALBEDO` to the color of `albedo_texture` at the [mesh](/reference/glossary/#mesh)'s `UV` coordinates. The function `texture(albedo_texture, UV)` returns four numbers (red, green, blue, and alpha); take the first three by adding `.rgb` after it.
+and change `fragment()` so it sets `ALBEDO` to the color of `albedo_texture` at the [mesh](/reference/glossary/#mesh)'s `UV` coordinates, multiplied by `albedo_tint`. The function `texture(albedo_texture, UV)` returns four numbers (red, green, blue, and alpha); take the first three by adding `.rgb` after it.
 
 <Aside type="note" title="What the three hints do">
-- `source_color` says this texture holds colors. Color images are stored in [sRGB](/reference/glossary/#srgb), and Godot converts them before lighting. Without the hint, the grass looks washed out.
+- `source_color` says this texture holds colors. Color images are stored in [sRGB](/reference/glossary/#srgb), and Godot converts them before lighting. Without the hint, the grass looks washed out. It also gives `albedo_tint` a color picker in the Inspector.
 - `filter_linear_mipmap` smooths the texture between pixels and uses its [mipmaps](/reference/glossary/#mipmap), the smaller copies made on import, when the ground is far away. Without it, distant ground shimmers.
 - `repeat_enable` repeats the texture past its edges instead of smearing the last row of pixels. The ground needs it, as you see in piece 3.
 </Aside>
@@ -174,26 +175,28 @@ and change `fragment()` so it sets `ALBEDO` to the color of `albedo_texture` at 
 	<Code code={piece2} lang="gdshader" title="art/ground/ground.gdshader" />
 </Solution>
 
-Save the shader. The tile turns white, because the texture is still empty. Fill it in:
+Save the shader. The tile turns white, because the texture is still empty, and the tint is white. Fill them in:
 
 <Steps>
 
 1. Select `TestTile`. In the Inspector, under **Mesh**, then **Material**, find **Shader Parameters** (click it if it is closed). Your uniform appears there as **Albedo Texture**: Godot shows names written with underscores as separate capitalized words.
 
-2. Click the **&lt;empty&gt;** field of **Albedo Texture** and choose **Quick Load...**, as for the palette in lesson 11. Type `grass_albedo`, and press <Kbd keys="Enter" /> to pick `grass_albedo.png`.
+2. Click the **&lt;empty&gt;** field of **Albedo Texture** and choose **Quick Load...**, as for the palette in lesson 11. Type `grass_detail`, and press <Kbd keys="Enter" /> to pick `grass_detail.png`. The tile turns gray: the detail has light and dark but no color.
 
 	<Figure
 		src={nestedParameters}
-		alt="The Inspector for TestTile, scrolled down through Mesh (a PlaneMesh), PrimitiveMesh, and Material (a ShaderMaterial) to Shader Parameters, where Albedo Texture shows the grass texture."
+		alt="The Inspector for TestTile, scrolled down through Mesh (a PlaneMesh), PrimitiveMesh, and Material (a ShaderMaterial) to Shader Parameters, where Albedo Texture shows the grass detail and Albedo Tint a light green."
 		caption="Where to find Shader Parameters under TestTile. This picture is from the end of the lesson, so it also shows Texture Scale and Roughness, which you add in pieces 3 and 4."
 	/>
+
+3. Click the color field of **Albedo Tint**, type `95CC5A` in the **Hex** box, and close the picker. The tile turns grass green. The gray detail averages about 0.8, so a multiplier of 1 would leave the ground a fifth too dark; `95CC5A` is the palette's light grass swatch (hue 89, saturation 56, value 64) divided by 0.8, which makes the ground, on average, about that swatch. The blades then vary around it, lighter and darker.
 
 </Steps>
 
 <Figure
 	src={pieceTwo}
-	alt="The test tile now covered by the grass texture: dense painted grass tufts in light and dark greens."
-	caption="Piece 2: the grass texture on the tile."
+	alt="The test tile now covered by the grass detail, tinted green: flat, overlapping blades in slightly lighter and darker greens."
+	caption="Piece 2: the grass detail and its green tint on the tile."
 />
 
 ### See the problem with UV
@@ -206,7 +209,7 @@ Save the shader. The tile turns white, because the texture is still empty. Fill 
 
 2. With `TestTile2` selected, set **Transform > Position** to `1.4`, `0.012`, `0.6` and **Rotation** **y** to `30`. The y of `0.012` lifts it 2 millimeters above `TestTile`, so where they overlap they do not fight over pixels. The copy shares the same material, so it shows the same texture.
 
-3. To make the problem easy to see, select `TestTile`, find **Albedo Texture** under **Shader Parameters** again, and put `icon.svg` in place of the grass for a moment: click the grass picture in the field, choose **Quick Load...**, type `icon.svg`, and press <Kbd keys="Enter" />. `icon.svg` is the Godot logo that every new project starts with, at the bottom of the FileSystem dock.
+3. To make the problem easy to see, select `TestTile`, find **Albedo Texture** under **Shader Parameters** again, and put `icon.svg` in place of the grass for a moment: click the small arrow at the right of the field, choose **Quick Load...**, type `icon.svg`, and press <Kbd keys="Enter" />. `icon.svg` is the Godot logo that every new project starts with, at the bottom of the FileSystem dock.
 
 4. Save the scene with <Kbd keys="Ctrl+S" mac="Cmd+S" />.
 
@@ -214,7 +217,7 @@ Save the shader. The tile turns white, because the texture is still empty. Fill 
 
 <Figure
 	src={uvProblem}
-	alt="Two overlapping tiles, each showing one large Godot logo. The second tile's logo is turned 30 degrees with its tile, so the two logos cross each other where the tiles overlap."
+	alt="Two overlapping tiles, each showing one large Godot logo. The second tile's logo is turned 30 degrees with its tile, so the front tile's logo hides part of the other tile's logo instead of lining up with it."
 	caption="With UV, each tile carries its own copy of the texture, turned with the tile. Where they overlap, the two images clash."
 />
 
@@ -245,10 +248,10 @@ Save the shader. The two icons become one continuous grid that runs straight acr
 	caption="In world space, the tiles are windows onto one shared image. Moving or turning a tile does not move the image."
 />
 
-Put `grass_albedo.png` back in **Albedo Texture** with **Quick Load...** the same way. The grass now runs across both tiles with no seam, like the picture at the top of this lesson.
+Put `grass_detail.png` back in **Albedo Texture** with **Quick Load...** the same way. The grass now runs across both tiles with no seam, like the picture at the top of this lesson.
 
 <Aside type="note" title="Why 0.5">
-Your grass texture is 512 pixels wide and covers 2 meters of ground, the 256 pixels per meter [texel density](/reference/glossary/#texel-density) from lesson 13. Repeating it 0.5 times per meter, once every 2 meters, shows it at exactly that size.
+Your grass detail is 1024 pixels wide and the dirt and sand are 512, and each covers 2 meters of ground: 512 and 256 pixels per meter, the [texel density](/reference/glossary/#texel-density) you chose for them. Repeating a texture 0.5 times per meter, once every 2 meters, shows it at exactly that size.
 </Aside>
 
 ### Piece 4: roughness and comments
@@ -280,7 +283,8 @@ Save the shader, then save the scene with <Kbd keys="Ctrl+S" mac="Cmd+S" />. Sel
 
 - **The tile disappears and a line turns red in the Shader Editor.** The shader has an error, described at the bottom of the Shader Editor, such as `Error at line 5: Expected a ';'.` A missing semicolon is reported on the line *after* the one that needs it, so look one line up. The other common cause is a misspelled name, such as `albedo_texure`.
 - **The grass looks pale and washed out.** The `source_color` hint is missing from `albedo_texture`.
-- **The tile is plain white.** The texture is not assigned. Pick `grass_albedo.png` for **Albedo Texture** under **Shader Parameters** with **Quick Load...**.
+- **The tile is plain white.** The texture is not assigned. Pick `grass_detail.png` for **Albedo Texture** under **Shader Parameters** with **Quick Load...**.
+- **The grass is gray.** **Albedo Tint** is still white. Set it to `95CC5A`.
 - **The tile is white after your first save, and your typing is gone.** Godot asked about files newer on disk and **Reload from disk** was chosen, which loads the empty template again. Type the piece again, save, and choose **Ignore external changes** if Godot asks.
 - **The texture smears into long stripes.** The `repeat_enable` hint is missing.
 - **The tile flickers with stripes of gray.** It sits at the same height as the placeholder ground. Set its **Position** **y** to `0.01`.
@@ -295,11 +299,11 @@ Your project now contains:
 - art
   - ground
     - dirt_albedo.png
-    - grass_albedo.png
+    - grass_detail.png
     - **ground.gdshader** the shader from this lesson
     - sand_albedo.png
 - levels
-  - meadow.tscn
+  - **meadow.tscn** updated
 </FileTree>
 
 The `Meadow` scene's tree:
@@ -329,6 +333,6 @@ The `Meadow` scene's tree:
 	<Code code={groundShader} lang="gdshader" title="art/ground/ground.gdshader" />
 </Solution>
 
-The test tiles are temporary. In lesson 16, you turn the tile into a real ground tile in a `MeshLibrary` and paint ground with it.
+The test tiles are temporary. Commit your work: `git add .` and `git commit -m "Add the ground shader"`. In lesson 16, you turn the tile into a real ground tile in a `MeshLibrary` and paint ground with it.
 
 <Checkpoint />

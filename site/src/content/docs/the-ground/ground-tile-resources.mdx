@@ -1,0 +1,222 @@
+---
+title: Ground tiles as custom resources
+description: Give each kind of ground its own data in custom resources, so the game reads what a tile means from data and not from item numbers in code, and make sand slow the player down.
+sidebar:
+  order: 18
+  label: 18. Ground tiles as resources
+lesson:
+  number: 18
+  minutes: 60
+  learn:
+    - What a custom resource is, and why meaning belongs in data and not in code
+    - How to export properties and lists from a resource into the Inspector
+    - How to ask a GridMap what ground lies under a point in the world
+    - How the player reads a tile's data to change how fast it walks
+  prerequisites: [17]
+---
+
+import { Aside, Code, FileTree, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Solution from '../../../components/Solution.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import piece1 from '../../../checkpoints/18/pieces/piece-1.cs?raw';
+import piece2 from '../../../checkpoints/18/pieces/piece-2.cs?raw';
+import piece3 from '../../../checkpoints/18/pieces/piece-3.cs?raw';
+import piece4 from '../../../checkpoints/18/pieces/piece-4.cs?raw';
+import tileSet from '../../../checkpoints/18/files/art/ground/ground_tile_set.tres?raw';
+import result from '../../../assets/lessons/ground-tile-resources/result.png';
+import newScript from '../../../assets/lessons/ground-tile-resources/new-script.png';
+import tilesFilled from '../../../assets/lessons/ground-tile-resources/tiles-filled.png';
+import saveSet from '../../../assets/lessons/ground-tile-resources/save-set.png';
+import groundAssigned from '../../../assets/lessons/ground-tile-resources/ground-assigned.png';
+
+## What you will build
+
+The same meadow, but the game now knows which ground it stands on. Sand slows the player, dirt paths let them walk a little faster, and the numbers live in a file you edit in the Inspector, not in code.
+
+<Figure
+	src={result}
+	alt="The running game from above: the player stands in the middle of the sand patch, which has ragged edges against the grass."
+	caption="The player on the sand patch, walking at 70 percent of normal speed."
+/>
+
+## The idea
+
+Right now the meadow's ground is a grid of numbers: `0` is grass, `1` is sand, `2` is dirt. The numbers are the MeshLibrary's item numbers, and nothing in the game knows what they mean. The quick fix is `if (item == 1) speed *= 0.7f;` in the player's script. It works, and it spreads: scattering grass, generating levels, and footstep sounds would each need their own `if (item == 1)`, and renumbering the library would break all of them.
+
+The fix is to keep what a kind of ground means in **data**, in one place. A [custom resource](/reference/glossary/#custom-resource) is a C# class that extends `Resource`, with [exported](/reference/glossary/#export) properties. You make one `GroundTile` per kind of ground, and one `GroundTileSet` that lists them. Code asks the set about a tile, and the answer comes from the Inspector.
+
+| Property | What it says |
+|---|---|
+| `DisplayName` | The name of the ground, for you and for menus. |
+| `Item` | The tile's number in the MeshLibrary. This is the only place the number appears. |
+| `Layer` | Which layer the tile sits on, from the lowest at 0, as in lesson 17. |
+| `GrassDensity` | How thickly grass grows on it, from 0 to 1. Module 6 reads this. |
+| `WalkSpeed` | How fast the player walks on it, as a share of normal speed. |
+
+## Piece 1: a ground tile
+
+<Steps>
+
+1. In the FileSystem dock, make a folder `Ground` inside `src`, as you made `Player` in lesson 6.
+
+2. Click **Script** at the top to open the Script editor, and choose **File > New Script...**. Set **Language** to **C#**, **Inherits** to `Resource`, and **Path** to `res://src/Ground/GroundTile.cs`. Any **Template** will do, because you replace the contents. Click **Create**.
+
+	<Figure
+		src={newScript}
+		alt="The Create Script dialog: Language C#, Inherits Resource, Template Object: Empty, Path res://src/Ground/GroundTile.cs."
+		caption="A script for a resource."
+	/>
+
+</Steps>
+
+Open the file in your code editor, as in lesson 5.
+
+Replace the file's contents so that:
+
+- it has `using Godot;` and the line `namespace TopDownTemplate.Ground;`, with a comment above the class saying it is what one kind of ground means to the game;
+- `[GlobalClass]` is on the line above `public partial class GroundTile : Resource`. It registers the class with Godot, so the Inspector can create one from its name;
+- it has five exported properties, each with `{ get; set; }`: a `string` `DisplayName` that defaults to `""`; an `int` `Item`; an `int` `Layer`; a `float` `GrassDensity`; and a `float` `WalkSpeed` that defaults to `1f`;
+- `GrassDensity` is marked `[Export(PropertyHint.Range, "0,1,0.05")]` and `WalkSpeed` `[Export(PropertyHint.Range, "0,2,0.05")]`, which gives each a slider in the Inspector (minimum, maximum, step);
+- `Item`, `Layer`, `GrassDensity`, and `WalkSpeed` each have a short comment above them saying what they are.
+
+<Solution>
+	<Code code={piece1} lang="csharp" title="src/Ground/GroundTile.cs" />
+</Solution>
+
+## Piece 2: the set
+
+Make a second script the same way, `res://src/Ground/GroundTileSet.cs`, which inherits `Resource` too. Change it so that:
+
+- it has `using Godot;` and `using Godot.Collections;`, the namespace `TopDownTemplate.Ground;`, a comment above the class, and `[GlobalClass]`;
+- an exported property `Tiles` of type `Array<GroundTile>` starts as `[]`, an empty list. `Array<T>` is Godot's own list type, and it is the kind Godot can save and show in the Inspector;
+- a method `public GroundTile? Find(int item)` loops over `Tiles` with `foreach` and returns the tile whose `Item` equals `item`. After the loop it returns `null`, for an item with no tile. The `?` after the type says the answer can be missing, which the project's `Nullable` setting checks for you.
+
+<Solution>
+	<Code code={piece2} lang="csharp" title="src/Ground/GroundTileSet.cs" />
+</Solution>
+
+Save both files and click **Build Project**. The two classes are now in Godot's lists.
+
+## Piece 3: ask the ground
+
+The painted ground is the `GroundTiles` GridMap. Give it a script that can say which tile lies under a point.
+
+Open `levels/meadow.tscn`, select `GroundTiles`, and click **Attach Script**. Set **Language** to **C#** (**Inherits** is `GridMap`) and **Path** to `res://src/Ground/GroundMap.cs`, then click **Create**. Change the script so that:
+
+- it has `using Godot;`, the namespace `TopDownTemplate.Ground;`, and a comment above the class: the painted ground, which can say what kind of ground lies at a point;
+- an exported `GroundTileSet?` property `Tiles` holds the set. Its type allows `null`, because the Inspector slot is empty until you fill it;
+- `public GroundTile? TileAt(Vector3 worldPosition)` first turns the world position into the GridMap's own space: `var local = ToLocal(worldPosition);`, then sets `local.Y = 0f;`, so a point a little above or below the ground still finds the cell, since all the cells are in row 0;
+- it reads the item painted there: `var item = GetCellItem(LocalToMap(local));`. `LocalToMap` finds the cell that holds a point, and `GetCellItem` returns the item in a cell, or `InvalidCellItem` for an empty one;
+- it returns `null` for `InvalidCellItem`, and otherwise `Tiles?.Find(item)`. The `?.` skips the call when `Tiles` is empty and gives `null`.
+
+<Solution>
+	<Code code={piece3} lang="csharp" title="src/Ground/GroundMap.cs" />
+</Solution>
+
+Save the file and click **Build Project** again.
+
+## Fill in the data
+
+<Steps>
+
+1. Select `GroundTiles`. In the Inspector, find **Tiles**, click the arrow at the right of the empty field, and under **New** choose **GroundTileSet**. Click the new set to open it.
+
+2. Click its **Tiles** row, `Array[GroundTile]`, to open the list, and set **Size** to `3`.
+
+3. For each of the three elements, click the arrow at the right of its empty field and, under **New**, choose **GroundTile**. Then click the **GroundTile** button in the element's row to open the tile right below it.
+
+4. Fill in each tile:
+
+	| | Display Name | Item | Layer | Grass Density | Walk Speed |
+	|---|---|---|---|---|---|
+	| Element 0 | `Grass` | `0` | `2` | `1` | `1` |
+	| Element 1 | `Sand` | `1` | `0` | `0` | `0.7` |
+	| Element 2 | `Dirt` | `2` | `1` | `0.1` | `1.15` |
+
+	The items are the numbers from the tiles scene in lesson 16: grass first, then sand, then dirt. The layers are the heights from lesson 17.
+
+	<Figure
+		src={tilesFilled}
+		alt="The Inspector with the GroundTiles node's Tiles open: a GroundTileSet whose Tiles list has size 3, with the Grass tile (Item 0, Layer 2, Grass Density 1.0, Walk Speed 1.0) and the Sand tile (Item 1, Layer 0, Grass Density 0.0, Walk Speed 0.7) open below their rows."
+		caption="Two of the three tiles, filled in."
+	/>
+
+5. Scroll up to the **Tiles** row at the top, click the arrow at the right of the **GroundTileSet** field, and choose **Save As...**. Save it as `ground_tile_set.tres` in `art/ground`.
+
+	<Figure
+		src={saveSet}
+		alt="The Save Resource As dialog in res://art/ground, with File ground_tile_set.tres."
+		caption="The tile set as its own file."
+	/>
+
+6. Save the meadow with <Kbd keys="Ctrl+S" mac="Cmd+S" />.
+
+</Steps>
+
+<Solution label="Show the full ground_tile_set.tres">
+	<Code code={tileSet} lang="ini" title="art/ground/ground_tile_set.tres" />
+</Solution>
+
+## Piece 4: walk by the data
+
+Open `src/Player/PlayerMovement.cs`. Change it so that:
+
+- it has `using TopDownTemplate.Ground;` under `using Godot;`;
+- an exported `GroundMap?` property `Ground` sits under `Acceleration`, with a comment: the ground to walk on, which sets how fast each kind of ground lets the player go;
+- right after `speed` is picked, a new line multiplies it: `speed *= Ground?.TileAt(GlobalPosition)?.WalkSpeed ?? 1f;`. Read it left to right: if there is a ground, ask for the tile under the player, and if there is a tile, take its walk speed. `??` gives `1f` when any step answered `null`, so the player walks at normal speed off the painted ground.
+
+<Solution>
+	<Code code={piece4} lang="csharp" title="src/Player/PlayerMovement.cs" />
+</Solution>
+
+Save the file and click **Build Project**, then connect it: in `meadow.tscn`, select `Player`. In the Inspector, **Ground** is empty. Click **Assign...**, choose `GroundTiles`, and click **OK**. Save the meadow with <Kbd keys="Ctrl+S" mac="Cmd+S" />.
+
+<Figure
+	src={groundAssigned}
+	alt="The Inspector's Ground row under PlayerMovement, showing GroundTiles."
+	caption="The player's ground."
+/>
+
+<Aside type="note" title="Why the player's Ground is set in the meadow">
+The player scene can be used by other levels, and it cannot know where a level keeps its ground. An exported slot is filled by the scene that contains the player, which does know. This is the same idea as the camera rig's **Target** in lesson 6.
+</Aside>
+
+Press <Kbd keys="F5" mac="Cmd+B" />. Walk the dirt path: it feels a little quicker. Walk onto the sand patch: the player slows down, then speeds back up on grass.
+
+## Try it
+
+- Select `GroundTiles`, open its **Tiles**, and open the sand tile, element 1. Set its **Walk Speed** to `0.3`, save the meadow, and run again. Nothing in the code changed.
+- Invent a fourth kind of ground: add a matching tile to `ground_tiles.tscn` as in lesson 16, export the library, paint it, and add a `GroundTile` with its **Item**. Painted cells with no `GroundTile` make `Find` return `null`, and the player walks at normal speed there.
+
+## If it does not work
+
+- **Walking on sand changes nothing.** Check that `Player` has **Ground** set, that `GroundTiles` has **Tiles** set, and that the sand's **Item** is `1`.
+- **The Inspector offers no GroundTileSet under New.** The project has not been built since you wrote the scripts. Click **Build Project**.
+- **The MSBuild tab shows a nullable warning about `Find`.** The return type must be `GroundTile?`, with the question mark.
+- **The game stops with a NullReferenceException in `Find`.** An element of the set's **Tiles** is still empty. Give each of the three elements a `GroundTile`.
+- **The player slows everywhere.** The grass tile's **Walk Speed** is `0`, or two tiles share one **Item**, so the first match wins. Give grass a **Walk Speed** of `1` and every tile its own **Item**.
+
+## Checkpoint
+
+Your project has these changes:
+
+<FileTree>
+- art
+  - ground
+    - **ground_tile_set.tres**
+- levels
+  - meadow.tscn updated
+- src
+  - Ground
+    - **GroundMap.cs**
+    - **GroundTile.cs**
+    - **GroundTileSet.cs**
+  - Player
+    - PlayerMovement.cs updated
+</FileTree>
+
+Commit your work: `git add .` and `git commit -m "Ground tiles as custom resources"`. In Module 4, you turn to the light: the environment, the sun, and the day.
+
+<Checkpoint />

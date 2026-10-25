@@ -42,16 +42,16 @@ Target = NodePath("../Player")
 
 [node name="Player" parent="." unique_id=1368437750 instance=ExtResource("2_fbj5a")]
 
-[node name="Rocks" type="Node3D" parent="." unique_id=1203303629]
+[node name="Rocks" type="Node3D" parent="." unique_id=376350889]
 
-[node name="RockSmall" parent="Rocks" unique_id=388470486 instance=ExtResource("3_k6xl7")]
+[node name="RockSmall" parent="Rocks" unique_id=1198000824 instance=ExtResource("3_k6xl7")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, 0)
 
-[node name="RockSmall2" parent="Rocks" unique_id=1565826278 instance=ExtResource("3_k6xl7")]
+[node name="RockSmall2" parent="Rocks" unique_id=100530496 instance=ExtResource("3_k6xl7")]
 transform = Transform3D(1.0648977, 0, 0.74564934, 0, 1.3, 0, -0.74564934, 0, 1.0648977, -3.5, 0, 2)
 
-[node name="RockSmall3" parent="Rocks" unique_id=1219355834 instance=ExtResource("3_k6xl7")]
+[node name="RockSmall3" parent="Rocks" unique_id=1945861856 instance=ExtResource("3_k6xl7")]
 transform = Transform3D(0.39999998, 0, -0.69282037, 0, 0.8, 0, 0.69282037, 0, 0.39999998, 1.5, 0, -4)
 
-[node name="RockSmall4" parent="Rocks" unique_id=185138248 instance=ExtResource("3_k6xl7")]
+[node name="RockSmall4" parent="Rocks" unique_id=717295330 instance=ExtResource("3_k6xl7")]
 transform = Transform3D(-0.50000006, 0, 0.8660254, 0, 1, 0, -0.8660254, 0, -0.50000006, 0.6, 0, -4.6)

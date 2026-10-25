@@ -1,4 +1,5 @@
 using Godot;
+using TopDownTemplate.Ground;
 
 namespace TopDownTemplate.Player;
 
@@ -17,11 +18,15 @@ public partial class PlayerMovement : CharacterBody3D
 	// How quickly the player speeds up and slows down, in meters per second, per second.
 	[Export] public float Acceleration { get; set; } = 30f;
 
+	// The ground to walk on, which sets how fast each kind of ground lets the player go.
+	[Export] public GroundMap? Ground { get; set; }
+
 	public override void _PhysicsProcess(double delta)
 	{
 		var step = (float)delta;
 		var input = Input.GetVector(MoveLeft, MoveRight, MoveForward, MoveBack);
 		var speed = Input.IsActionPressed(Sprint) ? SprintSpeed : Speed;
+		speed *= Ground?.TileAt(GlobalPosition)?.WalkSpeed ?? 1f;
 		var target = new Vector3(input.X, 0f, input.Y) * speed;
 
 		var velocity = Velocity;

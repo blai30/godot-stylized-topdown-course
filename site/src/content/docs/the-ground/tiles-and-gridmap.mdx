@@ -56,7 +56,7 @@ Your tiles are half a meter wide: small enough that a curving path looks like a 
 
 1. Open `levels/meadow.tscn`. Select `TestTile` and press <Kbd keys="Ctrl+C" mac="Cmd+C" /> to copy it.
 
-2. Hold <Kbd keys="Ctrl" mac="Cmd" /> and click `TestTile2`, so both test tiles are selected, and press <Kbd keys="Delete" />. Godot asks **Delete 2 nodes?**; click **Delete**. Save the scene (<Kbd keys="Ctrl+S" mac="Cmd+S" />).
+2. Hold <Kbd keys="Ctrl" mac="Cmd" /> and click `TestTile2`, so both test tiles are selected, and press <Kbd keys="Delete" mac="Cmd+Backspace" />. Godot asks **Delete 2 nodes?**; click **Delete**. Save the scene (<Kbd keys="Ctrl+S" mac="Cmd+S" />).
 
 	<Figure
 		src={deleteConfirm}
@@ -92,17 +92,17 @@ Duplicate `Grass` now and both copies show grass, because a duplicate shares the
 
 	<Figure
 		src={makeUnique}
-		alt="The Inspector for Dirt: the PlaneMesh at 0.5 by 0.5 m, and its Material, a ShaderMaterial, with Shader Parameters showing Albedo Texture still the grass, Texture Scale 0.5, and Roughness 0.9."
+		alt="The Inspector for Dirt: the PlaneMesh at 0.5 by 0.5 m, and its Material, a ShaderMaterial, with Shader Parameters showing Albedo Texture still the grass detail, Albedo Tint still the grass green, Texture Scale 0.5, and Roughness 0.9."
 		caption="Dirt's own material, still showing the grass it was copied from."
 	/>
 
-4. Under **Shader Parameters**, click the grass picture in **Albedo Texture**, choose **Quick Load...**, type `dirt_albedo`, and press <Kbd keys="Enter" />. Set `Dirt`'s **Position** **x** to `1`, so it sits beside the grass where you can see it.
+4. Under **Shader Parameters**, click the small arrow at the right of the **Albedo Texture** picture, choose **Quick Load...**, type `dirt_albedo`, and press <Kbd keys="Enter" />. `Grass` keeps its green tint. The copy still carries it, but dirt is painted in its own colors, so click the **Albedo Tint** color field, type `FFFFFF` in the **Hex** box, and close the picker. Set `Dirt`'s **Position** **x** to `1`, so it sits beside the grass where you can see it.
 
-5. Do the same for sand: select `Grass`, duplicate it, rename the copy `Sand`, make its **Mesh** and its **Material** unique, load `sand_albedo` into **Albedo Texture**, and set **Position** **x** to `2`.
+5. Do the same for sand: select `Grass`, duplicate it, rename the copy `Sand`, make its **Mesh** and its **Material** unique, load `sand_albedo` into **Albedo Texture**, set **Albedo Tint** to white by typing `FFFFFF` in its **Hex** box, as for dirt, and set **Position** **x** to `2`.
 
 	<Figure
 		src={tilesScene}
-		alt="The GroundTiles scene with Grass, Dirt, and Sand in the Scene dock and three small square tiles in a row in the 3D view: grass, dirt with pebbles, and sand."
+		alt="The GroundTiles scene with Grass, Sand, and Dirt in the Scene dock and three small square tiles in a row in the 3D view: grass, dirt with pebbles, and sand."
 		caption="Three tiles, each with its own material."
 	/>
 
@@ -136,7 +136,7 @@ The mesh and the material are two resources, one inside the other. **Make Unique
 
 </Steps>
 
-The library now holds three items: **Grass**, **Dirt**, and **Sand**. Their positions in the scene do not matter: with **Apply MeshInstance Transforms** off, each item is its mesh alone, centered in its cell. Whenever you change a tile, export again over the same file; **Merge With Existing** keeps each item's number, so the cells you painted keep their tiles.
+The library now holds three items: **Grass**, **Sand**, and **Dirt**. Godot numbers them in the order they have in the scene, so Grass is `0`, Sand is `1`, and Dirt is `2`, even though the GridMap's palette lists them by name; lesson 18 relies on these numbers. Their positions in the scene do not matter: with **Apply MeshInstance Transforms** off, each item is its mesh alone, centered in its cell. Whenever you change a tile, export again over the same file; **Merge With Existing** keeps each item's number, so the cells you painted keep their tiles.
 
 ## A GridMap in the meadow
 
@@ -162,7 +162,7 @@ With the GridMap selected, the **GridMap** panel opens at the bottom of the edit
 
 ## Paint the ground
 
-Look straight down: click **Perspective** at the top left of the 3D view and choose **Top View** (or press <Kbd keys="Numpad 7" />). Roll the mouse wheel back until the whole 20 by 20 meter ground fits in the view. An orange grid shows the cells.
+Look straight down: click **Perspective** at the top left of the 3D view and choose **Top View** (or press <Kbd keys="Numpad 7" />; on a laptop without a numpad, use the menu). Roll the mouse wheel back until the whole 20 by 20 meter ground fits in the view. An orange grid shows the cells.
 
 <Steps>
 
@@ -198,8 +198,8 @@ Look straight down: click **Perspective** at the top left of the 3D view and cho
 
 <Aside type="tip" title="GridMap tools">
 - **Paint** (<Kbd keys="E" />) places the chosen tile where you click or drag, and **Erase** (<Kbd keys="W" />) removes tiles the same way.
-- **Pick** (<Kbd keys="R" />) chooses the tile under the pointer in the palette, handy once you have many tiles.
-- **Fill** (<Kbd keys="Z" />) fills a selection with the chosen tile, and **Delete** (<Kbd keys="V" />) empties it.
+- **Pick** chooses the tile under the pointer in the palette, handy once you have many tiles.
+- **Fill** (<Kbd keys="Z" />) fills a selection with the chosen tile. The buttons beside it cut, copy, and paste an area.
 - <Kbd keys="Ctrl+Z" mac="Cmd+Z" /> undoes a stroke.
 </Aside>
 
@@ -209,16 +209,17 @@ Press <Kbd keys="F5" mac="Cmd+B" /> and walk around. The ground is your painted 
 
 <Figure
 	src={running}
-	alt="The editor with the running game in the Game tab: the painted meadow from the game camera, with the dirt path and sand patch."
+	alt="The running game: the painted meadow from the game camera, with the dirt path and sand patch."
 	caption="The painted meadow in the running game."
 />
 
 ## If it does not work
 
 - **Painting does nothing.** The **Selection** tool is active, or no tile is chosen in the palette. Click a tile, then the **Paint** tool.
-- **Tiles float half a meter above the ground.** **Center Y** is still checked on the GridMap.
+- **Tiles float a quarter meter above the ground.** **Center Y** is still checked on the GridMap.
 - **Tiles have gaps between them.** The GridMap's **Cell > Size** is still 2, the default. Set it to `0.5`, `0.5`, `0.5`.
-- **All three tiles look like grass, or changing one changes the others.** A material is still shared. In `ground_tiles.tscn`, make the **Material** unique on `Dirt` and `Sand`, set their textures again, and export the library again.
+- **All three tiles look like grass, or changing one changes the others.** A material is still shared. In `ground_tiles.tscn`, make the **Mesh** and the **Material** unique on `Dirt` and `Sand`, set their textures again, and export the library again.
+- **Dirt or sand has a green cast.** **Albedo Tint** is still the grass green from the copy. Set it to white on each, and export the library again.
 - **The GridMap palette is empty.** The **Mesh Library** is not set, or the library was exported from a scene without mesh nodes.
 - **The player falls through the ground.** `Ground` was deleted instead of hidden. Undo, or add the placeholder ground again from lesson 4.
 

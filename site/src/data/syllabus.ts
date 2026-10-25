@@ -38,7 +38,7 @@ export const modules: Module[] = [
 		title: 'The ground',
 		directory: 'the-ground',
 		lessons: [
-			{ number: 13, title: 'Paint a tileable grass texture', slug: 'paint-a-grass-texture' },
+			{ number: 13, title: 'Draw the grass detail with code', slug: 'generate-grass-detail' },
 			{ number: 14, title: 'Paint dirt and sand to match', slug: 'paint-dirt-and-sand' },
 			{ number: 15, title: 'Your first shader', slug: 'your-first-shader' },
 			{ number: 16, title: 'Tile meshes, a MeshLibrary, and a GridMap', slug: 'tiles-and-gridmap' },
