@@ -45,12 +45,12 @@ func _run() -> void:
 		if error != "" and not step.get("optional", false):
 			_log("[capture] stopped")
 			break
-	# After a game session the editor may not quit on its own, so run-steps.ps1 closes it when it sees this line.
+	# After a game session the editor may not quit on its own, so sgt.py closes it when it sees this line.
 	_log("[capture] done")
 	get_tree().quit()
 
 # Step results go to the file named by CAPTURE_LOG, not the Output panel, so they never show in captures of it. The file
-# stays open for the whole run: reopening it per line fails while run-steps.ps1 is reading it, and loses lines.
+# stays open for the whole run: reopening it per line fails while sgt.py is reading it, and loses lines.
 var _log_file: FileAccess = null
 
 func _log(text: String) -> void:
@@ -330,7 +330,9 @@ func _key(step: Dictionary) -> String:
 	for pressed in [true, false]:
 		var event := InputEventKey.new()
 		event.keycode = OS.find_keycode_from_string(step["key"])
-		event.ctrl_pressed = step.get("ctrl", false)
+		# Shortcuts written Ctrl+ are Cmd+ on macOS.
+		event.ctrl_pressed = step.get("ctrl", false) and OS.get_name() != "macOS"
+		event.meta_pressed = step.get("ctrl", false) and OS.get_name() == "macOS"
 		event.shift_pressed = step.get("shift", false)
 		event.alt_pressed = step.get("alt", false)
 		event.pressed = pressed

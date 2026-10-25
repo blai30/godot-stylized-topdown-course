@@ -1,4 +1,4 @@
-# Lesson 16: three 1 m ground tiles (grass, dirt, sand) in a tiles scene, exported as a MeshLibrary, and a GridMap in
+# Lesson 16: three half-meter ground tiles (grass, dirt, sand) in a tiles scene, exported as a MeshLibrary, and a GridMap in
 # the meadow painted with them: grass filled over the area, a dirt path painted, a sand patch filled.
 import os
 import sys
@@ -144,6 +144,8 @@ for window in plugin._windows(plugin.get_tree().root):
 '''), {'op': 'select', 'path': 'Dirt'}, unfold_inspector(), {'op': 'wait', 'frames': 10}, show_row('material'),
                   {'op': 'capture', 'name': 'l16_make_unique', 'frames': 20}]
     steps += quick_load(TEXTURE, texture)
+    # The copy still carries the grass tint; dirt and sand are painted in their own colors, so their tint is white.
+    steps += [inspector_set('shader_parameter/albedo_tint', 'Color(1, 1, 1)')]
     steps += [
         inspector_set('position', 'Vector3(%d, 0, 0)' % (1 if name == 'Dirt' else 2)),
         {'op': 'wait', 'frames': 20},
@@ -208,7 +210,7 @@ print("[probe] mesh library ", out)
 if library.get_item_list().size() != 3:
 	return "the library does not hold three tiles"
 '''),
-    # The meadow: hide the placeholder ground, add a GridMap with the library, 1 m cells, tiles at y 0.
+    # The meadow: hide the placeholder ground, add a GridMap with the library, half-meter cells, tiles at y 0.
     {'op': 'open', 'path': 'res://levels/meadow.tscn'},
     {'op': 'wait', 'frames': 40},
     eval_('''

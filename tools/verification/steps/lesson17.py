@@ -1,4 +1,4 @@
-# Lesson 17: soft tile edges. Each tile grows to 1.5 m so it overhangs its cell, sits in its own layer (sand, dirt,
+# Lesson 17: soft tile edges. Each tile grows to 0.9 m so it overhangs its cell, sits in its own layer (sand, dirt,
 # grass), and the ground shader cuts the overhang with alpha scissor, first straight, then ragged with a noise texture
 # the three materials share. The MeshLibrary is exported again and the meadow shows the result.
 import os
@@ -10,8 +10,10 @@ from steps import (write, eval_, inspector_set, unfold_inspector, show_row, quic
 PIECES = [
     '''shader_type spatial;
 
-// The ground textures you painted in lessons 13 and 14.
+// The ground textures from lessons 13 and 14.
 uniform sampler2D albedo_texture : source_color, filter_linear_mipmap, repeat_enable;
+// The ground's color: the texture is multiplied by it, and white leaves the texture as it is.
+uniform vec3 albedo_tint : source_color = vec3(1.0);
 // How many times the texture repeats per meter: 0.5 is once every 2 meters.
 uniform float texture_scale = 0.5;
 uniform float roughness : hint_range(0.0, 1.0) = 0.9;
@@ -29,7 +31,7 @@ void vertex() {
 }
 
 void fragment() {
-	ALBEDO = texture(albedo_texture, world_position.xz * texture_scale).rgb;
+	ALBEDO = texture(albedo_texture, world_position.xz * texture_scale).rgb * albedo_tint;
 	ROUGHNESS = roughness;
 	// 0 inside the cell, rising to 1 at the tile's outer edge.
 	float outside = length(max(abs(tile_position) - cell_size * 0.5, 0.0)) / overhang;
@@ -39,8 +41,10 @@ void fragment() {
 ''',
     '''shader_type spatial;
 
-// The ground textures you painted in lessons 13 and 14.
+// The ground textures from lessons 13 and 14.
 uniform sampler2D albedo_texture : source_color, filter_linear_mipmap, repeat_enable;
+// The ground's color: the texture is multiplied by it, and white leaves the texture as it is.
+uniform vec3 albedo_tint : source_color = vec3(1.0);
 // How many times the texture repeats per meter: 0.5 is once every 2 meters.
 uniform float texture_scale = 0.5;
 uniform float roughness : hint_range(0.0, 1.0) = 0.9;
@@ -62,13 +66,16 @@ void vertex() {
 }
 
 void fragment() {
-	ALBEDO = texture(albedo_texture, world_position.xz * texture_scale).rgb;
+	ALBEDO = texture(albedo_texture, world_position.xz * texture_scale).rgb * albedo_tint;
 	ROUGHNESS = roughness;
 	// 0 inside the cell, rising to 1 at the tile's outer edge.
 	float outside = length(max(abs(tile_position) - cell_size * 0.5, 0.0)) / overhang;
 	// Inside the cell this stays at 0.5 or more, so the cell is always covered; at the outer edge it stays below.
 	float noise = texture(edge_noise, world_position.xz * edge_noise_scale).r;
 	ALPHA = noise + 0.5 - outside;
+	// The same noise, four times as wide, brightens and darkens the ground slowly, so the texture's repeat does not show.
+	float tone = texture(edge_noise, world_position.xz * edge_noise_scale * 0.25).r;
+	ALBEDO *= 0.75 + 0.5 * tone;
 	ALPHA_SCISSOR_THRESHOLD = 0.5;
 }
 ''',
@@ -137,7 +144,7 @@ steps = [
     {'op': 'main_screen', 'name': '3D'},
     {'op': 'wait', 'frames': 30},
 ]
-# Size 1.5 and a layer height for each tile.
+# Size 0.9 and a layer height for each tile.
 for name, height in TILES:
     steps += [
         {'op': 'select', 'path': name},
@@ -251,9 +258,68 @@ if noise[0] == null or noise[0] != noise[1] or noise[1] != noise[2]:
 ]
 
 
+
+SETTINGS = 'Project Settings'
+FIND_SETTINGS = f"""
+var window: Window = null
+for candidate in plugin._windows(plugin.get_tree().root):
+	if candidate.visible and "{SETTINGS}" in candidate.title:
+		window = candidate
+if window == null:
+	return "no {SETTINGS} window"
+"""
+
+
+def smooth_edges():
+    # Project > Project Settings > Rendering > Anti Aliasing: MSAA 3D at 4x, so the cut edges and the models' outlines
+    # are not stair-stepped.
+    return [
+        {'op': 'menu', 'path': ['Project', 'Project Settings...']},
+        {'op': 'wait', 'frames': 60},
+        eval_(FIND_SETTINGS + """
+var tree: Tree = plugin._collect(window, "Tree", "")[0]
+var item: TreeItem = tree.get_root()
+for part in ["Rendering", "Anti Aliasing"]:
+	var next: TreeItem = null
+	for child in item.get_children():
+		if child.get_text(0) == part:
+			next = child
+	if next == null:
+		return "no section " + part
+	item = next
+tree.set_selected(item, 0)
+tree.item_selected.emit()
+tree.scroll_to_item(item)
+"""),
+        {'op': 'wait', 'frames': 20},
+        eval_(FIND_SETTINGS + """
+for property in plugin._collect(window, "EditorProperty", ""):
+	if str(property.get_edited_property()) == "quality/msaa_3d":
+		var option: OptionButton = plugin._collect(property, "OptionButton", "")[0]
+		var items := []
+		for i in option.item_count:
+			items.append(option.get_item_text(i))
+		print("[probe] msaa options ", items)
+		property.emit_changed(property.get_edited_property(), 2)
+		return ""
+return "no row quality/msaa_3d"
+"""),
+        {'op': 'wait', 'frames': 20},
+        {'op': 'capture', 'name': 'l17_msaa', 'window': SETTINGS},
+        eval_(FIND_SETTINGS + """
+window.hide()
+"""),
+        {'op': 'wait', 'frames': 20},
+        eval_('print("[probe] msaa now ", ProjectSettings.get_setting("rendering/anti_aliasing/quality/msaa_3d"))'),
+    ]
+
+
 def report(label):
     return {'op': 'eval', 'code': f'''var player := tree.root.get_node("Meadow/Player") as CharacterBody3D
 print("[game] player {label} position ", player.global_position.snapped(Vector3.ONE * 0.01), " on floor ", player.is_on_floor())'''}
+
+
+steps += smooth_edges()
 
 
 game = game_steps(os.path.join(os.environ['TEMP'], 'sgt-phase1', 'game-l17.jsonl'), [

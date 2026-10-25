@@ -1,18 +1,17 @@
 # Replays a lesson's steps inside Krita. The step script (KRITA_STEPS) defines steps(driver), a generator that
 # yields the seconds to wait before its next step. Input is synthetic Qt events sent to Krita's own widgets, never
-# to the system mouse or keyboard. Captures come from QWidget.grab(), so nothing outside Krita is recorded.
+# to the system mouse or keyboard. Captures are grabs of Krita's own windows, so nothing outside Krita is recorded.
 import os
 import traceback
 
 from krita import Krita
-from PyQt5.QtCore import QEvent, QPointF, QTimer, Qt
+from PyQt5.QtCore import QEvent, QPoint, QPointF, QTimer, Qt
 from PyQt5.QtGui import QContextMenuEvent, QEnterEvent, QFocusEvent, QKeyEvent, QMouseEvent
 from PyQt5.QtWidgets import QApplication, QMenuBar, QWidget
 
 OUT = os.environ.get('KRITA_OUT', '')
 LOG = os.environ.get('KRITA_LOG', '')
 STEPS = os.environ.get('KRITA_STEPS', '')
-SCRIPTS = os.path.join(os.path.dirname(os.path.dirname(STEPS)), 'scripts')
 WIDTH, HEIGHT = 1920, 1080
 
 
@@ -25,81 +24,51 @@ def window():
     return Krita.instance().activeWindow().qwindow()
 
 
-def run_script(name, *arguments):
-    # Runs a PowerShell helper from tools/verification/scripts without blocking Krita's event loop, as a generator
-    # the step script yields from. Returns the helper's output.
-    import subprocess
-    script = os.path.join(SCRIPTS, name)
-    # Output goes to a file: a pipe nobody reads until the end fills up and stalls a long listing.
-    output_path = LOG + '.script'
-    with open(output_path, 'wb') as output_file:
-        process = subprocess.Popen(['powershell', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', script] + [str(item) for item in arguments],
-                                   stdout=output_file, stderr=subprocess.STDOUT, creationflags=0x08000000)
-        while process.poll() is None:
-            yield 0.2
-    with open(output_path, 'rb') as output_file:
-        output = output_file.read().decode('utf-8', 'replace').strip()
-    if process.returncode != 0:
-        raise RuntimeError('{} failed: {}'.format(name, output))
-    return output
-
-
-def capture(name, title=None, widget=None):
+def capture(name, title=None, widget=None, crop=None):
     # Saves a top-level window as the desktop compositor shows it, overlays included (QWidget.grab() leaves out the
-    # canvas's grid and selection outline, and grabbing a dialog leaves Krita's slider fields committing after one
-    # key). Without a title or widget it captures the main window.
+    # canvas's grid and selection outline). Without a title or widget it captures the main window. The screen
+    # grab has a device pixel ratio on a high-density screen; the image is scaled back to the window's own size, so
+    # captures are the same size on every platform. A generator, so step scripts keep one calling convention.
     path = os.path.join(OUT, name + '.png')
-    if widget is not None:
-        yield from run_script('capture-window.ps1', '-Handle', int(widget.window().winId()), '-Out', path)
-    elif title is None:
-        yield from run_script('capture-window.ps1', '-Handle', int(window().winId()), '-Out', path)
-    else:
-        yield from run_script('capture-window.ps1', '-ProcessId', os.getpid(), '-Title', title, '-Out', path)
+    target = widget.window() if widget is not None else (window() if title is None else top(title))
+    yield 0.3
+    # The window's rectangle on the screen, in the screen's own coordinates, so the grab holds exactly the window.
+    corner = target.mapToGlobal(QPoint(0, 0))
+    pixmap = target.windowHandle().screen().grabWindow(0, corner.x(), corner.y(), target.width(), target.height())
+    log('GRAB {} widget {}x{} at {},{} pixmap {}x{} ratio {}'.format(name, target.width(), target.height(), corner.x(), corner.y(), pixmap.width(), pixmap.height(), pixmap.devicePixelRatio()))
+    image = pixmap.toImage().scaled(target.width(), target.height(), Qt.IgnoreAspectRatio, Qt.SmoothTransformation)
+    if crop is not None:
+        # Only this widget's part of the window, in the window's own units.
+        origin = crop.mapTo(target, QPoint(0, 0))
+        image = image.copy(origin.x(), origin.y(), crop.width(), crop.height())
+    if not image.save(path):
+        raise RuntimeError('could not save ' + path)
     log('shot ' + name)
 
 
-def automate(*arguments):
-    # Drives a native dialog of Krita's (the Windows file dialogs) through UI Automation.
-    output = yield from run_script('uia.ps1', '-ProcessId', os.getpid(), *arguments)
-    return output
-
-
 def file_dialog(title, path):
-    # Fills a native Windows file dialog's File name box and presses its default button (Save or Open) with window
-    # messages to the dialog itself. The box is the Edit (id 0x3E9) in the ComboBox below the dialog's view.
-    import ctypes
-    from ctypes import wintypes
-    user32 = ctypes.windll.user32
-    user32.FindWindowW.restype = wintypes.HWND
-    user32.GetParent.restype = wintypes.HWND
-    user32.GetParent.argtypes = [wintypes.HWND]
-    user32.SendMessageW.argtypes = [wintypes.HWND, wintypes.UINT, wintypes.WPARAM, wintypes.LPCWSTR]
-    user32.PostMessageW.argtypes = [wintypes.HWND, wintypes.UINT, wintypes.WPARAM, wintypes.LPARAM]
-    dialog = user32.FindWindowW('#32770', title)
-    if not dialog:
+    # Fills Qt's own file dialog's file name and presses its default button (Save or Open). The runner turns off
+    # Krita's native file dialogs, which are different on every operating system, so this works on all of them. The
+    # accept is deferred, so the dialog closes after this step returns.
+    from PyQt5.QtWidgets import QFileDialog, QLineEdit
+    dialog = None
+    # The dialog can take a moment to show, longer after a save.
+    for _ in range(75):
+        for widget in QApplication.topLevelWidgets():
+            if widget.isVisible() and isinstance(widget, QFileDialog) and title in widget.windowTitle():
+                dialog = widget
+        if dialog is not None:
+            break
+        yield 0.2
+    if dialog is None:
         raise RuntimeError('no file dialog ' + title)
-
-    def class_of(hwnd):
-        name = ctypes.create_unicode_buffer(256)
-        user32.GetClassNameW(hwnd, name, 256)
-        return name.value
-
-    found = []
-    visitor = ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
-
-    def visit(hwnd, _):
-        parent = user32.GetParent(hwnd)
-        if class_of(hwnd) == 'Edit' and user32.GetDlgCtrlID(hwnd) == 0x3E9 and class_of(parent) == 'ComboBox' \
-                and class_of(user32.GetParent(parent)) == 'FloatNotifySink':
-            found.append(hwnd)
-        return True
-
-    user32.EnumChildWindows(dialog, visitor(visit), 0)
-    if not found:
-        raise RuntimeError('no File name box in ' + title)
-    # WM_SETTEXT, then WM_COMMAND IDOK, posted so the dialog closes after this step returns.
-    user32.SendMessageW(found[0], 0x000C, 0, path)
-    user32.PostMessageW(dialog, 0x0111, 1, 0)
+    dialog.setDirectory(os.path.dirname(path))
+    # The File name box, filled as typing does.
+    boxes = [edit for edit in dialog.findChildren(QLineEdit) if edit.isVisible()]
+    box = next((edit for edit in boxes if 'fileName' in edit.objectName()), None) or boxes[-1]
+    box.setText(os.path.basename(path))
+    log('FILE DIALOG {} dir {} files {}'.format(dialog.windowTitle(), dialog.directory().path(), dialog.selectedFiles()))
+    QTimer.singleShot(0, dialog.accept)
 
 
 def shot(name, widget=None):
@@ -230,9 +199,15 @@ def tab(widget, label):
     raise RuntimeError('no tab ' + label)
 
 
+def line_edit(spin):
+    # QAbstractSpinBox.lineEdit() is protected in some PyQt builds, so the text box is found as a child.
+    from PyQt5.QtWidgets import QLineEdit
+    return spin.findChild(QLineEdit)
+
+
 def set_number(spin, value):
     # Types a number into a spin box as a reader does: select its text, type, and Tab away.
-    edit = spin.lineEdit()
+    edit = line_edit(spin)
     edit.setFocus()
     edit.selectAll()
     type_text(edit, str(value))
@@ -246,7 +221,7 @@ def slider(spin, value):
     # The field's text box covers it, so a real click lands on the text box, which the field watches. Without the
     # field typing yet, Krita takes a digit as a shortcut (1 resets the zoom, 4 to 6 turn the canvas), so check the
     # value and type again if it went wrong.
-    target = spin.lineEdit()
+    target = line_edit(spin)
     for attempt in range(2):
         enter(target, point)
         yield 0.2
@@ -302,7 +277,7 @@ def toolbar_slider(label):
     raise RuntimeError('no toolbar field ' + label)
 
 
-def preset(name):
+def preset(name, shot=None):
     # Types into the Brush Presets docker's search box and clicks the one preset left, as a reader does.
     from PyQt5.QtWidgets import QAbstractItemView, QDockWidget, QLineEdit
     dock = [dock for dock in window().findChildren(QDockWidget) if dock.objectName() == 'PresetDocker'][0]
@@ -311,6 +286,8 @@ def preset(name):
     search.selectAll()
     type_text(search, name)
     yield 1
+    if shot:
+        yield from capture(shot, crop=dock)
     items = [view for view in dock.findChildren(QAbstractItemView) if view.isVisible()][0]
     model = items.model()
     # A name can be the start of another ("Basic-5 Size" and "Basic-5 Size Opacity"): click each match until the

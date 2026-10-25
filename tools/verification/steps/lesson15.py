@@ -15,14 +15,17 @@ void fragment() {
     '''shader_type spatial;
 
 uniform sampler2D albedo_texture : source_color, filter_linear_mipmap, repeat_enable;
+// The ground's color: the texture is multiplied by it, and white leaves the texture as it is.
+uniform vec3 albedo_tint : source_color = vec3(1.0);
 
 void fragment() {
-	ALBEDO = texture(albedo_texture, UV).rgb;
+	ALBEDO = texture(albedo_texture, UV).rgb * albedo_tint;
 }
 ''',
     '''shader_type spatial;
 
 uniform sampler2D albedo_texture : source_color, filter_linear_mipmap, repeat_enable;
+uniform vec3 albedo_tint : source_color = vec3(1.0);
 uniform float texture_scale = 0.5;
 
 varying vec3 world_position;
@@ -32,13 +35,15 @@ void vertex() {
 }
 
 void fragment() {
-	ALBEDO = texture(albedo_texture, world_position.xz * texture_scale).rgb;
+	ALBEDO = texture(albedo_texture, world_position.xz * texture_scale).rgb * albedo_tint;
 }
 ''',
     '''shader_type spatial;
 
-// The ground texture you painted in lesson 13.
+// The ground textures from lessons 13 and 14.
 uniform sampler2D albedo_texture : source_color, filter_linear_mipmap, repeat_enable;
+// The ground's color: the texture is multiplied by it, and white leaves the texture as it is.
+uniform vec3 albedo_tint : source_color = vec3(1.0);
 // How many times the texture repeats per meter: 0.5 is once every 2 meters.
 uniform float texture_scale = 0.5;
 uniform float roughness : hint_range(0.0, 1.0) = 0.9;
@@ -50,12 +55,16 @@ void vertex() {
 }
 
 void fragment() {
-	ALBEDO = texture(albedo_texture, world_position.xz * texture_scale).rgb;
+	ALBEDO = texture(albedo_texture, world_position.xz * texture_scale).rgb * albedo_tint;
 	ROUGHNESS = roughness;
 }
 ''',
 ]
 TEXTURE = 'shader_parameter/albedo_texture'
+# The grass detail averages 0.8 gray, so its tint is the green wanted, divided by 0.8: the palette's light grass swatch,
+# 119, 163, 72, becomes 149, 204, 90.
+TINT = 'shader_parameter/albedo_tint'
+GREEN = 'Color("#95CC5A")'
 
 
 def frame(*paths, first=False):
@@ -201,8 +210,9 @@ steps += type_code(PIECES[1], 'l15_piece2_untextured', ['TestTile'])
 # The texture: TestTile's Shader Parameters > Albedo Texture, by Quick Load.
 steps += [{'op': 'select', 'path': 'TestTile'}, unfold_inspector(), {'op': 'wait', 'frames': 20}]
 steps += [DISK_PROMPT]
-steps += quick_load(TEXTURE, 'grass_albedo')
+steps += quick_load(TEXTURE, 'grass_detail')
 steps += [
+    inspector_set(TINT, GREEN),
     show_row(TEXTURE),
     {'op': 'capture', 'name': 'l15_shader_parameters', 'frames': 30},
     *frame('TestTile'),
@@ -231,7 +241,7 @@ steps += [SAVE_SCENE, *frame('TestTile', 'TestTile2'), {'op': 'capture', 'name':
 steps += type_code(PIECES[2], 'l15_piece3', ['TestTile', 'TestTile2'])
 steps += [{'op': 'select', 'path': 'TestTile'}, unfold_inspector(), {'op': 'wait', 'frames': 20}]
 steps += [DISK_PROMPT]
-steps += quick_load(TEXTURE, 'grass_albedo')
+steps += quick_load(TEXTURE, 'grass_detail')
 steps += [*frame('TestTile', 'TestTile2'), {'op': 'capture', 'name': 'l15_piece3_grass', 'frames': 40}]
 steps += type_code(PIECES[3], 'l15_piece4', ['TestTile', 'TestTile2'])
 steps += [
@@ -247,7 +257,7 @@ var tile := root.get_node("TestTile") as MeshInstance3D
 var copy := root.get_node("TestTile2") as MeshInstance3D
 var material := (tile.mesh as PlaneMesh).material as ShaderMaterial
 print("[probe] tile ", tile.position, " copy ", copy.position, " ", copy.rotation_degrees.snapped(Vector3.ONE * 0.1), " same mesh ", copy.mesh == tile.mesh)
-print("[probe] texture ", material.get_shader_parameter("albedo_texture").resource_path, " scale ", material.get_shader_parameter("texture_scale"))
+print("[probe] texture ", material.get_shader_parameter("albedo_texture").resource_path, " scale ", material.get_shader_parameter("texture_scale"), " tint ", material.get_shader_parameter("albedo_tint").to_html(false))
 print("[probe] saved shader:\\n", FileAccess.get_file_as_string("res://art/ground/ground.gdshader"))
 '''),
     {'op': 'quit'},

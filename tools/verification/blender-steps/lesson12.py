@@ -7,7 +7,7 @@ import bmesh
 import bpy
 from bpy_extras.view3d_utils import location_3d_to_region_2d
 
-WORKBENCH = os.path.join(os.environ['TEMP'], 'sgt-phase1', 'workbench')
+WORKBENCH = os.path.join(os.environ.get('TEMP', '/tmp'), 'sgt-phase1', 'workbench')
 FOLDER = os.path.join(WORKBENCH, 'art_source', 'nature', 'rock_large')
 EXPORT = os.path.join(WORKBENCH, 'art', 'nature', 'rock_large')
 
@@ -46,23 +46,23 @@ def steps(d):
     d.key('S', ctrl=True, shift=True)
     yield 2
     browser = d.browser()
-    yield from d.press(545, top(19, browser.height), target=browser)
+    yield from d.press(545, top(19, d.pixels(browser.height)), target=browser)
     yield 0.3
     d.key('A', ctrl=True, target=browser)
     d.type_text(FOLDER + os.sep, target=browser)
     yield 0.3
     d.key('RET', target=browser)
     yield 1
-    yield from d.press(516, top(54, browser.height), target=browser)
+    yield from d.press(516, top(54, d.pixels(browser.height)), target=browser)
     yield 1
-    yield from d.press(455, top(578, browser.height), target=browser)
+    yield from d.press(455, top(578, d.pixels(browser.height)), target=browser)
     yield 0.3
     d.key('A', ctrl=True, target=browser)
     d.type_text('rock_large.blend', target=browser)
     yield 0.3
     d.key('RET', target=browser)
     yield 0.3
-    yield from d.press(857, 21, target=browser)
+    yield from d.press(d.save_button_x(browser), 21, target=browser)
     yield 1.5
     d.log('SAVED AS {}'.format(bpy.data.filepath))
 
@@ -281,27 +281,27 @@ def steps(d):
     yield from d.press(1892, top(763))
     yield 1.5
     browser = d.browser()
-    yield from d.press(545, top(19, browser.height), target=browser)
+    yield from d.press(545, top(19, d.pixels(browser.height)), target=browser)
     yield 0.3
-    yield from d.press(545, top(19, browser.height), target=browser)
+    yield from d.press(545, top(19, d.pixels(browser.height)), target=browser)
     yield 0.3
     d.key('A', ctrl=True, target=browser)
     d.type_text(EXPORT + os.sep, target=browser)
     yield 0.3
     d.key('RET', target=browser)
     yield 1
-    yield from d.press(516, top(57, browser.height), target=browser)
+    yield from d.press(516, top(57, d.pixels(browser.height)), target=browser)
     yield 1
-    yield from d.press(455, top(578, browser.height), target=browser)
+    yield from d.press(455, top(578, d.pixels(browser.height)), target=browser)
     yield 0.3
-    yield from d.press(455, top(578, browser.height), target=browser)
+    yield from d.press(455, top(578, d.pixels(browser.height)), target=browser)
     yield 0.3
     d.key('A', ctrl=True, target=browser)
     d.type_text('rock_large.glb', target=browser)
     yield 0.3
     d.key('RET', target=browser)
     yield 0.3
-    yield from d.press(857, 21, target=browser)
+    yield from d.press(d.save_button_x(browser), 21, target=browser)
     yield 1.5
     d.log('PATH after {}'.format(exporter.export_properties.filepath))
     d.move(1760, top(1060))

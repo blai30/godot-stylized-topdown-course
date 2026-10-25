@@ -6,9 +6,12 @@ import importlib.util
 import os
 import re
 import sys
+import tempfile
 
-STEPS = {15: 'lesson15', 17: 'lesson17', 5: 'lesson05', 6: 'lesson06'}
-EXTENSIONS = {15: '.gdshader', 17: '.gdshader', 5: '.cs', 6: '.cs'}
+TEMP = os.environ.get('TEMP', tempfile.gettempdir())
+
+STEPS = {13: 'lesson13', 18: 'lesson18', 15: 'lesson15', 17: 'lesson17', 5: 'lesson05', 6: 'lesson06'}
+EXTENSIONS = {13: '.cs', 18: '.cs', 15: '.gdshader', 17: '.gdshader', 5: '.cs', 6: '.cs'}
 verification = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 site = os.path.join(os.path.dirname(os.path.dirname(verification)), 'site', 'src', 'checkpoints')
 lesson = int(sys.argv[1])
@@ -20,7 +23,7 @@ if lesson in STEPS:
     spec = importlib.util.spec_from_file_location(STEPS[lesson], path)
     module = importlib.util.module_from_spec(spec)
     # Step scripts read their output path from argv; they write their steps there, which is discarded.
-    saved, sys.argv = sys.argv, [path, os.path.join(verification, 'steps'), os.path.join(os.environ['TEMP'], 'export-discard.jsonl')]
+    saved, sys.argv = sys.argv, [path, os.path.join(verification, 'steps'), os.path.join(TEMP, 'export-discard.jsonl')]
     sys.path.insert(0, os.path.join(verification, 'steps'))
     spec.loader.exec_module(module)
     sys.argv = saved
@@ -31,7 +34,7 @@ if lesson in STEPS:
         open(out, 'w', encoding='utf-8', newline='\n').write(code)
         print('wrote', out)
 
-snapshot = os.path.join(os.environ['TEMP'], 'sgt-phase1', 'snapshots', f'lesson-{lesson:02d}')
+snapshot = os.path.join(TEMP, 'sgt-phase1', 'snapshots', f'lesson-{lesson:02d}')
 for name in files:
     text = open(os.path.join(snapshot, name), encoding='utf-8-sig').read().replace('\r\n', '\n')
     if name == 'project.godot':

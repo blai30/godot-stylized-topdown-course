@@ -8,7 +8,7 @@ import bpy
 from bpy_extras.view3d_utils import location_3d_to_region_2d
 
 HEIGHT = 1080
-FOLDER = os.path.join(os.environ['TEMP'], 'sgt-phase1', 'workbench', 'art_source', 'nature', 'rock_small')
+FOLDER = os.path.join(os.environ.get('TEMP', '/tmp'), 'sgt-phase1', 'workbench', 'art_source', 'nature', 'rock_small')
 
 
 def top(y, height=HEIGHT):
@@ -50,19 +50,19 @@ def steps(d):
     yield 2
     browser = d.browser()
     d.shot('l09_save_as', browser)
-    d.click(545, top(19, browser.height), target=browser)
+    yield from d.press(545, top(19, d.pixels(browser.height)), target=browser)
     yield 0.5
     d.key('A', ctrl=True, target=browser)
-    d.type_text(FOLDER + '\\', target=browser)
+    d.type_text(FOLDER + os.sep, target=browser)
     yield 0.3
     d.shot('l09_path_typed', browser)
     d.key('RET', target=browser)
     yield 1
     d.shot('l09_create_folder', browser)
-    d.click(516, top(54, browser.height), target=browser)
+    d.click(516, top(54, d.pixels(browser.height)), target=browser)
     yield 1
     d.log('FOLDER exists {} browser dir {}'.format(os.path.isdir(FOLDER), browser.screen.areas[0].spaces.active.params.directory))
-    d.click(455, top(578, browser.height), target=browser)
+    d.click(455, top(578, d.pixels(browser.height)), target=browser)
     yield 0.5
     d.key('A', ctrl=True, target=browser)
     d.type_text('rock_small.blend', target=browser)
@@ -70,7 +70,7 @@ def steps(d):
     d.key('RET', target=browser)
     yield 0.3
     d.shot('l09_file_name', browser)
-    yield from d.press(857, 21, target=browser)
+    yield from d.press(d.save_button_x(browser), 21, target=browser)
     yield 0.5
     d.shot('l09_after_save_click', browser) if len(bpy.context.window_manager.windows) > 1 else None
     yield 2

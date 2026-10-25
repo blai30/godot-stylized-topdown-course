@@ -1,11 +1,12 @@
 # Lesson 7: builds the palette in Krita the reader's way and saves palette.kra and palette.png into the workbench.
 import os
+import tempfile
 
 from PyQt5.QtCore import Qt, QPoint
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QAbstractItemView, QAbstractSpinBox, QDockWidget, QLineEdit, QPushButton, QRadioButton, QTabWidget
 
-WORKBENCH = os.path.join(os.environ['TEMP'], 'sgt-phase1', 'workbench')
+WORKBENCH = os.path.join(os.environ.get('TEMP', tempfile.gettempdir()), 'sgt-phase1', 'workbench')
 CELL = 32
 
 # The reference palette: rows of two ramps, each four swatches from dark to light, as hue, saturation, value.
@@ -28,7 +29,9 @@ def image_rect(canvas):
             if QColor(image.pixel(x, y)).lightness() > 250:
                 xs.append(x)
                 ys.append(y)
-    return min(xs), min(ys), max(xs) + 2, max(ys) + 2
+    # A high-density screen grabs more pixels than the widget has; the rectangle is in the widget's own units.
+    ratio = image.devicePixelRatio()
+    return min(xs) / ratio, min(ys) / ratio, (max(xs) + 2) / ratio, (max(ys) + 2) / ratio
 
 
 def menu_path(d, *labels):
@@ -191,13 +194,13 @@ def steps(d):
     d.action('file_save_as')
     yield 3
     d.log('SAVE WINDOWS ' + str([w.windowTitle() for w in d.QApplication.topLevelWidgets() if w.isVisible()]))
-    d.file_dialog('Saving As', os.path.join(WORKBENCH, 'art_source', 'palette', 'palette.kra'))
+    yield from d.file_dialog('Saving As', os.path.join(WORKBENCH, 'art_source', 'palette', 'palette.kra'))
     yield 4
     d.log('SAVED ' + str(document.fileName()))
     d.action('file_export_file')
     yield 3
     yield from d.capture('k07_export_dialog', 'Exporting')
-    d.file_dialog('Exporting', os.path.join(WORKBENCH, 'art', 'palette', 'palette.png'))
+    yield from d.file_dialog('Exporting', os.path.join(WORKBENCH, 'art', 'palette', 'palette.png'))
     yield 3
     options = d.top('PNG image')
     d.shot('k07_png_options', options)

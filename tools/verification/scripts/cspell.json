@@ -134,6 +134,8 @@
     "srgbtrc",
     "elle",
     "Spacebar",
-    "BSDF"
+    "BSDF",
+    "MSAA",
+    "msaa"
   ]
 }

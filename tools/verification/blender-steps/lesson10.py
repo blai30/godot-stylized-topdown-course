@@ -6,7 +6,7 @@ import bmesh
 import bpy
 from bpy_extras.view3d_utils import location_3d_to_region_2d
 
-WORKBENCH = os.path.join(os.environ['TEMP'], 'sgt-phase1', 'workbench')
+WORKBENCH = os.path.join(os.environ.get('TEMP', '/tmp'), 'sgt-phase1', 'workbench')
 PALETTE = os.path.join(WORKBENCH, 'art', 'palette')
 EXPORT = os.path.join(WORKBENCH, 'art', 'nature', 'rock_small')
 
@@ -63,9 +63,9 @@ def steps(d):
     d.log('BROWSER {}x{} title area {}'.format(browser.width, browser.height, browser.screen.areas[0].type))
     # A new window may take its first click to become active; a second click on a field being edited only moves
     # its cursor, so two clicks are safe either way.
-    yield from d.press(545, top(19, browser.height), target=browser)
+    yield from d.press(545, top(19, d.pixels(browser.height)), target=browser)
     yield 0.3
-    yield from d.press(545, top(19, browser.height), target=browser)
+    yield from d.press(545, top(19, d.pixels(browser.height)), target=browser)
     yield 0.3
     d.key('A', ctrl=True, target=browser)
     d.type_text(PALETTE + os.sep, target=browser)
@@ -76,12 +76,12 @@ def steps(d):
     # Click palette.png in the file list, then Open Image.
     d.shot('l10_open_list', browser)
     # The first click may only end the path field's editing; a second click on the same row is harmless.
-    yield from d.press(300, top(77, browser.height), target=browser)
+    yield from d.press(300, top(77, d.pixels(browser.height)), target=browser)
     yield 0.3
-    yield from d.press(300, top(77, browser.height), target=browser)
+    yield from d.press(300, top(77, d.pixels(browser.height)), target=browser)
     yield 0.5
     d.shot('l10_open_image', browser)
-    yield from d.press(857, 21, target=browser)
+    yield from d.press(d.save_button_x(browser), 21, target=browser)
     yield 1.5
     d.log('IMAGES {}'.format([(image.name, image.filepath, tuple(image.size)) for image in bpy.data.images]))
     d.move(1760, top(1000))
@@ -245,9 +245,9 @@ def steps(d):
     yield 1.5
     browser = d.browser()
     d.log('PATH BROWSER {}x{}'.format(browser.width, browser.height))
-    yield from d.press(545, top(19, browser.height), target=browser)
+    yield from d.press(545, top(19, d.pixels(browser.height)), target=browser)
     yield 0.3
-    yield from d.press(545, top(19, browser.height), target=browser)
+    yield from d.press(545, top(19, d.pixels(browser.height)), target=browser)
     yield 0.3
     d.key('A', ctrl=True, target=browser)
     d.type_text(EXPORT + os.sep, target=browser)
@@ -255,12 +255,12 @@ def steps(d):
     d.key('RET', target=browser)
     yield 1
     d.shot('l10_export_folder', browser)
-    yield from d.press(516, top(57, browser.height), target=browser)
+    yield from d.press(516, top(57, d.pixels(browser.height)), target=browser)
     yield 1
     d.log('EXPORT folder exists {}'.format(os.path.isdir(EXPORT)))
-    yield from d.press(455, top(578, browser.height), target=browser)
+    yield from d.press(455, top(578, d.pixels(browser.height)), target=browser)
     yield 0.3
-    yield from d.press(455, top(578, browser.height), target=browser)
+    yield from d.press(455, top(578, d.pixels(browser.height)), target=browser)
     yield 0.3
     d.key('A', ctrl=True, target=browser)
     d.type_text('rock_small.glb', target=browser)
@@ -268,7 +268,7 @@ def steps(d):
     d.key('RET', target=browser)
     yield 0.3
     d.shot('l10_export_name', browser)
-    yield from d.press(857, 21, target=browser)
+    yield from d.press(d.save_button_x(browser), 21, target=browser)
     yield 1.5
     exporter = collection.exporters[0]
     d.log('FILEPATH {}'.format(exporter.export_properties.filepath))

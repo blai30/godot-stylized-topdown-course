@@ -4,6 +4,7 @@
 # touches the system mouse or keyboard, and nobody at the computer can disturb a run. Captures come from Blender's
 # own screenshot operator.
 import os
+import sys
 import traceback
 import types
 
@@ -12,13 +13,23 @@ import bpy
 OUT = os.environ['BLENDER_OUT']
 LOG = os.environ['BLENDER_LOG']
 STEPS = os.environ['BLENDER_STEPS']
-WORKBENCH = os.path.join(os.environ['TEMP'], 'sgt-phase1', 'workbench')
+WORKBENCH = os.path.join(os.environ.get('TEMP', '/tmp'), 'sgt-phase1', 'workbench')
 pointer = [0, 0]
 
 
 def log(message):
     with open(LOG, 'a', encoding='utf-8') as file:
         file.write(str(message) + '\n')
+
+
+def pixels(points):
+    # Window sizes are reported in points; events and regions use pixels, twice as many on a Retina screen.
+    return points * 2 if sys.platform == 'darwin' else points
+
+
+def save_button_x(target):
+    # The File Browser's Save or Open button: 857 in the Windows runs' browser, 72 pixels in from the right edge.
+    return 857 if sys.platform != 'darwin' else pixels(target.width) - 72
 
 
 def window():
@@ -162,5 +173,9 @@ class Runner:
 
 
 RUNNER = Runner()
+if sys.platform == 'darwin':
+    # A Retina screen doubles Blender's pixels; the run window is 960 by 540 points, which is 1920 by 1080 pixels, and
+    # half the resolution scale puts every control where it is on the Windows runs.
+    bpy.context.preferences.view.ui_scale = 0.5
 log('[blender] driver loaded, Blender ' + bpy.app.version_string)
 bpy.app.timers.register(RUNNER.tick, first_interval=3.0, persistent=True)

@@ -222,7 +222,7 @@ def play(game_path, wait_seconds, capture_dialog=None, capture_output=None, capt
 # The Output panel's clear button (Ctrl+Alt+K) has no tooltip; the panel may be closed, so search it whole.
 var log = plugin._find_class(plugin.get_tree().root, "EditorLog")
 for button in log.find_children("*", "Button", true, false):
-	if button.shortcut and button.shortcut.get_as_text() == "Ctrl+Alt+K":
+	if button.shortcut and button.shortcut.get_as_text().ends_with("K") and (button.shortcut.get_as_text().contains("Alt") or button.shortcut.get_as_text().contains("Option")):
 		button.pressed.emit()
 		return ""
 return "no clear button in the Output panel"
@@ -303,8 +303,11 @@ var tree: Tree = plugin._collect(dock, "Tree", "")[0]
 tree.grab_focus()
 for pressed in [true, false]:
 	var event := InputEventKey.new()
-	event.keycode = KEY_DELETE
-	event.physical_keycode = KEY_DELETE
+	# macOS has no Delete key on its keyboards: the shortcut is Cmd+Backspace.
+	var mac := OS.get_name() == "macOS"
+	event.keycode = KEY_BACKSPACE if mac else KEY_DELETE
+	event.physical_keycode = event.keycode
+	event.meta_pressed = mac
 	event.pressed = pressed
 	tree.get_viewport().push_input(event)
 	await plugin.get_tree().process_frame
@@ -593,3 +596,91 @@ if saved != {code!r}:
 	return "the file on disk is not the typed code: " + saved.left(120)
 '''),
     ]
+
+
+def new_script(path, inherits, capture=None):
+    # Script editor > File > New Script..., as the reader makes a script for a resource: the dialog is filled in the
+    # way its fields are, then Create is pressed.
+    steps = [
+        {'op': 'main_screen', 'name': 'Script'},
+        {'op': 'wait', 'frames': 30},
+        eval_('''
+var editor_node = plugin._find_class(plugin.get_tree().root, "ScriptEditor")
+for button in plugin._collect(editor_node, "MenuButton", "File"):
+	var popup: PopupMenu = button.get_popup()
+	for i in popup.item_count:
+		if popup.get_item_text(i) == "New Script...":
+			popup.id_pressed.emit(popup.get_item_id(i))
+			return ""
+return "no New Script... item"
+'''),
+        {'op': 'wait', 'frames': 40},
+        eval_(f'''
+for window in plugin._windows(plugin.get_tree().root):
+	if window.visible and window is ScriptCreateDialog:
+		var language: OptionButton = plugin._collect(window, "OptionButton", "")[0]
+		for i in language.item_count:
+			if language.get_item_text(i) == "C#":
+				language.select(i)
+				language.item_selected.emit(i)
+		await plugin.get_tree().process_frame
+		# The Script editor starts a built-in script, kept inside a scene; C# scripts are files, so it is switched off.
+		for box in plugin._collect(window, "CheckBox", "On"):
+			box.button_pressed = false
+			box.toggled.emit(false)
+		await plugin.get_tree().process_frame
+		var edits := plugin._collect(window, "LineEdit", "")
+		for edit in edits:
+			print("[probe] new script field ", edit.text)
+		for edit in edits:
+			if str(edit.text) == "Node":
+				edit.text = "{inherits}"
+				edit.text_changed.emit(edit.text)
+		await plugin.get_tree().process_frame
+		for edit in edits:
+			if str(edit.text).ends_with(".cs"):
+				edit.text = "{path}"
+				edit.text_changed.emit(edit.text)
+		return ""
+return "no New Script dialog"
+'''),
+        {'op': 'wait', 'frames': 30},
+        dump_windows(),
+    ]
+    if capture:
+        steps.append({'op': 'capture', 'name': capture, 'window': 'Create Script'})
+    steps += [
+        eval_('''
+for window in plugin._windows(plugin.get_tree().root):
+	if window.visible and window is ScriptCreateDialog:
+		window.get_ok_button().pressed.emit()
+		return ""
+return "no Create Script dialog"
+'''),
+        {'op': 'wait', 'frames': 60},
+    ]
+    return steps
+
+
+def run_tool_script(path):
+    # Opens a C# tool script in the Script editor and presses File > Run, as the reader does.
+    return [
+        {'op': 'main_screen', 'name': 'Script'},
+        eval_(f'''
+editor.edit_script(load("{path}"))
+'''),
+        {'op': 'wait', 'frames': 30},
+        eval_('''
+var editor_node = plugin._find_class(plugin.get_tree().root, "ScriptEditor")
+for button in plugin._collect(editor_node, "MenuButton", "File"):
+	var popup: PopupMenu = button.get_popup()
+	for i in popup.item_count:
+		if popup.get_item_text(i) == "Run":
+			print("[probe] run item disabled ", popup.is_item_disabled(i))
+			popup.id_pressed.emit(popup.get_item_id(i))
+			return ""
+return "no Run item in the File menu"
+'''),
+        {'op': 'sleep', 'seconds': 8},
+    ]
+

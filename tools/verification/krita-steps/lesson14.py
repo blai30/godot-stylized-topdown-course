@@ -17,7 +17,8 @@ from ground_painting import (close_editor, editor_page, enable_option, layer_eye
 # The reference palette's dirt and sand ramps, from lesson 7: shadow, dark, light, highlight.
 DIRT = [(20, 44, 40), (26, 46, 53), (32, 44, 66), (38, 38, 79)]
 SAND = [(30, 38, 52), (36, 40, 65), (42, 36, 78), (48, 28, 90)]
-SHADOW_GRAY, BODY_GRAY, RIM_GRAY, SHINE_GRAY = (0, 0, 30), (0, 0, 55), (0, 0, 75), (0, 0, 90)
+# Close in value, so a pebble sits softly on the ground: the stamp keeps these steps.
+SHADOW_GRAY, BODY_GRAY, RIM_GRAY, SHINE_GRAY = (0, 0, 48), (0, 0, 55), (0, 0, 60), (0, 0, 64)
 
 
 def far(d, name):
@@ -83,6 +84,8 @@ def pebble_brush(d, document, painter):
     yield 0.5
     yield from d.preset('Basic-2 Opacity')
     yield from d.slider(d.toolbar_slider('Size'), 16)
+    # The earlier blotches left the toolbar at Opacity 25; the rim is solid.
+    yield from d.slider(d.toolbar_slider('Opacity'), 100)
     yield from d.foreground(RIM_GRAY)
     top_edge = [c for c in corners if c[1] < center[1] - 6]
     top_edge.sort(key=lambda c: c[0])
@@ -171,32 +174,55 @@ def steps(d):
     yield 2
     random.seed(14)
 
-    # Dirt: the dark swatch as the base.
+    # Dirt: the light swatch as the base, so the ground is light and the pebbles sit softly on it.
     shadow, dark, light, highlight = DIRT
-    document, painter = yield from new_texture(d, 'dirt_albedo', dark, 'k14_dirt')
+    document, painter = yield from new_texture(d, 'dirt_albedo', light, 'k14_dirt')
     # Blotches: a hard round brush, see-through, so overlapping dabs build flat, painted shapes.
     d.action('KritaShape/KisToolBrush')
     yield 0.5
     yield from d.preset('Basic-2 Opacity')
     yield from d.slider(d.toolbar_slider('Size'), 90)
     yield from d.slider(d.toolbar_slider('Opacity'), 25)
-    for tone, count in ((shadow, 6), (light, 6)):
+    for tone, count in ((dark, 6), (highlight, 6)):
         yield from d.foreground(tone)
         yield from wander(painter, count, 120, step=15, turn=0.8)
     yield from d.capture('k14_dirt_blotches')
     yield from pebble_brush(d, document, painter)
-    # Pebbles: the light swatch, scattered; a few in the highlight color.
+    # Pebbles: the highlight swatch, a little lighter than the dirt, with only a soft shadow and lit edge; most of the dirt stays bare.
     yield from d.slider(d.toolbar_slider('Size'), 60)
     yield from d.slider(d.toolbar_slider('Opacity'), 100)
-    yield from d.foreground(light)
-    yield from wander(painter, 5, 260, turn=0.9)
     yield from d.foreground(highlight)
-    yield from wander(painter, 2, 160, turn=0.9)
+    yield from wander(painter, 3, 200, turn=0.9)
     yield from d.capture('k14_dirt_pebbles')
-    # Twigs and cracks: the Grass Blade brush from lesson 13, thin and dark.
-    yield from d.preset('Grass Blade')
+    # The twig brush: Basic-5 Size, with Fade instead of Pressure driving the size, on a falling curve.
+    d.action('KritaShape/KisToolBrush')
+    yield 0.5
+    yield from d.preset('Basic-5 Size', 'k14_preset_search')
+    editor = yield from editor_page(d, 'Size')
+    # Krita keeps changes to a built-in brush for the session unless this is off; off, every brush you pick is as
+    # it came, and your changes live only in the brushes you save.
+    tweaks = d.find(editor, QCheckBox, name='dirtyPresetCheckBox')
+    if tweaks.isChecked():
+        d.click(tweaks)
+    yield 0.3
+    d.log('TEMPORARILY SAVE TWEAKS {}'.format(tweaks.isChecked()))
+    if tweaks.isChecked():
+        raise RuntimeError('could not uncheck Temporarily Save Tweaks To Presets')
+    sensors, rows = set_sensors(d, editor, on=['Fade'], off=['Pressure'])
+    rect = sensors.visualRect(rows['Fade'])
+    d.click(sensors.viewport(), QPoint(rect.left() + 40, rect.center().y()))
+    yield 0.8
+    d.click(d.find(editor, QPushButton, name='revLinearButton'))
+    yield 0.5
+    yield from d.slider([w for w in editor.findChildren(QWidget) if w.objectName() == 'spinBoxLength' and w.isVisible()][0], 45)
+    yield from d.capture('k14_taper_settings', widget=editor)
+    yield from save_preset(d, editor, 'Twig', 'k14_save_preset')
+    yield from close_editor(d)
+    yield 1
+    # Twigs and cracks: the Twig brush, thin and dark.
+    yield from d.preset('Twig')
     yield from d.slider(d.toolbar_slider('Size'), 7)
-    yield from d.foreground(shadow)
+    yield from d.foreground(dark)
     for index in range(10):
         x, y = random.uniform(0, 512), random.uniform(0, 512)
         angle = random.uniform(0, 2 * math.pi)

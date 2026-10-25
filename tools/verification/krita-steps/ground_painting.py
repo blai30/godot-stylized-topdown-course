@@ -1,11 +1,12 @@
 # Shared steps for the ground texture lessons (13 and 14): a new 512 px texture with its base color and wrap-around
 # mode, strokes placed in image pixels, and Save As plus Export into the workbench.
 import os
+import tempfile
 
 from PyQt5.QtCore import QEvent, QPoint, Qt
 from PyQt5.QtWidgets import QAbstractSpinBox, QLineEdit, QPushButton, QTabWidget
 
-WORKBENCH = os.path.join(os.environ['TEMP'], 'sgt-phase1', 'workbench')
+WORKBENCH = os.path.join(os.environ.get('TEMP', tempfile.gettempdir()), 'sgt-phase1', 'workbench')
 SIZE = 512
 
 
@@ -98,12 +99,12 @@ def save_and_export(d, document, name):
         os.makedirs(os.path.join(WORKBENCH, folder), exist_ok=True)
     d.action('file_save_as')
     yield 3
-    d.file_dialog('Saving As', os.path.join(WORKBENCH, 'art_source', 'ground', name + '.kra'))
+    yield from d.file_dialog('Saving As', os.path.join(WORKBENCH, 'art_source', 'ground', name + '.kra'))
     yield 4
     d.log('SAVED ' + str(document.fileName()))
     d.action('file_export_file')
     yield 3
-    d.file_dialog('Exporting', os.path.join(WORKBENCH, 'art', 'ground', name + '.png'))
+    yield from d.file_dialog('Exporting', os.path.join(WORKBENCH, 'art', 'ground', name + '.png'))
     yield 3
     options = d.top('PNG image')
     yield from d.capture('k_' + name + '_png_options', widget=options)
