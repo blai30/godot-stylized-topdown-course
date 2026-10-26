@@ -40,6 +40,7 @@ import threeClumps from '../../../assets/lessons/model-grass-and-flowers/three-c
 import applyMenu from '../../../assets/lessons/model-grass-and-flowers/apply-menu.png';
 import daisyParts from '../../../assets/lessons/model-grass-and-flowers/daisy-parts.png';
 import paintNodes from '../../../assets/lessons/model-grass-and-flowers/paint-nodes.png';
+import fakeUser from '../../../assets/lessons/model-grass-and-flowers/fake-user.png';
 import paintModifier from '../../../assets/lessons/model-grass-and-flowers/paint-modifier.png';
 import linkMenu from '../../../assets/lessons/model-grass-and-flowers/link-menu.png';
 import flowersBuilt from '../../../assets/lessons/model-grass-and-flowers/flowers-built.png';
@@ -490,7 +491,15 @@ The colors come from a group named **Paint Part** with four inputs: **Red**, **G
 		caption="Paint Part: four numbers in, one vertex color out."
 	/>
 
-4. Go back to the Layout workspace and the modifier tab. The modifier has four fields. For the stem, a dark green, type `0.05`, `0.14`, `0.02`, and `0`: click each field, press <Kbd keys="Ctrl+A" mac="Cmd+A" />, type, and press <Kbd keys="Enter" />.
+4. Click the shield beside the group's name in the node editor's header. That is **Fake User**: Blender throws away a group that nothing uses when the file is saved, and after you join the flower parts nothing will. The shield keeps it, and lesson 34 will use it again.
+
+	<Figure
+		src={fakeUser}
+		alt="The node editor's header: the group's name, Paint Part, followed by a shield button, the Fake User button."
+		caption="The shield keeps the group in the file."
+	/>
+
+5. Go back to the Layout workspace and the modifier tab. The modifier has four fields. For the stem, a dark green, type `0.05`, `0.14`, `0.02`, and `0`: click each field, press <Kbd keys="Ctrl+A" mac="Cmd+A" />, type, and press <Kbd keys="Enter" />.
 
 	<Figure
 		src={paintModifier}

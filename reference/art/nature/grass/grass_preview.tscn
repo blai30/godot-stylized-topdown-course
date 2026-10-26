@@ -6,17 +6,26 @@
 
 [node name="GrassPreview" unique_id=1378982735 instance=ExtResource("1_dyjxw")]
 
-[node name="flower_cup" parent="." index="0" unique_id=27634113]
+[node name="flower_cup" parent="." index="0" unique_id=260419657]
 material_override = ExtResource("2_3iscj")
 
-[node name="flower_daisy" parent="." index="1" unique_id=2102253652]
+[node name="flower_daisy" parent="." index="1" unique_id=739865905]
 material_override = ExtResource("2_3iscj")
 
-[node name="grass_clump_a" parent="." index="2" unique_id=1007769096]
+[node name="grass_clump_a" parent="." index="2" unique_id=2096305274]
 material_override = ExtResource("3_xggx2")
 
-[node name="grass_clump_b" parent="." index="3" unique_id=359003877]
+[node name="grass_clump_b" parent="." index="3" unique_id=521336223]
 material_override = ExtResource("3_xggx2")
 
-[node name="grass_clump_c" parent="." index="4" unique_id=2028078705]
+[node name="grass_clump_c" parent="." index="4" unique_id=337982950]
 material_override = ExtResource("3_xggx2")
+
+[node name="mushroom_a" parent="." index="5" unique_id=990237608]
+material_override = ExtResource("2_3iscj")
+
+[node name="pebble_a" parent="." index="6" unique_id=1028652933]
+material_override = ExtResource("2_3iscj")
+
+[node name="pebble_b" parent="." index="7" unique_id=1492854425]
+material_override = ExtResource("2_3iscj")

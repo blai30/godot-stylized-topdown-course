@@ -635,11 +635,20 @@ def steps(d):
         paint_nodes['in'].location = (-330, 300)
         paint_nodes['out'].location = (-330, 60)
         yield from lesson26.build_chapter(d, ui, paint, paint_nodes, spec.PAINT_CHAPTER, spec=spec, layout={'paint': ((0, 300), 2)}, prefix='l30')
+        # The shield beside the group's name is Fake User: it keeps the group in the file after the parts that use it are joined.
+        yield from d.press(973, top(38))
+        yield 0.4
+        d.shot('l30_fake_user')
         d.move(*d.center(d.area('NODE_EDITOR')))
         d.key('SPACE', ctrl=True)
         yield 1.0
         yield from d.press(288, top(13))
         yield 1.5
+    if FAST and not os.environ.get('LESSON30_PAINT_UI'):
+        paint.use_fake_user = True
+    d.log('PAINT FAKE USER {}'.format(paint.use_fake_user))
+    if not paint.use_fake_user:
+        raise RuntimeError('the Paint Part group is not kept')
     d.log('PAINT GROUP nodes {} links {} inputs {}'.format(len(paint.nodes), len(paint.links), [(item.name, item.in_out, item.socket_type) for item in paint.interface.items_tree]))
     over_view()
     yield from d.press(1595, top(514))

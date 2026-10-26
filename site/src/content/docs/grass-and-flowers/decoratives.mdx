@@ -1,0 +1,392 @@
+---
+title: "Decoratives: pebbles, mushrooms, and dirt patches"
+description: Model a pebble and a mushroom from rounded boxes, color them with the Paint Part group from lesson 30, scatter them by the ground's own densities, and lay dirt patches on the meadow as Decal nodes that clear the grass under them.
+sidebar:
+  order: 34
+  label: "34. Decoratives: pebbles, mushrooms, and dirt patches"
+lesson:
+  number: 34
+  minutes: 120
+  learn:
+    - How a rounded box from a cube and Subdivision Surface makes a pebble or a cap
+    - How a group kept with Fake User is reused in a later file
+    - How one scatter script grows any number of kinds of prop from the names of the models
+    - How a Decal projects a soft-edged texture onto the ground
+    - How a patch clears the grass under it
+  prerequisites: [30, 31, 32]
+---
+
+import { Aside, Code, FileTree, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Solution from '../../../components/Solution.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import piece1 from '../../../checkpoints/34/pieces/piece-1.cs?raw';
+import piece2 from '../../../checkpoints/34/pieces/piece-2.cs?raw';
+import tileSet from '../../../checkpoints/34/files/art/ground/ground_tile_set.tres?raw';
+import patchTexture from '../../../checkpoints/34/files/art/ground/dirt_patch.tres?raw';
+import pebbleBlender from '../../../assets/lessons/decoratives/pebble-a.png';
+import boxes from '../../../assets/lessons/decoratives/boxes.png';
+import groupList from '../../../assets/lessons/decoratives/group-list.png';
+import paintValues from '../../../assets/lessons/decoratives/paint-values.png';
+import convertMenu from '../../../assets/lessons/decoratives/convert-menu.png';
+import cleared from '../../../assets/lessons/decoratives/cleared.png';
+import collectionTab from '../../../assets/lessons/decoratives/collection-tab.png';
+import previewScene from '../../../assets/lessons/decoratives/preview-scene.png';
+import tile2 from '../../../assets/lessons/decoratives/tile-2.png';
+import propsShot from '../../../assets/lessons/decoratives/props.png';
+import decalInspector from '../../../assets/lessons/decoratives/decal-inspector.png';
+import saveTexture from '../../../assets/lessons/decoratives/save-texture.png';
+import grassPatches from '../../../assets/lessons/decoratives/grass-patches.png';
+import patches from '../../../assets/lessons/decoratives/patches.png';
+import mid from '../../../assets/lessons/decoratives/mid.png';
+import close from '../../../assets/lessons/decoratives/close.png';
+import mushroomClose from '../../../assets/lessons/decoratives/mushroom-close.png';
+import pebbleClose from '../../../assets/lessons/decoratives/pebble-close.png';
+import dusk from '../../../assets/lessons/decoratives/dusk.png';
+import night from '../../../assets/lessons/decoratives/night.png';
+
+## What you will build
+
+Three small things that finish the ground. **Pebbles** lie on the path and sparsely in the grass, and **mushrooms** stand here and there in it, both scattered by the same script as the grass. And a few **dirt patches**, soft brown ovals of bare ground, lie in the meadow with the grass cleared from under them. By the end the meadow is no longer a lawn.
+
+<Figure
+	src={mid}
+	alt="The meadow at noon from above: grass with scattered small flowers, three soft brown dirt patches in the grass with no blades in them, a dirt path, and a few pebbles on the path."
+	caption="The meadow with its dirt patches."
+/>
+
+Two of the three come from the pipeline you already have. A pebble and a mushroom are meshes in `grass.glb`, colored with vertex colors by the **Paint Part** group of lesson 30, and `GrassScatter` places them. The patches are the new idea: a **`Decal`**, a box that paints a texture onto whatever surfaces are inside it, which needs no mesh and no change to the tiles.
+
+## Rounded boxes
+
+A pebble and a mushroom cap are both a box with its corners rounded off. You make one the way lesson 24 rounded a trunk: a cube, scaled, with **Subdivision Surface** applied, which turns a box into a smooth, soft shape of 24 faces. Every part below is the same four steps.
+
+Open `art_source/nature/grass/grass.blend` from lesson 30 in Blender. It still has the clumps and the flowers, and the **Paint Part** group, which you made in lesson 30 and kept with **Fake User**, the shield beside its name. Click the `grass` collection in the outliner, so new objects go in it.
+
+<Steps>
+
+1. Over the 3D view press <Kbd keys="Shift+A" />, type `cube`, and press <Kbd keys="Enter" />. Press <Kbd keys="F2" /> and name it `pebble_a`.
+
+2. Press <Kbd keys="S" /> and type `0.09`, <Kbd keys="Tab" />, `0.07`, <Kbd keys="Tab" />, `0.045`, then <Kbd keys="Enter" />: the cube is now a flat box 18 centimeters wide, 14 deep, and 9 high. Press <Kbd keys="Ctrl+A" mac="Cmd+A" /> and choose **Scale**, so that size becomes the mesh's own.
+
+3. Raise the mesh, not the object, so the object's origin stays on the ground: press <Kbd keys="Tab" /> for Edit Mode, <Kbd keys="A" />, <Kbd keys="G" />, <Kbd keys="Z" />, `0.0375`, <Kbd keys="Enter" />, and <Kbd keys="Tab" /> to leave. The pebble now rests with its bottom at the ground. Then press <Kbd keys="G" />, <Kbd keys="X" />, `-0.5`, <Kbd keys="Enter" /> to move the object aside while you work. You will clear that move later, and the mesh will not change.
+
+4. Click the **Modifiers** tab, **Add Modifier**, type `subdivision`, and press <Kbd keys="Enter" />. Move over the modifier's panel and press <Kbd keys="Ctrl+A" mac="Cmd+A" /> to apply it.
+
+	<Figure
+		src={pebbleBlender}
+		alt="Blender's front view: a flat, rounded gray pebble sitting on the red line of the ground, among the clumps of grass."
+		caption="The first pebble: a cube, rounded."
+	/>
+
+</Steps>
+
+Make three more the same way, from the table. Each is a new cube, so start with <Kbd keys="Shift+A" /> again:
+
+| Object | Scale: X, Y, Z | Mesh lift | Moved along X |
+|---|---|---|---|
+| `pebble_a` | `0.09`, `0.07`, `0.045` | `0.0375` | `-0.5` |
+| `pebble_b` | `0.06`, `0.075`, `0.038` | `0.0315` | `-0.3` |
+| `mushroom_stem` | `0.015`, `0.015`, `0.07` | `0.0595` | `0.3` |
+| `mushroom_cap` | `0.07`, `0.07`, `0.035` | `0.15` | `0.3` |
+
+The stem is a tall thin box and the cap a wide flat one standing on it: a mushroom of 18 centimeters, nearly twice as tall as a pebble is wide.
+
+<Figure
+	src={boxes}
+	alt="Blender's front view of the four rounded parts: two flat pebbles at the left, and a thin stem under a wide flat cap at the right, beside the grass clumps."
+	caption="Four parts."
+/>
+
+## Color them with Paint Part
+
+<Steps>
+
+1. Click `pebble_a`, open the **Modifiers** tab, click **Add Modifier**, type `geometry nodes`, and press <Kbd keys="Enter" />. The modifier has no group yet. Click the small dropdown at the left of the **New** button: it lists the groups in the file, and `Paint Part` is there, marked **F** for Fake User. Choose it.
+
+	<Figure
+		src={groupList}
+		alt="Blender's modifier panel: a Geometry Nodes modifier with its group list open, listing one group, F Paint Part, above a search field."
+		caption="The group from lesson 30, still in the file."
+	/>
+
+2. Set its four fields, the pebble's gray: **Red** `0.16`, **Green** `0.16`, **Blue** `0.17`, **Alpha** `0`. Click each field, press <Kbd keys="Ctrl+A" mac="Cmd+A" />, type, and press <Kbd keys="Enter" />. An alpha of 0 is what tells the shaders this is not a petal: it never flutters and the grass does not push it.
+
+	<Figure
+		src={paintValues}
+		alt="The modifier tab: Paint Part with Red 0.16, Green 0.16, Blue 0.17, and Alpha 0."
+		caption="The pebble's color."
+	/>
+
+3. Click `pebble_b`, then <Kbd keys="Ctrl" /> and click `mushroom_stem` and `mushroom_cap`, and last `pebble_a`, so `pebble_a` is active. In the 3D view's header choose **Object > Link/Transfer Data > Copy Modifiers**. Each of the three now has the modifier. Set their fields:
+
+	| Object | Red | Green | Blue | Alpha |
+	|---|---|---|---|---|
+	| `pebble_a` | `0.16` | `0.16` | `0.17` | `0` |
+	| `pebble_b` | `0.24` | `0.23` | `0.22` | `0` |
+	| `mushroom_stem` | `0.62` | `0.52` | `0.36` | `0` |
+	| `mushroom_cap` | `0.5` | `0.06` | `0.05` | `0` |
+
+</Steps>
+
+## Make them plain meshes, and join the mushroom
+
+<Steps>
+
+1. Select the four objects, and choose **Object > Convert > Mesh**. The modifiers are applied, and each mesh now has the `Col` color attribute.
+
+	<Figure
+		src={convertMenu}
+		alt="Blender's Object menu open on Convert, its submenu listing Mesh, Curve, Curves, Point Cloud, and Grease Pencil."
+		caption="Convert to Mesh, as for the flowers."
+	/>
+
+2. Click `mushroom_cap`, then <Kbd keys="Ctrl" /> and click `mushroom_stem` last, and press <Kbd keys="Ctrl+J" mac="Cmd+J" /> over the 3D view. Press <Kbd keys="F2" /> and name the joined object `mushroom_a`.
+
+3. Select `pebble_a`, `pebble_b`, and `mushroom_a`, and with the pointer over the 3D view press <Kbd keys="Alt+G" />, **Clear Location**. The three objects return to the origin, where their meshes already stand on the ground. Press <Kbd keys="Numpad /" /> for **Local View** and <Kbd keys="Numpad ." /> to look at just those three.
+
+	<Figure
+		src={cleared}
+		alt="Blender's local view of three objects at the origin: two rounded gray pebbles and a red-capped mushroom with a cream stem, one in front of the other."
+		caption="The three props at the origin, in their vertex colors' own light."
+	/>
+
+	Press <Kbd keys="Numpad /" /> again to leave Local View.
+
+4. As in lesson 30, name each mesh after its object in the **Data** tab, since Godot shows the mesh's name: `pebble_a`, `pebble_b`, and `mushroom_a`.
+
+</Steps>
+
+A pebble is 48 triangles and the mushroom 96.
+
+## Export
+
+The `grass` collection already has the exporter from lesson 30, and the new objects are in the collection, so one click does it.
+
+<Steps>
+
+1. Click the `grass` collection, open the **Collection** tab, and click **Export All**. The file `grass.glb` now holds eight meshes.
+
+	<Figure
+		src={collectionTab}
+		alt="The Properties editor's Collection tab, with the glTF 2.0 exporter listed and its Export All button."
+		caption="The collection's exporter."
+	/>
+
+2. Save the file with <Kbd keys="Ctrl+S" mac="Cmd+S" />.
+
+</Steps>
+
+## Materials for the new meshes
+
+Switch to Godot. It imports `grass.glb` again. The preview scene from lesson 31 inherits from the file, so the three new meshes are in it already, without a material.
+
+<Steps>
+
+1. Open `art/nature/grass/grass_preview.tscn`. It lists `mushroom_a`, `pebble_a`, and `pebble_b` with the rest.
+
+2. For each of the three, set **Material Override** to `flower.tres` with **Quick Load...**. The flower shader draws the vertex colors with the soft rim, and with an alpha of 0 nothing on a prop moves, so it is the right shader for a prop whose color comes from its vertices. Save the scene.
+
+	<Figure
+		src={previewScene}
+		alt="Godot's editor with grass_preview.tscn open: the node list includes mushroom_a, pebble_a, and pebble_b, and mushroom_a is selected with a red-capped mushroom as its mesh thumbnail and flower.tres as its material override."
+		caption="The mushroom in the preview scene."
+	/>
+
+</Steps>
+
+## Scatter them
+
+The scatter finds the models by name, as it did the clumps. It now handles each kind of prop the same way, so there is nothing to add for a new one except a density on the ground.
+
+<Steps>
+
+1. In `src/Ground/GroundTile.cs` add two properties below `FlowerDensity`: `PebbleDensity` and `MushroomDensity`, both `[Export(PropertyHint.Range, "0,1,0.05")]` floats, with a comment: how many of the 1 meter squares of this ground hold a pebble, and how many a mushroom.
+
+2. Replace `GrassScatter.cs` with the version in the solutions below. What changed:
+
+	- A table, `Props`, lists the kinds that grow one to a square: each has the start of its models' names and a function that reads its density from a tile. Flowers, pebbles, and mushrooms are three rows. A kind with no model in the scene is skipped.
+	- `Grow` loops over the table instead of doing the flower alone. The first draws of each square are unchanged, so the grass and the flowers fall exactly where they did in lesson 32.
+	- A new export, `Patches`, which you will use below.
+
+3. Click **Build Project**. In the meadow, select `GroundTiles`, open **Tiles**, and set the densities of each tile, as for **Flower Density** in lesson 32. Choose **Save** from the **Tiles** row's menu.
+
+	| Tile | Pebble Density | Mushroom Density |
+	|---|---|---|
+	| Grass | `0.05` | `0.08` |
+	| Sand | `0.15` | `0` |
+	| Dirt | `0.4` | `0` |
+
+	<Figure
+		src={tile2}
+		alt="The Inspector on the Dirt tile: Grass Density 0.1, Flower Density 0, Pebble Density 0.4, Mushroom Density 0, and Walk Speed 1.15."
+		caption="The dirt tile: pebbles on almost half its squares, no mushrooms."
+	/>
+
+4. Select the `Grass` node and click **Scatter**. The Output panel reports the new total, and the field now holds about 42 pebbles and 32 mushrooms among its clumps and flowers.
+
+	<Figure
+		src={propsShot}
+		alt="The meadow in the editor's 3D view after the scatter, with the grass, the flowers, and small gray pebbles on the dirt path."
+		caption="After Scatter, with the new props."
+	/>
+
+</Steps>
+
+<Solution label="Show the full GroundTile.cs">
+	<Code code={piece1} lang="csharp" title="src/Ground/GroundTile.cs" />
+</Solution>
+
+<Solution label="Show the full GrassScatter.cs">
+	<Code code={piece2} lang="csharp" title="src/Ground/GrassScatter.cs" />
+</Solution>
+
+## Dirt patches
+
+A patch is a decal. A **`Decal`** node is a box, and inside the box it paints its **Texture Albedo** onto every surface it touches, as a sticker projected from above. No mesh and no tile has to change, and a decal can be moved, turned, and stretched like any node.
+
+For the texture, the patch needs a shape whose edge fades out to nothing, so it blends into the ground. A **`GradientTexture2D`** does that: a gradient filled outward from the middle, brown in the middle and transparent at the rim.
+
+<Steps>
+
+1. In the meadow, select the root, add a **Node3D**, and name it `Patches`. Select it, add a **Decal** under it, and name it `Patch1`.
+
+2. In the Inspector set the decal's **Position** to `1.9, 0, -0.7`, its **Rotation** to `0, 20, 0`, and its **Size** to `2.4, 0.6, 1.6`. The decal is a box 2.4 meters wide, 0.6 high, and 1.6 deep, with its middle on the ground: it reaches 30 centimeters above and below.
+
+3. Set **Texture Albedo** to a **New GradientTexture2D**, and click it to open it. Set **Fill** to **Radial**, **Width** and **Height** to `256`, **Fill From** to `0.5, 0.5` and **Fill To** to `1, 0.5`: the gradient runs from the middle of the texture to the middle of its right edge, so the rim is where the gradient ends. Set **Gradient** to a **New Gradient**, and give it three colors: `7A5638` at offset `0`, `8A6342` at `0.55`, and `8A6342` with an alpha of `0` at `1`. In the gradient's editor, click a color marker, set its offset, and click the color to change it.
+
+	<Figure
+		src={decalInspector}
+		alt="The Inspector on a Decal: Size 2.4, 0.6, 1.6, and a Texture Albedo that is a GradientTexture2D with a radial fill and a brown-to-transparent gradient."
+		caption="The first patch."
+	/>
+
+4. Choose **Save As...** from the **Texture Albedo** row's menu and save it as `dirt_patch.tres` in `art/ground`, so the other patches can share it.
+
+	<Figure
+		src={saveTexture}
+		alt="The Save Resource dialog: the file name dirt_patch.tres in the folder art/ground."
+		caption="The patch texture, saved."
+	/>
+
+5. Add two more decals under `Patches`, `Patch2` and `Patch3`, with **Texture Albedo** set to `dirt_patch.tres` by **Quick Load...** and these numbers:
+
+	| Decal | Position | Rotation Y | Size |
+	|---|---|---|---|
+	| `Patch2` | `-3.2, 0, 1` | `70` | `1.8, 0.6, 1.4` |
+	| `Patch3` | `0.5, 0, 5` | `140` | `3, 0.6, 1.9` |
+
+</Steps>
+
+<Solution label="Show the full dirt_patch.tres">
+	<Code code={patchTexture} lang="ini" title="art/ground/dirt_patch.tres" />
+</Solution>
+
+The patches are on the ground, but the grass still stands in them: a decal paints the surface under the blades, and the blades are above it. The grass must not grow there. That is the `Patches` property of `GrassScatter`: every `Decal` under that node clears the grass and the props from the ground inside its box. A point is inside when, in the decal's own frame, it falls within the ellipse the box makes on the ground, so a turned or stretched patch clears what it covers and nothing else.
+
+<Steps>
+
+1. Select the `Grass` node, click **Assign...** beside **Patches**, and choose `Patches`.
+
+	<Figure
+		src={grassPatches}
+		alt="The Inspector on the Grass node: Ground, Models, Patches set to the Patches node, Seed 1, and the Scatter button."
+		caption="The Grass node, with its patches."
+	/>
+
+2. Click **Scatter**. The report drops by about 17 clumps, the ones that stood in the patches. Save the scene.
+
+	<Figure
+		src={patches}
+		alt="The meadow in the editor's 3D view: soft brown oval patches on the ground, with no grass standing in them."
+		caption="After Scatter, with the patches."
+	/>
+
+</Steps>
+
+## Run it
+
+Run the meadow and look around the player.
+
+<Figure
+	src={close}
+	alt="The meadow close up at noon: a dirt patch in the grass with no blades in it and soft edges, a dirt path with pebbles, flowers, and the player capsule."
+	caption="Zoomed in."
+/>
+
+<Figure
+	src={mushroomClose}
+	alt="A close view of the meadow with a red-capped mushroom standing in the grass and a dirt patch behind it."
+	caption="A mushroom."
+/>
+
+<Figure
+	src={pebbleClose}
+	alt="A close view of a gray pebble lying in the grass beside the dirt."
+	caption="A pebble."
+/>
+
+<Figure
+	src={dusk}
+	alt="The meadow at dusk: the patches and the grass in warm light with long shadows."
+	caption="Dusk. The patches take the sun and the shadows, as the ground does."
+/>
+
+<Figure
+	src={night}
+	alt="The meadow at night: the grass, the patches, and the props as blue and dark shapes."
+	caption="Night."
+/>
+
+The patches are lit with the ground under them, because a decal only changes its albedo: shadows and the day's light fall on them as they do on the soil. The pebbles and the mushrooms are lit by the flower shader's wrapped diffuse and rim.
+
+## Try it
+
+- Move a patch with <Kbd keys="G" /> in the 3D view, and click **Scatter**: the grass leaves where the patch arrives, and returns where it left.
+- Stretch a patch to `5, 0.6, 1.2` and turn it, for a muddy track.
+- Change **Albedo Mix** on a decal to `0.7`, so a patch is more transparent and lets the grass texture through.
+- Set the sand tile's **Mushroom Density** to `0.3` and scatter: mushrooms on sand. Then set it back.
+- Add a second mushroom to the file, a taller one, named `mushroom_b`, from a stem and a cap, and scatter. The script finds it by its name, and each mushroom is a random one of the two.
+
+## If it does not work
+
+- **No pebbles or mushrooms grow.** `grass_preview.tscn` has no node starting with `pebble` or `mushroom`, or the densities are all `0`. Open the scene and check the names.
+- **The props are white or gray in the game.** `flower.tres` is not on them. Set **Material Override** on all three.
+- **A mushroom stands in the ground up to its cap.** The stem was lifted in Object Mode, not in Edit Mode, so the origin is above the ground and the mesh is not. Lift the mesh, as in step 3.
+- **The patches are not visible.** The decal's box does not reach the ground. Its **Position** `y` is `0` and its **Size** `y` is `0.6`, so the box spans the ground. Also check that **Texture Albedo** is set.
+- **A patch is a hard-edged brown square.** The gradient's last color is not transparent, or **Fill To** is `1, 1`.
+- **Grass still grows in the patches.** `Patches` is empty on the `Grass` node, or the decals are not children of that node.
+- **A patch paints the grass blades brown.** Their roots are inside the decal's box. That is the dark ground color showing through at the base, and a patch with no grass in it has none.
+
+## Checkpoint
+
+Your project now contains:
+
+<FileTree>
+- art
+  - ground
+    - **dirt_patch.tres**
+    - ground_tile_set.tres with pebble and mushroom densities
+  - nature
+    - grass
+      - grass.glb now with pebble_a, pebble_b, and mushroom_a
+      - grass_preview.tscn with materials on the new meshes
+- art_source
+  - nature
+    - grass
+      - grass.blend now with the props
+- src
+  - Ground
+    - GroundTile.cs and GrassScatter.cs updated
+- levels
+  - meadow.tscn with a `Patches` node of three decals
+</FileTree>
+
+<Solution label="Show the full ground_tile_set.tres">
+	<Code code={tileSet} lang="ini" title="art/ground/ground_tile_set.tres" />
+</Solution>
+
+Commit your work: `git add .` and `git commit -m "Add pebbles, mushrooms, and dirt patches"`. That is the last lesson of the grass and flowers. The module's review follows.
+
+<Checkpoint />

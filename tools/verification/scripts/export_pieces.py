@@ -10,8 +10,8 @@ import tempfile
 
 TEMP = os.environ.get('TEMP', tempfile.gettempdir())
 
-STEPS = {13: 'lesson13', 18: 'lesson18', 15: 'lesson15', 17: 'lesson17', 19: 'lesson19', 21: 'lesson21', 22: 'lesson22', 23: 'lesson23', 27: 'lesson27', 28: 'lesson28', 31: 'lesson31', 32: 'lesson32', 33: 'lesson33', 5: 'lesson05', 6: 'lesson06'}
-EXTENSIONS = {13: '.cs', 18: '.cs', 15: '.gdshader', 17: '.gdshader', 19: '.gdshader', 21: ['.gdshader', '.cs'], 22: '.cs', 23: ['.gdshaderinc', '.gdshader', '.gdshader', '.cs', '.cs'], 27: ['.gdshaderinc', '.gdshader', '.gdshader'], 28: '.cs', 31: ['.gdshaderinc', '.gdshader', '.gdshaderinc', '.gdshader', '.gdshader'], 32: '.cs', 33: ['.gdshaderinc', '.gdshader', '.gdshader', '.cs'], 5: '.cs', 6: '.cs'}
+STEPS = {13: 'lesson13', 18: 'lesson18', 15: 'lesson15', 17: 'lesson17', 19: 'lesson19', 21: 'lesson21', 22: 'lesson22', 23: 'lesson23', 27: 'lesson27', 28: 'lesson28', 31: 'lesson31', 32: 'lesson32', 33: 'lesson33', 34: 'lesson34', 5: 'lesson05', 6: 'lesson06'}
+EXTENSIONS = {13: '.cs', 18: '.cs', 15: '.gdshader', 17: '.gdshader', 19: '.gdshader', 21: ['.gdshader', '.cs'], 22: '.cs', 23: ['.gdshaderinc', '.gdshader', '.gdshader', '.cs', '.cs'], 27: ['.gdshaderinc', '.gdshader', '.gdshader'], 28: '.cs', 31: ['.gdshaderinc', '.gdshader', '.gdshaderinc', '.gdshader', '.gdshader'], 32: '.cs', 33: ['.gdshaderinc', '.gdshader', '.gdshader', '.cs'], 34: '.cs', 5: '.cs', 6: '.cs'}
 verification = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 site = os.path.join(os.path.dirname(os.path.dirname(verification)), 'site', 'src', 'checkpoints')
 lesson = int(sys.argv[1])

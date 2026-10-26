@@ -21,6 +21,10 @@ public partial class GroundTile : Resource
 	// How many of the 1 meter squares of this ground grow a flower, from 0 to 1.
 	[Export(PropertyHint.Range, "0,1,0.05")] public float FlowerDensity { get; set; }
 
+	// How many of the 1 meter squares of this ground hold a pebble, and how many a mushroom, from 0 to 1.
+	[Export(PropertyHint.Range, "0,1,0.05")] public float PebbleDensity { get; set; }
+	[Export(PropertyHint.Range, "0,1,0.05")] public float MushroomDensity { get; set; }
+
 	// How fast the player walks here, as a share of normal speed.
 	[Export(PropertyHint.Range, "0,2,0.05")] public float WalkSpeed { get; set; } = 1f;
 }

@@ -1,11 +1,12 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
 
 namespace TopDownTemplate.Ground;
 
-// Grows grass and flowers on the painted ground. The Scatter button reads the ground's tiles and fills a
-// MultiMeshInstance3D for each kind of clump or flower in each block of the world. The result is saved in the scene.
+// Grows grass, flowers, pebbles, and mushrooms on the painted ground. The Scatter button reads the ground's tiles and
+// fills a MultiMeshInstance3D for each model in each block of the world. The result is saved in the scene.
 [Tool]
 public partial class GrassScatter : Node3D
 {
@@ -15,9 +16,12 @@ public partial class GrassScatter : Node3D
 	// Keep this node at the origin, so a point in the world is a point in the node.
 	[Export] public GroundMap? Ground { get; set; }
 
-	// A scene with a MeshInstance3D for each model, named grass_clump_a and so on, or flower_daisy and so on, each with
-	// its material.
+	// A scene with a MeshInstance3D for each model, each with its material, named for what it is: grass_clump_a, flower_daisy,
+	// pebble_a, mushroom_a, and so on.
 	[Export] public PackedScene? Models { get; set; }
+
+	// Dirt patches: each Decal under this node clears the grass and the props from the ground it covers.
+	[Export] public Node3D? Patches { get; set; }
 
 	// A different seed grows a different field.
 	[Export] public int Seed { get; set; } = 1;
@@ -27,6 +31,14 @@ public partial class GrassScatter : Node3D
 
 	[ExportToolButton("Scatter")]
 	public Callable ScatterButton => Callable.From(Scatter);
+
+	// What grows one to a square, besides the clumps: the start of its models' names, and how often the ground grows it.
+	private static readonly (string Prefix, Func<GroundTile, float> Density)[] Props =
+	[
+		("flower", tile => tile.FlowerDensity),
+		("pebble", tile => tile.PebbleDensity),
+		("mushroom", tile => tile.MushroomDensity),
+	];
 
 	private readonly record struct Growth(Transform3D Transform, Color Data);
 
@@ -41,11 +53,11 @@ public partial class GrassScatter : Node3D
 		Clear();
 		var models = Models.Instantiate();
 		var clumps = FindModels(models, "grass_clump");
-		var flowers = FindModels(models, "flower");
+		var props = Props.Select(prop => (prop.Density, Models: FindModels(models, prop.Prefix))).Where(prop => prop.Models.Count > 0).ToList();
 		var fields = new Dictionary<(string Model, Vector2I Block), List<Growth>>();
 		foreach (var square in Squares())
 		{
-			Grow(square, clumps, flowers, fields);
+			Grow(square, clumps, props, fields);
 		}
 
 		// In a fixed order, so the nodes come out the same every time.
@@ -92,9 +104,9 @@ public partial class GrassScatter : Node3D
 		}
 	}
 
-	// Each square has two clumps, one in each half, and one flower. Every roll is drawn whether or not it is used, so a
-	// square grows the same however its neighbors are painted.
-	private void Grow(Vector2I square, List<string> clumps, List<string> flowers, Dictionary<(string, Vector2I), List<Growth>> fields)
+	// Each square has two clumps, one in each half, and one of each prop. Every roll is drawn whether or not it is used, so
+	// a square grows the same however its neighbors are painted.
+	private void Grow(Vector2I square, List<string> clumps, List<(Func<GroundTile, float> Density, List<string> Models)> props, Dictionary<(string, Vector2I), List<Growth>> fields)
 	{
 		var random = new RandomNumberGenerator { Seed = SquareSeed(square) };
 		for (var half = 0; half < 2; half++)
@@ -103,21 +115,37 @@ public partial class GrassScatter : Node3D
 			var roll = random.Randf();
 			var model = clumps[random.RandiRange(0, clumps.Count - 1)];
 			var growth = Place(position, random, new Color(random.Randf(), 0f, 0f, 0f));
-			if (roll < Ground!.TileAt(position)?.GrassDensity)
+			if (roll < Ground!.TileAt(position)?.GrassDensity && !InPatch(position))
 			{
 				Add(fields, model, growth);
 			}
 		}
 
-		var flowerPosition = new Vector3(square.X + random.Randf(), 0f, square.Y + random.Randf());
-		var flowerRoll = random.Randf();
-		var flower = flowers[random.RandiRange(0, flowers.Count - 1)];
-		var tint = FlowerColors[random.RandiRange(0, FlowerColors.Length - 1)].SrgbToLinear();
-		var flowerGrowth = Place(flowerPosition, random, new Color(random.Randf(), tint.R, tint.G, tint.B));
-		if (flowerRoll < Ground!.TileAt(flowerPosition)?.FlowerDensity)
+		foreach (var (density, models) in props)
 		{
-			Add(fields, flower, flowerGrowth);
+			var position = new Vector3(square.X + random.Randf(), 0f, square.Y + random.Randf());
+			var roll = random.Randf();
+			var model = models[random.RandiRange(0, models.Count - 1)];
+			// The petal color, which only a flower's petals use.
+			var tint = FlowerColors[random.RandiRange(0, FlowerColors.Length - 1)].SrgbToLinear();
+			var growth = Place(position, random, new Color(random.Randf(), tint.R, tint.G, tint.B));
+			var tile = Ground!.TileAt(position);
+			if (tile is not null && roll < density(tile) && !InPatch(position))
+			{
+				Add(fields, model, growth);
+			}
 		}
+	}
+
+	// Whether a point on the ground lies under one of the dirt patches: inside the ellipse its box makes on the ground.
+	private bool InPatch(Vector3 position)
+	{
+		return Patches?.GetChildren().OfType<Decal>().Any(decal =>
+		{
+			var local = decal.ToLocal(position);
+			var half = decal.Size / 2f;
+			return Mathf.Pow(local.X / half.X, 2f) + Mathf.Pow(local.Z / half.Z, 2f) < 1f;
+		}) ?? false;
 	}
 
 	// A growth at a position, turned any way about the vertical and a little larger or smaller than the model.
