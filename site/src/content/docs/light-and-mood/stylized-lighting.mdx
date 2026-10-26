@@ -99,9 +99,10 @@ Type into the new file so that:
 - `global uniform vec4 rim_color : source_color;` and `global uniform float rim_strength;` read the globals, with a comment: the rim's color and strength, which `DayClock` sets from the day animation. A color global is a `vec4` in a shader, and you use its `.rgb`;
 - `const float WRAP = 0.5;` has a comment: how far the light wraps around a surface, where 0 is plain diffuse and 1 reaches the far side;
 - `const float RIM_POWER = 3.0;` has a comment: how narrow the rim is, where a higher power keeps it closer to the silhouette;
-- a function `vec3 soft_rim(vec3 view_normal, mat4 inverse_view)` has a comment: a faint glow along the silhouette that separates a surface from the ground behind it. In it, `float edge = pow(1.0 - clamp(view_normal.z, 0.0, 1.0), RIM_POWER);` is 0 where a surface faces the camera and 1 at the silhouette. The comment above says the camera looks along -Z in view space, so a normal turned away from +Z is near the silhouette;
+- `const float RIM_SURFACE_MIX = 0.8;` has a comment: how much of the surface's own color the rim takes, where 0 is the pure rim color and 1 is the surface color;
+- a function `vec3 soft_rim(vec3 view_normal, mat4 inverse_view, vec3 albedo)` has a comment: a faint glow along the silhouette that separates a surface from the ground behind it. In it, `float edge = pow(1.0 - clamp(view_normal.z, 0.0, 1.0), RIM_POWER);` is 0 where a surface faces the camera and 1 at the silhouette. The comment above says the camera looks along -Z in view space, so a normal turned away from +Z is near the silhouette;
 - then `float world_up = (inverse_view * vec4(view_normal, 0.0)).y;` turns the normal back into world space, to read how far it faces up, and `float sky = clamp(0.5 + world_up, 0.0, 1.0);` is 1 for faces looking up, a half for upright faces, and 0 for faces looking down, so the underside of a rock never glows. The comment says that;
-- the function returns `rim_color.rgb * rim_strength * edge * sky`;
+- the function returns `rim_color.rgb * rim_strength * edge * sky * mix(vec3(1.0), albedo, RIM_SURFACE_MIX)`. The last factor tints the rim toward the surface's own color, and a comment says why: a dark surface, such as bark, would otherwise get a pale, bluish edge;
 - `void light()` is Godot's per-light function. A comment says plain diffuse is the dot product alone, and wrapping shifts it so the side facing away from the light stays softly lit. It computes `float wrapped = clamp((dot(NORMAL, LIGHT) + WRAP) / (1.0 + WRAP), 0.0, 1.0);` and adds `wrapped * ATTENUATION * LIGHT_COLOR / PI` to `DIFFUSE_LIGHT`. `ATTENUATION` carries the shadow, so a cast shadow is still dark.
 
 <Solution>
@@ -112,7 +113,7 @@ Save it with <Kbd keys="Ctrl+Alt+S" mac="Cmd+Option+S" />.
 
 <Figure
 	src={includeEditor}
-	alt="The Shader Editor showing stylized_lit.gdshaderinc: the comment, the two global uniforms, and WRAP and RIM_POWER with their comments."
+	alt="The Shader Editor showing stylized_lit.gdshaderinc: the comment, the two global uniforms, and WRAP, RIM_POWER, and RIM_SURFACE_MIX with their comments."
 	caption="The include in the Shader Editor."
 />
 
@@ -125,7 +126,7 @@ Under a perspective camera, Godot gives a shader `VIEW`, the direction to the ca
 Open `art/ground/ground.gdshader` in the Shader Editor, as in lesson 17, and change it so that:
 
 - `#include "res://art/shaders/stylized_lit.gdshaderinc"` is under `shader_type spatial;`, with a blank line before it and after it;
-- the last line of `fragment()` is `EMISSION += soft_rim(NORMAL, INV_VIEW_MATRIX);`. `EMISSION` is light a surface gives out by itself, so the rim shows in shadow too. `NORMAL` is the normal in view space, and `INV_VIEW_MATRIX` takes it back to world space.
+- the last line of `fragment()` is `EMISSION += soft_rim(NORMAL, INV_VIEW_MATRIX, ALBEDO);`. `EMISSION` is light a surface gives out by itself, so the rim shows in shadow too. `NORMAL` is the normal in view space, `INV_VIEW_MATRIX` takes it back to world space, and `ALBEDO` is the color the rim is tinted toward.
 
 <Solution>
 	<Code code={piece3} lang="gdshader" title="art/ground/ground.gdshader" />
@@ -149,7 +150,7 @@ Type into it so that:
 
 - it starts with `shader_type spatial;` and a blank line, then the same `#include`;
 - `palette` is a `sampler2D` uniform with `source_color` and `filter_nearest`, with a comment: the palette, one swatch for each color of the rocks. Nearest filtering keeps each swatch a flat color;
-- `fragment()` sets `ALBEDO = texture(palette, UV).rgb;` and then `EMISSION += soft_rim(NORMAL, INV_VIEW_MATRIX);`.
+- `fragment()` sets `ALBEDO = texture(palette, UV).rgb;` and then `EMISSION += soft_rim(NORMAL, INV_VIEW_MATRIX, ALBEDO);`.
 
 <Solution>
 	<Code code={piece2} lang="gdshader" title="art/palette/palette_lit.gdshader" />
@@ -243,8 +244,8 @@ Press <Kbd keys="F5" mac="Cmd+B" /> and compare with the game at the end of less
 
 <Figure
 	src={duskAfter}
-	alt="The game at dusk, zoomed in: the rocks' sides away from the sun are lighter and rose, softly shaded, with a faint orange edge along their silhouettes."
-	caption="Dusk after: the shadow side is soft, and the edge has a light rim."
+	alt="The game at dusk, zoomed in: the rocks' sides away from the sun are lighter and rose, softly shaded, with a faint edge along their silhouettes that takes the rock's own rose color."
+	caption="Dusk after: the shadow side is soft, and the edge has a faint rim."
 />
 
 The cast shadows on the ground stayed dark: `ATTENUATION` carries them. What changed is the shading *on* the rocks, and the ground, which now takes a little more light at dusk. At noon the change is small, because the sun is high and every surface faces it.
@@ -257,7 +258,7 @@ The cast shadows on the ground stayed dark: `ATTENUATION` carries them. What cha
 
 <Figure
 	src={noonAfter}
-	alt="The game at noon, zoomed in: the rocks look the same, with slightly lighter blue-gray sides and a faint pale edge."
+	alt="The game at noon, zoomed in: the rocks look the same, with slightly lighter blue-gray sides."
 	caption="Noon after: a lighter shadow side."
 />
 

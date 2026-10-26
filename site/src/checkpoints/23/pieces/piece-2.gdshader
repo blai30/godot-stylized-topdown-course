@@ -7,5 +7,5 @@ uniform sampler2D palette : source_color, filter_nearest;
 
 void fragment() {
 	ALBEDO = texture(palette, UV).rgb;
-	EMISSION += soft_rim(NORMAL, INV_VIEW_MATRIX);
+	EMISSION += soft_rim(NORMAL, INV_VIEW_MATRIX, ALBEDO);
 }

@@ -68,7 +68,7 @@ Tiles = ExtResource("7_4wctf")
 
 [node name="WorldEnvironment" parent="." unique_id=756480353 instance=ExtResource("8_4wctf")]
 
-[node name="Trees" type="Node3D" parent="." unique_id=917682018]
+[node name="Trees" type="Node3D" parent="." unique_id=1345753356]
 
-[node name="TreeOak" parent="Trees" unique_id=642112219 instance=ExtResource("9_x3fdv")]
+[node name="TreeOak" parent="Trees" unique_id=981684149 instance=ExtResource("9_x3fdv")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0, -3)

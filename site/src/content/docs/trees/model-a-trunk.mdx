@@ -45,12 +45,12 @@ import result from '../../../assets/lessons/model-a-trunk/result.png';
 
 ## What you will build
 
-A bare oak: a flared trunk that forks about two meters up into two limbs and a leader, and two side branches off the leader, about 4.3 meters tall. It has no leaves yet. In the next lessons you paint leaves, hang them on cards over this skeleton, and write the shader that makes them move. First the wood has to be right, because it shows through the canopy from every side.
+A bare oak: a thick, flared trunk that forks a little over two meters up into two limbs and a leader, and two side branches off the leader, about 4.5 meters tall. It has no leaves yet. In the next lessons you paint leaves, hang them on cards over this skeleton, and write the shader that makes them move. First the wood has to be right, because it shows through the canopy from every side.
 
 <Figure
 	src={final}
 	alt="A bare brown tree in Blender's viewport: a straight trunk that widens at the foot, forking into several limbs that spread and rise, the thinnest ending in blunt tips."
-	caption="The reference trunk: about 2,700 triangles and 4.3 meters tall. Yours will have its own shape."
+	caption="The reference trunk: about 1,900 triangles and 4.5 meters tall. Yours will have its own shape."
 />
 
 ## What a tree needs from its bark
@@ -64,7 +64,7 @@ Once the leaves are on, most of the twigs disappear behind them. What stays visi
 You will not sculpt any of this. A trunk is a tube whose radius changes, and Blender can build a tube around a line for you: you place a few points joined by edges, the **skeleton**, and give each point a radius. The [Skin modifier](/reference/glossary/#skin-modifier) wraps faces around it. A dozen well-placed points make a whole tree, and moving one point reshapes a whole limb.
 
 <Aside type="note" title="Where the budget goes">
-The rocks took 100 to 400 triangles. This tree takes about 2,700, because the Skin modifier joins limbs with many small faces and the Subdivision Surface modifier splits every face again. That is fine for one tree. For a grove, lesson 28 shows how Godot draws a simpler copy of a tree from far away.
+The rocks took 100 to 400 triangles. This tree takes about 1,900, because the Skin modifier joins limbs with many small faces and the Subdivision Surface modifier splits every face again. That is fine for one tree. For a grove, lesson 28 shows how Godot draws a simpler copy of a tree from far away.
 </Aside>
 
 ## Start the file
@@ -99,14 +99,14 @@ To [extrude](/reference/glossary/#extrude) a vertex is to pull a new vertex out 
 
 <Steps>
 
-1. With the vertex selected, press <Kbd keys="E" />. Type `0`, press <Kbd keys="Tab" />, type `0`, press <Kbd keys="Tab" />, type `0.35`, and press <Kbd keys="Enter" />. A second vertex appears 35 centimeters above the first, joined to it by an edge, and it is the selected one.
+1. With the vertex selected, press <Kbd keys="E" />. Type `0`, press <Kbd keys="Tab" />, type `0`, press <Kbd keys="Tab" />, type `0.4`, and press <Kbd keys="Enter" />. A second vertex appears 40 centimeters above the first, joined to it by an edge, and it is the selected one.
 
-2. Because the new vertex is selected, the next extrusion grows from it. Press <Kbd keys="E" /> and type `0.05`, <Kbd keys="Tab" />, `0`, <Kbd keys="Tab" />, `0.75`, <Kbd keys="Enter" />. Then press <Kbd keys="E" /> once more with `-0.05`, <Kbd keys="Tab" />, `0.05`, <Kbd keys="Tab" />, `0.9`, <Kbd keys="Enter" />. The small sideways numbers are the lean that keeps the trunk from being a pole.
+2. Because the new vertex is selected, the next extrusion grows from it. Press <Kbd keys="E" /> and type `0.03`, <Kbd keys="Tab" />, `0`, <Kbd keys="Tab" />, `0.7`, <Kbd keys="Enter" />. Then press <Kbd keys="E" /> once more with `-0.03`, <Kbd keys="Tab" />, `0.03`, <Kbd keys="Tab" />, `1.15`, <Kbd keys="Enter" />. The small sideways numbers are the lean that keeps the trunk from being a pole.
 
 	<Figure
 		src={trunk}
-		alt="Edit Mode: four vertices joined by three edges climbing from the origin, the second only 35 centimeters above the first, the others spaced further apart, with a faint lean."
-		caption="The trunk skeleton, framed with Numpad . (View Selected) so it fills the view. The top vertex is the fork, 1.9 meters up."
+		alt="Edit Mode: four vertices joined by three edges climbing from the origin, the second only 40 centimeters above the first, the others spaced further apart, with a faint lean."
+		caption="The trunk skeleton, framed with Numpad . (View Selected) so it fills the view. The top vertex is the fork, 2.15 meters up."
 	/>
 
 3. Zoom out a little with the mouse wheel to leave room for the limbs.
@@ -120,22 +120,22 @@ Every limb is a short chain of extrusions that starts at a vertex you choose. Cl
 | Vertex | Grows from | Type (X, Y, Z) | Ends at |
 |---|---|---|---|
 | Foot | | | 0, 0, -0.1 |
-| Flare | Foot | 0, 0, 0.35 | 0, 0, 0.25 |
-| Middle | Flare | 0.05, 0, 0.75 | 0.05, 0, 1.0 |
-| Fork | Middle | -0.05, 0.05, 0.9 | 0, 0.05, 1.9 |
-| A1 | Fork | -0.6, 0.05, 0.6 | -0.6, 0.1, 2.5 |
-| A2 | A1 | -0.5, 0.1, 0.6 | -1.1, 0.2, 3.1 |
-| A3 | A2 | -0.2, 0.1, 0.5 | -1.3, 0.3, 3.6 |
-| B1 | Fork | 0.7, -0.25, 0.7 | 0.7, -0.2, 2.6 |
-| B2 | B1 | 0.5, -0.1, 0.6 | 1.2, -0.3, 3.2 |
-| B3 | B2 | 0.2, 0.1, 0.5 | 1.4, -0.2, 3.7 |
-| L1 | Fork | 0.05, 0.05, 0.9 | 0.05, 0.1, 2.8 |
-| L2 | L1 | 0.05, 0.1, 0.8 | 0.1, 0.2, 3.6 |
-| L3 | L2 | -0.05, -0.1, 0.6 | 0.05, 0.1, 4.2 |
-| C1 | L1 | -0.35, 0.6, 0.5 | -0.3, 0.7, 3.3 |
-| C2 | C1 | -0.2, 0.4, 0.5 | -0.5, 1.1, 3.8 |
-| D1 | L1 | 0.45, -0.8, 0.6 | 0.5, -0.7, 3.4 |
-| D2 | D1 | 0.3, -0.3, 0.5 | 0.8, -1.0, 3.9 |
+| Flare | Foot | 0, 0, 0.4 | 0, 0, 0.3 |
+| Middle | Flare | 0.03, 0, 0.7 | 0.03, 0, 1.0 |
+| Fork | Middle | -0.03, 0.03, 1.15 | 0, 0.03, 2.15 |
+| A1 | Fork | -0.35, 0.02, 0.6 | -0.35, 0.05, 2.75 |
+| A2 | A1 | -0.35, 0.05, 0.6 | -0.7, 0.1, 3.35 |
+| A3 | A2 | -0.1, 0.05, 0.5 | -0.8, 0.15, 3.85 |
+| B1 | Fork | 0.4, -0.13, 0.7 | 0.4, -0.1, 2.85 |
+| B2 | B1 | 0.35, -0.05, 0.6 | 0.75, -0.15, 3.45 |
+| B3 | B2 | 0.1, 0.05, 0.5 | 0.85, -0.1, 3.95 |
+| L1 | Fork | 0.03, 0.02, 0.9 | 0.03, 0.05, 3.05 |
+| L2 | L1 | 0.02, 0.05, 0.8 | 0.05, 0.1, 3.85 |
+| L3 | L2 | -0.02, -0.05, 0.6 | 0.03, 0.05, 4.45 |
+| C1 | L1 | -0.28, 0.4, 0.5 | -0.25, 0.45, 3.55 |
+| C2 | C1 | -0.1, 0.25, 0.5 | -0.35, 0.7, 4.05 |
+| D1 | L1 | 0.27, -0.55, 0.6 | 0.3, -0.5, 3.65 |
+| D2 | D1 | 0.15, -0.2, 0.5 | 0.45, -0.7, 4.15 |
 
 <Steps>
 
@@ -162,7 +162,7 @@ Every limb is a short chain of extrusions that starts at a vertex you choose. Cl
 </Steps>
 
 <Aside type="tip" title="Make it yours">
-The table is one possible tree. To change it, select a vertex and press <Kbd keys="G" /> to move it: everything grown from it does not follow, so move the tip first, then the vertices below it. Keep the fork between 1.5 and 2.5 meters, so the trunk shows under the canopy, and keep the tips inside a circle about 1.5 meters from the trunk, because lesson 26 builds the leaf canopy around them.
+The table is one possible tree. To change it, select a vertex and press <Kbd keys="G" /> to move it: everything grown from it does not follow, so move the tip first, then the vertices below it. Keep the fork between 1.8 and 2.5 meters, so the trunk shows under the canopy, and keep the tips inside a circle about 1 meter from the trunk, because lesson 26 builds the leaf canopy around them.
 </Aside>
 
 ## Give it bark
@@ -197,13 +197,15 @@ The table is one possible tree. To change it, select a vertex and press <Kbd key
 
 	| Vertices | Radius | Type |
 	|---|---|---|
-	| Foot | 0.26 m | `1.04` |
-	| Flare | 0.20 m | `0.8` |
-	| Middle | 0.17 m | `0.68` |
-	| Fork | 0.15 m | `0.6` |
-	| A1, B1, L1 | 0.10 m | `0.4` |
-	| A2, B2, L2, C1, D1 | 0.06 m | `0.24` |
-	| A3, B3, L3, C2, D2 | 0.03 m | `0.12` |
+	| Foot | 0.40 m | `1.6` |
+	| Flare | 0.28 m | `1.12` |
+	| Middle | 0.22 m | `0.88` |
+	| Fork | 0.20 m | `0.8` |
+	| L1 | 0.16 m | `0.64` |
+	| A1, B1 | 0.14 m | `0.56` |
+	| L2, C1, D1 | 0.09 m | `0.36` |
+	| A2, B2 | 0.08 m | `0.32` |
+	| A3, B3, L3, C2, D2 | 0.04 m | `0.16` |
 
 	Click the first vertex of a group, <Kbd keys="Shift" />-click the others, press <Kbd keys="Ctrl+A" mac="Cmd+A" />, type the number, and press <Kbd keys="Enter" />. Do the groups from the top of the table down, and press <Kbd keys="Alt+A" mac="Option+A" /> between groups.
 
@@ -217,7 +219,7 @@ The table is one possible tree. To change it, select a vertex and press <Kbd key
 
 </Steps>
 
-The twig radius of 3 centimeters is the thinnest the bark goes. Everything finer will be a leaf card.
+The twig radius of 4 centimeters is the thinnest the bark goes. Everything finer will be a leaf card.
 
 ## Round it and make it real
 
@@ -245,7 +247,7 @@ The Skin modifier builds tubes with four sides, and they look it. One level of S
 
 4. Apply the modifiers in order, the Skin first. Point at the Skin modifier's panel and press <Kbd keys="Ctrl+A" mac="Cmd+A" />. The panel disappears and the Subdivision panel moves up. Point at it and press <Kbd keys="Ctrl+A" mac="Cmd+A" /> again. The modifier list is empty, and the mesh is the tree.
 
-5. Check the model. With the pointer over the viewport, open the **Statistics** overlay if you like (the **Overlays** popover). The reference tree has 2,724 triangles, is about 2.7 meters wide and 4.3 meters tall, and its lowest point is 7 centimeters below the ground.
+5. Check the model. With the pointer over the viewport, open the **Statistics** overlay if you like (the **Overlays** popover). The reference tree has 1,864 triangles, is about 1.7 meters wide and 4.5 meters tall, and its lowest point is 7 centimeters below the ground.
 
 	<Figure
 		src={applied}

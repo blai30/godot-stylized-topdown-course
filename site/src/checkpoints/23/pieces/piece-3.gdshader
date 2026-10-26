@@ -38,5 +38,5 @@ void fragment() {
 	float tone = texture(edge_noise, world_position.xz * edge_noise_scale * 0.25).r;
 	ALBEDO *= 0.75 + 0.5 * tone;
 	ALPHA_SCISSOR_THRESHOLD = 0.5;
-	EMISSION += soft_rim(NORMAL, INV_VIEW_MATRIX);
+	EMISSION += soft_rim(NORMAL, INV_VIEW_MATRIX, ALBEDO);
 }
