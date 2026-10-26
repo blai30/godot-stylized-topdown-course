@@ -1,0 +1,9 @@
+[gd_resource type="ShaderMaterial" format=3 uid="uid://d0230kc7ifqxi"]
+
+[ext_resource type="Shader" uid="uid://ds11h2q4ianxk" path="res://art/shaders/bark.gdshader" id="1_jywyy"]
+[ext_resource type="Texture2D" uid="uid://dybnnuhcd7x8n" path="res://art/palette/palette.png" id="2_w6qgk"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_jywyy")
+shader_parameter/palette = ExtResource("2_w6qgk")

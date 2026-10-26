@@ -1,0 +1,320 @@
+---
+title: The foliage shader and wind
+description: Write the shader that turns the oak's cards into leaves lit as one soft crown, and a wind include that sways the whole tree and flutters each card, with no script.
+sidebar:
+  order: 27
+  label: 27. The foliage shader and wind
+lesson:
+  number: 27
+  minutes: 90
+  learn:
+    - How a shader reads vertex colors and a stored normal that Blender wrote
+    - How to cut leaves out of a card with the alpha scissor, and why that also gives leafy shadows
+    - How to grade a crown lighter and warmer on top and darker and cooler below, and darker deep inside
+    - How to move vertices in a shader, from TIME and a position, so a grove sways with no script
+    - What a per-instance shader parameter is, and why a tree needs one
+  prerequisites: [17, 23, 25, 26]
+---
+
+import { Aside, Code, FileTree, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Solution from '../../../components/Solution.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import piece1 from '../../../checkpoints/27/pieces/piece-1.gdshaderinc?raw';
+import piece2 from '../../../checkpoints/27/pieces/piece-2.gdshader?raw';
+import piece3 from '../../../checkpoints/27/pieces/piece-3.gdshader?raw';
+import leavesMaterial from '../../../checkpoints/27/files/art/nature/tree_oak/leaves.tres?raw';
+import treeScene from '../../../checkpoints/27/files/art/nature/tree_oak/tree_oak.tscn?raw';
+import noon from '../../../assets/lessons/the-foliage-shader/noon.png';
+import dusk from '../../../assets/lessons/the-foliage-shader/dusk.png';
+import night from '../../../assets/lessons/the-foliage-shader/night.png';
+import wind from '../../../assets/lessons/the-foliage-shader/wind.png';
+import globals from '../../../assets/lessons/the-foliage-shader/globals.png';
+import createInclude from '../../../assets/lessons/the-foliage-shader/create-include.png';
+import createFoliage from '../../../assets/lessons/the-foliage-shader/create-foliage.png';
+import createBark from '../../../assets/lessons/the-foliage-shader/create-bark.png';
+import windEditor from '../../../assets/lessons/the-foliage-shader/wind-editor.png';
+import foliageEditor from '../../../assets/lessons/the-foliage-shader/foliage-editor.png';
+import leavesMaterialShot from '../../../assets/lessons/the-foliage-shader/leaves-material.png';
+import saveMaterial from '../../../assets/lessons/the-foliage-shader/save-material.png';
+import barkMaterialShot from '../../../assets/lessons/the-foliage-shader/bark-material.png';
+import treeSceneShot from '../../../assets/lessons/the-foliage-shader/tree-scene.png';
+
+## What you will build
+
+Two shaders and a shared include that turn the oak's colored cards into a tree: leaves cut out of the cards, lit as one soft crown, and moving in the wind. By the end, the oak in the meadow has a crown that is lighter and warmer on top and darker and cooler beneath, that casts a leafy shadow, and that leans and flutters as a gust crosses it.
+
+<Figure
+	src={noon}
+	alt="The game at noon from above: the player capsule beside a round green oak with a lighter, warmer top and a darker underside, casting a leafy shadow on the grass."
+	caption="The oak at noon in the game."
+/>
+
+The wind is not a script. A shader can compute where each vertex should be from the time and its own position, so the wind is a few lines in the shader, and it works for any number of trees with no per-frame code. The only things set outside the shader are two numbers, the wind's direction and strength, which are **shader globals**, as the rim's color and strength were in lesson 23.
+
+## What the shader reads
+
+Lesson 26 gave each card three numbers in its vertex colors, and a normal. Here is how this lesson's shader uses them.
+
+| Data | From | Used for |
+|---|---|---|
+| Vertex color red, the **phase** | The card | Which of the atlas's four sprays the card shows, and the card's own flutter |
+| Vertex color green | The card's far edge | How much the card flutters: none at the stem, most at the far edge |
+| Vertex color blue, the **depth** | The card's place in the crown | Darkening the leaves deep inside |
+| The custom normal | The card's corners | Lighting every card as part of one dome |
+| The atlas's alpha | The picture you painted | Cutting leaves out of the card |
+| The atlas's color | The picture you painted | A multiplier around mid-gray on the leaf color |
+
+## The wind globals
+
+<Steps>
+
+1. Choose **Project > Project Settings...** and open the **Globals** tab, then **Shader Globals**.
+
+2. Type `wind_direction` in **Name**, set **Type** to `vec2`, and click **Add**. Then type `wind_strength`, set **Type** to `float`, and click **Add**.
+
+3. Set `wind_direction` to `1` and `0.4`: it is a direction on the ground, where X points east and Y points south, so the wind blows east and a little south. Set `wind_strength` to `0.6`: a steady breeze, from 0 for none to 1 for the strongest the shader makes. Click each field, type the number, and press <Kbd keys="Enter" />.
+
+	<Figure
+		src={globals}
+		alt="The Project Settings window on Globals, Shader Globals, listing rim_color, rim_strength, wind_direction as 1.0 and 0.4, and wind_strength as 0.6."
+		caption="Two more shader globals, with values."
+	/>
+
+4. Click **Close**.
+
+</Steps>
+
+## Piece 1: the wind include
+
+The wind goes in an include, because the bark and the cards must move by exactly the same rule, or the leaves would drift away from their branches.
+
+<Steps>
+
+1. Click **Shader Editor** at the bottom of the window. In its **File** menu, choose **New Shader Include...**. Set **Path** to `res://art/shaders/wind.gdshaderinc` and click **Create**.
+
+	<Figure
+		src={createInclude}
+		alt="The Create Shader dialog: Type ShaderInclude, Path res://art/shaders/wind.gdshaderinc."
+		caption="A new include beside the lighting one."
+	/>
+
+</Steps>
+
+Type into it so that:
+
+- a comment on the first line says it is wind for anything that sways: one gust front that crosses the meadow, and the sway and flutter it drives;
+- `global uniform vec2 wind_direction;` and `global uniform float wind_strength;` read the globals, with a comment above them: which way the wind blows along the ground (x east, y south), and how hard, from 0 to 1;
+- constants follow, each with a comment. The gust: `GUST_LENGTH` `24.0` meters, `GUST_SECONDS` `8.0`, and `GUST_FLOOR` `0.4`, the share of its strength that the wind never drops below. The sway: `SWAY_HZ` `0.5`, `TREE_BEND` `0.03`, and `CANOPY_HEIGHT` `6.0`. The flutter: `FLUTTER_HZ` `1.125` and `CARD_FLUTTER` `0.06`;
+- a function `float gust_strength(vec3 world_position)` has a comment: the wind's strength here, now, as the wave's crest passes each spot in turn, from upwind to downwind. It takes `normalize(wind_direction)` as `heading`, then `float wave = 0.5 + 0.5 * sin(TAU * (TIME / GUST_SECONDS - dot(world_position.xz, heading) / GUST_LENGTH));`, which runs between 0 and 1, and returns `wind_strength * mix(GUST_FLOOR, 1.0, wave)`;
+- a function `vec3 tree_sway(vec3 world_position, vec3 tree_origin, float tree_phase)` has a comment: how far the whole tree leans at a point on it, in world space, where the tree's own phase keeps a grove from swaying in step. It computes `float rise = (world_position.y - tree_origin.y) / CANOPY_HEIGHT;`, `float swing = sin(TAU * (tree_phase + SWAY_HZ * TIME));`, and `float lean = TREE_BEND * CANOPY_HEIGHT * rise * rise * gust_strength(world_position) * swing;`, with a comment that the top moves most, since the lean grows with the square of the height, and returns `vec3(heading.x, 0.0, heading.y) * lean`;
+- a function `vec3 card_flutter(vec3 world_position, float tree_phase, float card_phase, float far_edge)` has a comment: how far a card flutters, along its own direction, more at its far edge, in step with its own phase. It makes `float angle = TAU * card_phase;`, `vec3 direction = vec3(cos(angle), 0.6, sin(angle));` (a direction that leans a little up), and `float beat = sin(TAU * (tree_phase + card_phase + FLUTTER_HZ * TIME));`, and returns `direction * CARD_FLUTTER * far_edge * gust_strength(world_position) * beat`.
+
+<Solution>
+	<Code code={piece1} lang="gdshader" title="art/shaders/wind.gdshaderinc" />
+</Solution>
+
+Save it with <Kbd keys="Ctrl+Alt+S" mac="Cmd+Option+S" />.
+
+<Figure
+	src={windEditor}
+	alt="The Shader Editor showing wind.gdshaderinc: the comment, the two global uniforms, and the constants for the gust, the sway, and the flutter."
+	caption="The wind include."
+/>
+
+<Aside type="note" title="How the wind works">
+`TIME` is the number of seconds the game has run. Every vertex asks the same question, "what is the wind where I am, right now?", and gets a different answer because the gust is a wave: `TIME / GUST_SECONDS` moves its crest along, and `dot(world_position.xz, heading) / GUST_LENGTH` offsets each spot by how far it is along the wind. The crest takes 8 seconds to repeat and is 24 meters long, so across a meadow some trees are in a gust while others are in a lull, and the gust crosses them in turn. That is what reads as wind, and no tree needs to know about the others.
+
+The sway and the flutter each take their strength from the gust, so a lull stills them and a gust sets them off. The tree's `tree_phase` shifts its swing in time, and each card's red channel shifts its flutter, so no two move in step.
+
+Godot's `TIME` starts over every hour. The rates here are chosen to make a whole number of cycles in an hour (1800 sways, 4050 flutters, and 450 gusts), so nothing jumps when it does.
+</Aside>
+
+## Piece 2: the foliage shader
+
+<Steps>
+
+1. In the Shader Editor, choose **File > New Shader...**, set **Path** to `res://art/shaders/foliage.gdshader`, keep **Mode** on **Spatial**, and click **Create**.
+
+	<Figure
+		src={createFoliage}
+		alt="The Create Shader dialog: Type Shader, Mode Spatial, Path res://art/shaders/foliage.gdshader."
+		caption="A shader for the cards."
+	/>
+
+</Steps>
+
+Type into it so that:
+
+- it starts with `shader_type spatial;` and `render_mode cull_disabled;`, then a blank line, then `#include "res://art/shaders/wind.gdshaderinc"`. A card is a single flat face, and `cull_disabled` draws both its sides, so it shows from behind too;
+- `leaf_atlas` is a `sampler2D` uniform with `filter_linear_mipmap_anisotropic`, with a comment: the leaf atlas from lesson 25. It has no `source_color`, because the atlas is a table of multipliers and not a picture, and the shader reads its numbers as they are. `leaf_color` is a `vec3` with `source_color`, set to `vec3(0.408, 0.765, 0.263)`, with a comment: the color the atlas's middle gray becomes. `instance uniform float tree_phase = 0.0;` has a comment: set on each tree, so a grove does not sway in step. An **instance uniform** is a parameter each instance of a mesh carries for itself, where an ordinary uniform is shared by every use of the material;
+- constants follow, each with a comment. `LEAF_GAIN` is `255.0 / 128.0`: the atlas stores a multiplier around 0.5, 128 of 255 means 1.0, and this gain keeps the leaf color on average. `CANOPY_TOP` is `vec3(1.25, 1.22, 0.95)`, lighter and warmer, for cards facing up, and `CANOPY_UNDER` is `vec3(0.5, 0.6, 0.6)`, darker and cooler, for cards facing down. `CANOPY_GRADE` is `vec2(-0.4, 0.85)`, the heights of the normal where the grade starts and is complete. `CANOPY_INNER` is `0.55`, and `CANOPY_DEPTH` is `vec2(0.3, 0.95)`: leaves deep in the canopy darken to `CANOPY_INNER`, from the depth `CANOPY_DEPTH.y` inward to `CANOPY_DEPTH.x`. `LEAF_WRAP` is `0.25`, with a comment: leaves wrap light less than rocks do, so each clump keeps a shaded side;
+- three `varying` variables, `vec3 world_normal`, `float canopy_depth`, and `float atlas_cell`, carry values from `vertex()` to `fragment()`;
+- `void vertex()` has the comments and lines below. `world_normal = normalize(MODEL_NORMAL_MATRIX * NORMAL);`, with a comment that this is the normal stored in lesson 26, kept in world space, because Godot flips `NORMAL` on the back of a card and this does not. `canopy_depth = COLOR.b;`. `atlas_cell = floor(COLOR.r * 3.999);`, with a comment that a card's phase also picks which of the atlas's four sprays it shows. `vec3 world_position = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;` and `vec3 tree_origin = MODEL_MATRIX[3].xyz;`. `vec3 wind = tree_sway(world_position, tree_origin, tree_phase) + card_flutter(world_position, tree_phase, COLOR.r, COLOR.g);`. And last `VERTEX += inverse(mat3(MODEL_MATRIX)) * wind;`, with a comment that the shader moves the vertex in model space, so the world-space push is turned around;
+- `void fragment()` computes `vec2 cell = vec2(mod(atlas_cell, 2.0), floor(atlas_cell / 2.0));`, the cell's column and row in the atlas's 2 by 2, and `vec4 leaf = texture(leaf_atlas, (UV + cell) * 0.5);`. `ALPHA = leaf.a;` and `ALPHA_SCISSOR_THRESHOLD = 0.5;`. `NORMAL = normalize((VIEW_MATRIX * vec4(world_normal, 0.0)).xyz);`, with a comment: light every card with the stored normal, turned to view space. Then `float top = smoothstep(CANOPY_GRADE.x, CANOPY_GRADE.y, world_normal.y);` and `float inner = mix(CANOPY_INNER, 1.0, smoothstep(CANOPY_DEPTH.x, CANOPY_DEPTH.y, canopy_depth));`, then `ALBEDO = leaf_color * leaf.rgb * LEAF_GAIN * mix(CANOPY_UNDER, CANOPY_TOP, top) * inner;` and `ROUGHNESS = 1.0;`;
+- `void light()` has the same body as lesson 23's, with `LEAF_WRAP` in place of `WRAP`: it computes `float wrapped = clamp((dot(NORMAL, LIGHT) + LEAF_WRAP) / (1.0 + LEAF_WRAP), 0.0, 1.0);` and adds `wrapped * ATTENUATION * LIGHT_COLOR / PI` to `DIFFUSE_LIGHT`.
+
+<Solution>
+	<Code code={piece2} lang="gdshader" title="art/shaders/foliage.gdshader" />
+</Solution>
+
+Save it. The Shader Editor shows an error if a name is wrong, and the line it is on.
+
+<Figure
+	src={foliageEditor}
+	alt="The Shader Editor showing foliage.gdshader: shader_type spatial, the cull_disabled render mode, the include of wind.gdshaderinc, the atlas and leaf color uniforms, the instance uniform tree_phase, and the canopy constants."
+	caption="The foliage shader."
+/>
+
+Here is what the shader does, step by step.
+
+- **Which spray.** A card's phase, red, is a random number from 0 up to but not including 1. `floor(phase * 3.999)` makes it 0, 1, 2, or 3, and that picks the cell. The card's UVs run 0 to 1 over the whole card, so `(UV + cell) * 0.5` is the same place inside that cell of the atlas.
+- **Leaves.** `ALPHA` is the atlas's transparency. With `ALPHA_SCISSOR_THRESHOLD`, a pixel is either fully there or fully cut away, so a card keeps a hard leafy edge and still writes to the depth buffer, as a solid does. That is why the tree's *shadow* is leafy: the shadow pass cuts away the same pixels.
+- **One soft crown.** Setting `NORMAL` from `world_normal` lights every card with the normal you stored in Blender, not the card's own. Lesson 26's custom normals make the whole crown shade as one dome.
+- **The grade.** `top` is 0 where the stored normal points down and 1 where it points up. The card's color mixes from the cooler, darker `CANOPY_UNDER` to the warmer, lighter `CANOPY_TOP` as it does. `inner` darkens by the depth stored in blue, so leaves inside the crown read as in shade, and the surface leaves read as in the light.
+
+## Piece 3: the bark shader
+
+The trunk and limbs need to move with the crown. The palette shader from lesson 23 does not know about wind, so give the bark its own shader that includes both.
+
+<Steps>
+
+1. In the Shader Editor, choose **File > New Shader...**, set **Path** to `res://art/shaders/bark.gdshader`, keep **Mode** on **Spatial**, and click **Create**.
+
+	<Figure
+		src={createBark}
+		alt="The Create Shader dialog: Type Shader, Mode Spatial, Path res://art/shaders/bark.gdshader."
+		caption="A shader for the bark."
+	/>
+
+</Steps>
+
+Type into it so that:
+
+- it starts with `shader_type spatial;` and a blank line, then two includes, `res://art/shaders/stylized_lit.gdshaderinc` and `res://art/shaders/wind.gdshaderinc`;
+- `palette` is the same `sampler2D` uniform as in `palette_lit.gdshader`, `source_color` and `filter_nearest`, with a comment that it is the palette as for the rocks, and `instance uniform float tree_phase = 0.0;` has the same comment as in the foliage shader;
+- `void vertex()` makes `vec3 world_position = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;` and `vec3 tree_origin = MODEL_MATRIX[3].xyz;`, with a comment that the bark leans with the cards, so the limbs stay under their leaves, and does `VERTEX += inverse(mat3(MODEL_MATRIX)) * tree_sway(world_position, tree_origin, tree_phase);`;
+- `void fragment()` is the same as the palette shader's: `ALBEDO = texture(palette, UV).rgb;` and `EMISSION += soft_rim(NORMAL, INV_VIEW_MATRIX, ALBEDO);`.
+
+<Solution>
+	<Code code={piece3} lang="gdshader" title="art/shaders/bark.gdshader" />
+</Solution>
+
+Save it. Click **Shader Editor** again to close it.
+
+## The materials
+
+<Steps>
+
+1. Open `art/nature/tree_oak/tree_oak.tscn` and select its `leaves` node. In the Inspector, under **Geometry**, click **Material Override**'s empty field and choose **ShaderMaterial** under **New**. Click the material, click its **Shader** field, choose **Quick Load...**, and pick `foliage.gdshader`.
+
+2. Under **Shader Parameters**, click **Leaf Atlas**'s empty field, choose **Quick Load...**, and pick `leaf_atlas.png`. **Leaf Color** is already the green you gave the shader.
+
+	<Figure
+		src={leavesMaterialShot}
+		alt="The Inspector for leaves with Geometry's Material Override set to a ShaderMaterial, its Shader foliage.gdshader, its Leaf Atlas parameter showing the four sprays of leaves, and Leaf Color a green swatch."
+		caption="The foliage material."
+	/>
+
+3. Click the down arrow at the right of the **Material Override** row and choose **Save As...**. Save it as `leaves.tres` in `art/nature/tree_oak`.
+
+	<Figure
+		src={saveMaterial}
+		alt="The Save Resource As dialog in res://art/nature/tree_oak with File leaves.tres."
+		caption="The material as a file of its own."
+	/>
+
+4. Select the `tree_oak` node, the trunk. It still has lesson 24's palette material: click the down arrow at the right of **Material Override** and choose **Clear**. Then click the empty field, choose **ShaderMaterial** under **New**, click the material, click its **Shader** field, choose **Quick Load...**, and pick `bark.gdshader`. Under **Shader Parameters**, click **Palette**'s empty field, choose **Quick Load...**, and pick `palette.png`. Save the material as `bark.tres`, in the same folder.
+
+	<Figure
+		src={barkMaterialShot}
+		alt="The Inspector for tree_oak with Geometry's Material Override set to a ShaderMaterial, its Shader bark.gdshader, and its Palette parameter showing the palette's colored swatches."
+		caption="The bark material."
+	/>
+
+5. Save the scene with <Kbd keys="Ctrl+S" mac="Cmd+S" />.
+
+	<Figure
+		src={treeSceneShot}
+		alt="The Godot editor with the tree_oak scene open: a round green crown of leaves above a brown trunk."
+		caption="The tree scene with both materials."
+	/>
+
+</Steps>
+
+## See it in the game
+
+Press <Kbd keys="F5" mac="Cmd+B" /> to run. The oak stands by the dirt patch, with a crown that is lit as one dome and leafy at its edge, and a shadow made of leaves. Watch the crown for a few seconds: it leans a little and flutters, and the motion comes and goes as gusts pass.
+
+<Figure
+	src={wind}
+	alt="Three frames of the oak's crown, half a second apart: the leaf masses shift slightly between frames, and the crown's outline changes."
+	caption="The crown at three moments, half a second apart. Every card moves a little, and the whole crown leans."
+/>
+
+The day animation changes the oak with the rest of the scene, since the cards and the bark take the same sun.
+
+<Figure
+	src={dusk}
+	alt="The game at dusk: the oak's crown is a warm olive green, lit from the side, with a long shadow across the orange-tinted grass."
+	caption="Dusk."
+/>
+
+<Figure
+	src={night}
+	alt="The game at night: the oak's crown is a deep blue-green, nearly dark below with a lighter top, in a blue-tinted meadow."
+	caption="Night."
+/>
+
+<Aside type="note" title="What the leaf color is, and is not">
+The oak's green comes from three things: `leaf_color`, the atlas's values near mid-gray, and the grade. Change `leaf_color` in the material and every leaf changes together, and the atlas keeps its warm and cool leaves. An autumn oak is the same material with a different `leaf_color`.
+</Aside>
+
+## Try it
+
+- In the `wind_strength` global, set `1`. Run the game and watch the oak: it leans farther and flutters harder. Set it back to `0.6` after. A strength of `0` stills it.
+- In `wind.gdshaderinc`, change `GUST_LENGTH` to `6.0`. The gusts become short, and a large tree is in a gust and a lull at the same time.
+- In `foliage.gdshader`, set `LEAF_WRAP` to `0.5`, the rocks' value. The crown's shaded side gets lighter and the clumps lose some of their depth. Put it back after.
+- Set `CANOPY_INNER` to `1.0`: the leaves deep inside are as bright as the ones on the surface, and the crown flattens.
+
+## If it does not work
+
+- **The shader reports "Unknown identifier".** A name is misspelled, or the include is missing. `tree_sway` and `card_flutter` come from `wind.gdshaderinc`, so check the `#include` line at the top of the shader.
+- **The leaves are a flat black-green.** The atlas is not set: check **Leaf Atlas** in the material, and that `leaf_atlas.png` is the picture from lesson 25.
+- **The cards are solid squares.** `ALPHA` is not set to the atlas's alpha, or `ALPHA_SCISSOR_THRESHOLD` is missing.
+- **The leaves are too light or too dark overall.** The atlas's values should be near the middle: if you painted it much lighter or darker than mid-gray, scale `LEAF_GAIN` to match. Or change `leaf_color`.
+- **The crown does not move.** The globals are not there, or `wind_strength` is `0`. Check **Project Settings > Globals > Shader Globals**, and that the material on `leaves` is the foliage shader.
+- **The branches and the leaves move apart.** The trunk is not using `bark.gdshader`, or its `tree_phase` differs from the cards' phase. Both stay at `0` until lesson 28 changes them.
+- **Both sides of the cards look different.** `world_normal` is not used. The cards must take their lighting from the normal in the vertex shader, not from `NORMAL` as Godot provides it.
+- **A card shows the wrong part of the atlas, or a seam.** `(UV + cell) * 0.5` is the cell's place in the atlas: check the `0.5` and the cell calculation.
+
+## Checkpoint
+
+Your project now contains:
+
+<FileTree>
+- art
+  - nature
+    - tree_oak
+      - **leaves.tres**
+      - **bark.tres**
+      - tree_oak.tscn, with both materials on its two nodes
+  - shaders
+    - **wind.gdshaderinc**
+    - **foliage.gdshader**
+    - **bark.gdshader**
+- project.godot, with `wind_direction` and `wind_strength` shader globals
+</FileTree>
+
+<Solution label="Show the full leaves.tres">
+	<Code code={leavesMaterial} lang="ini" title="art/nature/tree_oak/leaves.tres" />
+</Solution>
+
+<Solution label="Show the full tree_oak.tscn">
+	<Code code={treeScene} lang="ini" title="art/nature/tree_oak/tree_oak.tscn" />
+</Solution>
+
+Commit your work: `git add .` and `git commit -m "Write the foliage shader and the wind"`. In the next lesson you give the oak a collision shape and shadows, and plant a whole grove.
+
+<Checkpoint />

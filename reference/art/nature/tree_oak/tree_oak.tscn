@@ -1,9 +1,13 @@
 [gd_scene format=3 uid="uid://cq7tmg6gvhpss"]
 
 [ext_resource type="PackedScene" uid="uid://cw47i6sol14wq" path="res://art/nature/tree_oak/tree_oak.glb" id="1_gsu0v"]
-[ext_resource type="Material" uid="uid://dfwjs7hb3bs1e" path="res://art/palette/palette_lit.tres" id="2_hjhm8"]
+[ext_resource type="Material" uid="uid://ls5qbbc3t7ob" path="res://art/nature/tree_oak/leaves.tres" id="2_hjhm8"]
+[ext_resource type="Material" uid="uid://d0230kc7ifqxi" path="res://art/nature/tree_oak/bark.tres" id="3_mrtju"]
 
 [node name="TreeOak" unique_id=981684149 instance=ExtResource("1_gsu0v")]
 
-[node name="tree_oak" parent="." index="0" unique_id=300424691]
+[node name="leaves" parent="." index="0" unique_id=247363250]
 material_override = ExtResource("2_hjhm8")
+
+[node name="tree_oak" parent="." index="1" unique_id=777462879]
+material_override = ExtResource("3_mrtju")
