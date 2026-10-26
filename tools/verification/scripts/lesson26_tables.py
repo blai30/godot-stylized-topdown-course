@@ -8,11 +8,11 @@ import leaf_cards_spec as spec
 ENUMS = {
     'data_type': {'FLOAT': 'Float', 'FLOAT_VECTOR': 'Vector', 'FLOAT_COLOR': 'Color', 'FLOAT2': '2D Vector', 'INT': 'Integer'},
     'domain': {'POINT': 'Point', 'INSTANCE': 'Instance', 'CORNER': 'Face Corner'},
-    'operation': {'GREATER_THAN': 'Greater Than', 'SCALE': 'Scale', 'ADD': 'Add', 'NORMALIZE': 'Normalize'},
+    'operation': {'GREATER_THAN': 'Greater Than', 'SCALE': 'Scale', 'ADD': 'Add', 'NORMALIZE': 'Normalize', 'MULTIPLY': 'Multiply'},
     'distribute_method': {'RANDOM': 'Random'},
     'axis': {'Z': 'Z', 'Y': 'Y'},
     'pivot_axis': {'AUTO': 'Auto', 'Z': 'Z'},
-    'mode': {'RGB': 'RGB', 'FREE': 'Free'},
+    'mode': {'RGB': 'RGB', 'FREE': 'Free', 'OFFSET': 'Offset'},
 }
 LABELS = {'data_type': 'type', 'domain': 'domain', 'operation': 'operation', 'distribute_method': 'method', 'axis': 'axis', 'pivot_axis': 'pivot', 'mode': 'mode'}
 TITLES = {'Position': 'Position', 'Compare': 'Compare', 'Grid': 'Grid'}
@@ -49,7 +49,7 @@ def link_row(chapter, keys, link):
     return a, output, b, name
 
 
-for chapter in spec.CHAPTERS:
+for chapter in (spec.PINE_CHAPTERS if 'pine' in sys.argv[1:] else spec.CHAPTERS):
     print('###', chapter['title'])
     print()
     print('| Node | Settings |')

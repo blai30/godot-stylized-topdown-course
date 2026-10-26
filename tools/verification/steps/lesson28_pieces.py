@@ -32,3 +32,10 @@ GROVE = [
     ('TreeOak6', (6.0, 0, 3.6), 20, 1.1),
     ('TreeOak7', (-6.2, 0, 3.8), 250, 0.9),
 ]
+
+# The pines of lesson 29: position, turn about the vertical in degrees, and scale.
+PINES = [
+    ('TreePine', (1.2, 0, -3.4), 0, 1.0),
+    ('TreePine2', (2.8, 0, 3.2), 120, 0.9),
+    ('TreePine3', (-1.5, 0, 4.4), 250, 1.1),
+]

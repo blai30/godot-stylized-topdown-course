@@ -1,0 +1,10 @@
+[gd_resource type="ShaderMaterial" format=3 uid="uid://dhr50ceh0pgb4"]
+
+[ext_resource type="Shader" uid="uid://c70osic5cobt1" path="res://art/shaders/foliage.gdshader" id="1_27v2j"]
+[ext_resource type="Texture2D" uid="uid://b7evp0wm2oshd" path="res://art/nature/tree_pine/pine_atlas.png" id="2_ipmk2"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_27v2j")
+shader_parameter/leaf_atlas = ExtResource("2_ipmk2")
+shader_parameter/leaf_color = Color(0.18431373, 0.47843137, 0.29803923, 1)

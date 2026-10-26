@@ -1,0 +1,481 @@
+---
+title: "A second species: a pine"
+description: Grow a pine with the same pipeline as the oak, faster, with a straight trunk, a needle atlas painted from twig strokes, and a short Geometry Nodes group that rings the trunk with tiers of cards.
+sidebar:
+  order: 29
+  label: "29. A second species: a pine"
+lesson:
+  number: 29
+  minutes: 120
+  learn:
+    - How one pipeline makes a second species, with a different skeleton, atlas, and crown group but the same shader
+    - How to paint needles with a tapering brush
+    - How a crown can be tiers of cards on a leader, built with a short Geometry Nodes group
+    - How the same data, vertex colors and a custom normal, serves a very different crown
+  prerequisites: [14, 24, 25, 26, 27, 28]
+---
+
+import { Aside, Code, FileTree, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Solution from '../../../components/Solution.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import treeScene from '../../../checkpoints/29/files/art/nature/tree_pine/tree_pine.tscn?raw';
+import needlesMaterial from '../../../checkpoints/29/files/art/nature/tree_pine/needles.tres?raw';
+import atlas from '../../../assets/lessons/a-pine/atlas.png';
+import twigs from '../../../assets/lessons/a-pine/twigs.png';
+import skeleton from '../../../assets/lessons/a-pine/skeleton.png';
+import trunk from '../../../assets/lessons/a-pine/trunk.png';
+import tiersNodes from '../../../assets/lessons/a-pine/tiers-nodes.png';
+import tiersView from '../../../assets/lessons/a-pine/tiers-view.png';
+import cardsNodes from '../../../assets/lessons/a-pine/cards-nodes.png';
+import cardsView from '../../../assets/lessons/a-pine/cards-view.png';
+import dataNodes from '../../../assets/lessons/a-pine/data-nodes.png';
+import shadingNodes from '../../../assets/lessons/a-pine/shading-nodes.png';
+import crown from '../../../assets/lessons/a-pine/crown.png';
+import needlesShot from '../../../assets/lessons/a-pine/needles-material.png';
+import treeSceneShot from '../../../assets/lessons/a-pine/tree-scene.png';
+import meadowEditor from '../../../assets/lessons/a-pine/meadow-editor.png';
+import noon from '../../../assets/lessons/a-pine/noon.png';
+import noonClose from '../../../assets/lessons/a-pine/noon-close.png';
+import dusk from '../../../assets/lessons/a-pine/dusk.png';
+import night from '../../../assets/lessons/a-pine/night.png';
+
+## What you will build
+
+A pine, and three of them planted among the oaks. It is the whole pipeline of lessons 24 to 28 again, shorter, because most of it carries over: the shader, the wind, the trunk's bark, the collision script. What changes is the species: a straight trunk with no limbs, an atlas of needles, and a crown that is not a dome of clumps but a stack of skirts, one ring of cards for each tier.
+
+<Figure
+	src={noon}
+	alt="The meadow from above at noon: seven round green oaks and three dark green conical pines among them, each pine a stack of skirts narrowing to a point, with a leafy shadow."
+	caption="Three pines among the oaks."
+/>
+
+## How a pine differs
+
+An oak's crown is a dome made of clumps, and its trunk forks. A pine has one thing the eye reads, its **tiers**: horizontal layers of needles that start wide near the bottom and narrow to the tip, each hanging a little lower at its outer edge. Under that, a straight trunk. So this lesson changes three things and nothing else:
+
+- **The skeleton** is a leader: one chain of vertices straight up, with no forks. Needles hide the thin limbs, so a pine needs none.
+- **The atlas** is needles: long thin strokes fanned out of a twig, painted with the **Twig** brush you made in lesson 14.
+- **The crown group** is short. There is no envelope and no clumps: it places six rings of points at six heights, with a card on each point leaning out and down.
+
+The foliage shader of lesson 27 is not touched. It reads the same data from a card, so a pine's cards need only to carry it.
+
+## Paint the needles
+
+<Steps>
+
+1. In Krita, make a new 1024 by 1024 image named `pine_atlas` with one layer, clear it to transparent, and turn on the 512 pixel grid, as in the first steps of lesson 25: **File > New...**, **Select > Select All**, **Edit > Clear**, **Select > Deselect**, and **Settings > Dockers > Grid and Guides**.
+
+2. Press <Kbd keys="B" /> and pick **Basic-2 Opacity**. Set **Size** to `8` and **Opacity** to `100`. Set a dark blue-gray, hue `215`, saturation `10`, value `30`. In each cell, drag a twig from near the bottom of the cell up through its middle, to about a quarter of the way down from the top, bending it a little. Keep 16 pixels or more clear of the cell's lines.
+
+	<Figure
+		src={twigs}
+		alt="Krita with a see-through canvas split into four cells, each with one thin, slightly bent dark twig in the middle."
+		caption="Four twigs."
+	/>
+
+3. Pick your **Twig** brush from lesson 14. It starts every stroke at full size and tapers it to a point, which is exactly a needle. Set **Size** to `14`. Pick the first gray from this table, hue, saturation, and value:
+
+	| Gray | Hue | Saturation | Value |
+	|---|---|---|---|
+	| Cool, mid | 215 | 14 | 52 |
+	| Cool, dark | 210 | 18 | 44 |
+	| Cool, light | 222 | 10 | 60 |
+	| Warm, mid | 34 | 18 | 56 |
+
+4. Paint needles on each twig: short strokes that leave the twig and sweep outward and upward, about 100 to 200 pixels long, thirty or so to a side, from the twig's foot to near its tip, a little longer in the middle than at the ends. Change the gray every so often, so a spray mixes all four.
+
+	<Figure
+		src={atlas}
+		alt="Krita with four sprays of gray-blue and gray-brown needles, each a fishbone of long tapering strokes leaving a dark twig, one spray in each cell."
+		caption="Four sprays of needles."
+	/>
+
+5. Save the file as `pine_atlas.kra` in a new `art_source\nature\tree_pine` folder in your project, and export it as `pine_atlas.png` into a new `art\nature\tree_pine` folder, leaving **Store alpha channel** checked.
+
+6. In Godot, click `art/nature/tree_pine/pine_atlas.png`, open the **Import** tab, set **Compress > Mode** to **VRAM Compressed**, check **Mipmaps > Generate**, and click **Reimport (\*)**, as for the oak's atlas.
+
+</Steps>
+
+## The trunk
+
+This is lesson 24 again, with a straight skeleton. Do these, in the order of that lesson:
+
+<Steps>
+
+1. In Blender choose **File > New > General**, rename the cube `tree_pine`, and save it as `tree_pine.blend` in `art_source\nature\tree_pine`.
+
+2. Merge the cube to one vertex and sink it 10 centimeters, as in the lesson's **One vertex** section. Extrude the leader with these numbers, each after <Kbd keys="E" />, the last vertex selected each time:
+
+	| Vertex | Type (X, Y, Z) | Ends at |
+	|---|---|---|
+	| Foot | | 0, 0, -0.1 |
+	| Flare | 0, 0, 0.4 | 0, 0, 0.3 |
+	| Low | 0.04, 0, 0.7 | 0.04, 0, 1.0 |
+	| Middle | 0, 0.03, 1.3 | 0.04, 0.03, 2.3 |
+	| Upper | 0, 0, 1.3 | 0.04, 0.03, 3.6 |
+	| Near top | 0.02, 0, 0.8 | 0.06, 0.03, 4.4 |
+	| Tip | 0, 0, 0.7 | 0.06, 0.03, 5.1 |
+
+	<Figure
+		src={skeleton}
+		alt="Edit Mode: seven vertices joined by six edges in a nearly straight line rising from the origin."
+		caption="The pine's skeleton: one chain, seven vertices."
+	/>
+
+3. Add the **Skin** modifier with **Symmetry X** off, and set the radii with **Skin Resize** (<Kbd keys="Ctrl+A" mac="Cmd+A" />), a vertex or two at a time, from the foot up:
+
+	| Vertex | Radius | Type |
+	|---|---|---|
+	| Foot | 0.30 m | `1.2` |
+	| Flare | 0.22 m | `0.88` |
+	| Low | 0.16 m | `0.64` |
+	| Middle | 0.10 m | `0.4` |
+	| Upper | 0.06 m | `0.24` |
+	| Near top, Tip | 0.03 m | `0.12` |
+
+	The pine tapers from 30 centimeters at the foot to a thin leader.
+
+4. Add **Subdivision Surface** at level 1, choose **Object > Shade Smooth**, and apply the **Skin** modifier and then the **Subdivision Surface** modifier, as in lesson 24.
+
+5. Append the `palette` material from `rock_small.blend` and give the trunk that material, add a UV map, and collapse every UV onto one swatch, as in lesson 24, but this time set the UV Vertex to X `0.0625` and Y `0.6875`: the darkest brown of the browns ramp, a darker bark than the oak's.
+
+6. Name the mesh `tree_pine`, name the collection `tree_pine`, and add a glTF exporter to it that writes `art\nature\tree_pine\tree_pine.glb`, with **Animation** off and **Images** set to **None**, as in lesson 24. Click the export button.
+
+	<Figure
+		src={trunk}
+		alt="The tree_pine file in Blender: a straight dark brown trunk, widest at the foot and tapering to a thin tip, almost six meters tall."
+		caption="The pine's trunk: about 1,200 triangles."
+	/>
+
+</Steps>
+
+## The crown group
+
+The crown is a short group on a plane. The plane is only a place to hang the modifier on: the group builds everything from nothing.
+
+<Steps>
+
+1. With the pointer over the 3D view, press <Kbd keys="Shift+A" />, search `plane`, and press <Kbd keys="Enter" />. Press <Kbd keys="F2" /> and name it `needles`.
+
+2. Click the **Geometry Nodes** tab and click **New** in the node editor's header. Make the editor fill the window with <Kbd keys="Ctrl+Space" mac="Cmd+Space" />, and build the group in four chapters, as in lesson 26: add each node with <Kbd keys="Shift+A" />, name it with <Kbd keys="F2" />, set its fields, and link them.
+
+</Steps>
+
+### Chapter 1: tiers
+
+The first chapter makes six rings, one at each tier's height, each smaller than the one below.
+
+<Steps>
+
+1. Add these nodes:
+
+	| Node | Settings |
+	|---|---|
+	| **Tier heights**, from Mesh Line | mode **Offset**, Count `6`, Start Location `0, 0, 1.5`, Offset `0, 0, 0.76` |
+	| **Tier ring**, from Mesh Circle | Vertices `14`, Radius `1` |
+	| **Tier number**, from Index | nothing |
+	| **Tier reach**, from Map Range | type **Float**, From Min `0`, From Max `5`, To Min `0.9`, To Max `0` |
+	| **Ring size**, from Combine XYZ | Z `1` |
+	| **Ring on each height**, from Instance on Points | nothing |
+	| **Realize rings**, from Realize Instances | nothing |
+
+2. Make these links:
+
+	| From | To |
+	|---|---|
+	| Tier heights, Mesh | Ring on each height, Points |
+	| Tier ring, Mesh | Ring on each height, Instance |
+	| Tier number, Index | Tier reach, Value |
+	| Tier reach, Result | Ring size, X |
+	| Tier reach, Result | Ring size, Y |
+	| Ring size, Vector | Ring on each height, Scale |
+	| Ring on each height, Instances | Realize rings, Geometry |
+	| Realize rings, Geometry | Group Output, Geometry |
+
+</Steps>
+
+<Figure
+	src={tiersNodes}
+	alt="The node editor with chapter 1's seven nodes: Tier heights and Tier ring, a Tier number, Tier reach, and Ring size chain, and Ring on each height with Realize rings, joined to the Group Output."
+	caption="Chapter 1: seven nodes."
+/>
+
+**Tier heights** is a line of six points, 76 centimeters apart, from 1.5 meters up to 5.3. **Tier ring** is a circle of 14 points. **Ring on each height** puts a copy of the circle on every point. **Tier number** is each point's number, 0 to 5, and **Tier reach** turns it into a radius from `0.9` for the bottom tier to `0` for the top, where the cards meet at the axis in a point, so **Ring size** scales each circle by it. The rings are small because each card is 1.5 meters long and reaches out from the ring, so a card's tip lands near the radius a pine's tier would have.
+
+<Figure
+	src={tiersView}
+	alt="Blender's viewport with the trunk and six rings of orange dots stacked up it, widest at the bottom."
+	caption="Six rings of 14 points."
+/>
+
+### Chapter 2: a card on each point
+
+<Steps>
+
+1. Add these nodes:
+
+	| Node | Settings |
+	|---|---|
+	| **Position**, from Position | nothing |
+	| **Flatten**, from Vector Math | operation **Multiply**, Vector (second) `1, 1, 0` |
+	| **Outward**, from Vector Math | operation **Normalize** |
+	| **Half outward**, from Vector Math | operation **Scale**, Scale `0.5` |
+	| **Add up**, from Vector Math | operation **Add**, Vector (second) `0, 0, 1` |
+	| **Facing**, from Vector Math | operation **Normalize** |
+	| **Store tier normal**, from Store Named Attribute | type **Vector**, domain **Point**, Name `tier_normal` |
+	| **Face this way**, from Align Rotation to Vector | axis **Z**, pivot **Auto** |
+	| **Roll outward**, from Align Rotation to Vector | axis **Y**, pivot **Z** |
+	| **Card**, from Grid | Size X `1.5`, Size Y `1.5`, Vertices X `2`, Vertices Y `2` |
+	| **Card UVs**, from Store Named Attribute | type **2D Vector**, domain **Face Corner**, Name `UVMap` |
+	| **Card on each point**, from Instance on Points | nothing |
+
+2. Make these links:
+
+	| From | To |
+	|---|---|
+	| Position, Position | Flatten, Vector |
+	| Flatten, Vector | Outward, Vector |
+	| Outward, Vector | Half outward, Vector |
+	| Half outward, Vector | Add up, Vector |
+	| Add up, Vector | Facing, Vector |
+	| Realize rings, Geometry | Store tier normal, Geometry |
+	| Facing, Vector | Store tier normal, Value |
+	| Facing, Vector | Face this way, Vector |
+	| Face this way, Rotation | Roll outward, Rotation |
+	| Outward, Vector | Roll outward, Vector |
+	| Card, Mesh | Card UVs, Geometry |
+	| Card, UV Map | Card UVs, Value |
+	| Store tier normal, Geometry | Card on each point, Points |
+	| Card UVs, Geometry | Card on each point, Instance |
+	| Roll outward, Rotation | Card on each point, Rotation |
+	| Card on each point, Instances | Group Output, Geometry |
+
+</Steps>
+
+<Figure
+	src={cardsNodes}
+	alt="The node editor with chapter 2's twelve nodes: a row of Vector Math nodes from Position to Facing, two Align Rotation to Vector nodes, a Card and its UVs, and Card on each point."
+	caption="Chapter 2: twelve nodes."
+/>
+
+- The first five nodes work out each point's **direction**. **Position** is where a ring point is, and **Flatten** keeps only its X and Y, so the vector points straight out from the trunk. **Outward** makes it length 1. **Half outward** halves it, **Add up** adds `0, 0, 1`, and **Facing** scales the result to length 1: a direction that is mostly up, tipped outward. That is the way a tier's top faces, and it is also the normal you want the crown shaded by, so **Store tier normal** writes it onto each point, as `tier_normal`, as lesson 26 wrote `env_normal`.
+- **Face this way** turns a card so that it faces that direction: the card lies like a skirt tilted down toward its outer edge. **Roll outward** spins it about that axis until the card's **Y** axis points along **Outward**: the stem edge of the card sits at the ring and the far edge sweeps outward.
+- **Card** is the same flat square as the oak's, here 1.5 meters, and **Card UVs** stores its UVs.
+
+<Figure
+	src={cardsView}
+	alt="Blender's viewport with the trunk and six skirts of flat gray cards stacked up it, each tier tilted down at its outer edge, narrowing to the top."
+	caption="Six skirts of cards."
+/>
+
+### Chapter 3: data on every card
+
+<Steps>
+
+1. Add these nodes:
+
+	| Node | Settings |
+	|---|---|
+	| **Wind phase**, from Random Value | type **Float**, Min `0`, Max `1`, Seed `13` |
+	| **Store phase**, from Store Named Attribute | type **Float**, domain **Instance**, Name `phase` |
+	| **Realize cards**, from Realize Instances | nothing |
+
+2. Make these links:
+
+	| From | To |
+	|---|---|
+	| Card on each point, Instances | Store phase, Geometry |
+	| Wind phase, Value | Store phase, Value |
+	| Store phase, Geometry | Realize cards, Geometry |
+	| Realize cards, Geometry | Group Output, Geometry |
+
+</Steps>
+
+<Figure
+	src={dataNodes}
+	alt="The node editor with chapter 3's three nodes: Wind phase, Store phase, and Realize cards."
+	caption="Chapter 3: a random phase per card, then real faces."
+/>
+
+### Chapter 4: colors and normals
+
+<Steps>
+
+1. Add these nodes:
+
+	| Node | Settings |
+	|---|---|
+	| **Read phase**, from Named Attribute | type **Float**, Name `phase` |
+	| **Read UVs**, from Named Attribute | type **Vector**, Name `UVMap` |
+	| **Card height**, from Separate XYZ | nothing |
+	| **Depth value**, from Map Range | type **Float**, From Min `0`, From Max `1`, To Min `0.4`, To Max `1` |
+	| **Pack colors**, from Combine Color | mode **RGB**, Alpha `1` |
+	| **Store colors**, from Store Named Attribute | type **Color**, domain **Point**, Name `Col` |
+	| **Read tier normal**, from Named Attribute | type **Vector**, Name `tier_normal` |
+	| **Set normals**, from Set Mesh Normal | mode **Free** |
+
+2. Make these links:
+
+	| From | To |
+	|---|---|
+	| Read UVs, Attribute | Card height, Vector |
+	| Read phase, Attribute | Pack colors, Red |
+	| Card height, Y | Pack colors, Green |
+	| Card height, Y | Depth value, Value |
+	| Depth value, Result | Pack colors, Blue |
+	| Realize cards, Geometry | Store colors, Geometry |
+	| Pack colors, Color | Store colors, Value |
+	| Store colors, Geometry | Set normals, Mesh |
+	| Read tier normal, Attribute | Set normals, Custom Normal |
+	| Set normals, Mesh | Group Output, Geometry |
+
+</Steps>
+
+<Figure
+	src={shadingNodes}
+	alt="The node editor with chapter 4's eight nodes: attribute reads, Card height, Depth value, Pack colors, Store colors, Read tier normal, and Set normals, before the Group Output."
+	caption="Chapter 4: eight nodes, and the group is complete."
+/>
+
+The oak's blue channel was how deep in the crown a card sat. A pine's depth is simpler: it rises from `0.4` at the stem edge of a card to `1` at its far edge, so each skirt is darker where it meets the trunk and lighter at its rim, and the shader's depth darkening gives the tiers their layered look. The custom normal is just the stored `tier_normal`.
+
+<Figure
+	src={crown}
+	alt="Blender's viewport with the finished pine: a straight dark trunk under six skirts of gray cards, each lit lighter on top, the crown a narrow cone."
+	caption="The pine's crown, shaded as tiers."
+/>
+
+### Export
+
+Finish as in lesson 26, in the same order:
+
+<Steps>
+
+1. Press <Kbd keys="Ctrl+Space" mac="Cmd+Space" /> over the node editor to get the other editors back. On the **Data** tab, name the mesh `needles`, open **Color Attributes**, click **+**, set **Name** to `Col`, and click **Add**.
+
+2. Click the **Layout** tab. On the **Collection** tab, open the exporter's **Data** and **Vertex Colors**, set **Use Vertex Color** to **Active**, and uncheck **Export All Vertex Colors**. Click **Export All**, and save the file with <Kbd keys="Ctrl+S" mac="Cmd+S" />.
+
+</Steps>
+
+## The pine in Godot
+
+<Steps>
+
+1. Open Godot. It imports `tree_pine.glb`. Choose **Scene > New Inherited Scene...** and pick `art/nature/tree_pine/tree_pine.glb`. Rename the root `TreePine`.
+
+2. Select the `needles` node. Under **Geometry**, set **Material Override** to a new **ShaderMaterial**, set its **Shader** to `foliage.gdshader`, and under **Shader Parameters**, set **Leaf Atlas** to `pine_atlas.png`. Click **Leaf Color** and set its hex to `2F7A4C`, a deeper green than the oak's. Save the material as `needles.tres` in `art/nature/tree_pine`.
+
+	<Figure
+		src={needlesShot}
+		alt="The Inspector for needles with Geometry's Material Override set to a ShaderMaterial, its Shader foliage.gdshader, its Leaf Atlas parameter showing the pine's four needle sprays, and Leaf Color a deep green swatch."
+		caption="The foliage shader with the pine's atlas and a darker green."
+	/>
+
+3. Select the `tree_pine` node, the trunk, and set its **Material Override** to `art/nature/tree_oak/bark.tres`: the same bark material, because the shader is the same and the trunk's UV points at the darker swatch.
+
+4. Add a `StaticBody3D` named `Trunk` to the root, with a `CollisionShape3D` named `TrunkShape` under it, as in lesson 28. Give the shape a **CylinderShape3D** with **Radius** `0.3`, and set its **Position** to `0, 1, 0`. Select the root and set its **Script** to `WindPhase.cs`, the script from lesson 28.
+
+5. Save the scene as `tree_pine.tscn`.
+
+	<Figure
+		src={treeSceneShot}
+		alt="The Godot editor with the tree_pine scene: a dark green cone of needles on a dark trunk."
+		caption="The pine's scene."
+	/>
+
+</Steps>
+
+Nothing in the shader changed. The cards carry the same data, so the same shader makes them leaves, light, and wind, and the script gives the pine its own phase.
+
+## Plant the pines
+
+<Steps>
+
+1. Open `levels/meadow.tscn`, select `Trees`, and instantiate `tree_pine.tscn` three times. Set their **Position**, **Rotation**, and **Scale** as in lesson 28:
+
+	| Tree | Position | Turn | Scale |
+	|---|---|---|---|
+	| `TreePine` | `1.2, 0, -3.4` | `0` | `1` |
+	| `TreePine2` | `2.8, 0, 3.2` | `120` | `0.9` |
+	| `TreePine3` | `-1.5, 0, 4.4` | `250` | `1.1` |
+
+	<Figure
+		src={meadowEditor}
+		alt="The Godot editor showing the meadow with seven oaks and three dark green pines among them, and the Scene dock listing the ten trees under Trees."
+		caption="Three pines among the oaks."
+	/>
+
+2. Save the scene, and press <Kbd keys="F5" mac="Cmd+B" />.
+
+</Steps>
+
+<Figure
+	src={noonClose}
+	alt="The game close up at noon: a pine fills the center, a narrow cone of dark green needles in layered skirts, lit lighter on top of each tier."
+	caption="A pine at noon."
+/>
+
+<Figure
+	src={dusk}
+	alt="The game at dusk: two pines among the oaks, deep green with an olive light on their upper tiers, and long shadows."
+	caption="Dusk."
+/>
+
+<Figure
+	src={night}
+	alt="The game at night: the pines and oaks as dark blue-green shapes in a blue-tinted meadow."
+	caption="Night."
+/>
+
+The pines throw shadows of their needles, sway with the gusts at their own phases, and stop the player at the trunk.
+
+## Try it
+
+- Change `6` in **Tier heights** to `8`, and the **Offset** to `0, 0, 0.56`: a taller pine with more tiers. Change **To Max** in **Tier reach** to `0.2`, and the top opens into a ring.
+- Raise **Radius** in **Tier ring** or the `0.9` in **Tier reach**, for a pine with wide skirts.
+- Change **Leaf Color** to a gray-blue, `5E7F8F`, for a spruce, with no other change.
+- Paint a second atlas with fewer, longer needles and use it in a new material, for a different pine.
+
+## If it does not work
+
+- **The pine's crown is a flat disk or a cone with no gaps.** The cards are not leaning: check that **Face this way**'s **Vector** is linked to **Facing**, and that **Add up** adds `0, 0, 1`, not `0, 0, 0`.
+- **The tiers do not narrow toward the top.** **Tier reach** has **To Min** and **To Max** reversed. **To Min** is `0.9`, the bottom tier.
+- **The needles show a flat color with no strokes.** The atlas is not set in the material, or `needles.tres` still holds the oak's atlas.
+- **The pine is bright lime green.** **Leaf Color** is still the oak's. Set it to `2F7A4C`.
+- **The trunk shows through the top tier.** The skeleton's tip is higher than the top tier. The tip should end at `5.1`, and the top tier's cards are at `5.3`.
+- **The cards are white in Godot.** The exporter's **Use Vertex Color** is not **Active**, or the mesh has no `Col` attribute. Do the two steps of Export and export again.
+
+## Checkpoint
+
+Your project now contains:
+
+<FileTree>
+- art
+  - nature
+    - tree_pine
+      - **pine_atlas.png**
+      - **tree_pine.glb**
+      - **needles.tres**
+      - **tree_pine.tscn**
+- art_source
+  - nature
+    - tree_pine
+      - **pine_atlas.kra**
+      - **tree_pine.blend**
+- levels
+  - meadow.tscn with ten trees under `Trees`
+</FileTree>
+
+<Solution label="Show the full tree_pine.tscn">
+	<Code code={treeScene} lang="ini" title="art/nature/tree_pine/tree_pine.tscn" />
+</Solution>
+
+<Solution label="Show the full needles.tres">
+	<Code code={needlesMaterial} lang="ini" title="art/nature/tree_pine/needles.tres" />
+</Solution>
+
+Commit your work: `git add .` and `git commit -m "Grow a pine"`. That is the last lesson of the trees. The module's review follows.
+
+<Checkpoint />

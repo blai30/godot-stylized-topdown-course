@@ -1,0 +1,24 @@
+[gd_scene format=3 uid="uid://bwnqnqcrrhkbc"]
+
+[ext_resource type="PackedScene" uid="uid://bqu8qje7mjj1m" path="res://art/nature/tree_pine/tree_pine.glb" id="1_nhnjm"]
+[ext_resource type="Script" uid="uid://dc8e513p7cql4" path="res://src/World/WindPhase.cs" id="2_tdw8x"]
+[ext_resource type="Material" uid="uid://dhr50ceh0pgb4" path="res://art/nature/tree_pine/needles.tres" id="3_o5no3"]
+[ext_resource type="Material" uid="uid://d0230kc7ifqxi" path="res://art/nature/tree_oak/bark.tres" id="4_7dwh8"]
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_uto0v"]
+radius = 0.3
+
+[node name="TreePine" unique_id=982113338 instance=ExtResource("1_nhnjm")]
+script = ExtResource("2_tdw8x")
+
+[node name="needles" parent="." index="0" unique_id=5035779]
+material_override = ExtResource("3_o5no3")
+
+[node name="tree_pine" parent="." index="1" unique_id=202741516]
+material_override = ExtResource("4_7dwh8")
+
+[node name="Trunk" type="StaticBody3D" parent="." index="2" unique_id=1105537611]
+
+[node name="TrunkShape" type="CollisionShape3D" parent="Trunk" index="0" unique_id=2010178029]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+shape = SubResource("CylinderShape3D_uto0v")

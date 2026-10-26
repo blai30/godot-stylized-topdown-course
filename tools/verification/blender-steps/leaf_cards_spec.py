@@ -162,10 +162,10 @@ CHAPTERS = [
 ]
 
 
-def build(tree, only=None):
+def build(tree, only=None, chapters=None):
     # Builds the whole group, or the chapters named in `only`, with the API: for the headless checks.
     nodes = {'in': next(n for n in tree.nodes if n.bl_idname == 'NodeGroupInput'), 'out': next(n for n in tree.nodes if n.bl_idname == 'NodeGroupOutput')}
-    for chapter in CHAPTERS:
+    for chapter in (chapters or CHAPTERS):
         if only and chapter['key'] not in only:
             continue
         for key, search, settings, inputs in chapter['nodes']:
@@ -196,6 +196,10 @@ IDNAMES = {
     'Grid': 'GeometryNodeMeshGrid',
     'Combine Color': 'FunctionNodeCombineColor',
     'Set Mesh Normal': 'GeometryNodeSetMeshNormal',
+    'Mesh Line': 'GeometryNodeMeshLine',
+    'Mesh Circle': 'GeometryNodeMeshCircle',
+    'Index': 'GeometryNodeInputIndex',
+    'Combine XYZ': 'ShaderNodeCombineXYZ',
 }
 
 
@@ -215,3 +219,123 @@ def apply(node, settings, inputs):
     for name, value in inputs.items():
         found = socket(node, name, False)
         found.default_value = value
+
+
+# The pine's crown, lesson 29: six tiers on a leader, a ring of cards around each. Reuses lesson 26's nodes.
+PINE_LABELS = {
+    'line': 'Tier heights', 'ring': 'Tier ring', 'tier': 'Tier number', 'reach': 'Tier reach', 'size': 'Ring size',
+    'rings': 'Ring on each height', 'r1': 'Realize rings',
+    'pos': 'Position', 'flat': 'Flatten', 'outward': 'Outward', 'half': 'Half outward', 'up': 'Add up', 'facing': 'Facing',
+    's_n': 'Store tier normal', 'az': 'Face this way', 'ay': 'Roll outward', 'grid': 'Card', 'uv': 'Card UVs', 'i2': 'Card on each point',
+    'phase': 'Wind phase', 's_phase': 'Store phase', 'r2': 'Realize cards',
+    'n_phase': 'Read phase', 'n_uv': 'Read UVs', 'uvsep': 'Card height', 'depth': 'Depth value', 'col': 'Pack colors',
+    's_col': 'Store colors', 'n_n': 'Read tier normal', 'sn': 'Set normals',
+}
+LABELS.update(PINE_LABELS)
+
+PINE_CHAPTERS = [
+    {
+        'key': 'tiers',
+        'title': 'Tiers',
+        'flow': {'line': (0, 0), 'ring': (0, 1.2), 'tier': (1, 1.2), 'reach': (2, 1.2), 'size': (3, 1.2), 'rings': (3, 0), 'r1': (4, 0)},
+        'nodes': [
+            ('line', 'Mesh Line', {'mode': 'OFFSET'}, {'Count': 6, 'Start Location': (0.0, 0.0, 1.5), 'Offset': (0.0, 0.0, 0.76)}),
+            ('ring', 'Mesh Circle', {}, {'Vertices': 14, 'Radius': 1.0}),
+            ('tier', 'Index', {}, {}),
+            ('reach', 'Map Range', {'data_type': 'FLOAT'}, {'From Min': 0.0, 'From Max': 5.0, 'To Min': 0.9, 'To Max': 0.0}),
+            ('size', 'Combine XYZ', {}, {'Z': 1.0}),
+            ('rings', 'Instance on Points', {}, {}),
+            ('r1', 'Realize Instances', {}, {}),
+        ],
+        'links': [
+            ('line', 'Mesh', 'rings', 'Points'),
+            ('ring', 'Mesh', 'rings', 'Instance'),
+            ('tier', 'Index', 'reach', 'Value'),
+            ('reach', 'Result', 'size', 'X'),
+            ('reach', 'Result', 'size', 'Y'),
+            ('size', 'Vector', 'rings', 'Scale'),
+            ('rings', 'Instances', 'r1', 'Geometry'),
+            ('r1', 'Geometry', 'out', 'Geometry'),
+        ],
+    },
+    {
+        'key': 'cards',
+        'title': 'Cards',
+        'flow': {'pos': (0, 0), 'flat': (1, 0), 'outward': (2, 0), 'half': (3, 0), 'up': (4, 0), 'facing': (5, 0), 's_n': (6, 0), 'az': (6, 1.4), 'ay': (7, 1.4), 'grid': (5, 2.8), 'uv': (6, 2.8), 'i2': (8, 0)},
+        'nodes': [
+            ('pos', 'Position', {}, {}),
+            ('flat', 'Vector Math', {'operation': 'MULTIPLY'}, {'Vector_001': (1.0, 1.0, 0.0)}),
+            ('outward', 'Vector Math', {'operation': 'NORMALIZE'}, {}),
+            ('half', 'Vector Math', {'operation': 'SCALE'}, {'Scale': 0.5}),
+            ('up', 'Vector Math', {'operation': 'ADD'}, {'Vector_001': (0.0, 0.0, 1.0)}),
+            ('facing', 'Vector Math', {'operation': 'NORMALIZE'}, {}),
+            ('s_n', 'Store Named Attribute', {'data_type': 'FLOAT_VECTOR', 'domain': 'POINT'}, {'Name': 'tier_normal'}),
+            ('az', 'Align Rotation to Vector', {'axis': 'Z', 'pivot_axis': 'AUTO'}, {}),
+            ('ay', 'Align Rotation to Vector', {'axis': 'Y', 'pivot_axis': 'Z'}, {}),
+            ('grid', 'Grid', {}, {'Size X': 1.5, 'Size Y': 1.5, 'Vertices X': 2, 'Vertices Y': 2}),
+            ('uv', 'Store Named Attribute', {'data_type': 'FLOAT2', 'domain': 'CORNER'}, {'Name': 'UVMap'}),
+            ('i2', 'Instance on Points', {}, {}),
+        ],
+        'links': [
+            ('pos', 'Position', 'flat', 'Vector'),
+            ('flat', 'Vector', 'outward', 'Vector'),
+            ('outward', 'Vector', 'half', 'Vector'),
+            ('half', 'Vector', 'up', 'Vector'),
+            ('up', 'Vector', 'facing', 'Vector'),
+            ('r1', 'Geometry', 's_n', 'Geometry'),
+            ('facing', 'Vector', 's_n', 'Value'),
+            ('facing', 'Vector', 'az', 'Vector'),
+            ('az', 'Rotation', 'ay', 'Rotation'),
+            ('outward', 'Vector', 'ay', 'Vector'),
+            ('grid', 'Mesh', 'uv', 'Geometry'),
+            ('grid', 'UV Map', 'uv', 'Value'),
+            ('s_n', 'Geometry', 'i2', 'Points'),
+            ('uv', 'Geometry', 'i2', 'Instance'),
+            ('ay', 'Rotation', 'i2', 'Rotation'),
+            ('i2', 'Instances', 'out', 'Geometry'),
+        ],
+    },
+    {
+        'key': 'data',
+        'title': 'Data on every card',
+        'flow': {'phase': (0, 1), 's_phase': (1, 0), 'r2': (2, 0)},
+        'nodes': [
+            ('phase', 'Random Value', {'data_type': 'FLOAT'}, {'Min': 0.0, 'Max': 1.0, 'Seed': 13}),
+            ('s_phase', 'Store Named Attribute', {'data_type': 'FLOAT', 'domain': 'INSTANCE'}, {'Name': 'phase'}),
+            ('r2', 'Realize Instances', {}, {}),
+        ],
+        'links': [
+            ('i2', 'Instances', 's_phase', 'Geometry'),
+            ('phase', 'Value', 's_phase', 'Value'),
+            ('s_phase', 'Geometry', 'r2', 'Geometry'),
+            ('r2', 'Geometry', 'out', 'Geometry'),
+        ],
+    },
+    {
+        'key': 'shading',
+        'title': 'Colors and normals',
+        'flow': {'n_phase': (0, 0), 'n_uv': (0, 1.2), 'uvsep': (1, 1.2), 'depth': (2, 1.8), 'col': (3, 0.6), 's_col': (4, 0), 'n_n': (3, 2.8), 'sn': (5, 0)},
+        'nodes': [
+            ('n_phase', 'Named Attribute', {'data_type': 'FLOAT'}, {'Name': 'phase'}),
+            ('n_uv', 'Named Attribute', {'data_type': 'FLOAT_VECTOR'}, {'Name': 'UVMap'}),
+            ('uvsep', 'Separate XYZ', {}, {}),
+            ('depth', 'Map Range', {'data_type': 'FLOAT'}, {'From Min': 0.0, 'From Max': 1.0, 'To Min': 0.4, 'To Max': 1.0}),
+            ('col', 'Combine Color', {'mode': 'RGB'}, {'Alpha': 1.0}),
+            ('s_col', 'Store Named Attribute', {'data_type': 'FLOAT_COLOR', 'domain': 'POINT'}, {'Name': 'Col'}),
+            ('n_n', 'Named Attribute', {'data_type': 'FLOAT_VECTOR'}, {'Name': 'tier_normal'}),
+            ('sn', 'Set Mesh Normal', {'mode': 'FREE'}, {}),
+        ],
+        'links': [
+            ('n_uv', 'Attribute', 'uvsep', 'Vector'),
+            ('n_phase', 'Attribute', 'col', 'Red'),
+            ('uvsep', 'Y', 'col', 'Green'),
+            ('uvsep', 'Y', 'depth', 'Value'),
+            ('depth', 'Result', 'col', 'Blue'),
+            ('r2', 'Geometry', 's_col', 'Geometry'),
+            ('col', 'Color', 's_col', 'Value'),
+            ('s_col', 'Geometry', 'sn', 'Mesh'),
+            ('n_n', 'Attribute', 'sn', 'Custom Normal'),
+            ('sn', 'Mesh', 'out', 'Geometry'),
+        ],
+    },
+]
