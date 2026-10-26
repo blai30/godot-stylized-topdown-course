@@ -145,7 +145,7 @@ This is lesson 24 again, with a straight skeleton. Do these, in the order of tha
 
 	<Figure
 		src={trunk}
-		alt="The tree_pine file in Blender: a straight dark brown trunk, widest at the foot and tapering to a thin tip, almost six meters tall."
+		alt="The tree_pine file in Blender: a straight dark brown trunk, widest at the foot and tapering to a thin tip, a little over five meters tall."
 		caption="The pine's trunk: about 1,200 triangles."
 	/>
 
@@ -202,7 +202,7 @@ The first chapter makes six rings, one at each tier's height, each smaller than 
 	caption="Chapter 1: seven nodes."
 />
 
-**Tier heights** is a line of six points, 76 centimeters apart, from 1.5 meters up to 5.3. **Tier ring** is a circle of 14 points. **Ring on each height** puts a copy of the circle on every point. **Tier number** is each point's number, 0 to 5, and **Tier reach** turns it into a radius from `0.9` for the bottom tier to `0` for the top, where the cards meet at the axis in a point, so **Ring size** scales each circle by it. The rings are small because each card is 1.5 meters long and reaches out from the ring, so a card's tip lands near the radius a pine's tier would have.
+**Tier heights** is a line of six points, 76 centimeters apart, from 1.5 meters up to 5.3. **Tier ring** is a circle of 14 points. **Ring on each height** puts a copy of the circle on every point. **Tier number** is each point's number, 0 to 5, and **Tier reach** turns it into a radius from `0.9` for the bottom tier to `0` for the top, where the cards meet at the axis in a point, so **Ring size** scales each circle by it. The rings are small because each card is 1.5 meters long and centered on its ring point, so its outer half reaches 0.75 meters past the ring, to about the radius a pine's tier would have.
 
 <Figure
 	src={tiersView}
@@ -260,8 +260,8 @@ The first chapter makes six rings, one at each tier's height, each smaller than 
 	caption="Chapter 2: twelve nodes."
 />
 
-- The first five nodes work out each point's **direction**. **Position** is where a ring point is, and **Flatten** keeps only its X and Y, so the vector points straight out from the trunk. **Outward** makes it length 1. **Half outward** halves it, **Add up** adds `0, 0, 1`, and **Facing** scales the result to length 1: a direction that is mostly up, tipped outward. That is the way a tier's top faces, and it is also the normal you want the crown shaded by, so **Store tier normal** writes it onto each point, as `tier_normal`, as lesson 26 wrote `env_normal`.
-- **Face this way** turns a card so that it faces that direction: the card lies like a skirt tilted down toward its outer edge. **Roll outward** spins it about that axis until the card's **Y** axis points along **Outward**: the stem edge of the card sits at the ring and the far edge sweeps outward.
+- The first six nodes work out each point's **direction**. **Position** is where a ring point is, and **Flatten** keeps only its X and Y, so the vector points straight out from the trunk. **Outward** makes it length 1. **Half outward** halves it, **Add up** adds `0, 0, 1`, and **Facing** scales the result to length 1: a direction that is mostly up, tipped outward. That is the way a tier's top faces, and it is also the normal you want the crown shaded by, so **Store tier normal** writes it onto each point, as `tier_normal`, as lesson 26 wrote `env_normal`.
+- **Face this way** turns a card so that it faces that direction: the card lies like a skirt tilted down toward its outer edge. **Roll outward** spins it about that axis until the card's **Y** axis points along **Outward**: the card is centered on its ring point, and its far half sweeps outward past the ring.
 - **Card** is the same flat square as the oak's, here 1.5 meters, and **Card UVs** stores its UVs.
 
 <Figure
@@ -433,7 +433,7 @@ The pines throw shadows of their needles, sway with the gusts at their own phase
 
 ## Try it
 
-- Change `6` in **Tier heights** to `8`, and the **Offset** to `0, 0, 0.56`: a taller pine with more tiers. Change **To Max** in **Tier reach** to `0.2`, and the top opens into a ring.
+- Change `6` in **Tier heights** to `8`, the **Offset** to `0, 0, 0.56`, and **From Max** in **Tier reach** to `7`: a taller pine with more tiers. Its top tier is at 5.42 meters, so move the trunk's tip vertex up a little too. Change **To Max** in **Tier reach** to `0.2`, and the top opens into a ring.
 - Raise **Radius** in **Tier ring** or the `0.9` in **Tier reach**, for a pine with wide skirts.
 - Change **Leaf Color** to a gray-blue, `5E7F8F`, for a spruce, with no other change.
 - Paint a second atlas with fewer, longer needles and use it in a new material, for a different pine.

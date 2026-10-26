@@ -22,9 +22,7 @@ import Checkpoint from '../../../components/Checkpoint.astro';
 import Kbd from '../../../components/Kbd.astro';
 import crown from '../../../assets/lessons/leaf-cards/crown.png';
 import envelope from '../../../assets/lessons/leaf-cards/envelope.png';
-import addSphere from '../../../assets/lessons/leaf-cards/add-sphere.png';
 import newGroup from '../../../assets/lessons/leaf-cards/new-group.png';
-import nodeMenu from '../../../assets/lessons/leaf-cards/node-menu.png';
 import nodeSearch from '../../../assets/lessons/leaf-cards/node-search.png';
 import clumpsNodes from '../../../assets/lessons/leaf-cards/clumps-nodes.png';
 import clumpsView from '../../../assets/lessons/leaf-cards/clumps-view.png';
@@ -36,12 +34,13 @@ import dataNodes from '../../../assets/lessons/leaf-cards/data-nodes.png';
 import shadingNodes from '../../../assets/lessons/leaf-cards/shading-nodes.png';
 import shadingView from '../../../assets/lessons/leaf-cards/shading-view.png';
 import colorAttributes from '../../../assets/lessons/leaf-cards/color-attributes.png';
-import colorDialog from '../../../assets/lessons/leaf-cards/color-dialog.png';
 import colorAdded from '../../../assets/lessons/leaf-cards/color-added.png';
 import exporterColors from '../../../assets/lessons/leaf-cards/exporter-colors.png';
 import treeScene from '../../../assets/lessons/leaf-cards/tree-scene.png';
 
 ## What you will build
+
+The figures in this lesson are from Blender 5.2.
 
 The oak's crown: several hundred flat cards, each a small square that will show one of your leaf sprays, packed into a lumpy dome above the trunk. You do not place the cards by hand. You build a **Geometry Nodes** group in Blender, about forty nodes wired in five short chapters, and it scatters them. The group also writes the numbers the foliage shader will read in lesson 27: how each card should be shaded, and when it should move in the wind.
 
@@ -59,7 +58,7 @@ A real tree has tens of thousands of leaves, and a game cannot draw them one by 
 
 Three decisions make the pile read as a tree and not as a heap of paper.
 
-- **Clumps through a volume.** A thin shell of cards around a ball reads as a hollow ball. Instead, the group first chooses about twenty **clump centers** inside the crown, each at a random depth below the surface, and then fills a small sphere around each center with cards at every depth. The crown has layers: cards in front of cards, with shadow between them.
+- **Clumps through a volume.** A thin shell of cards around a ball reads as a hollow ball. Instead, the group first chooses about thirty **clump centers** inside the crown, each at a random depth below the surface, and then fills a small sphere around each center with cards at every depth. The crown has layers: cards in front of cards, with shadow between them.
 - **Cards face out and up.** Each card turns to face away from the crown, tipped toward the sky and wobbled a little, so the cards catch light the way leaves on top of a tree do.
 - **One shared normal.** A flat card has one **[normal](/reference/glossary/#normal)**, the direction it faces, and lighting a pile of cards by their own normals gives a speckled mess of light and dark. The shader lights each card with a normal you store on it that points the way the *crown* faces at that spot, a little changed by the clump it is in. The whole crown then shades as one soft form, lighter on top and darker beneath, while the cards' leafy edges stay sharp. Blender calls such a stored normal a **custom normal**.
 
@@ -67,7 +66,7 @@ The group also stores two pieces of data on every card, as vertex colors:
 
 | Channel | Holds | Used for |
 |---|---|---|
-| Red | A random number per card, its **phase** | Wind: so neighboring cards do not move in step |
+| Red | A random number per card, its **phase** | Wind, so neighboring cards do not move in step, and which of the atlas's four sprays the card shows |
 | Green | 0 on the card's stem edge, 1 on its far edge | Wind: the far edge of a card flutters more than the edge by the stem |
 | Blue | How deep in the crown the card is, 0 deep and 1 at the surface | Shading: leaves deep inside are darker |
 
@@ -78,12 +77,6 @@ The group needs a shape to scatter cards through: the **envelope**, the outline 
 <Steps>
 
 1. Open `tree_oak.blend` from lesson 24 in Blender. With the pointer over the 3D view, press <Kbd keys="Shift+A" /> and type `uv sphere`, then press <Kbd keys="Enter" />. A sphere appears at the center of the scene, around the trunk's foot.
-
-	<Figure
-		src={addSphere}
-		alt="Blender's Add menu with uv sphere typed into its search field and one result, UV Sphere, under Mesh."
-		caption="Shift+A, then type to search."
-	/>
 
 2. Press <Kbd keys="F2" />, press <Kbd keys="Ctrl+A" mac="Cmd+A" />, type `leaves`, and press <Kbd keys="Enter" />. The object is named `leaves`, and Blender will show its name in Godot.
 
@@ -128,15 +121,9 @@ Three things you do in every chapter:
 - **Link two nodes.** Drag from a dot on the right edge of a node, an output, to a dot on the left edge of another, an input. Once an input is linked, its field disappears, because the link gives the value.
 
 <Figure
-	src={nodeMenu}
-	alt="The node editor with Shift+A pressed over empty space: the Add menu opened with Search at its top and categories below it."
-	caption="Shift+A opens the Add menu."
-/>
-
-<Figure
 	src={nodeSearch}
-	alt="The Add menu with position typed into its search, and one result."
-	caption="Typing searches it, and Enter picks the first result."
+	alt="The Add menu open in the node editor, with a Search field at its top and the node categories below it."
+	caption="Shift+A opens the Add menu. Type to search it, and press Enter to pick the first result."
 />
 
 Each chapter lists its nodes in a table, in the order to add them, with the settings and values to give them. **To tell nodes apart, name each one:** after you drop a node, press <Kbd keys="F2" />, type the name in bold in the table, and press <Kbd keys="Enter" />. The names are only for you, and the later tables and the figures use them. A second table lists the links to make, as *from node, output* to *node, input*. A node's name in a table is followed by where it comes from: the name you search for.
@@ -197,7 +184,7 @@ Read it from left to right. **Position** is where each face of the envelope is, 
 
 <Figure
 	src={clumpsView}
-	alt="Blender's viewport framed on the oak, with about twenty-five orange dots scattered through and over the crown's upper part."
+	alt="Blender's viewport framed on the oak, with about thirty orange dots scattered through and over the crown's upper part."
 	caption="The group's output so far: the clump centers, a few of them deep inside the crown."
 />
 
@@ -297,7 +284,7 @@ Here is what the nodes do.
 - **Envelope normal** reads back the `env_normal` attribute from chapter 1. The cards come from points on the *balls*, which are made from the clump centers, so each ball point inherits the value of its center: every card in a clump reads the direction the envelope faced at its clump.
 - **Tip up** adds `0, 0, 0.6` to that, which tips the direction toward the sky. **Wobble** is a random vector with each part between `-0.85` and `0.85`, and **Add wobble** adds it, so no two neighbors face quite the same way. **Facing** scales the sum to length 1, a plain direction.
 - **Face this way** makes a rotation that points a card's Z axis, the direction its face looks, along that direction. **Roll to the clump** then spins the card about it until its Y axis points along the ball's own normal at that point: the card's stem edge ends up toward the clump's center and its far edge outward, as leaves on a branch hang.
-- **Card** is a flat square 1.25 meters on a side, a grid of 2 by 2 points, which is one face. **Card UVs** stores its UV map, which comes from the **Grid** node's **UV Map** output and puts the whole atlas cell on the card. **Card size** is a random scale from 0.8 to 1.2, which makes the cards 1 to 1.5 meters across.
+- **Card** is a flat square 1.25 meters on a side, a grid of 2 by 2 points, which is one face. **Card UVs** stores its UV map, which comes from the **Grid** node's **UV Map** output and covers the card from 0 to 1. Lesson 27's shader picks which of the atlas's four sprays that range shows. **Card size** is a random scale from 0.8 to 1.2, which makes the cards 1 to 1.5 meters across.
 - **Card on each point** puts a card on each point, with that rotation and that scale.
 
 <Figure
@@ -305,6 +292,10 @@ Here is what the nodes do.
 	alt="Blender's viewport with the crown covered in flat gray cards at many angles, piled in layers, with gaps where the trunk and limbs show below."
 	caption="The cards, still plain gray. Several hundred of them."
 />
+
+<Aside type="note" title="Why the cards look like slivers">
+A card is a flat square, but from the side it is a thin line, and at a slant it is a long thin triangle. A crown of cards in the viewport therefore looks like jagged shards. They read as leaves once the atlas cuts them out in lesson 27.
+</Aside>
 
 <Aside type="note" title="The number of cards">
 The count depends on the random seeds and on the envelope's own face order, which differs a little each time you make it. Yours will be a few hundred, and anything from 400 to 800 reads the same. If your crown looks sparse, raise **Density** on **Card points** a little. If the trunk is hidden, lower it.
@@ -348,7 +339,7 @@ The two **Store** nodes work on the **Instance** domain: each value belongs to o
 
 ## Chapter 5: colors and normals
 
-The last chapter packs the data into a vertex color, and builds each corner's normal.
+The last chapter packs the data into a vertex color, and builds each point's normal.
 
 <Steps>
 
@@ -396,7 +387,7 @@ The last chapter packs the data into a vertex color, and builds each corner's no
 />
 
 - **Read phase**, **Read depth**, and **Read UVs** look up the attributes by name. **Card height** keeps the UV's Y: a card's UVs run from 0 at its stem edge to 1 at its far edge, so this is the green channel's 0-to-1. **Pack colors** puts the phase in red, the card height in green, and the depth in blue, and **Store colors** writes the three as a vertex color named `Col`.
-- The normal for each corner is the *envelope's* normal plus the *clump's* normal, **Clump strength** times 1.4, then scaled back to length 1. The envelope's normal sets the crown's overall shading, lit on top and dark underneath. The clump's normal adds a little lump to it, so each clump is a soft bump on the dome, and the surface of the whole crown is not smooth. **Set normals** stores the result as the corners' **custom normal**.
+- The normal for each point is the *envelope's* normal plus the *clump's* normal, **Clump strength** times 1.4, then scaled back to length 1. The envelope's normal sets the crown's overall shading, lit on top and dark underneath. The clump's normal adds a little lump to it, so each clump is a soft bump on the dome, and the surface of the whole crown is not smooth. **Set normals** stores the result as the corners' **custom normal**.
 
 <Figure
 	src={shadingView}
@@ -410,7 +401,7 @@ Without the custom normals, each card would be lit by its own tilt, and with eve
 
 ## A place for the colors
 
-Blender writes a mesh's vertex colors to the glTF file only when the mesh has an **active** color attribute. The group's attribute is made at the end of the group, so the mesh itself has none, and Blender writes plain white in its place. Give the mesh an empty attribute with the same name, and the group's data fills it.
+Blender writes a mesh's vertex colors to the glTF file only when the mesh has an **active** color attribute. The group's attribute is made at the end of the group, so the mesh itself has none, and Blender has no vertex colors to write. Without them the cards come out white in Godot. Give the mesh an empty attribute with the same name, and the group's data fills it.
 
 <Steps>
 
@@ -425,12 +416,6 @@ Blender writes a mesh's vertex colors to the glTF file only when the mesh has an
 	/>
 
 3. In the dialog, set **Name** to `Col`. Leave **Domain** on **Vertex** and **Data Type** on **Color**, and click **Add**.
-
-	<Figure
-		src={colorDialog}
-		alt="The Add Color Attribute dialog: Name, Domain with Vertex chosen, Data Type with Color chosen, a Color swatch, and Cancel and Add buttons."
-		caption="An attribute named Col, on the vertices."
-	/>
 
 	<Figure
 		src={colorAdded}
@@ -454,7 +439,7 @@ The collection already has the glTF exporter you set up in lesson 24, writing `a
 		caption="The active color attribute, and only that one."
 	/>
 
-2. Click **Export All** in the **Exporters** panel, above the exporter's settings. Blender writes `tree_oak.glb` again. Save the file with <Kbd keys="Ctrl+S" mac="Cmd+S" />.
+2. Click **Export All** in the **Exporters** panel, above the exporter's settings. It is the same action as the arrow button on the exporter's title bar that lesson 24 used. Blender writes `tree_oak.glb` again. Save the file with <Kbd keys="Ctrl+S" mac="Cmd+S" />.
 
 </Steps>
 
@@ -468,7 +453,7 @@ The collection already has the glTF exporter you set up in lesson 24, writing `a
 
 	<Figure
 		src={treeScene}
-		alt="The Godot editor with the tree_oak scene: the brown trunk and above it a crown of flat cards, each colored a different shade of pink, purple, and blue by the data written to its corners."
+		alt="The Godot editor with the tree_oak scene: the brown trunk and above it a crown of flat cards, mostly teal and green, with some pink, purple, and white, colored by the data written to its corners."
 		caption="The cards as Godot imports them. The colors are not leaf colors: they are the data you packed, shown as colors."
 	/>
 
