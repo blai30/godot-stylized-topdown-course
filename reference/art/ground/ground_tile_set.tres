@@ -8,6 +8,7 @@ script = ExtResource("1_4rgye")
 DisplayName = "Grass"
 Layer = 2
 GrassDensity = 1.0
+FlowerDensity = 0.25
 metadata/_custom_type_script = "uid://bav431h16v1bs"
 
 [sub_resource type="Resource" id="Resource_5yil8"]

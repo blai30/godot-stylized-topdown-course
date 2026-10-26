@@ -4,6 +4,7 @@ using Godot.Collections;
 namespace TopDownTemplate.Ground;
 
 // Every kind of ground in the game.
+[Tool]
 [GlobalClass]
 public partial class GroundTileSet : Resource
 {

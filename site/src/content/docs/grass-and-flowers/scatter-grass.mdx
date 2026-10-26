@@ -1,0 +1,224 @@
+---
+title: Scatter grass from the tiles
+description: Write a tool node with a Scatter button that reads the painted ground and grows clumps and flowers on it, as one MultiMeshInstance3D for each kind in each block of the world, saved in the scene.
+sidebar:
+  order: 32
+  label: 32. Scatter grass from the tiles
+lesson:
+  number: 32
+  minutes: 120
+  learn:
+    - Why a field is drawn with MultiMeshInstance3D, and why it is split into blocks
+    - How a tool script with a button builds nodes that the scene saves
+    - How to place by a hash of the square, so scattering again gives the same field
+    - How the ground's data, GrassDensity and a new FlowerDensity, decides where things grow
+    - How to read the cost of a field, in draw calls and triangles
+  prerequisites: [18, 30, 31]
+---
+
+import { Aside, Code, FileTree, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Solution from '../../../components/Solution.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import piece1 from '../../../checkpoints/32/pieces/piece-1.cs?raw';
+import piece2 from '../../../checkpoints/32/pieces/piece-2.cs?raw';
+import piece3 from '../../../checkpoints/32/pieces/piece-3.cs?raw';
+import piece4 from '../../../checkpoints/32/pieces/piece-4.cs?raw';
+import tileSet from '../../../checkpoints/32/files/art/ground/ground_tile_set.tres?raw';
+import flowerDensity from '../../../assets/lessons/scatter-grass/flower-density.png';
+import grassNode from '../../../assets/lessons/scatter-grass/grass-node.png';
+import scattered from '../../../assets/lessons/scatter-grass/scattered.png';
+import noon from '../../../assets/lessons/scatter-grass/noon.png';
+import mid from '../../../assets/lessons/scatter-grass/mid.png';
+import close from '../../../assets/lessons/scatter-grass/close.png';
+import dusk from '../../../assets/lessons/scatter-grass/dusk.png';
+import night from '../../../assets/lessons/scatter-grass/night.png';
+
+## What you will build
+
+A `Grass` node in the meadow with a **Scatter** button. Press it, and the node reads the painted ground and grows a field: about 700 clumps on the grass tiles, thinly on the dirt, none on the sand, and 85 flowers among them. The field is saved in the scene, so the game loads it as it is.
+
+<Figure
+	src={mid}
+	alt="The meadow from above at noon: dense grass covering the ground, thinner beside the dirt path, with small white, pink, blue, and yellow flowers scattered through it, around the trees and rocks."
+	caption="The meadow with its grass and flowers."
+/>
+
+## Why a MultiMesh, and why blocks
+
+The field is 700 clumps of 285 triangles, about 200,000 triangles. A graphics card draws that easily, but it does not draw 700 separate nodes easily: each one is a separate request, and the cost of requests, not triangles, is what a field of small things runs out of first. A **`MultiMesh`** is one mesh with a list of places, and the card draws all of them in one request. That is why lesson 30 made a clump a patch of 95 blades and not a tuft of 16: for the same blades, there are a sixth of the requests.
+
+One `MultiMesh` for the whole field would be drawn whenever any of it showed. So the field is cut into **blocks** 16 meters on a side, and each kind of clump gets one `MultiMeshInstance3D` in each block. Godot skips a block that is off the screen. The meadow is 20 meters across, so there are four blocks, and with three clumps and two flowers, up to twenty `MultiMeshInstance3D` nodes.
+
+## A flower density
+
+The ground says where grass grows: `GrassDensity` on a `GroundTile`, from lesson 18. Flowers need the same kind of number.
+
+<Steps>
+
+1. Open `src/Ground/GroundTile.cs` and add a property below `GrassDensity`:
+
+	```csharp
+	// How many of the 1 meter squares of this ground grow a flower, from 0 to 1.
+	[Export(PropertyHint.Range, "0,1,0.05")] public float FlowerDensity { get; set; }
+	```
+
+2. The scatter runs in the editor, so the scripts it calls must run there too. Add `[Tool]` on the line above `[GlobalClass]` in `GroundTile.cs` and `GroundTileSet.cs`, and on the line above `public partial class` in `GroundMap.cs`. Without it, the editor cannot run the scripts: the `Ground` property of the scatter would refuse the `GroundTiles` node, because to the editor it is only a plain `GridMap`.
+
+3. Click the hammer, **Build Project**. Then select `GroundTiles` in the meadow, open its **Tiles**, and open the first element, **Grass**. A new row, **Flower Density**, is there. Set it to `0.25`. Choose **Save** from the **Tiles** row's menu, so the set is saved to `ground_tile_set.tres`.
+
+	<Figure
+		src={flowerDensity}
+		alt="The Inspector on the GroundTiles node with the Tiles set open: the first tile, Grass, with Item 0, Layer 2, Grass Density 1.0, Flower Density 0.25, and Walk Speed 1.0."
+		caption="Grass tiles grow a flower on a quarter of their squares. Sand and dirt keep 0."
+	/>
+
+</Steps>
+
+<Solution label="Show the full GroundTile.cs">
+	<Code code={piece1} lang="csharp" title="src/Ground/GroundTile.cs" />
+</Solution>
+
+<Solution label="Show the full GroundTileSet.cs">
+	<Code code={piece2} lang="csharp" title="src/Ground/GroundTileSet.cs" />
+</Solution>
+
+<Solution label="Show the full GroundMap.cs">
+	<Code code={piece3} lang="csharp" title="src/Ground/GroundMap.cs" />
+</Solution>
+
+## The scatter
+
+The script is a `[Tool]` node: it runs in the editor, and an `[ExportToolButton]` shows a button for it in the Inspector. Creating nodes from a button is how you do something once in the editor, and keep it, as lesson 18's `GrassDetail` made a texture.
+
+<Steps>
+
+1. Create `src/Ground/GrassScatter.cs` in your code editor and type the script from the solution below the steps. Read the walk-through after it.
+
+2. Click **Build Project**.
+
+</Steps>
+
+<Solution label="Show the full GrassScatter.cs">
+	<Code code={piece4} lang="csharp" title="src/Ground/GrassScatter.cs" />
+</Solution>
+
+How the script works:
+
+- **What it needs.** `Ground` is the `GroundMap`, which knows the tiles. `Models` is the `grass_preview.tscn` of lesson 31: a scene with a `MeshInstance3D` for each model, each with its material. The scatter reads the **mesh** and the **material** from each. Models are found by name: `grass_clump...` and `flower...`.
+- **Squares.** `Squares()` walks every 1 meter square that touches a painted cell. The ground's cells are half a meter, so a square covers four.
+- **Two clumps and a flower in each square.** Each clump gets its own half of the square, so no stretch of ground is bare: the first is placed in the west half, the second in the east, each a little off-center by a random amount. The flower goes anywhere in the square. A clump is turned by any angle about the vertical and scaled between 0.9 and 1.1.
+- **A hash, not a roll.** Each square seeds its own random generator from its coordinates and the `Seed`. So what a square grows depends on that square alone: change the ground next door, or scatter again, and this square grows exactly what it did. Every random number is drawn whether or not it is used, so one decision never shifts the next.
+- **Density.** A clump grows if its roll is below the `GrassDensity` of the tile at its position, so grass at `1` grows on every square, dirt at `0.1` on a tenth of them, and sand never. A flower grows if its roll is below `FlowerDensity`.
+- **The data in each instance.** `INSTANCE_CUSTOM`, a `Color` with four numbers, is the instance's data for the shader of lesson 31. Its first number is the wind phase. For a flower the other three are its petal color, in linear color, from one of the four `FlowerColors`.
+- **Blocks.** Each growth is put in a list for its model and its block, and each list becomes a `MultiMeshInstance3D` named after the model and the block, with the model's mesh and material, and no shadow: a field of shadows is expensive and the ground's own is enough. The nodes are added as children, and `Owner` is set to the scene's root, which is what makes the scene save them.
+- **Scattering again.** `Clear()` removes the old nodes first.
+
+## Add it to the meadow
+
+<Steps>
+
+1. Open `meadow.tscn`. Select `GrassPreview`, the node from lesson 31, press <Kbd keys="Delete" mac="Cmd+Backspace" />, and confirm. The `Models` file stays.
+
+2. Select the root, add a **Node3D**, and name it `Grass`. In the Inspector, open the **Script** row's menu, choose **Quick Load...**, and pick `GrassScatter.cs`. The node's own properties appear.
+
+3. Set **Ground** to `GroundTiles`: click **Assign...** and choose it in the list. Set **Models** to `grass_preview.tscn` with **Quick Load...**. Leave **Seed** at `1`.
+
+	<Figure
+		src={grassNode}
+		alt="The Inspector on the Grass node: a GrassScatter with Ground set to GroundTiles, Models set to a scene, Seed 1, Flower Colors an array of four colors, and a Scatter button."
+		caption="The Grass node, ready to scatter."
+	/>
+
+4. Click **Scatter**. The Output panel prints `Scattered 784 in 20 meshes.`: 699 clumps and 85 flowers. The 3D view fills with grass.
+
+	<Figure
+		src={scattered}
+		alt="Godot's 3D view of the meadow: the player capsule standing in dense tufts of grass with a few flowers on the ground, and a dirt path crossing it."
+		caption="After Scatter."
+	/>
+
+5. Click **Scatter** again. It prints the same line, and nothing changes: the same squares grow the same things. Change **Seed** to `2` and click it once more, and you have a different field. Set it back to `1`, scatter, and save the scene with <Kbd keys="Ctrl+S" mac="Cmd+S" />.
+
+</Steps>
+
+<Aside type="tip" title="The saved nodes are the field">
+The scene file is now a few hundred kilobytes larger, because it holds every position. That is the point: the game does not run the scatter. It loads the nodes, and draws them. If you delete the `Grass` node's children, the field is gone until you scatter again.
+</Aside>
+
+## Run it
+
+Run the meadow, and zoom in with the wheel.
+
+<Figure
+	src={noon}
+	alt="The whole meadow from far above at noon: a rectangle of grass with a dirt path, trees, and rocks, with the grass a little ragged at the edges, on a blue background."
+	caption="The whole field, zoomed out."
+/>
+
+<Figure
+	src={close}
+	alt="The meadow close up at noon: individual blades of grass in fans, flowers of different colors, the player capsule, a dirt path with sparse tufts at its edge, and the shadows of the trees as darker grass."
+	caption="Zoomed in: fans of blades, and flowers."
+/>
+
+<Figure
+	src={dusk}
+	alt="The meadow at dusk: the grass in warm brown and green with long shadows from the trees and the player."
+	caption="Dusk."
+/>
+
+<Figure
+	src={night}
+	alt="The meadow at night: the grass and flowers as dark blue shapes."
+	caption="Night."
+/>
+
+With the field, the game's own counters read, at the default zoom, 144 draw calls and about 247,000 triangles in a frame, and 120 frames a second. At the closest zoom it runs at about 97. The field is the bulk of the triangles. It is within what a laptop does, and these numbers are why the clump is a big patch and the blocks are not smaller.
+
+<Aside type="note" title="What this lesson leaves out">
+A world that streams in, with ground that changes while the game runs, needs more than this. The field would thin as the camera zooms out, since a far blade is smaller than a pixel. It would shrink to nothing at the edge of the view, so nothing pops. It would skip blades whose feet are on a wall or in water. Each of those is a real cost for a big streamed world, and none is needed for a meadow of this size and a camera with this range. Module 9's generator is where the first of them would arrive.
+</Aside>
+
+## Try it
+
+- Set `Seed` to a few other numbers, and scatter each time. The ground's data decides where grass grows, and the seed decides how it falls.
+- Change the grass tile's **Flower Density** to `0.8` for a flower meadow, or `0` for none. Scatter again.
+- Give the dirt tile a **Grass Density** of `0.3`, and see the tufts cross the path. Paint some dirt over a stretch of grass with the **GridMap** and scatter again: the grass leaves it.
+- Remove two of the four entries of **Flower Colors**. The flowers use what is left.
+- Add a fourth clump to `grass_preview.tscn`, such as a `grass_clump_d` of lesson 30, and scatter. The script finds it by its name.
+
+## If it does not work
+
+- **Nothing grows, and the Output says "GrassScatter needs a Ground and Models".** One of the two properties is empty. If **Ground** will not accept `GroundTiles`, the **GroundMap** script lacks `[Tool]`: add it and build.
+- **The Scatter button is not there.** The script has not built, or the node has no script. Click **Build Project** and check that the node's script is `GrassScatter.cs`.
+- **The field grows, but a clump stands in the air or in the ground.** The grass models are not at the ground in their scene, or the `Grass` node is not at the origin. Both should be at `0, 0, 0`.
+- **Flowers are all white.** The petal color comes from the instance data: check that **Flower Colors** is not empty, and that `flower.gdshader` reads `INSTANCE_CUSTOM.yzw`.
+- **Grass grows on the sand.** The sand tile's **Grass Density** is not `0`.
+- **An error about a type that is `null` in the editor.** One of the three scripts of the ground has no `[Tool]`.
+- **A scatter makes a different field each time.** The generator is seeded from something other than the square, such as the time. Seed it from `SquareSeed`.
+
+## Checkpoint
+
+Your project now contains:
+
+<FileTree>
+- art
+  - ground
+    - **ground_tile_set.tres** with a Flower Density
+- src
+  - Ground
+    - **GrassScatter.cs**
+    - GroundTile.cs, GroundTileSet.cs, and GroundMap.cs now marked `[Tool]`
+- levels
+  - meadow.tscn with a `Grass` node of 20 `MultiMeshInstance3D` nodes
+</FileTree>
+
+<Solution label="Show the full ground_tile_set.tres">
+	<Code code={tileSet} lang="ini" title="art/ground/ground_tile_set.tres" />
+</Solution>
+
+Commit your work: `git add .` and `git commit -m "Scatter grass from the tiles"`. Lesson 33 makes the grass part around the player.
+
+<Checkpoint />

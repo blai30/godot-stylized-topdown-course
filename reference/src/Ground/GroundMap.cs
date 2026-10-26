@@ -3,6 +3,7 @@ using Godot;
 namespace TopDownTemplate.Ground;
 
 // The painted ground, which can say what kind of ground lies at a point.
+[Tool]
 public partial class GroundMap : GridMap
 {
 	[Export] public GroundTileSet? Tiles { get; set; }

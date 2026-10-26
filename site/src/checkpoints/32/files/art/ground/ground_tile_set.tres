@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="GroundTileSet" format=3 uid="uid://bbfxix0y17o25"]
+
+[ext_resource type="Script" uid="uid://bav431h16v1bs" path="res://src/Ground/GroundTile.cs" id="1_4rgye"]
+[ext_resource type="Script" uid="uid://c7tvn2tchfefm" path="res://src/Ground/GroundTileSet.cs" id="2_evcml"]
+
+[sub_resource type="Resource" id="Resource_i4481"]
+script = ExtResource("1_4rgye")
+DisplayName = "Grass"
+Layer = 2
+GrassDensity = 1.0
+FlowerDensity = 0.25
+metadata/_custom_type_script = "uid://bav431h16v1bs"
+
+[sub_resource type="Resource" id="Resource_5yil8"]
+script = ExtResource("1_4rgye")
+DisplayName = "Sand"
+Item = 1
+WalkSpeed = 0.7
+metadata/_custom_type_script = "uid://bav431h16v1bs"
+
+[sub_resource type="Resource" id="Resource_po6ru"]
+script = ExtResource("1_4rgye")
+DisplayName = "Dirt"
+Item = 2
+Layer = 1
+GrassDensity = 0.1
+WalkSpeed = 1.15
+metadata/_custom_type_script = "uid://bav431h16v1bs"
+
+[resource]
+script = ExtResource("2_evcml")
+Tiles = Array[ExtResource("1_4rgye")]([SubResource("Resource_i4481"), SubResource("Resource_5yil8"), SubResource("Resource_po6ru")])
+metadata/_custom_type_script = "uid://c7tvn2tchfefm"
