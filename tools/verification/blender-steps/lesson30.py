@@ -917,10 +917,17 @@ def steps(d):
     d.log('GLB exported {} size {}'.format(os.path.exists(glb) and os.path.getmtime(glb) != before, os.path.getsize(glb) if os.path.exists(glb) else 0))
     if not os.path.exists(glb) or os.path.getmtime(glb) == before:
         raise RuntimeError('the export did not run')
-    over_view()
-    d.key('S', ctrl=True)
-    yield 1.5
-    d.log('SAVED {} dirty {}'.format(bpy.data.filepath, bpy.data.is_dirty))
+    # Ctrl+S is sometimes lost, so the file's time says whether it saved, and the key is pressed again if not.
+    saved_before = os.path.getmtime(bpy.data.filepath)
+    for attempt in range(4):
+        over_view()
+        d.key('S', ctrl=True)
+        yield 2.0
+        if os.path.getmtime(bpy.data.filepath) != saved_before:
+            break
+    d.log('SAVED {} dirty {} size {}'.format(bpy.data.filepath, bpy.data.is_dirty, os.path.getsize(bpy.data.filepath)))
+    if os.path.getmtime(bpy.data.filepath) == saved_before:
+        raise RuntimeError('the file did not save')
     if STOP == 'exporter':
         return
 
