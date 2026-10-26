@@ -40,3 +40,32 @@ vec3 card_flutter(vec3 world_position, float tree_phase, float card_phase, float
 	float beat = sin(TAU * (tree_phase + card_phase + FLUTTER_HZ * TIME));
 	return direction * CARD_FLUTTER * far_edge * gust_strength(world_position) * beat;
 }
+
+// A blade's tip sways TIP_SWAY meters along the wind at full strength, bobbing BLADE_HZ times a second, and flutters
+// BLADE_FLUTTER meters across it.
+const float TIP_SWAY = 0.12;
+const float BLADE_FLUTTER = 0.025;
+const float BLADE_HZ = 0.8;
+// A petal flutters PETAL_FLUTTER meters across the wind, PETAL_HZ times a second.
+const float PETAL_FLUTTER = 0.02;
+const float PETAL_HZ = 0.5;
+
+// How far a vertex of a grass blade moves, in world space. share is its share of the blade's height, so the foot stays
+// put and the tip moves most; the clump's phase and the blade's own keep a field from swaying in step.
+vec3 grass_sway(vec3 world_position, float clump_phase, float blade_phase, float share) {
+	vec2 heading = normalize(wind_direction);
+	vec2 across = vec2(-heading.y, heading.x);
+	float beat = TAU * (clump_phase + blade_phase + BLADE_HZ * TIME);
+	float reach = share * share * gust_strength(world_position);
+	vec2 push = reach * (heading * TIP_SWAY * (0.6 + 0.4 * sin(beat)) + across * BLADE_FLUTTER * sin(2.0 * beat));
+	return vec3(push.x, 0.0, push.y);
+}
+
+// How far a petal vertex flutters, in world space. mask is 1 on a petal and 0 on the stem and the center.
+vec3 petal_flutter(vec3 world_position, float flower_phase, float mask) {
+	vec2 heading = normalize(wind_direction);
+	vec2 across = vec2(-heading.y, heading.x);
+	float beat = TAU * (flower_phase + PETAL_HZ * TIME);
+	vec2 push = across * PETAL_FLUTTER * mask * gust_strength(world_position) * sin(2.0 * beat + world_position.x * 5.0);
+	return vec3(push.x, 0.0, push.y);
+}

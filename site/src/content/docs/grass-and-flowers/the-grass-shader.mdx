@@ -1,0 +1,327 @@
+---
+title: The grass shader
+description: Write the shader that colors a clump from the ground under it, lights the field as one matte surface with a satin sheen on the tips, and sways in the same gusts as the trees, plus a small shader for the flowers.
+sidebar:
+  order: 31
+  label: 31. The grass shader
+lesson:
+  number: 31
+  minutes: 120
+  learn:
+    - How a blade takes its color from the ground under it, so grass and ground always match
+    - How to share one function between two shaders in an include
+    - How a vertex shader moves a blade from its share of its height and the wind
+    - How to light a whole field as one surface, with a broad highlight that a gust bends
+    - How a flower shader tints only its petals
+  prerequisites: [13, 15, 23, 27, 30]
+---
+
+import { Aside, Code, FileTree, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Solution from '../../../components/Solution.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import piece1 from '../../../checkpoints/31/pieces/piece-1.gdshaderinc?raw';
+import piece2 from '../../../checkpoints/31/pieces/piece-2.gdshader?raw';
+import piece3 from '../../../checkpoints/31/pieces/piece-3.gdshaderinc?raw';
+import piece4 from '../../../checkpoints/31/pieces/piece-4.gdshader?raw';
+import piece5 from '../../../checkpoints/31/pieces/piece-5.gdshader?raw';
+import grassMaterial from '../../../checkpoints/31/files/art/nature/grass/grass.tres?raw';
+import flowerMaterial from '../../../checkpoints/31/files/art/nature/grass/flower.tres?raw';
+import previewScene from '../../../checkpoints/31/files/art/nature/grass/grass_preview.tscn?raw';
+import noon from '../../../assets/lessons/the-grass-shader/noon.png';
+import noonClose from '../../../assets/lessons/the-grass-shader/noon-close.png';
+import dusk from '../../../assets/lessons/the-grass-shader/dusk.png';
+import night from '../../../assets/lessons/the-grass-shader/night.png';
+import wind from '../../../assets/lessons/the-grass-shader/wind.png';
+import groundColorEditor from '../../../assets/lessons/the-grass-shader/ground-color-editor.png';
+import groundEditor from '../../../assets/lessons/the-grass-shader/ground-editor.png';
+import windEditor from '../../../assets/lessons/the-grass-shader/wind-editor.png';
+import grassEditor from '../../../assets/lessons/the-grass-shader/grass-editor.png';
+import flowerEditor from '../../../assets/lessons/the-grass-shader/flower-editor.png';
+import inheritDialog from '../../../assets/lessons/the-grass-shader/inherit-dialog.png';
+import grassMaterialShot from '../../../assets/lessons/the-grass-shader/grass-material.png';
+import flowerMaterialShot from '../../../assets/lessons/the-grass-shader/flower-material.png';
+import previewSceneShot from '../../../assets/lessons/the-grass-shader/preview-scene.png';
+import saveScene from '../../../assets/lessons/the-grass-shader/save-scene.png';
+import previewInspector from '../../../assets/lessons/the-grass-shader/preview-inspector.png';
+
+## What you will build
+
+Two shaders and a small change to three files. The clumps you modeled in lesson 30 are gray meshes with numbers in their vertex colors. A **grass shader** turns them into grass: each blade runs from the ground's own color at its foot, through a deeper green, to a warm light green at its tip, the whole field is lit as one matte surface with a soft highlight on the tips, and the tips sway in the same gusts as the trees. A **flower shader** colors the flowers from their vertices and flutters their petals.
+
+By the end, a preview of the three clumps and the two flowers stands in the meadow, and the figures below are what the shaders make of it.
+
+<Figure
+	src={noonClose}
+	alt="A close view of the meadow at noon: three tufts of fanned green grass with dark roots and light tips, and two small flowers, a white daisy with a yellow center and a white cup, in the sunlit grass."
+	caption="The preview at noon: three clumps and two flowers."
+/>
+
+## What the shader reads
+
+Lesson 30 stored two numbers in each blade's vertex colors. The shader also reads the clump's instance data, which lesson 32's scatter fills in.
+
+| Data | From | Used for |
+|---|---|---|
+| Vertex color red, the **phase** | The blade | Its own place in the wind's beat, so blades do not move in step |
+| Vertex color alpha, the **share** | The blade, 0 at the foot and 1 at the tip | The color from root to tip, and how far the vertex moves: the foot not at all |
+| `INSTANCE_CUSTOM.x`, the clump's phase | The scatter (lesson 32) | The clump's own place in the wind's beat |
+| The ground's texture, tint, and noise | The ground shader | The color at the foot of every blade |
+| The wind globals | Lesson 27 | The direction and strength of the sway |
+
+## One function for the ground's color
+
+The grass has to start from exactly the color the ground has at that spot. If the grass has its own copy of the ground's texture and noise math, a later change to the ground would leave the grass behind. So the ground's color moves into a **shared function**, and both shaders call it.
+
+<Steps>
+
+1. In the Shader Editor, choose **File > New Shader Include...**, set **Path** to `res://art/shaders/ground_color.gdshaderinc`, and click **Create**.
+
+2. Type the function. Its comment says what it is, and it takes the ground shader's own uniforms and a position on the ground in meters: `vec3 ground_color(sampler2D albedo_texture, vec3 albedo_tint, float texture_scale, sampler2D edge_noise, float edge_noise_scale, vec2 position)`. It reads the texture at `position * texture_scale`, multiplies by the tint, reads the edge noise at `position * edge_noise_scale * 0.25` for a slow `tone`, and returns the color times `0.75 + 0.5 * tone`: the lines that lesson 15 and lesson 17 put in the ground shader's `fragment()`.
+
+	<Figure
+		src={groundColorEditor}
+		alt="The Shader Editor showing ground_color.gdshaderinc: a comment, then a function ground_color that reads the texture, then the noise, and returns the color times a slow tone."
+		caption="The ground's color, as a function."
+	/>
+
+	Save it with <Kbd keys="Ctrl+Alt+S" mac="Cmd+Option+S" />.
+
+3. Open `art/ground/ground.gdshader`. Add `#include "res://art/shaders/ground_color.gdshaderinc"` under the first include, and in `fragment()` replace the first line, the texture lookup, and the `tone` lines with one: `ALBEDO = ground_color(albedo_texture, albedo_tint, texture_scale, edge_noise, edge_noise_scale, world_position.xz);`. Keep the lines for `ROUGHNESS`, the tile's edge, and the rim.
+
+	<Figure
+		src={groundEditor}
+		alt="The Shader Editor showing ground.gdshader with two includes at the top and a fragment function whose first line calls ground_color."
+		caption="The ground shader, calling the shared function."
+	/>
+
+	Save it, and run the meadow. The ground looks exactly as it did: the function is the same arithmetic. (The shadows of the trees may sit a little differently, because the trees are swaying.)
+
+</Steps>
+
+<Solution label="Show the full ground_color.gdshaderinc">
+	<Code code={piece1} lang="gdshader" title="art/shaders/ground_color.gdshaderinc" />
+</Solution>
+
+<Solution label="Show the full ground.gdshader">
+	<Code code={piece2} lang="gdshader" title="art/ground/ground.gdshader" />
+</Solution>
+
+## The wind for grass and petals
+
+The trees' sway lives in `wind.gdshaderinc`, so the grass's does too, and the grass uses the same gust: `gust_strength` is one wave across the whole meadow, and a gust that bends the oaks bends the grass at the same moment.
+
+<Steps>
+
+1. Open `art/shaders/wind.gdshaderinc` and add to the end of it the constants and two functions in the solution below the steps: `TIP_SWAY` and `BLADE_FLUTTER` and `BLADE_HZ` for the grass, and `PETAL_FLUTTER` and `PETAL_HZ` for the petals, then `grass_sway` and `petal_flutter`.
+
+	<Figure
+		src={windEditor}
+		alt="The Shader Editor showing the end of wind.gdshaderinc: the new constants and the grass_sway function."
+		caption="The grass's sway, next to the tree's."
+	/>
+
+	Save it.
+
+</Steps>
+
+<Solution label="Show the full wind.gdshaderinc">
+	<Code code={piece3} lang="gdshader" title="art/shaders/wind.gdshaderinc" />
+</Solution>
+
+How the two functions work:
+
+- **`grass_sway`** returns how far a vertex of a blade moves, in world space. A blade's tip moves `TIP_SWAY` `0.12` meters downwind at full gust, bobbing `0.8` times a second, and flutters `0.025` meters across the wind at twice that rate. Its **share** says how much of that the vertex gets: the share squared times the gust's strength, so the foot stays on the ground and the tip moves most, and the bend is gentle low down and sharp at the end, as a blade's is. The clump's phase and the blade's own phase make the beat different for every blade.
+- **`petal_flutter`** is the same idea for a flower: a petal flutters 2 centimeters across the wind. The mask is 1 on a petal and 0 on the stem and the center, so only petals move.
+
+## The grass shader
+
+<Steps>
+
+1. In the Shader Editor, choose **File > New Shader...**, set **Path** to `res://art/shaders/grass.gdshader`, keep **Mode** on **Spatial**, and click **Create**. Type the shader from the solution below the steps, in four parts.
+
+	<Figure
+		src={grassEditor}
+		alt="The Shader Editor showing grass.gdshader: render modes, includes, uniforms for the ground, and the constants for the colors, the light, and the satin."
+		caption="The top of the grass shader."
+	/>
+
+	Save it.
+
+</Steps>
+
+<Solution label="Show the full grass.gdshader">
+	<Code code={piece4} lang="gdshader" title="art/shaders/grass.gdshader" />
+</Solution>
+
+The four parts:
+
+- **Render modes.** `cull_disabled` draws both sides of a blade, which is one flat sheet. `world_vertex_coords` makes `VERTEX` arrive in world space, so the wind moves it along the ground whatever the clump's turn. `specular_disabled` turns off Godot's own highlight, because the shader makes its own.
+- **The vertex function.** It moves each vertex by `grass_sway`, then colors it. The **root** is `ground_color` at the vertex's own spot on the ground, the same call the ground makes, so a blade's foot is exactly the color of the ground under it. The color runs through three stops: the root darkened to `0.25` at the foot, the middle at `0.55` of the height (the blade's joint), moved `0.15` of the way toward the tip color and darkened to `0.6`, and the **tip color**, a warm light green, at the tip. It then varies a little by clump, from a number made from the clump's place, and across the field in patches 48 meters wide, from the noise texture, in value and in hue.
+- **The fragment function.** `ALBEDO` is that color. The shading normal is moved `0.85` of the way to straight up, so every blade lights like the ground and the field reads as one matte surface, with no single blade standing out. `EMISSION` adds `0.1` of the blade's own color, a little light the ground gives back, so grass in a tree's shadow stays a dark green and does not turn blue. It also works out the normal of the highlight: the ground's up, bent downwind by the gust.
+- **The light function.** Diffuse is wrapped by `0.5`, as in lesson 23, so a blade turned from the sun is not black. Then the **satin**: a single broad highlight, a GGX lobe, on the upper blade only (`smoothstep(0.25, 1.0, tip_share)`), tinted three quarters toward the blade's own color, and clamped so it cannot make a bright speck. A gust bends its normal downwind, so a band of brighter grass sweeps across the field as the gust does.
+
+<Aside type="note" title="Why the grass has no rim">
+The ground, the rocks, and the flowers wear the soft rim of lesson 23, a faint glow along the silhouette that separates them from what is behind. A field of blades has a silhouette everywhere, so a rim would only make every blade glow. The grass has no rim.
+</Aside>
+
+## The flower shader
+
+<Steps>
+
+1. Choose **File > New Shader...** again, set **Path** to `res://art/shaders/flower.gdshader`, and click **Create**. Type the shader from the solution below the steps.
+
+	<Figure
+		src={flowerEditor}
+		alt="The Shader Editor showing flower.gdshader: two includes, a vertex function that moves the petals and picks a color, and a fragment function that sets the albedo."
+		caption="The flower shader."
+	/>
+
+	Save it.
+
+</Steps>
+
+<Solution label="Show the full flower.gdshader">
+	<Code code={piece5} lang="gdshader" title="art/shaders/flower.gdshader" />
+</Solution>
+
+The flower shader is short. The vertex function moves a vertex by `petal_flutter`, weighted by the alpha of its vertex color. The color is the vertex's own color, but the petals, where the alpha is 1, are multiplied by a **tint**: the instance's custom data, `INSTANCE_CUSTOM.yzw`, which the scatter will set to each flower's color. The petals are white, so the tint is their color. A flower that is not in a `MultiMesh`, such as the preview, has no tint, and its petals stay white. The lighting is lesson 23's, from `stylized_lit.gdshaderinc`, with its rim.
+
+## The materials and a preview scene
+
+You will put a material on each mesh and look at the result. The meshes are in `grass.glb`, and a scene that inherits from it holds the materials.
+
+<Steps>
+
+1. Choose **Scene > New Inherited Scene...** and open `art/nature/grass/grass.glb`. Click **Open**. The scene has the five meshes. Rename its root `GrassPreview`.
+
+	<Figure
+		src={inheritDialog}
+		alt="The Open Base Scene dialog with grass.glb selected in the art/nature/grass folder."
+		caption="A scene inherited from the lesson 30 file."
+	/>
+
+2. Click `grass_clump_a` and in the Inspector, under **Geometry**, set **Material Override** to a **New ShaderMaterial**. Click it to open it, and set **Shader** to `grass.gdshader` with **Quick Load...**. In **Shader Parameters**: set **Ground Texture** to `grass_detail.png` and **Field Noise** to `edge_noise.tres`, both by **Quick Load...**, and **Ground Tint** to `95CC5A`. These are the grass tile's own texture and tint, and the ground's noise, so the grass roots match the grass tile.
+
+	<Figure
+		src={grassMaterialShot}
+		alt="The Inspector on grass_clump_a: a Material Override that is a ShaderMaterial with the shader grass.gdshader, Ground Texture grass_detail.png, Ground Tint a light green, Ground Scale 0.5, Field Noise edge_noise.tres, and Field Noise Scale 0.4."
+		caption="The grass material's parameters."
+	/>
+
+3. Click the **Material Override** row's menu and choose **Save As...**. Save it as `grass.tres` in `art/nature/grass`. Then click `grass_clump_b` and set its **Material Override** to `grass.tres` with **Quick Load...**, and do the same for `grass_clump_c`.
+
+4. Click `flower_daisy`, set its **Material Override** to a **New ShaderMaterial** with `flower.gdshader`, and save it as `flower.tres` in the same folder. It has no parameters. Set `flower_cup`'s **Material Override** to `flower.tres`.
+
+	<Figure
+		src={flowerMaterialShot}
+		alt="The Inspector on flower_daisy: a Material Override that is a ShaderMaterial with the shader flower.gdshader and no parameters."
+		caption="The flower material."
+	/>
+
+5. Save the scene with <Kbd keys="Ctrl+S" mac="Cmd+S" /> as `grass_preview.tscn`, in `art/nature/grass`.
+
+	<Figure
+		src={saveScene}
+		alt="The Save Scene As dialog: the file name grass_preview.tscn in the folder art/nature/grass."
+		caption="The preview scene."
+	/>
+
+6. Open the meadow, select its root, click the **Instantiate Child Scene** button in the Scene dock, and choose `grass_preview.tscn`. Select it and set its **Position** to `-1, 0, 1.2`, so it stands by the player. Save the meadow.
+
+	<Figure
+		src={previewInspector}
+		alt="Godot's editor with the meadow open: the GrassPreview node selected and its Position set to -1, 0, 1.2, in the 3D view."
+		caption="The preview in the meadow."
+	/>
+
+</Steps>
+
+<Solution label="Show the full grass.tres">
+	<Code code={grassMaterial} lang="ini" title="art/nature/grass/grass.tres" />
+</Solution>
+
+<Solution label="Show the full flower.tres">
+	<Code code={flowerMaterial} lang="ini" title="art/nature/grass/flower.tres" />
+</Solution>
+
+<Solution label="Show the full grass_preview.tscn">
+	<Code code={previewScene} lang="ini" title="art/nature/grass/grass_preview.tscn" />
+</Solution>
+
+## Run it
+
+Run the meadow and look at the three clumps just below the player, with the two flowers beside them. Zoom in with the wheel.
+
+<Figure
+	src={noon}
+	alt="The game at noon from above: the meadow with trees and the player, and a small patch of grass and two flowers just below the player."
+	caption="The preview at noon, from the default zoom."
+/>
+
+<Figure
+	src={dusk}
+	alt="The preview at dusk: the grass in a warm brown-green under long shadows, and the flowers in the same warm light."
+	caption="Dusk: the same shader under the dusk's light."
+/>
+
+<Figure
+	src={night}
+	alt="The preview at night: the grass and flowers in dark blue-green."
+	caption="Night."
+/>
+
+The grass takes the day's light as the rest does, because it is lit by the same sun and the same ambient light, and the satin and the green in the shadows come with it. Wait a moment, and the tips move.
+
+<Figure
+	src={wind}
+	alt="Six frames half a second apart, each showing the same clump and a white daisy: the blades' tips lean one way, then the other, and the daisy's petals stay nearly still."
+	caption="Half a second apart: the tips sway, and the petals flutter a little."
+/>
+
+The sway is gentle on purpose: a tip moves 12 centimeters at the strongest gust, which is a third of a blade's height. Turn **wind_strength** up to `1` in the shader globals and it grows by two thirds.
+
+## Try it
+
+- Set **Tip Color** in `grass.tres` to a yellow-green, `A5B35A`, for dry grass, or a blue-green, `5FA87A`, for a wet meadow. The roots do not change, because they are the ground's.
+- Set **Ground Tint** in `grass.tres` to white, and the roots and the middle of every blade turn gray: the texture is a gray detail map, and the tint is what makes it green. That is why the material copies the grass tile's tint.
+- Change `ROOT_SHADE` in the shader from `0.25` to `0.6` for a field with light roots, or to `0.05` for a dark, dense one.
+- Raise `FLATTEN` to `1.0` and every blade lights exactly as the ground does, with no detail. Lower it to `0.3` and each blade shows its own shading.
+- Change `BOUNCE` to `0` and look at the grass in the shadow of a tree at noon: it goes blue-black.
+
+## If it does not work
+
+- **The grass is magenta, or white, or invisible.** A shader error: open the **Shader Editor** and read the **Output** panel. A missing include is the usual cause: the include's file name is `ground_color.gdshaderinc`, and the paths in `#include` are `res://art/shaders/...`.
+- **The grass is black.** The ground texture, field noise, or tint is empty: set them on the material, from `grass.tres`.
+- **The grass is a different color from the ground.** **Ground Tint** is white. The grass tile's tint is `95CC5A`.
+- **The blades do not move.** The `wind_strength` global is 0, or `wind.gdshaderinc` was not saved with `grass_sway` in it.
+- **The flowers are black.** The mesh has no vertex colors: the exporter's vertex color setting in lesson 30 must write `Col`.
+- **The whole clump sways, even its foot.** The vertex color's alpha is not the share of the blade's height. Check **Share of height** in the group from lesson 30.
+- **The ground looks different after step 3.** `ground_color`'s arguments are in the wrong order, or `edge_noise_scale * 0.25` was typed without the `0.25`.
+
+## Checkpoint
+
+Your project now contains:
+
+<FileTree>
+- art
+  - ground
+    - **ground.gdshader** now calls ground_color
+  - nature
+    - grass
+      - **grass.tres**
+      - **flower.tres**
+      - **grass_preview.tscn**
+  - shaders
+    - **ground_color.gdshaderinc**
+    - **grass.gdshader**
+    - **flower.gdshader**
+    - wind.gdshaderinc now has grass_sway and petal_flutter
+- levels
+  - meadow.tscn with `GrassPreview` beside the player
+</FileTree>
+
+Commit your work: `git add .` and `git commit -m "Write the grass shader"`. Lesson 32 scatters the clumps over the ground.
+
+<Checkpoint />

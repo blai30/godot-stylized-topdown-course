@@ -10,6 +10,7 @@
 [ext_resource type="PackedScene" uid="uid://dpo347bmep5qf" path="res://world/environment/world_environment.tscn" id="8_4wctf"]
 [ext_resource type="PackedScene" uid="uid://cq7tmg6gvhpss" path="res://art/nature/tree_oak/tree_oak.tscn" id="9_x3fdv"]
 [ext_resource type="PackedScene" uid="uid://bwnqnqcrrhkbc" path="res://art/nature/tree_pine/tree_pine.tscn" id="10_f2x53"]
+[ext_resource type="PackedScene" uid="uid://dmcj83gsvdjj1" path="res://art/nature/grass/grass_preview.tscn" id="11_i52f3"]
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_uor45"]
 size = Vector2(20, 20)
@@ -100,3 +101,6 @@ transform = Transform3D(-0.45000005, 0, 0.7794228, 0, 0.9, 0, -0.7794228, 0, -0.
 
 [node name="TreePine3" parent="Trees" unique_id=981490198 instance=ExtResource("10_f2x53")]
 transform = Transform3D(-0.37622207, 0, -1.033662, 0, 1.1, 0, 1.033662, 0, -0.37622207, -1.5, 0, 4.4)
+
+[node name="GrassPreview" parent="." unique_id=1378982735 instance=ExtResource("11_i52f3")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0, 1.2)

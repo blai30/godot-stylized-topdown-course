@@ -1,6 +1,7 @@
 shader_type spatial;
 
 #include "res://art/shaders/stylized_lit.gdshaderinc"
+#include "res://art/shaders/ground_color.gdshaderinc"
 
 // The ground textures from lessons 13 and 14.
 uniform sampler2D albedo_texture : source_color, filter_linear_mipmap, repeat_enable;
@@ -27,16 +28,13 @@ void vertex() {
 }
 
 void fragment() {
-	ALBEDO = texture(albedo_texture, world_position.xz * texture_scale).rgb * albedo_tint;
+	ALBEDO = ground_color(albedo_texture, albedo_tint, texture_scale, edge_noise, edge_noise_scale, world_position.xz);
 	ROUGHNESS = roughness;
 	// 0 inside the cell, rising to 1 at the tile's outer edge.
 	float outside = length(max(abs(tile_position) - cell_size * 0.5, 0.0)) / overhang;
 	// Inside the cell this stays at 0.5 or more, so the cell is always covered; at the outer edge it stays below.
 	float noise = texture(edge_noise, world_position.xz * edge_noise_scale).r;
 	ALPHA = noise + 0.5 - outside;
-	// The same noise, four times as wide, brightens and darkens the ground slowly, so the texture's repeat does not show.
-	float tone = texture(edge_noise, world_position.xz * edge_noise_scale * 0.25).r;
-	ALBEDO *= 0.75 + 0.5 * tone;
 	ALPHA_SCISSOR_THRESHOLD = 0.5;
 	EMISSION += soft_rim(NORMAL, INV_VIEW_MATRIX, ALBEDO);
 }

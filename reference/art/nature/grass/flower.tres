@@ -1,0 +1,7 @@
+[gd_resource type="ShaderMaterial" format=3 uid="uid://bw54unkb0dppx"]
+
+[ext_resource type="Shader" uid="uid://cdgvjm6kl70id" path="res://art/shaders/flower.gdshader" id="1_wa3ms"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_wa3ms")
