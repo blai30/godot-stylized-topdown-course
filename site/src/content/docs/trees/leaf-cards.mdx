@@ -1,0 +1,516 @@
+---
+title: Leaf cards and transferred normals
+description: Build the oak's crown in Blender from hundreds of flat leaf cards, scattered in clumps through a lumpy envelope by a Geometry Nodes group you wire yourself, with the shading data the foliage shader needs.
+sidebar:
+  order: 26
+  label: 26. Leaf cards and transferred normals
+lesson:
+  number: 26
+  minutes: 120
+  learn:
+    - Why a tree's crown is hundreds of flat cards, and why they are placed in clumps through a volume
+    - How a Geometry Nodes group scatters points, puts a card on each, and stores data on them
+    - What a custom normal is, and how one shared normal lets a crown of flat cards shade like one soft form
+    - How vertex colors carry a card's wind phase, flutter weight, and depth to a shader
+    - How to export vertex colors from Blender to Godot in the slot Godot reads
+  prerequisites: [10, 11, 24, 25]
+---
+
+import { Aside, FileTree, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import crown from '../../../assets/lessons/leaf-cards/crown.png';
+import envelope from '../../../assets/lessons/leaf-cards/envelope.png';
+import addSphere from '../../../assets/lessons/leaf-cards/add-sphere.png';
+import newGroup from '../../../assets/lessons/leaf-cards/new-group.png';
+import nodeMenu from '../../../assets/lessons/leaf-cards/node-menu.png';
+import nodeSearch from '../../../assets/lessons/leaf-cards/node-search.png';
+import clumpsNodes from '../../../assets/lessons/leaf-cards/clumps-nodes.png';
+import clumpsView from '../../../assets/lessons/leaf-cards/clumps-view.png';
+import spheresNodes from '../../../assets/lessons/leaf-cards/spheres-nodes.png';
+import spheresView from '../../../assets/lessons/leaf-cards/spheres-view.png';
+import cardsNodes from '../../../assets/lessons/leaf-cards/cards-nodes.png';
+import cardsView from '../../../assets/lessons/leaf-cards/cards-view.png';
+import dataNodes from '../../../assets/lessons/leaf-cards/data-nodes.png';
+import shadingNodes from '../../../assets/lessons/leaf-cards/shading-nodes.png';
+import shadingView from '../../../assets/lessons/leaf-cards/shading-view.png';
+import colorAttributes from '../../../assets/lessons/leaf-cards/color-attributes.png';
+import colorDialog from '../../../assets/lessons/leaf-cards/color-dialog.png';
+import colorAdded from '../../../assets/lessons/leaf-cards/color-added.png';
+import exporterColors from '../../../assets/lessons/leaf-cards/exporter-colors.png';
+import treeScene from '../../../assets/lessons/leaf-cards/tree-scene.png';
+
+## What you will build
+
+The oak's crown: several hundred flat cards, each a small square that will show one of your leaf sprays, packed into a lumpy dome above the trunk. You do not place the cards by hand. You build a **Geometry Nodes** group in Blender, about forty nodes wired in five short chapters, and it scatters them. The group also writes the numbers the foliage shader will read in lesson 27: how each card should be shaded, and when it should move in the wind.
+
+<Figure
+	src={crown}
+	alt="Blender's viewport showing the oak: the brown trunk with a rounded crown of flat gray cards piled in overlapping layers above it."
+	caption="The crown in Blender's viewport, before it has leaves or color."
+/>
+
+This is the longest lesson of the module, and the one with the most new ideas. Take it a chapter at a time: each one ends with a result you can look at.
+
+## How a crown is made of cards
+
+A real tree has tens of thousands of leaves, and a game cannot draw them one by one. A **card** is a flat square with a picture of leaves on it, from the atlas you painted in lesson 25. A few hundred cards, piled up and tilted every way, read as a mass of leaves, and the transparent parts of each picture let sky and the trunk show through.
+
+Three decisions make the pile read as a tree and not as a heap of paper.
+
+- **Clumps through a volume.** A thin shell of cards around a ball reads as a hollow ball. Instead, the group first chooses about twenty **clump centers** inside the crown, each at a random depth below the surface, and then fills a small sphere around each center with cards at every depth. The crown has layers: cards in front of cards, with shadow between them.
+- **Cards face out and up.** Each card turns to face away from the crown, tipped toward the sky and wobbled a little, so the cards catch light the way leaves on top of a tree do.
+- **One shared normal.** A flat card has one **[normal](/reference/glossary/#normal)**, the direction it faces, and lighting a pile of cards by their own normals gives a speckled mess of light and dark. The shader lights each card with a normal you store on it that points the way the *crown* faces at that spot, a little changed by the clump it is in. The whole crown then shades as one soft form, lighter on top and darker beneath, while the cards' leafy edges stay sharp. Blender calls such a stored normal a **custom normal**.
+
+The group also stores two pieces of data on every card, as vertex colors:
+
+| Channel | Holds | Used for |
+|---|---|---|
+| Red | A random number per card, its **phase** | Wind: so neighboring cards do not move in step |
+| Green | 0 on the card's stem edge, 1 on its far edge | Wind: the far edge of a card flutters more than the edge by the stem |
+| Blue | How deep in the crown the card is, 0 deep and 1 at the surface | Shading: leaves deep inside are darker |
+
+## The envelope
+
+The group needs a shape to scatter cards through: the **envelope**, the outline of the crown. You make it from three spheres, scaled into ellipsoids and moved so they overlap into a lumpy dome. It stays in the file as the group's input, and it is not exported: the group replaces it with the cards.
+
+<Steps>
+
+1. Open `tree_oak.blend` from lesson 24 in Blender. With the pointer over the 3D view, press <Kbd keys="Shift+A" /> and type `uv sphere`, then press <Kbd keys="Enter" />. A sphere appears at the center of the scene, around the trunk's foot.
+
+	<Figure
+		src={addSphere}
+		alt="Blender's Add menu with uv sphere typed into its search field and one result, UV Sphere, under Mesh."
+		caption="Shift+A, then type to search."
+	/>
+
+2. Press <Kbd keys="F2" />, press <Kbd keys="Ctrl+A" mac="Cmd+A" />, type `leaves`, and press <Kbd keys="Enter" />. The object is named `leaves`, and Blender will show its name in Godot.
+
+3. Press <Kbd keys="Tab" /> for Edit Mode. The whole sphere is selected. Press <Kbd keys="S" />, type `1.25`, <Kbd keys="Tab" />, `1.2`, <Kbd keys="Tab" />, `1.1`, and <Kbd keys="Enter" />. The three numbers are the stretch along X, Y, and Z. Then press <Kbd keys="G" />, type `0`, <Kbd keys="Tab" />, `0`, <Kbd keys="Tab" />, `3.45`, and <Kbd keys="Enter" />. The sphere is now an ellipsoid 2.5 meters wide, above the trunk.
+
+4. Still in Edit Mode, press <Kbd keys="Shift+A" />, search `uv sphere`, and press <Kbd keys="Enter" />. A second sphere is added to the same mesh, and only it is selected. Scale it by `0.9`, `0.85`, `0.8`, and move it by `0.45`, `0.3`, `3.95`, as in the last step.
+
+5. Add a third sphere the same way. Scale it by `0.85`, `0.85`, `0.75`, and move it by `-0.5`, `-0.25`, `3.85`.
+
+6. Press <Kbd keys="Tab" /> to leave Edit Mode, and <Kbd keys="Numpad ." /> to frame the result. The three ellipsoids overlap in one lumpy dome, 2.7 meters wide, sitting on the fork.
+
+	<Figure
+		src={envelope}
+		alt="Blender's viewport framed on a smooth gray lumpy dome made of three overlapping ellipsoids, above the brown trunk."
+		caption="The envelope: three ellipsoids in one mesh."
+	/>
+
+</Steps>
+
+## The group
+
+<Steps>
+
+1. Click the **Geometry Nodes** tab at the top of the window. The node editor fills the lower half. With `leaves` selected, click **New** in the node editor's header. Blender makes a node group named `Geometry Nodes` and puts a **Geometry Nodes modifier** on the object, which runs the group. The group so far is two nodes: **Group Input**, the object's own mesh, joined to **Group Output**, what the modifier gives back.
+
+	<Figure
+		src={newGroup}
+		alt="The Geometry Nodes workspace: a spreadsheet on the left, the 3D view on the right, and below them the node editor with a Group Input node joined by a green line to a Group Output node."
+		caption="A new group: whatever goes in comes out."
+	/>
+
+2. Point at the node editor and press <Kbd keys="Ctrl+Space" mac="Cmd+Space" /> to make it fill the whole window. Press it again, over the editor, whenever you want the other editors back. Scroll the wheel to zoom and drag with the middle mouse button to pan, or press <Kbd keys="Home" /> to fit everything.
+
+</Steps>
+
+A node group is a recipe: data flows along the lines from left to right, and each node changes it. The lines are colored by what they carry: green for **geometry** (a mesh or points), purple for vectors, gray for single numbers, and a lighter purple for rotations. A socket joins only to a socket of a compatible type.
+
+Three things you do in every chapter:
+
+- **Add a node.** With the pointer where you want it, press <Kbd keys="Shift+A" />, type the node's name, press <Kbd keys="Enter" />, and click to drop it.
+- **Set a field.** Click a number, press <Kbd keys="Ctrl+A" mac="Cmd+A" />, type, and press <Kbd keys="Enter" />. A field with three numbers is a vector: type X, press <Kbd keys="Tab" />, type Y, <Kbd keys="Tab" />, Z, and press <Kbd keys="Enter" />. A dropdown, such as a node's data type, you click and choose from.
+- **Link two nodes.** Drag from a dot on the right edge of a node, an output, to a dot on the left edge of another, an input. Once an input is linked, its field disappears, because the link gives the value.
+
+<Figure
+	src={nodeMenu}
+	alt="The node editor with Shift+A pressed over empty space: the Add menu opened with Search at its top and categories below it."
+	caption="Shift+A opens the Add menu."
+/>
+
+<Figure
+	src={nodeSearch}
+	alt="The Add menu with position typed into its search, and one result."
+	caption="Typing searches it, and Enter picks the first result."
+/>
+
+Each chapter lists its nodes in a table, in the order to add them, with the settings and values to give them. **To tell nodes apart, name each one:** after you drop a node, press <Kbd keys="F2" />, type the name in bold in the table, and press <Kbd keys="Enter" />. The names are only for you, and the later tables and the figures use them. A second table lists the links to make, as *from node, output* to *node, input*. A node's name in a table is followed by where it comes from: the name you search for.
+
+<Aside type="tip" title="Keep a chapter's nodes apart">
+Drop each node in empty space. A node dropped onto a line inserts itself into it, and you will have to undo that. Leave room in a row, and work left to right, as the figures do. If a link goes to the wrong socket, drag the end away from the node and let go in empty space: the link is removed.
+</Aside>
+
+## Chapter 1: clump centers
+
+The first chapter picks the places the clumps grow from. It scatters random points over the envelope's surface, in its upper part only, and pushes each point a random distance into the crown, so the centers are spread through the volume and not all on the outside. It also remembers two things about each center: how deep it is, and which way the envelope faces there.
+
+<Steps>
+
+1. Add these nodes, name them, and set their values:
+
+	| Node | Settings |
+	|---|---|
+	| **Position**, from Position | nothing |
+	| **Height**, from Separate XYZ | nothing |
+	| **High enough**, from Compare | type **Float**, operation **Greater Than**, B `2.7` |
+	| **Clump centers**, from Distribute Points on Faces | method **Random**, Density `0.8`, Seed `3` |
+	| **Push depth**, from Random Value | type **Float**, Min `-0.9`, Max `0`, Seed `1` |
+	| **Push inward**, from Vector Math | operation **Scale** |
+	| **Move inside**, from Set Position | nothing |
+	| **Depth value**, from Map Range | type **Float**, From Min `-0.9`, From Max `0`, To Min `0`, To Max `1` |
+	| **Store depth**, from Store Named Attribute | type **Float**, domain **Point**, Name `depth` |
+	| **Store envelope normal**, from Store Named Attribute | type **Vector**, domain **Point**, Name `env_normal` |
+
+2. Make these links. **Group Input** and **Group Output** are the two nodes that were already there. Move **Group Output** to the right of the nodes as you go, so it is out of the way.
+
+	| From | To |
+	|---|---|
+	| Position, Position | Height, Vector |
+	| Height, Z | High enough, A |
+	| Group Input, Geometry | Clump centers, Mesh |
+	| High enough, Result | Clump centers, Selection |
+	| Clump centers, Normal | Push inward, Vector |
+	| Push depth, Value | Push inward, Scale |
+	| Clump centers, Points | Move inside, Geometry |
+	| Push inward, Vector | Move inside, Offset |
+	| Push depth, Value | Depth value, Value |
+	| Move inside, Geometry | Store depth, Geometry |
+	| Depth value, Result | Store depth, Value |
+	| Store depth, Geometry | Store envelope normal, Geometry |
+	| Clump centers, Normal | Store envelope normal, Value |
+	| Store envelope normal, Geometry | Group Output, Geometry |
+
+</Steps>
+
+<Figure
+	src={clumpsNodes}
+	alt="The node editor with chapter 1's nodes: Position and Height feeding High enough, which feeds Clump centers, whose points go through Move inside and two Store nodes to the Group Output."
+	caption="Chapter 1: ten nodes."
+/>
+
+Read it from left to right. **Position** is where each face of the envelope is, **Height** keeps its Z, and **High enough** is true where Z is above 2.7 meters, so clumps start only on the upper part of the dome, and the lower front stays open for the trunk to show. **Clump centers** scatters random points on those faces (the **Density** is how many per square meter, and the **Seed** picks one random arrangement) and gives each the surface **Normal**, the direction the envelope faces there. **Push depth** is a random number from `-0.9` to `0`, **Push inward** multiplies the normal by it, so it points *into* the crown, and **Move inside** moves each point by that. **Depth value** turns the push into a number from 0, deep, to 1, at the surface. The two **Store** nodes write that number, and the envelope's normal, onto each point under names you will read again: a **named attribute** is a value stored on a mesh or on points that later nodes can look up by name.
+
+<Figure
+	src={clumpsView}
+	alt="Blender's viewport framed on the oak, with about twenty-five orange dots scattered through and over the crown's upper part."
+	caption="The group's output so far: the clump centers, a few of them deep inside the crown."
+/>
+
+The result is points, not a mesh, so the viewport shows dots. Change **Density** and **Seed** on **Clump centers** and watch the dots move: the group is live, and every later chapter follows what this one gives.
+
+## Chapter 2: a ball around each center
+
+<Steps>
+
+1. Add these nodes:
+
+	| Node | Settings |
+	|---|---|
+	| **Clump ball**, from Ico Sphere | Radius `0.75`, Subdivisions `3` |
+	| **Ball on each center**, from Instance on Points | nothing |
+	| **Realize balls**, from Realize Instances | nothing |
+
+2. Make these links:
+
+	| From | To |
+	|---|---|
+	| Store envelope normal, Geometry | Ball on each center, Points |
+	| Clump ball, Mesh | Ball on each center, Instance |
+	| Ball on each center, Instances | Realize balls, Geometry |
+	| Realize balls, Geometry | Group Output, Geometry |
+
+</Steps>
+
+<Figure
+	src={spheresNodes}
+	alt="The node editor with chapter 2's three nodes: Clump ball and Ball on each center, then Realize balls, joined to the points from chapter 1."
+	caption="Chapter 2: the clump centers become balls."
+/>
+
+**Instance on Points** puts a copy of the **Instance** geometry on every point: here a ball 75 centimeters in radius. An **instance** is a cheap copy: Blender remembers one ball and where each copy goes. **Realize Instances** turns the copies into real faces, because the next chapter scatters points over those faces. The last link moves **Group Output** to the new end of the chain, so the viewport now shows the balls.
+
+<Figure
+	src={spheresView}
+	alt="Blender's viewport with the crown filled with gray overlapping spheres of the same size, thickest toward the middle of the top."
+	caption="A clump ball on every center. They overlap, and the cards will fill them."
+/>
+
+## Chapter 3: a card on each point
+
+This is the biggest chapter. It scatters points over the balls, turns each point into a card, and aims each card: out of the crown, tipped toward the sky, wobbled, and rolled at random.
+
+<Steps>
+
+1. Add these nodes:
+
+	| Node | Settings |
+	|---|---|
+	| **Card points**, from Distribute Points on Faces | method **Random**, Density `4`, Seed `5` |
+	| **Envelope normal**, from Named Attribute | type **Vector**, Name `env_normal` |
+	| **Tip up**, from Vector Math | operation **Add**, Vector (second) `0, 0, 0.6` |
+	| **Wobble**, from Random Value | type **Vector**, Min `-0.85, -0.85, -0.85`, Max `0.85, 0.85, 0.85`, Seed `7` |
+	| **Add wobble**, from Vector Math | operation **Add** |
+	| **Facing**, from Vector Math | operation **Normalize** |
+	| **Face this way**, from Align Rotation to Vector | axis **Z**, pivot **Auto** |
+	| **Roll to the clump**, from Align Rotation to Vector | axis **Y**, pivot **Z** |
+	| **Card size**, from Random Value | type **Vector**, Min `0.8, 0.8, 0.8`, Max `1.2, 1.2, 1.2`, Seed `11` |
+	| **Card**, from Grid | Size X `1.25`, Size Y `1.25`, Vertices X `2`, Vertices Y `2` |
+	| **Card UVs**, from Store Named Attribute | type **2D Vector**, domain **Face Corner**, Name `UVMap` |
+	| **Card on each point**, from Instance on Points | nothing |
+
+2. Make these links:
+
+	| From | To |
+	|---|---|
+	| Realize balls, Geometry | Card points, Mesh |
+	| Envelope normal, Attribute | Tip up, Vector |
+	| Tip up, Vector | Add wobble, Vector |
+	| Wobble, Value | Add wobble, Vector (second) |
+	| Add wobble, Vector | Facing, Vector |
+	| Facing, Vector | Face this way, Vector |
+	| Face this way, Rotation | Roll to the clump, Rotation |
+	| Card points, Normal | Roll to the clump, Vector |
+	| Card, Mesh | Card UVs, Geometry |
+	| Card, UV Map | Card UVs, Value |
+	| Card points, Points | Card on each point, Points |
+	| Card UVs, Geometry | Card on each point, Instance |
+	| Roll to the clump, Rotation | Card on each point, Rotation |
+	| Card size, Value | Card on each point, Scale |
+	| Card on each point, Instances | Group Output, Geometry |
+
+</Steps>
+
+<Figure
+	src={cardsNodes}
+	alt="The node editor with chapter 3's twelve nodes: a row of vector nodes ending in two Align Rotation to Vector nodes, a Grid with its UV store, and an Instance on Points node that collects them."
+	caption="Chapter 3: twelve nodes."
+/>
+
+Here is what the nodes do.
+
+- **Card points** scatters four points per square meter over the balls' surfaces. The balls overlap, so the points fall at every depth of the crown.
+- **Envelope normal** reads back the `env_normal` attribute from chapter 1. The cards come from points on the *balls*, which are made from the clump centers, so each ball point inherits the value of its center: every card in a clump reads the direction the envelope faced at its clump.
+- **Tip up** adds `0, 0, 0.6` to that, which tips the direction toward the sky. **Wobble** is a random vector with each part between `-0.85` and `0.85`, and **Add wobble** adds it, so no two neighbors face quite the same way. **Facing** scales the sum to length 1, a plain direction.
+- **Face this way** makes a rotation that points a card's Z axis, the direction its face looks, along that direction. **Roll to the clump** then spins the card about it until its Y axis points along the ball's own normal at that point: the card's stem edge ends up toward the clump's center and its far edge outward, as leaves on a branch hang.
+- **Card** is a flat square 1.25 meters on a side, a grid of 2 by 2 points, which is one face. **Card UVs** stores its UV map, which comes from the **Grid** node's **UV Map** output and puts the whole atlas cell on the card. **Card size** is a random scale from 0.8 to 1.2, which makes the cards 1 to 1.5 meters across.
+- **Card on each point** puts a card on each point, with that rotation and that scale.
+
+<Figure
+	src={cardsView}
+	alt="Blender's viewport with the crown covered in flat gray cards at many angles, piled in layers, with gaps where the trunk and limbs show below."
+	caption="The cards, still plain gray. Several hundred of them."
+/>
+
+<Aside type="note" title="The number of cards">
+The count depends on the random seeds and on the envelope's own face order, which differs a little each time you make it. Yours will be a few hundred, and anything from 400 to 800 reads the same. If your crown looks sparse, raise **Density** on **Card points** a little. If the trunk is hidden, lower it.
+</Aside>
+
+## Chapter 4: data on every card
+
+Two more values go onto each card, stored as attributes: a random **phase**, and the clump's normal.
+
+<Steps>
+
+1. Add these nodes:
+
+	| Node | Settings |
+	|---|---|
+	| **Wind phase**, from Random Value | type **Float**, Min `0`, Max `1`, Seed `13` |
+	| **Store phase**, from Store Named Attribute | type **Float**, domain **Instance**, Name `phase` |
+	| **Store clump normal**, from Store Named Attribute | type **Vector**, domain **Instance**, Name `clump_normal` |
+	| **Realize cards**, from Realize Instances | nothing |
+
+2. Make these links:
+
+	| From | To |
+	|---|---|
+	| Card on each point, Instances | Store phase, Geometry |
+	| Wind phase, Value | Store phase, Value |
+	| Store phase, Geometry | Store clump normal, Geometry |
+	| Card points, Normal | Store clump normal, Value |
+	| Store clump normal, Geometry | Realize cards, Geometry |
+	| Realize cards, Geometry | Group Output, Geometry |
+
+</Steps>
+
+<Figure
+	src={dataNodes}
+	alt="The node editor with chapter 4's four nodes: Wind phase, two Store nodes, and Realize cards, after Card on each point."
+	caption="Chapter 4: the data stays on the cards when they are made real."
+/>
+
+The two **Store** nodes work on the **Instance** domain: each value belongs to one whole card, so every corner of it has the same number, and a card's **Wind phase** is one number for the card. **Card points**' normal is the direction of the *ball's* surface at the card's point: the clump normal that shapes the crown's shading. **Realize cards** makes the cards into one mesh, and the stored values come along to each corner.
+
+## Chapter 5: colors and normals
+
+The last chapter packs the data into a vertex color, and builds each corner's normal.
+
+<Steps>
+
+1. Add these nodes:
+
+	| Node | Settings |
+	|---|---|
+	| **Read phase**, from Named Attribute | type **Float**, Name `phase` |
+	| **Read depth**, from Named Attribute | type **Float**, Name `depth` |
+	| **Read UVs**, from Named Attribute | type **Vector**, Name `UVMap` |
+	| **Card height**, from Separate XYZ | nothing |
+	| **Pack colors**, from Combine Color | mode **RGB**, Alpha `1` |
+	| **Store colors**, from Store Named Attribute | type **Color**, domain **Point**, Name `Col` |
+	| **Read clump normal**, from Named Attribute | type **Vector**, Name `clump_normal` |
+	| **Read envelope normal**, from Named Attribute | type **Vector**, Name `env_normal` |
+	| **Clump strength**, from Vector Math | operation **Scale**, Scale `1.4` |
+	| **Blend normals**, from Vector Math | operation **Add** |
+	| **Unit normal**, from Vector Math | operation **Normalize** |
+	| **Set normals**, from Set Mesh Normal | mode **Free** |
+
+2. Make these links:
+
+	| From | To |
+	|---|---|
+	| Read UVs, Attribute | Card height, Vector |
+	| Read phase, Attribute | Pack colors, Red |
+	| Card height, Y | Pack colors, Green |
+	| Read depth, Attribute | Pack colors, Blue |
+	| Realize cards, Geometry | Store colors, Geometry |
+	| Pack colors, Color | Store colors, Value |
+	| Read clump normal, Attribute | Clump strength, Vector |
+	| Read envelope normal, Attribute | Blend normals, Vector |
+	| Clump strength, Vector | Blend normals, Vector (second) |
+	| Blend normals, Vector | Unit normal, Vector |
+	| Store colors, Geometry | Set normals, Mesh |
+	| Unit normal, Vector | Set normals, Custom Normal |
+	| Set normals, Mesh | Group Output, Geometry |
+
+</Steps>
+
+<Figure
+	src={shadingNodes}
+	alt="The node editor with chapter 5's twelve nodes: Named Attribute reads on the left feeding Combine Color and a chain of Vector Math nodes, ending in Store colors and Set normals before the Group Output."
+	caption="Chapter 5: twelve nodes, and the group is complete."
+/>
+
+- **Read phase**, **Read depth**, and **Read UVs** look up the attributes by name. **Card height** keeps the UV's Y: a card's UVs run from 0 at its stem edge to 1 at its far edge, so this is the green channel's 0-to-1. **Pack colors** puts the phase in red, the card height in green, and the depth in blue, and **Store colors** writes the three as a vertex color named `Col`.
+- The normal for each corner is the *envelope's* normal plus the *clump's* normal, **Clump strength** times 1.4, then scaled back to length 1. The envelope's normal sets the crown's overall shading, lit on top and dark underneath. The clump's normal adds a little lump to it, so each clump is a soft bump on the dome, and the surface of the whole crown is not smooth. **Set normals** stores the result as the corners' **custom normal**.
+
+<Figure
+	src={shadingView}
+	alt="Blender's viewport with the crown of gray cards, shaded as one soft lit dome, light on top and darker beneath, and its edges still made of separate flat cards."
+	caption="With custom normals, the piled cards shade as one dome."
+/>
+
+<Aside type="note" title="Why not shade each card by its own normal?">
+Without the custom normals, each card would be lit by its own tilt, and with every card tipped a different way, the crown would turn into a speckle of bright and dark flakes. A stylized tree fakes a soft volume out of flat cards, and this one stored normal is the whole trick.
+</Aside>
+
+## A place for the colors
+
+Blender writes a mesh's vertex colors to the glTF file only when the mesh has an **active** color attribute. The group's attribute is made at the end of the group, so the mesh itself has none, and Blender writes plain white in its place. Give the mesh an empty attribute with the same name, and the group's data fills it.
+
+<Steps>
+
+1. Press <Kbd keys="Ctrl+Space" mac="Cmd+Space" /> over the node editor to get the other editors back. In the **Properties** editor, click the **Data** tab, the green triangle. Click the name at the top, press <Kbd keys="Ctrl+A" mac="Cmd+A" />, type `leaves`, and press <Kbd keys="Enter" />: the mesh is named `leaves`, as Godot will show it.
+
+2. <Kbd keys="Ctrl" />-click the **Color Attributes** panel's header to open it and close the others. Click the **+** at its right.
+
+	<Figure
+		src={colorAttributes}
+		alt="The Properties editor on the Data tab with the Color Attributes panel open and empty, and a plus button at its right."
+		caption="The Color Attributes panel."
+	/>
+
+3. In the dialog, set **Name** to `Col`. Leave **Domain** on **Vertex** and **Data Type** on **Color**, and click **Add**.
+
+	<Figure
+		src={colorDialog}
+		alt="The Add Color Attribute dialog: Name, Domain with Vertex chosen, Data Type with Color chosen, a Color swatch, and Cancel and Add buttons."
+		caption="An attribute named Col, on the vertices."
+	/>
+
+	<Figure
+		src={colorAdded}
+		alt="The Color Attributes panel with one entry, Col, selected."
+		caption="Col is now the mesh's active color attribute."
+	/>
+
+</Steps>
+
+## Export
+
+The collection already has the glTF exporter you set up in lesson 24, writing `art\nature\tree_oak\tree_oak.glb`. The `leaves` object is in the same collection, so the same file will carry the trunk and the cards. The exporter needs one change.
+
+<Steps>
+
+1. Click the **Layout** tab. Open the **Collection** tab in the Properties editor, scroll to **glTF 2.0**, and open its **Data** section. Open **Vertex Colors**. Set **Use Vertex Color** to **Active**, and uncheck **Export All Vertex Colors**. The default, **Material**, writes the colors only when a material reads them, and the cards have no material.
+
+	<Figure
+		src={exporterColors}
+		alt="The exporter's Vertex Colors section: Use Vertex Color set to Active, Export All Vertex Colors unchecked, and Export Active Vertex Color When No Material checked."
+		caption="The active color attribute, and only that one."
+	/>
+
+2. Click **Export All** in the **Exporters** panel, above the exporter's settings. Blender writes `tree_oak.glb` again. Save the file with <Kbd keys="Ctrl+S" mac="Cmd+S" />.
+
+</Steps>
+
+## Bring it into Godot
+
+<Steps>
+
+1. Open your project in Godot. It imports the changed `tree_oak.glb` again as it starts, and `tree_oak.tscn`, which was made from it, shows a new child, `leaves`, with the cards. It has no shader yet, so Godot gives it a plain material that shows the vertex colors as they are.
+
+2. Open `art/nature/tree_oak/tree_oak.tscn`. Select `leaves`.
+
+	<Figure
+		src={treeScene}
+		alt="The Godot editor with the tree_oak scene: the brown trunk and above it a crown of flat cards, each colored a different shade of pink, purple, and blue by the data written to its corners."
+		caption="The cards as Godot imports them. The colors are not leaf colors: they are the data you packed, shown as colors."
+	/>
+
+</Steps>
+
+The odd colors are the proof that the data arrived: red is each card's phase, green how far along it from the stem edge, and blue its depth in the crown. In lesson 27 you write the shader that turns the data into leaves, light, and wind.
+
+## Try it
+
+- On **Clump centers**, raise **Density** to `1.5`. More clumps, and so more cards. Then try a **Seed** of `4`: a different crown from the same group.
+- On **Card points**, lower **Density** to `2`. The crown thins into an airy one. On **Card**, make **Size X** and **Size Y** `0.8`, and compare how the cards read.
+- Change `2.7` in **High enough** to `3.4`. The cards pull up out of the lower crown, and the trunk and limbs show below. Put it back after.
+
+## If it does not work
+
+- **A link will not connect.** The sockets are of different types, or you dragged to the wrong socket. Drag from the dot, not the node, and let go on the dot.
+- **The viewport shows nothing.** The last node's output is not joined to **Group Output**, or the modifier is switched off: check the modifier's eye icon in the Properties editor's **Modifiers** tab.
+- **The cards are not in the right place, or are far too big or small.** A value is wrong. **Ico Sphere**'s radius `0.75`, **Card**'s sizes `1.25`, and the three ellipsoids' numbers are the usual ones.
+- **The cards all face one way.** **Roll to the clump** has the wrong axis or its **Vector** is not linked to **Card points**' **Normal**. Its **axis** is **Y**, and its pivot **Z**.
+- **The crown is a hollow shell.** **Push inward** is not scaling by **Push depth**, so the clump centers lie on the surface. Check that **Push depth**'s **Value** goes to **Push inward**'s **Scale**.
+- **The cards are lit as a speckle.** **Set normals** is muted, or **Unit normal** is not linked to its **Custom Normal**.
+- **In Godot the cards are white.** The exporter's **Use Vertex Color** is **Material**, or the mesh has no `Col` color attribute. Do the two steps of the last sections and export again.
+- **Blender says there is no active color attribute.** In the Color Attributes panel, click the `Col` entry to make it active.
+
+## Checkpoint
+
+Your project now contains:
+
+<FileTree>
+- art
+  - nature
+    - tree_oak
+      - leaf_atlas.png
+      - **tree_oak.glb**, now with the cards
+      - tree_oak.glb.import
+      - tree_oak.tscn
+- art_source
+  - nature
+    - tree_oak
+      - **tree_oak.blend**, with the envelope and the Leaf Cards group
+</FileTree>
+
+Commit your work: `git add .` and `git commit -m "Build the oak's leaf cards"`. In the next lesson you write the shader that gives the cards their leaves, their light, and the wind.
+
+<Checkpoint />
