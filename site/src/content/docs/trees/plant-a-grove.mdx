@@ -1,0 +1,225 @@
+---
+title: "The tree scene: plant a grove"
+description: Give the oak a solid trunk and its own place in the wind, check what Godot's imported mesh levels do under the orthographic camera, and plant seven oaks in the meadow, each turned and sized differently.
+sidebar:
+  order: 28
+  label: "28. The tree scene: plant a grove"
+lesson:
+  number: 28
+  minutes: 60
+  learn:
+    - How to give a tree a solid trunk and leave the crown walkable beneath
+    - How an instance shader parameter gives each copy of a tree its own value
+    - What the importer's mesh levels of detail did to the oak, measured under the game's camera
+    - How a turn and a size change make copies of one tree read as a grove
+  prerequisites: [11, 24, 26, 27]
+---
+
+import { Aside, Code, FileTree, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Solution from '../../../components/Solution.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import piece1 from '../../../checkpoints/28/pieces/piece-1.cs?raw';
+import treeScene from '../../../checkpoints/28/files/art/nature/tree_oak/tree_oak.tscn?raw';
+import meadowScene from '../../../checkpoints/28/files/levels/meadow.tscn?raw';
+import trunkShape from '../../../assets/lessons/plant-a-grove/trunk-shape.png';
+import treeSceneShot from '../../../assets/lessons/plant-a-grove/tree-scene.png';
+import selectScene from '../../../assets/lessons/plant-a-grove/select-scene.png';
+import meadowEditor from '../../../assets/lessons/plant-a-grove/meadow-editor.png';
+import groveNoon from '../../../assets/lessons/plant-a-grove/grove-noon.png';
+import groveFar from '../../../assets/lessons/plant-a-grove/grove-far.png';
+import groveDusk from '../../../assets/lessons/plant-a-grove/grove-dusk.png';
+import groveClose from '../../../assets/lessons/plant-a-grove/grove-close.png';
+
+## What you will build
+
+A grove of seven oaks in the meadow. Each stands on a trunk the player cannot walk through, sways in the wind at its own moment, and is turned and sized a little differently from the others, so seven copies of one model read as seven trees.
+
+<Figure
+	src={groveNoon}
+	alt="The meadow from above at noon: seven oaks of slightly different sizes around the dirt path, each with a leafy shadow, and the player capsule in the middle."
+	caption="The grove at noon."
+/>
+
+## A trunk to bump into
+
+The player still walks through the oak. Rocks got their collision from the importer, as a shape built from their mesh. A tree's trunk needs a simpler one: a short cylinder, because the player should stop at the trunk but pass under the crown, and a shape built from the whole mesh would include the crown's cards.
+
+<Steps>
+
+1. Open `art/nature/tree_oak/tree_oak.tscn`. Select the root, **TreeOak**, click **+** at the top of the Scene dock, search for `StaticBody3D`, click **Create**, and rename it `Trunk`. A **StaticBody3D** is a solid that never moves.
+
+2. With `Trunk` selected, click **+** again, search for `CollisionShape3D`, click **Create**, and rename it `TrunkShape`. It is the shape the body uses.
+
+3. Select `TrunkShape`. In the Inspector, click the **Shape** field's empty value, choose **CylinderShape3D** from the **New** list, and click the new shape to open it. Set **Radius** to `0.35`. Leave **Height** at `2`. Under **Transform**, set **Position** to `0, 1, 0`: the cylinder is centered on its position, so this puts its base on the ground and its top 2 meters up, where the trunk forks.
+
+	<Figure
+		src={trunkShape}
+		alt="The Godot editor with the tree scene: a teal cylinder outline around the lower trunk, and the Inspector showing a CylinderShape3D with Radius 0.35 and Height 2."
+		caption="The trunk's cylinder, 70 centimeters across and 2 meters tall."
+	/>
+
+</Steps>
+
+The player is a capsule of the **player** physics layer, and `StaticBody3D` is on the **world** layer by default, so they collide with no more setup, as the rocks do.
+
+## Each tree in its own phase
+
+Both of the oak's shaders have an `instance uniform float tree_phase`, a number each copy of the tree carries for itself. It is `0` for every tree until something sets it, so seven oaks would all sway in step. A small script gives each its own.
+
+<Steps>
+
+1. In your editor, create `src/World/WindPhase.cs`. Save the code below into it.
+
+2. Click **Build Project** in Godot's toolbar.
+
+</Steps>
+
+Write the script so that:
+
+- it has `using System.Linq;` and `using Godot;`, and is in the namespace `TopDownTemplate.World;`;
+- a comment says it gives a tree its own place in the wind, so a grove does not sway in step. `WindPhase` is a `partial class` that inherits `Node3D`;
+- a `private static readonly StringName` named `PhaseParameter` holds `"tree_phase"`;
+- `_Ready()` has a comment: a number from 0 up to 1 made from where the tree stands, so every tree has its own and keeps it. It computes `var phase = Mathf.PosMod(GlobalPosition.X * 0.37f + GlobalPosition.Z * 0.61f, 1f);`, then loops over `GetChildren().OfType<GeometryInstance3D>()` and calls `SetInstanceShaderParameter(PhaseParameter, phase)` on each. The tree's two meshes, `leaves` and `tree_oak`, are the children that are geometry instances, so both get the same phase, and the bark and the cards sway together.
+
+<Solution>
+	<Code code={piece1} lang="csharp" title="src/World/WindPhase.cs" />
+</Solution>
+
+The phase comes from the tree's position, so it needs no saved data: move a tree and its phase changes, and put it back and it returns. Two trees side by side get phases that differ, because the two multipliers are unrelated, and `PosMod` wraps the sum back into 0 to 1.
+
+<Steps>
+
+3. Select **TreeOak**, the root. In the Inspector, click **Script**'s empty field, choose **Quick Load...**, and pick `WindPhase.cs`.
+
+	<Figure
+		src={treeSceneShot}
+		alt="The Godot editor with the tree scene: the Scene dock listing TreeOak with a script icon, leaves, tree_oak, and Trunk with TrunkShape, and the oak in the 3D viewport."
+		caption="The finished tree scene."
+	/>
+
+4. Save the scene with <Kbd keys="Ctrl+S" mac="Cmd+S" />.
+
+</Steps>
+
+## Levels of detail
+
+A far-off model needs fewer triangles than a close one. Godot can make simpler copies of a mesh when it imports it, **levels of detail**, and switch among them by how big the mesh is on screen. It did so for the oak, and the importer's settings were on by default, so there was nothing to turn on.
+
+What it did is worth looking at, because the numbers are not what you would expect. The reference project reads the imported mesh back: the trunk, `tree_oak`, has the full mesh of 5,592 indices and three simpler ones of 1,398, 699, and 333. The crown, `leaves`, has none: a card is two triangles, and there is nothing to simplify. So the levels of detail only touch the trunk, which is small next to the crown.
+
+Under this game's orthographic camera, the engine still switches them. The reference project counted the triangles Godot drew for one oak, shadows included, at three zooms:
+
+| Camera | Triangles drawn for one oak |
+|---|---|
+| Zoomed in all the way | 4,514 |
+| The starting view | 4,270 |
+| Zoomed out all the way | 3,804 |
+
+The count falls by about 15 percent as you zoom out, which is the trunk's levels taking over. The crown does not change at all, and it is most of the cost. For seven trees, the whole grove is about 30,000 triangles at the starting view, which is small for a modern GPU, so this template does not add its own crown levels. If your trees grow to hundreds, the next step is a second, coarser crown with fewer cards, swapped in by distance on the `leaves` node's **Visibility Range** properties.
+
+<Aside type="note" title="A report from another project">
+FactoryGame turns the importer's levels off and swaps meshes itself, because it found the shadow pass picking a level by the wrong rule under an orthographic camera. This lesson did not set out to reproduce that, and the numbers above come from the oak's shadows and its main view together, so it cannot say either way. If you see a tree's shadow change shape as you zoom, turn **Generate LODs** off in the glb's **Import** tab, and reimport.
+</Aside>
+
+## Plant the grove
+
+<Steps>
+
+1. Open `levels/meadow.tscn`. The `Trees` node holds the one `TreeOak` from lesson 24. Select `Trees`, click **Instantiate Child Scene**, type `tree_oak.tscn`, and press <Kbd keys="Enter" />. Repeat five more times. Godot names the copies `TreeOak2` to `TreeOak7`.
+
+	<Figure
+		src={selectScene}
+		alt="The Select Scene dialog with tree_oak.tscn typed in its search box and the one matching scene listed."
+		caption="Instantiate Child Scene, one copy at a time."
+	/>
+
+2. Select each tree in turn and set its **Position**, **Rotation**, and **Scale** in the Inspector. Rotation is in the vertical axis only: the second number is the turn, in degrees.
+
+	| Tree | Position | Turn | Scale |
+	|---|---|---|---|
+	| `TreeOak` | `-5, 0, -3` | `0` | `1` |
+	| `TreeOak2` | `-7.5, 0, -0.5` | `70` | `0.92` |
+	| `TreeOak3` | `-2.6, 0, -4.8` | `215` | `1.08` |
+	| `TreeOak4` | `4.5, 0, -4.2` | `140` | `1` |
+	| `TreeOak5` | `7.2, 0, -1.5` | `300` | `0.95` |
+	| `TreeOak6` | `6, 0, 3.6` | `20` | `1.1` |
+	| `TreeOak7` | `-6.2, 0, 3.8` | `250` | `0.9` |
+
+	Keep every scale equal on all three axes: a tree stretched on one is a different shape, and its bark and cards would no longer fit.
+
+	<Figure
+		src={meadowEditor}
+		alt="The Godot editor showing the meadow in the 3D viewport with seven oaks standing in a loose ring, and the Scene dock listing Trees and its seven TreeOak children."
+		caption="The grove in the editor."
+	/>
+
+3. Save the scene.
+
+</Steps>
+
+Two things make seven copies look like seven trees, and both are cheap. The **turn** hides that every crown is the same: the cards' clumps face a different way, and the trunk's forks lean a different way. The **scale** from 0.9 to 1.1 makes some older and some younger. A turn of a model about its vertical axis is free, and a scale change within 10 percent is about as far as it goes before the proportions start to look wrong.
+
+## Try it
+
+Press <Kbd keys="F5" mac="Cmd+B" /> to run.
+
+<Figure
+	src={groveFar}
+	alt="The game zoomed out: the whole meadow as a small rectangle in a blue sky, with seven oaks around its path."
+	caption="Zoomed out all the way: the whole meadow and its seven trees."
+/>
+
+- Walk the player into a trunk. It stops. Walk under the crown, between the trunk and the leaves' edge: it passes.
+- Watch two oaks side by side. They lean and flutter at different moments, because of `WindPhase`.
+- Set the day to dusk or night and look at the shadows: the crowns throw leafy ones across the grass, and all seven take the light the same way.
+
+<Figure
+	src={groveDusk}
+	alt="The game at dusk: seven oaks of olive green with long shadows across orange-tinted grass."
+	caption="The grove at dusk."
+/>
+
+<Figure
+	src={groveClose}
+	alt="The game close up at noon: two of the oaks fill the frame, one turned from the other, their crowns lit lighter on top and darker beneath."
+	caption="Close to two of the oaks: a turn and a different size make them different trees."
+/>
+
+## If it does not work
+
+- **The player walks through the trunk.** The `StaticBody3D` is not in the tree scene, or the shape's **Radius** is `0`. Open `tree_oak.tscn` and check that `Trunk` and `TrunkShape` are there and saved.
+- **All the trees sway in step.** The script is not on `TreeOak`, or the project was not built after you saved it. Click **Build Project**, and check that the root has the `WindPhase.cs` script.
+- **Godot says `WindPhase` cannot be loaded.** The class name and the file name must match, and the namespace must be `TopDownTemplate.World`. Build again.
+- **The trees all face the same way.** Their **Rotation** is `0, 0, 0`: set the turn in the second field.
+- **A tree is flattened or stretched.** Its scale differs between axes. Set all three to the same number.
+- **A tree stands inside another.** Two **Position** values are too close. The table keeps a meter or more between trunks.
+
+## Checkpoint
+
+Your project now contains:
+
+<FileTree>
+- art
+  - nature
+    - tree_oak
+      - tree_oak.tscn, with `Trunk` and the `WindPhase` script
+- src
+  - World
+    - **WindPhase.cs**
+- levels
+  - meadow.tscn with seven `TreeOak` nodes under `Trees`
+</FileTree>
+
+<Solution label="Show the full tree_oak.tscn">
+	<Code code={treeScene} lang="ini" title="art/nature/tree_oak/tree_oak.tscn" />
+</Solution>
+
+<Solution label="Show the full meadow.tscn">
+	<Code code={meadowScene} lang="ini" title="levels/meadow.tscn" />
+</Solution>
+
+Commit your work: `git add .` and `git commit -m "Plant the grove"`. In the next lesson you grow a second species, a pine, with the same pipeline.
+
+<Checkpoint />
