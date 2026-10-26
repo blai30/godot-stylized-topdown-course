@@ -88,7 +88,7 @@ The grass has to start from exactly the color the ground has at that spot. If th
 
 	Save it with <Kbd keys="Ctrl+Alt+S" mac="Cmd+Option+S" />.
 
-3. Open `art/ground/ground.gdshader`. Add `#include "res://art/shaders/ground_color.gdshaderinc"` under the first include, and in `fragment()` replace the first line, the texture lookup, and the `tone` lines with one: `ALBEDO = ground_color(albedo_texture, albedo_tint, texture_scale, edge_noise, edge_noise_scale, world_position.xz);`. Keep the lines for `ROUGHNESS`, the tile's edge, and the rim.
+3. Open `art/ground/ground.gdshader`. Add `#include "res://art/shaders/ground_color.gdshaderinc"` under the first include, and in `fragment()` replace the line that sets `ALBEDO` from the texture and the tint, and the two lines about `tone` further down (`float tone = ...` and `ALBEDO *= ...`), with one line, the first in the function: `ALBEDO = ground_color(albedo_texture, albedo_tint, texture_scale, edge_noise, edge_noise_scale, world_position.xz);`. Keep the lines for `ROUGHNESS`, the tile's edge, and the rim.
 
 	<Figure
 		src={groundEditor}
@@ -276,11 +276,11 @@ The grass takes the day's light as the rest does, because it is lit by the same 
 
 <Figure
 	src={wind}
-	alt="Six frames half a second apart, each showing the same clump and a white daisy: the blades' tips lean one way, then the other, and the daisy's petals stay nearly still."
+	alt="Six frames half a second apart, each showing the same clump and a white daisy: the blades' tips lean one way, then the other, and the daisy's petals change only slightly."
 	caption="Half a second apart: the tips sway, and the petals flutter a little."
 />
 
-The sway is gentle on purpose: a tip moves 12 centimeters at the strongest gust, which is a third of a blade's height. Turn **wind_strength** up to `1` in the shader globals and it grows by two thirds.
+The sway is gentle on purpose: at the default `wind_strength` of `0.6`, a tip moves at most about 7 centimeters in the strongest gust, a fifth of a blade's height. Turn **wind_strength** up to `1` in the shader globals and it grows by two thirds, to the full 12 centimeters.
 
 ## Try it
 

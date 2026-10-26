@@ -18,7 +18,7 @@ EXPORT = os.path.join(WORKBENCH, 'art', 'nature', 'grass')
 PEBBLE_A = ('pebble_a', (0.09, 0.07, 0.045), -0.5, 0.0375)
 PEBBLE_B = ('pebble_b', (0.06, 0.075, 0.038), -0.3, 0.0315)
 STEM = ('mushroom_stem', (0.015, 0.015, 0.07), 0.3, 0.0595)
-CAP = ('mushroom_cap', (0.07, 0.07, 0.035), 0.3, 0.15)
+CAP = ('mushroom_cap', (0.07, 0.07, 0.035), 0.3, 0.145)
 GRAY, GRAY_LIGHT = (0.16, 0.16, 0.17, 0.0), (0.24, 0.23, 0.22, 0.0)
 CREAM, RED = (0.62, 0.52, 0.36, 0.0), (0.5, 0.06, 0.05, 0.0)
 

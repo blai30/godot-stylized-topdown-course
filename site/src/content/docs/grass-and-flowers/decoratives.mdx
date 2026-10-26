@@ -60,7 +60,7 @@ Two of the three come from the pipeline you already have. A pebble and a mushroo
 
 ## Rounded boxes
 
-A pebble and a mushroom cap are both a box with its corners rounded off. You make one the way lesson 24 rounded a trunk: a cube, scaled, with **Subdivision Surface** applied, which turns a box into a smooth, soft shape of 24 faces. Every part below is the same four steps.
+A pebble and a mushroom cap are both a box with its corners rounded off. You make one the way lesson 24 rounded a trunk: a cube, scaled, with **Subdivision Surface** applied, which turns a box into a smooth, soft shape of 24 faces. Every part starts the same way.
 
 Open `art_source/nature/grass/grass.blend` from lesson 30 in Blender. It still has the clumps and the flowers, and the **Paint Part** group, which you made in lesson 30 and kept with **Fake User**, the shield beside its name. Click the `grass` collection in the outliner, so new objects go in it.
 
@@ -68,7 +68,7 @@ Open `art_source/nature/grass/grass.blend` from lesson 30 in Blender. It still h
 
 1. Over the 3D view press <Kbd keys="Shift+A" />, type `cube`, and press <Kbd keys="Enter" />. Press <Kbd keys="F2" /> and name it `pebble_a`.
 
-2. Press <Kbd keys="S" /> and type `0.09`, <Kbd keys="Tab" />, `0.07`, <Kbd keys="Tab" />, `0.045`, then <Kbd keys="Enter" />: the cube is now a flat box 18 centimeters wide, 14 deep, and 9 high. Press <Kbd keys="Ctrl+A" mac="Cmd+A" /> and choose **Scale**, so that size becomes the mesh's own.
+2. Press <Kbd keys="S" /> and type `0.09`, <Kbd keys="Tab" />, `0.07`, <Kbd keys="Tab" />, `0.045`, then <Kbd keys="Enter" />: the cube is now a flat box 18 centimeters wide, 14 deep, and 9 high (rounding will shrink it to about 15, 12, and 7.5). Press <Kbd keys="Ctrl+A" mac="Cmd+A" /> and choose **Scale**, so that size becomes the mesh's own.
 
 3. Raise the mesh, not the object, so the object's origin stays on the ground: press <Kbd keys="Tab" /> for Edit Mode, <Kbd keys="A" />, <Kbd keys="G" />, <Kbd keys="Z" />, `0.0375`, <Kbd keys="Enter" />, and <Kbd keys="Tab" /> to leave. The pebble now rests with its bottom at the ground. Then press <Kbd keys="G" />, <Kbd keys="X" />, `-0.5`, <Kbd keys="Enter" /> to move the object aside while you work. You will clear that move later, and the mesh will not change.
 
@@ -89,9 +89,9 @@ Make three more the same way, from the table. Each is a new cube, so start with 
 | `pebble_a` | `0.09`, `0.07`, `0.045` | `0.0375` | `-0.5` |
 | `pebble_b` | `0.06`, `0.075`, `0.038` | `0.0315` | `-0.3` |
 | `mushroom_stem` | `0.015`, `0.015`, `0.07` | `0.0595` | `0.3` |
-| `mushroom_cap` | `0.07`, `0.07`, `0.035` | `0.15` | `0.3` |
+| `mushroom_cap` | `0.07`, `0.07`, `0.035` | `0.145` | `0.3` |
 
-The stem is a tall thin box and the cap a wide flat one standing on it: a mushroom of 18 centimeters, nearly twice as tall as a pebble is wide.
+The stem is a tall thin box and the cap a wide flat one standing on it, overlapping the stem's top a little so there is no gap: a mushroom about 18 centimeters tall, more than twice as tall as a pebble.
 
 <Figure
 	src={boxes}
@@ -148,8 +148,8 @@ The stem is a tall thin box and the cap a wide flat one standing on it: a mushro
 
 	<Figure
 		src={cleared}
-		alt="Blender's local view of three objects at the origin: two rounded gray pebbles and a red-capped mushroom with a cream stem, one in front of the other."
-		caption="The three props at the origin, in their vertex colors' own light."
+		alt="Blender's front view in Local View: the three meshes overlapping at the origin, drawn in solid gray, with a flat rounded pebble shape and a mushroom with a wide flat cap on a thin stem."
+		caption="The three props at the origin, in Solid shading, so their colors do not show."
 	/>
 
 	Press <Kbd keys="Numpad /" /> again to leave Local View.
@@ -283,7 +283,7 @@ For the texture, the patch needs a shape whose edge fades out to nothing, so it 
 	<Code code={patchTexture} lang="ini" title="art/ground/dirt_patch.tres" />
 </Solution>
 
-The patches are on the ground, but the grass still stands in them: a decal paints the surface under the blades, and the blades are above it. The grass must not grow there. That is the `Patches` property of `GrassScatter`: every `Decal` under that node clears the grass and the props from the ground inside its box. A point is inside when, in the decal's own frame, it falls within the ellipse the box makes on the ground, so a turned or stretched patch clears what it covers and nothing else.
+The patches are on the ground, but the grass still stands in them: a decal paints the surface under the blades, and the blades are above it. The grass must not grow there. That is the `Patches` property of `GrassScatter`: every `Decal` that is a child of that node clears the grass and the props from the ground inside its box. A point is inside when, in the decal's own frame, it falls within the ellipse the box makes on the ground, so a turned or stretched patch clears what it covers and nothing else.
 
 <Steps>
 
@@ -353,7 +353,7 @@ The patches are lit with the ground under them, because a decal only changes its
 
 - **No pebbles or mushrooms grow.** `grass_preview.tscn` has no node starting with `pebble` or `mushroom`, or the densities are all `0`. Open the scene and check the names.
 - **The props are white or gray in the game.** `flower.tres` is not on them. Set **Material Override** on all three.
-- **A mushroom stands in the ground up to its cap.** The stem was lifted in Object Mode, not in Edit Mode, so the origin is above the ground and the mesh is not. Lift the mesh, as in step 3.
+- **A mushroom stands in the ground up to its cap.** The part was moved up in Object Mode, so its origin is above the ground. Lift the mesh in Edit Mode, as in step 3 of Rounded boxes, and set the object's location back to 0.
 - **The patches are not visible.** The decal's box does not reach the ground. Its **Position** `y` is `0` and its **Size** `y` is `0.6`, so the box spans the ground. Also check that **Texture Albedo** is set.
 - **A patch is a hard-edged brown square.** The gradient's last color is not transparent, or **Fill To** is `1, 1`.
 - **Grass still grows in the patches.** `Patches` is empty on the `Grass` node, or the decals are not children of that node.

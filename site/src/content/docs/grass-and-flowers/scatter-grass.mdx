@@ -106,7 +106,7 @@ The script is a `[Tool]` node: it runs in the editor, and an `[ExportToolButton]
 
 How the script works:
 
-- **What it needs.** `Ground` is the `GroundMap`, which knows the tiles. `Models` is the `grass_preview.tscn` of lesson 31: a scene with a `MeshInstance3D` for each model, each with its material. The scatter reads the **mesh** and the **material** from each. Models are found by name: `grass_clump...` and `flower...`.
+- **What it needs.** `Ground` is the `GroundMap`, which knows the tiles. `Models` is the `grass_preview.tscn` of lesson 31: a scene with a `MeshInstance3D` for each model, each with its material. The scatter reads the **mesh** and the **Material Override** from each. Models are found by name: `grass_clump...` and `flower...`.
 - **Squares.** `Squares()` walks every 1 meter square that touches a painted cell. The ground's cells are half a meter, so a square covers four.
 - **Two clumps and a flower in each square.** Each clump gets its own half of the square, so no stretch of ground is bare: the first is placed in the west half, the second in the east, each a little off-center by a random amount. The flower goes anywhere in the square. A clump is turned by any angle about the vertical and scaled between 0.9 and 1.1.
 - **A hash, not a roll.** Each square seeds its own random generator from its coordinates and the `Seed`. So what a square grows depends on that square alone: change the ground next door, or scatter again, and this square grows exactly what it did. Every random number is drawn whether or not it is used, so one decision never shifts the next.
