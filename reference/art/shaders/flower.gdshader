@@ -3,6 +3,7 @@ render_mode cull_disabled, world_vertex_coords, specular_disabled;
 
 #include "res://art/shaders/wind.gdshaderinc"
 #include "res://art/shaders/stylized_lit.gdshaderinc"
+#include "res://art/shaders/ground_cover.gdshaderinc"
 
 varying vec3 flower_color;
 
@@ -12,6 +13,8 @@ void vertex() {
 	// neither, so its petals stay white.
 	float petal = COLOR.a;
 	VERTEX += petal_flutter(VERTEX, INSTANCE_CUSTOM.x, petal);
+	// A flower parts by its root: its petals lean away from the character, and the stem stays.
+	VERTEX = push_aside(VERTEX, vec3(MODEL_MATRIX[3].x, MODEL_MATRIX[3].y, MODEL_MATRIX[3].z), petal);
 	vec3 tint = mix(vec3(1.0), INSTANCE_CUSTOM.yzw, step(0.001, dot(INSTANCE_CUSTOM.yzw, vec3(1.0))));
 	flower_color = COLOR.rgb * mix(vec3(1.0), tint, petal);
 }

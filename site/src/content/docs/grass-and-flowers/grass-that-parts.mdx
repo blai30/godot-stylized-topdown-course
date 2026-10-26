@@ -1,0 +1,226 @@
+---
+title: Grass that parts around the player
+description: Tell the shaders where the player stands through a shader global, and lean and sink the blades and petals around that point, so the player walks through the grass and not over it.
+sidebar:
+  order: 33
+  label: 33. Grass that parts around the player
+lesson:
+  number: 33
+  minutes: 60
+  learn:
+    - How a script gives a shader a position, through a shader global written every frame
+    - How a vertex shader pushes a vertex away from a point, by a share of its distance
+    - Why each blade parts by its own spot on the ground, and a flower by its root
+    - What to change when more than one character should part the grass
+  prerequisites: [27, 31, 32]
+---
+
+import { Aside, Code, FileTree, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Solution from '../../../components/Solution.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import piece1 from '../../../checkpoints/33/pieces/piece-1.gdshaderinc?raw';
+import piece2 from '../../../checkpoints/33/pieces/piece-2.gdshader?raw';
+import piece3 from '../../../checkpoints/33/pieces/piece-3.gdshader?raw';
+import piece4 from '../../../checkpoints/33/pieces/piece-4.cs?raw';
+import playerScene from '../../../checkpoints/33/files/world/player/player.tscn?raw';
+import before from '../../../assets/lessons/grass-that-parts/before.png';
+import after from '../../../assets/lessons/grass-that-parts/after.png';
+import globals from '../../../assets/lessons/grass-that-parts/globals.png';
+import includeEditor from '../../../assets/lessons/grass-that-parts/include-editor.png';
+import grassEditor from '../../../assets/lessons/grass-that-parts/grass-editor.png';
+import flowerEditor from '../../../assets/lessons/grass-that-parts/flower-editor.png';
+import playerSceneShot from '../../../assets/lessons/grass-that-parts/player-scene.png';
+import walk0 from '../../../assets/lessons/grass-that-parts/walk-0.png';
+import walk1 from '../../../assets/lessons/grass-that-parts/walk-1.png';
+import walk2 from '../../../assets/lessons/grass-that-parts/walk-2.png';
+
+## What you will build
+
+The grass now stands still around the player: the capsule walks through blades without moving one. After this lesson the blades near the player's feet lean away from it and sink, and spring back as it walks on. The effect is small, 25 centimeters of lean at most, and it is what makes the player stand in the grass and not on it.
+
+The shaders cannot see the player. So the player's position goes into a **shader global**, as the wind did in lesson 27: a small script on the player writes it every frame, and the grass and flower shaders read it.
+
+Here is the same spot before and after, close up, the capsule's feet at the middle.
+
+<Figure
+	src={before}
+	alt="A close view of grass around the player capsule's feet before the change: the blades stand upright around it and behind it."
+	caption="Before."
+/>
+
+<Figure
+	src={after}
+	alt="The same view after the change: the blades around the capsule's feet are flatter and lean away from it."
+	caption="After: the blades near the feet lean away and sink."
+/>
+
+## The global
+
+<Steps>
+
+1. Choose **Project > Project Settings...**, open the **Globals** tab and **Shader Globals**. Type `push_point` in **Name**, set **Type** to `vec4`, and click **Add**. Leave the value `0, 0, 0, 0`, and click **Close**.
+
+	<Figure
+		src={globals}
+		alt="Project Settings on Globals, Shader Globals, listing the earlier globals and a new push_point of type vec4."
+		caption="One more global: a vec4."
+	/>
+
+</Steps>
+
+The four numbers are the player's position, X, Y, and Z, and how far its push reaches, W, in meters. A W of 0 means no push, and it is the value when the player is not in the game.
+
+## The shared include
+
+Grass and flowers both need to push a vertex away from the point, so the function lives in an include that both shaders use, as the wind does.
+
+<Steps>
+
+1. In the Shader Editor, choose **File > New Shader Include...**, set **Path** to `res://art/shaders/ground_cover.gdshaderinc`, and click **Create**. Type the include from the solution below the steps. Its pieces:
+
+	- `global uniform vec4 push_point;`, with a comment saying what its four numbers are;
+	- two constants: `PUSH_DISTANCE` `0.25`, how far a vertex leans at the most, and `PUSH_FLATTEN` `0.5`, how much of its height it can sink;
+	- a function `vec3 push_aside(vec3 vertex, vec3 ground, float mask)`. `ground` is the spot on the ground the vertex is rooted at, and `mask` says how much of the part moves.
+
+	<Figure
+		src={includeEditor}
+		alt="The Shader Editor showing ground_cover.gdshaderinc: the global, two constants, and the push_aside function."
+		caption="The include."
+	/>
+
+	Save it with <Kbd keys="Ctrl+Alt+S" mac="Cmd+Option+S" />.
+
+</Steps>
+
+<Solution label="Show the full ground_cover.gdshaderinc">
+	<Code code={piece1} lang="gdshader" title="art/shaders/ground_cover.gdshaderinc" />
+</Solution>
+
+How `push_aside` works:
+
+- **How close.** `away` is the vector from the player to the part's spot on the ground, and `push` is `1 - distance / radius`, clamped from 0 to 1: 1 at the player's feet, falling to 0 at the edge of the radius, and 0 beyond. A radius of 0 gives 0.
+- **Lean.** The vertex moves along `away`, normalized, by `PUSH_DISTANCE * mask * push`: up to 25 centimeters, away from the player, and only as far as the mask lets it.
+- **Sink.** Its height above the ground is scaled by `1 - PUSH_FLATTEN * mask * push`, so at the feet a blade's tip comes down to half its height. This is what reads as the grass being stepped on.
+- **The mask.** For a blade it is the share of its height, so the foot, with a mask of 0, never moves and the tip moves most. For a flower it is the petal mask: the petals lean and the stem stays.
+
+## Call it from the shaders
+
+<Steps>
+
+1. Open `grass.gdshader`. Under the includes add `#include "res://art/shaders/ground_cover.gdshaderinc"`. In `vertex()`, after the line that adds `grass_sway`, add a comment and a line that pushes the vertex: `VERTEX = push_aside(VERTEX, vec3(VERTEX.x, clump_origin.y, VERTEX.z), COLOR.a);`
+
+	<Figure
+		src={grassEditor}
+		alt="The Shader Editor showing grass.gdshader with three includes, and in the vertex function a line calling push_aside after the sway."
+		caption="The grass shader, pushing each vertex."
+	/>
+
+	The vertex's own X and Z are used, not the clump's root, because a clump is almost a meter wide and the player's push is 60 centimeters: the blades on one side of a clump part and those on the other do not.
+
+2. Open `flower.gdshader`. Add the same include, and in `vertex()`, after the line that adds `petal_flutter`, add `VERTEX = push_aside(VERTEX, vec3(MODEL_MATRIX[3].x, MODEL_MATRIX[3].y, MODEL_MATRIX[3].z), petal);`. A flower is small, so it parts by its root: its petals lean away from the player together.
+
+	<Figure
+		src={flowerEditor}
+		alt="The Shader Editor showing flower.gdshader with the include and a push_aside call in the vertex function."
+		caption="The flower shader."
+	/>
+
+</Steps>
+
+<Solution label="Show the full grass.gdshader">
+	<Code code={piece2} lang="gdshader" title="art/shaders/grass.gdshader" />
+</Solution>
+
+<Solution label="Show the full flower.gdshader">
+	<Code code={piece3} lang="gdshader" title="art/shaders/flower.gdshader" />
+</Solution>
+
+## The script on the player
+
+<Steps>
+
+1. Create `src/Player/PushPoint.cs` and type the script from the solution below the steps. It is a `Node3D` with one export, `Radius`, `0.6` meters by default. Each frame, `_Process` writes the node's position and the radius into the global with `RenderingServer.GlobalShaderParameterSet`. When the node leaves the tree, `_ExitTree` writes zeros, so a player that is gone pushes nothing.
+
+2. Click **Build Project**. Open `world/player/player.tscn`, select its root, and add a **Node3D** named `PushPoint`. Open its **Script** row's menu, choose **Quick Load...**, and pick `PushPoint.cs`. Its **Radius** appears in the Inspector. Save the scene.
+
+	<Figure
+		src={playerSceneShot}
+		alt="Godot's editor with player.tscn open: a PushPoint node under Player, with a Radius of 0.6 in the Inspector."
+		caption="PushPoint on the player."
+	/>
+
+</Steps>
+
+<Solution label="Show the full PushPoint.cs">
+	<Code code={piece4} lang="csharp" title="src/Player/PushPoint.cs" />
+</Solution>
+
+The node is at the player's origin, its feet, so the push is centered on the ground under it. Because it is a child of the player scene, every place the player is used pushes the grass, and the node comes and goes with the player.
+
+## Run it
+
+Run the meadow and walk through the grass with the move keys. The blades lean away from the capsule's feet and sink under them, and spring back as it goes by.
+
+<Figure
+	src={walk0}
+	alt="The player capsule walking up the screen through grass, the blades beside its feet leaning aside."
+	caption="Walking."
+/>
+
+<Figure
+	src={walk1}
+	alt="A little later: the capsule in the shade of a pine, the grass around its feet bent."
+	caption="A moment later."
+/>
+
+<Figure
+	src={walk2}
+	alt="The capsule standing still beside the pine, with the grass around it parted."
+	caption="Standing still: the grass stays parted around it."
+/>
+
+## Several characters
+
+The template has one push point, because it has one character. A game with enemies or animals that should part the grass has two ways to go. Send a `mat4` to the shader, with one character in each of its four columns, and loop over them in `push_aside`, applying each in turn: it is the same function in a `for` loop. Or keep a short list in a texture. Both are more code than this lesson, and neither changes how the push works.
+
+## Try it
+
+- Change `Radius` on the `PushPoint` to `1.2` for a player that clears a wide path, or `0.3` for a small animal.
+- Change `PUSH_DISTANCE` to `0.5`, and the blades throw far to the side. Change `PUSH_FLATTEN` to `0.9` and the grass is trampled flat under the feet.
+- Add a second `PushPoint` node on a rock. It will fight the player's for the one global: only the last to write wins. That is why the shader needs a list of points before it can push for more than one character.
+
+## If it does not work
+
+- **The grass does not move at all.** The global is not named `push_point`, or it is not a `vec4`. Check **Project Settings > Globals > Shader Globals**. The name is also in `PushPoint.cs`.
+- **The grass moves where the player was, not where it is.** `_Process` is not running: the script did not build, or the node's script is empty.
+- **The whole clump jumps away.** The push uses the clump's root and not the vertex's own spot. The call in `grass.gdshader` must pass `VERTEX.x` and `VERTEX.z`.
+- **The blades are pushed into the ground and the flowers float.** `ground.y` is wrong: the grass uses `clump_origin.y` and the flower `MODEL_MATRIX[3].y`.
+- **The grass parts around the origin when the player is gone.** The global is `0, 0, 0, 0` and the shader treats a radius of 0 as a push. `push_aside` must give a `push` of 0 when `push_point.w` is 0.
+- **A shader error says "Unknown identifier push_aside".** The include is not in the shader: add the `#include` line.
+
+## Checkpoint
+
+Your project now contains:
+
+<FileTree>
+- art
+  - shaders
+    - **ground_cover.gdshaderinc**
+    - grass.gdshader and flower.gdshader now call push_aside
+- src
+  - Player
+    - **PushPoint.cs**
+- world
+  - player
+    - player.tscn with a `PushPoint` node
+</FileTree>
+
+<Solution label="Show the full player.tscn">
+	<Code code={playerScene} lang="ini" title="world/player/player.tscn" />
+</Solution>
+
+Commit your work: `git add .` and `git commit -m "Part the grass around the player"`. Lesson 34 adds pebbles, mushrooms, and dirt patches.
+
+<Checkpoint />

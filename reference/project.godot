@@ -248,3 +248,7 @@ wind_strength={
 "type": "float",
 "value": 0.6
 }
+push_point={
+"type": "vec4",
+"value": Vector4(0, 0, 0, 0)
+}

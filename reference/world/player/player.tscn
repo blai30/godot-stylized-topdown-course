@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://da4v4dtydqec2"]
 
 [ext_resource type="Script" uid="uid://dyuab66eukwsc" path="res://src/Player/PlayerMovement.cs" id="1_yynsy"]
+[ext_resource type="Script" uid="uid://dux1hsmbfbiro" path="res://src/Player/PushPoint.cs" id="2_bvkkv"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_4qwqg"]
 radius = 0.3
@@ -28,3 +29,6 @@ mesh = SubResource("CapsuleMesh_1hose")
 [node name="Nose" type="MeshInstance3D" parent="." unique_id=1726072841]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0.3)
 mesh = SubResource("BoxMesh_7y05k")
+
+[node name="PushPoint" type="Node3D" parent="." unique_id=1521593173]
+script = ExtResource("2_bvkkv")

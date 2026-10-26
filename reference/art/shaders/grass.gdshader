@@ -3,6 +3,7 @@ render_mode cull_disabled, world_vertex_coords, specular_disabled;
 
 #include "res://art/shaders/wind.gdshaderinc"
 #include "res://art/shaders/ground_color.gdshaderinc"
+#include "res://art/shaders/ground_cover.gdshaderinc"
 
 // The ground this grass grows from, as the ground shader draws it: its texture, tint, and noise.
 uniform sampler2D ground_texture : source_color, filter_linear_mipmap, repeat_enable;
@@ -60,6 +61,8 @@ void vertex() {
 	vec3 clump_origin = MODEL_MATRIX[3].xyz;
 	gust = gust_strength(VERTEX);
 	VERTEX += grass_sway(VERTEX, INSTANCE_CUSTOM.x, COLOR.r, COLOR.a);
+	// A clump is wider than a push, so each blade parts by its own spot on the ground, not by the clump's root.
+	VERTEX = push_aside(VERTEX, vec3(VERTEX.x, clump_origin.y, VERTEX.z), COLOR.a);
 
 	// The root is the ground's color under the blade; the middle and tip come from it and the tip color.
 	vec3 root = ground_color(ground_texture, ground_tint, ground_scale, field_noise, field_noise_scale, VERTEX.xz);
