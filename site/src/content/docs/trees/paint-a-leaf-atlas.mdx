@@ -1,0 +1,304 @@
+---
+title: Paint a leaf atlas
+description: Paint four sprays of leaves into one image in Krita, with a leaf stamp brush you make yourself, so the next lessons can hang them on cards over the tree.
+sidebar:
+  order: 25
+  label: 25. Paint a leaf atlas
+lesson:
+  number: 25
+  minutes: 90
+  learn:
+    - What an atlas is, and why a tree's leaves are painted as sprays and not as single leaves
+    - How to paint one leaf from a few strokes, and turn it into a stamp brush that turns and varies by itself
+    - How to build a spray from a stem and overlapping leaves in a few warm and cool grays
+    - Why the atlas is painted at about half brightness and kept clear of its cell edges
+    - Which import settings an atlas with transparency needs in Godot
+  prerequisites: [7, 13, 14, 24]
+---
+
+import { Aside, FileTree, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import atlas from '../../../assets/lessons/paint-a-leaf-atlas/atlas.png';
+import referenceAtlas from '../../../assets/lessons/paint-a-leaf-atlas/reference-atlas.png';
+import newDimensions from '../../../assets/lessons/paint-a-leaf-atlas/new-dimensions.png';
+import newContent from '../../../assets/lessons/paint-a-leaf-atlas/new-content.png';
+import grid from '../../../assets/lessons/paint-a-leaf-atlas/grid.png';
+import leafShape from '../../../assets/lessons/paint-a-leaf-atlas/leaf-shape.png';
+import leafBody from '../../../assets/lessons/paint-a-leaf-atlas/leaf-body.png';
+import leaf from '../../../assets/lessons/paint-a-leaf-atlas/leaf.png';
+import stamp from '../../../assets/lessons/paint-a-leaf-atlas/stamp.png';
+import leafTip from '../../../assets/lessons/paint-a-leaf-atlas/leaf-tip.png';
+import leafRotation from '../../../assets/lessons/paint-a-leaf-atlas/leaf-rotation.png';
+import leafSize from '../../../assets/lessons/paint-a-leaf-atlas/leaf-size.png';
+import pngOptions from '../../../assets/lessons/paint-a-leaf-atlas/png-options.png';
+import importAtlas from '../../../assets/lessons/paint-a-leaf-atlas/import-atlas.png';
+
+## What you will build
+
+One 1024 by 1024 picture with four sprays of leaves, each on a short stem, on a see-through background. A spray fills one quarter of the picture, a **cell** of 512 by 512 pixels. This kind of picture, with several small images packed into one, is an **atlas**.
+
+<Figure
+	src={atlas}
+	alt="Krita showing a see-through image divided by a grid into four cells, each with a spray of overlapping gray-blue and gray-brown leaves with pale veins on a short dark stem."
+	caption="The atlas in Krita: four sprays, one in each cell."
+/>
+
+You do not paint a tree's leaves one by one. In the next lessons you build the tree's crown from hundreds of flat **cards**, each a square that shows one of these sprays, tilted and turned and piled up until they read as a crown. A card is cheap and a spray gives it a leafy edge. Four sprays, not one, keep the crown from showing the same pattern everywhere.
+
+## What the picture is for
+
+Three decisions shape everything you paint in this lesson.
+
+- **A spray, not a leaf.** A card with one leaf on it would need a thousand cards. A card with a spray of twenty overlapping leaves needs a few hundred, and each shows a leafy shape, with gaps for sky, at its edge.
+- **Mid-gray values, warm and cool.** The foliage shader in lesson 27 reads the atlas as numbers, not as a color picture: it multiplies each pixel by about two and then by one flat leaf color, so a 50 percent gray comes out as the leaf color itself. A lighter leaf brightens the tree, a darker one shades it. Paint some leaves a little warm (brown-gray) and some a little cool (blue-gray), so a crown made of them has tint variety, and keep all of them near the middle.
+- **Room at the edges.** Godot shrinks textures into [mipmaps](/reference/glossary/#mipmap) for objects far away, and every shrunk copy blurs a pixel into its neighbors. Keep paint at least 16 pixels away from each cell's edge, so one spray never leaks into the next.
+
+<Aside type="note" title="The reference atlas is more finished">
+The atlas in the course's reference project was made with a script, so it has soft shadows between the leaves and slightly wavy edges that a hand-painted atlas takes hours to get. Yours does not have to match it. Everything after this lesson works with whatever atlas you paint, as long as it has four sprays on a see-through background and stays near mid-gray.
+</Aside>
+
+<Figure
+	src={referenceAtlas}
+	alt="Four sprays of broad pale gray-blue and tan leaves with veins on short dark stems, on a gray background."
+	caption="The reference project's atlas, shown on gray. It is a finished picture, not what you are expected to match."
+/>
+
+## A new, empty picture
+
+<Steps>
+
+1. Open Krita and choose **File > New...** (<Kbd keys="Ctrl+N" mac="Cmd+N" />). On the **Dimensions** tab, set **Width** and **Height** to `1024` pixels.
+
+	<Figure
+		src={newDimensions}
+		alt="Krita's Create new document dialog on the Dimensions tab with Width 1024 and Height 1024 in Pixels."
+		caption="1024 by 1024: four cells of 512."
+	/>
+
+2. Click the **Content** tab, set **Name** to `leaf_atlas` and **Layers** to `1`, and click **Create**.
+
+	<Figure
+		src={newContent}
+		alt="The Content tab with Name leaf_atlas, Layers 1, a white Background Color, and Background Opacity 100 percent."
+		caption="One layer, named after the file."
+	/>
+
+3. The new layer is filled with white. Make it see-through: choose **Select > Select All** (<Kbd keys="Ctrl+A" mac="Cmd+A" />), **Edit > Clear** (<Kbd keys="Delete" />), and **Select > Deselect** (<Kbd keys="Ctrl+Shift+A" mac="Cmd+Shift+A" />). The canvas now shows a checkerboard, which is how Krita draws nothing.
+
+4. Choose **Settings > Dockers > Grid and Guides**. In the docker, set **X spacing** to `512` (**Y spacing** follows it) and check **Show grid**. A line now divides the picture into its four cells.
+
+	<Figure
+		src={grid}
+		alt="Krita with a see-through canvas split into four cells by thin lines, and the Grid and Guides docker on the right with X and Y spacing 512 px and Show grid checked."
+		caption="A 512 pixel grid marks the cells. Keep your paint off the lines."
+	/>
+
+</Steps>
+
+## Make a leaf brush
+
+You paint one leaf, make a stamp brush from it, and print it over and over, as you did with the pebble in lesson 14. First you need a brush that draws the leaf's shape.
+
+### A brush that tapers faster
+
+A leaf is wide in the middle and pointed at the tip. Your **Twig** brush from lesson 14 draws a stroke that starts at full size and shrinks to a point, which is half of a leaf. It shrinks over 45 dabs, though, and a leaf needs a shorter taper.
+
+<Steps>
+
+1. Press <Kbd keys="B" /> for the **Freehand Brush Tool**, search the Brush Presets docker for `Twig`, and click it.
+
+2. Press <Kbd keys="F5" mac="Fn+F5" /> to open the **Brush Editor**. Click **Size** in the options list, then click the word **Fade** in the list of inputs, which is still checked from lesson 14. Right-click the **Length** field, type `22`, and press <Kbd keys="Enter" />.
+
+3. Click **Save New Brush Preset...**, name it `Leaf Shape`, and click **Save**. Close the editor with <Kbd keys="F5" mac="Fn+F5" />.
+
+	<Figure
+		src={leafShape}
+		alt="The Brush Editor on the Size option: Fade checked, Length 22, and the curve falling in a straight line from 100 percent to 0 percent."
+		caption="The Twig brush's taper cut to 22 dabs, saved as Leaf Shape."
+	/>
+
+</Steps>
+
+### Paint one leaf
+
+<Steps>
+
+1. Choose **Layer > New > Add Paint Layer**. You paint the leaf here, away from the atlas, and delete this layer when the brush is made.
+
+2. Set the foreground color to a mid gray: **Saturation** `0` and **Value** `50` on the **HSV** tab, as in lesson 7. With **Leaf Shape** picked, set **Size** to `130` and **Opacity** to `100`.
+
+3. A leaf is two strokes from its widest point. In the first cell, about two thirds of the way down, drag straight up for about 150 pixels: the stroke starts wide and shrinks to the leaf's tip. Then start again at the same point and drag straight down for about 90 pixels: this makes the narrower end where the leaf meets its stalk. The two strokes together are a plump leaf.
+
+4. Click **Lock Alpha** in the Layers docker, the checkerboard button on the layer's row, or press <Kbd keys="/" />. While it is on, paint only lands where the layer already has paint, so you can shade the leaf without going over its edge.
+
+5. Shade it with a gradient. Set the foreground color to a lighter gray, value `60`, and press <Kbd keys="X" /> to swap it into the background color. Then set the foreground to a darker gray, value `44`. Press <Kbd keys="G" /> for the **Gradient Tool** and drag from the leaf's base to its tip, tilting the drag a little to the right. The base is now darker and the tip lighter, with one side catching more light.
+
+	<Figure
+		src={leafBody}
+		alt="A leaf shape on the see-through canvas shaded from darker gray at the bottom to lighter gray at the top, with the grid lines passing behind it."
+		caption="The leaf after the gradient. Alpha lock kept the shading inside it."
+	/>
+
+6. Add veins. Press <Kbd keys="B" /> and pick **Basic-2 Opacity**. Set **Size** to `4`, **Opacity** to `100`, and a light gray, value `58`. Drag one line up the middle of the leaf, from near its base to near its tip, for the midrib. Then add four pairs of side veins: short strokes that leave the midrib and slant up and outward, about 35 pixels long, evenly spaced up the leaf.
+
+	<Figure
+		src={leaf}
+		alt="The gray leaf with a pale midrib and four pairs of pale side veins slanting up and outward."
+		caption="Two strokes, a gradient, and some veins."
+	/>
+
+</Steps>
+
+### Make the stamp
+
+<Steps>
+
+1. Click the eye beside **Background** to hide it, so only the leaf layer is visible. Draw a rectangle selection (<Kbd keys="Ctrl+R" mac="Cmd+R" />) around the leaf with a little room on every side, then press <Kbd keys="B" /> and pick **Basic-2 Opacity**.
+
+2. Press <Kbd keys="F5" mac="Fn+F5" /> to open the Brush Editor. Click **Brush Tip**, the **Predefined** tab, and **Stamp**. Name it `Leaf`, uncheck **Create mask from color**, and click **Save**.
+
+	<Figure
+		src={stamp}
+		alt="The Stamp dialog with the name Leaf, a preview of the gray leaf, Spacing on Auto, Create mask from color unchecked, and the Save button."
+		caption="The leaf becomes a brush tip."
+	/>
+
+3. Set **Brush mode** to **Lightness map**. With it, the tip's middle gray paints the foreground color, its darker grays paint darker versions of it, and its lighter grays paint lighter ones, so one leaf stamps in any color, with its veins and shading kept.
+
+	<Figure
+		src={leafTip}
+		alt="The Brush Tip page with the Leaf tip selected, Spacing Auto, and Brush mode Lightness map."
+		caption="Lightness map: the stamp's grays follow the foreground color."
+	/>
+
+4. Check the box beside **Rotation** and click its name. In its inputs, check **Drawing angle** and uncheck **Pressure**. The stamp now turns to follow the direction you drag.
+
+	<Figure
+		src={leafRotation}
+		alt="The Rotation option with Drawing angle checked and Pressure unchecked."
+		caption="Rotation follows the stroke."
+	/>
+
+5. Check the box beside **Size** and click its name. Check **Fuzzy Dab** and uncheck **Pressure**, click the curve's left point, type `55` in the percentage field beside the curve, and press <Kbd keys="Tab" />. Each leaf is now between 55 percent and full size.
+
+	<Figure
+		src={leafSize}
+		alt="The Size option with Fuzzy Dab checked and a curve rising from 55 percent at the left to 100 percent at the right."
+		caption="From a bit over half size to full size."
+	/>
+
+6. Click **Save New Brush Preset...**, name it `Leaf`, click **Save**, and close the editor with <Kbd keys="F5" mac="Fn+F5" />.
+
+7. Deselect (<Kbd keys="Ctrl+Shift+A" mac="Cmd+Shift+A" />). Delete the leaf layer with the trash button in the Layers docker, and click the eye beside **Background** to show it again.
+
+</Steps>
+
+## Paint the sprays
+
+A spray is a stem with leaves fanned around it. You paint the stems first, then the leaves from the top down, so lower leaves lie over higher ones like roof tiles.
+
+<Steps>
+
+1. Pick **Basic-2 Opacity**, set **Size** to `8`, and set a dark blue-gray, hue `215`, saturation `10`, value `30`. In each cell, drag a stem from about 30 pixels above the bottom of the cell up to the middle of the cell, bending it a little. Stay inside the cell, 16 pixels or more from its lines.
+
+2. Pick your **Leaf** brush and set **Size** to `215` and **Opacity** to `100`.
+
+3. Choose a gray for the first leaf from this table, in hue, saturation, and value. Three are cool, three are warm:
+
+	| Gray | Hue | Saturation | Value |
+	|---|---|---|---|
+	| Cool, mid | 215 | 14 | 56 |
+	| Cool, dark | 210 | 18 | 48 |
+	| Cool, light | 222 | 10 | 64 |
+	| Warm, mid | 38 | 22 | 52 |
+	| Warm, light | 34 | 18 | 62 |
+	| Warm, dark | 30 | 14 | 46 |
+
+4. Stamp the first leaf near the top of the cell with a short drag, about 5 pixels. The stamp turns to follow the drag, as you set it: a drag to the right prints the leaf pointing up, a drag down prints it pointing right, a drag to the left prints it pointing down, and a drag up prints it pointing left. For a leaf leaning to the right of up, drag right and a little down. Leaves on the left of the stem should lean left, so drag right and a little up.
+
+5. Keep stamping, changing the gray often, from the top of the spray down to the bottom: about twenty leaves per cell. Spread them in a dome around the stem, leaning away from it, with the biggest overlap near the middle and the stem showing below. Let a few leaves stand out on the sides.
+
+	<Figure
+		src={atlas}
+		alt="Krita with the four finished sprays of overlapping gray-blue and gray-brown leaves with pale veins, each on a short dark stem, in the four cells of the grid."
+		caption="Four sprays. Yours will differ, and the lower leaves should overlap the upper ones."
+	/>
+
+6. Look at each cell. Leaves that cross a grid line, or nearly touch it, will leak into the next cell: undo them, or erase them with **Basic-2 Opacity** in the eraser mode (<Kbd keys="E" />), and place them again.
+
+</Steps>
+
+## Save and export
+
+<Steps>
+
+1. Choose **File > Save As...** (<Kbd keys="Ctrl+Shift+S" mac="Cmd+Shift+S" />). Go to your project's `art_source\nature\tree_oak` folder, the one that holds `tree_oak.blend`, set **File name** to `leaf_atlas.kra`, and click **Save**.
+
+2. Choose **File > Export...**. Go to your project's `art\nature\tree_oak` folder, set **File name** to `leaf_atlas.png`, and click **Save**. In the **PNG image** dialog, leave **Store alpha channel (transparency)** checked and the other options as they are, and click **OK**.
+
+	<Figure
+		src={pngOptions}
+		alt="The PNG image options dialog: Compression 3, Store alpha channel checked, Force convert to sRGB checked, and the other options unchecked."
+		caption="The same PNG options as for the ground textures, with transparency kept."
+	/>
+
+</Steps>
+
+## Import it into Godot
+
+<Steps>
+
+1. In Godot, click `art/nature/tree_oak/leaf_atlas.png`, open the **Import** tab, set **Compress > Mode** to **VRAM Compressed**, check **Mipmaps > Generate**, and click **Reimport (\*)**, as for the ground textures.
+
+	<Figure
+		src={importAtlas}
+		alt="The Import dock for leaf_atlas.png: Compress Mode VRAM Compressed, Normal Map Detect, Mipmaps Generate checked, and the Reimport button."
+		caption="VRAM compression and mipmaps, as for the ground."
+	/>
+
+2. Leave the options under **Process** as they are. **Fix Alpha Border** is on by default, and it matters here: it paints the see-through pixels at a leaf's edge the leaf's color, so a leaf does not get a dark fringe when Godot shrinks the image.
+
+</Steps>
+
+<Aside type="note" title="Color or data?">
+A texture of colors is stored so that the numbers look right on screen, in the [sRGB](/reference/glossary/#srgb) encoding, and the shader decodes it when it reads it. Your atlas is read as plain numbers to be multiplied, so its shader will not ask for that decoding. The foliage shader in lesson 27 reads it without that decoding, so nothing in the import changes.
+</Aside>
+
+## Try it
+
+- Paint a fifth, much sparser spray in a new image of the same size, with big leaves and big gaps, and compare the two when the tree is done. Sparse sprays make a thin, airy crown.
+- Paint with colors from your meadow palette in the **Leaf** brush's gray slot, such as a brown for autumn. Keep the values near the middle.
+- Set the **Size** curve's left point to `30`. The leaves vary much more, and the crown looks more natural, but it takes more care to keep the sprays inside their cells.
+
+## If it does not work
+
+- **Every leaf points up, even when I drag sideways.** **Rotation** is not on, or its **Drawing angle** input is not checked. Open the Brush Editor, click **Rotation**, and check both.
+- **The leaf prints as a flat gray shape with no veins.** **Brush mode** is **Alpha mask**, not **Lightness map**, or **Create mask from color** was checked when you made the stamp. Make the stamp again.
+- **Leaves print as long smears.** The drag was too long, so the brush printed several leaves along it. Undo and drag only a few pixels.
+- **The leaf tip is blunt.** The stroke stopped before the brush shrank to a point. Drag a little farther, or lower **Length** in the **Leaf Shape** brush.
+- **Painting the gradient also changed the background.** **Lock Alpha** was not on, or you were on the background layer. Undo and select the leaf's layer first.
+- **The picture is white behind the leaves in the exported file.** The layer was not cleared. Select the layer, then **Select All**, **Clear**, and export again.
+
+## Checkpoint
+
+Your project now has three new files:
+
+<FileTree>
+- art
+  - nature
+    - tree_oak
+      - **leaf_atlas.png**
+      - **leaf_atlas.png.import**
+- art_source
+  - nature
+    - tree_oak
+      - **leaf_atlas.kra**
+</FileTree>
+
+The reference project has the finished script-made atlas in the same place, but not a `.kra`, because it was not painted in Krita. Krita keeps your **Leaf Shape** and **Leaf** brushes with its own settings, not with the image.
+
+Commit your work: `git add .` and `git commit -m "Paint the leaf atlas"`. In the next lesson, you open Blender and cover the tree with leaf cards.
+
+<Checkpoint />

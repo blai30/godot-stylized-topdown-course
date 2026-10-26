@@ -18,15 +18,17 @@ def pixel(document, x, y):
 
 class Painter:
     # Maps image pixels to the canvas for the current view and paints strokes there, as mouse drags.
-    def __init__(self, d):
+    def __init__(self, d, size=SIZE):
         self.d = d
+        self.size = size
         view = d.Krita.instance().activeWindow().activeView()
         self.canvas = d.of_class(d.window(), 'KisOpenGLCanvas2')
-        self.scale = view.canvas().zoomLevel()
+        # Krita's zoom is in device pixels; mouse events are in the widget's own units.
+        self.scale = view.canvas().zoomLevel() / self.canvas.devicePixelRatioF()
         self.center = (self.canvas.width() / 2.0, self.canvas.height() / 2.0)
 
     def at(self, x, y):
-        return QPoint(int(self.center[0] + (x - SIZE / 2) * self.scale), int(self.center[1] + (y - SIZE / 2) * self.scale))
+        return QPoint(int(self.center[0] + (x - self.size / 2) * self.scale), int(self.center[1] + (y - self.size / 2) * self.scale))
 
     def stroke(self, points):
         # Fills in points between the given ones, as a real mouse sends many moves along a stroke.
