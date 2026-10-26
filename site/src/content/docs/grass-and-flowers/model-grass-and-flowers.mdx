@@ -1,0 +1,655 @@
+---
+title: Model a grass clump and two flowers
+description: Model one grass blade by hand, bend it three ways, scatter a patch of blades with a Geometry Nodes group that also writes the data the grass shader needs, model a daisy and a cup flower from simple parts, and export them all in one file.
+sidebar:
+  order: 30
+  label: 30. Model a grass clump and two flowers
+lesson:
+  number: 30
+  minutes: 150
+  learn:
+    - Why grass is drawn as patches of blades, not as single blades or a texture
+    - How to model a blade from five vertices and bend it by moving two rows
+    - How a Geometry Nodes group picks one of several blades for each point and scales, turns, and colors it
+    - How a vertex color carries a blade's wind phase and its share of its height to a shader
+    - How to build small parts, paint each with a modifier, and join them into one flower
+    - How to export several meshes in one glTF file and import it without generated LODs
+  prerequisites: [10, 24, 26]
+---
+
+import { Aside, FileTree, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import clumpsView from '../../../assets/lessons/model-grass-and-flowers/clumps-view.png';
+import flowersView from '../../../assets/lessons/model-grass-and-flowers/flowers-view.png';
+import quad from '../../../assets/lessons/model-grass-and-flowers/quad.png';
+import tipRow from '../../../assets/lessons/model-grass-and-flowers/tip-row.png';
+import blade from '../../../assets/lessons/model-grass-and-flowers/blade.png';
+import threeBlades from '../../../assets/lessons/model-grass-and-flowers/three-blades.png';
+import bends from '../../../assets/lessons/model-grass-and-flowers/bends.png';
+import collections from '../../../assets/lessons/model-grass-and-flowers/collections.png';
+import footprint from '../../../assets/lessons/model-grass-and-flowers/footprint.png';
+import newGroup from '../../../assets/lessons/model-grass-and-flowers/new-group.png';
+import feetNodes from '../../../assets/lessons/model-grass-and-flowers/feet-nodes.png';
+import bladesNodes from '../../../assets/lessons/model-grass-and-flowers/blades-nodes.png';
+import bladesView from '../../../assets/lessons/model-grass-and-flowers/blades-view.png';
+import colorsNodes from '../../../assets/lessons/model-grass-and-flowers/colors-nodes.png';
+import seed from '../../../assets/lessons/model-grass-and-flowers/seed.png';
+import threeClumps from '../../../assets/lessons/model-grass-and-flowers/three-clumps.png';
+import applyMenu from '../../../assets/lessons/model-grass-and-flowers/apply-menu.png';
+import daisyParts from '../../../assets/lessons/model-grass-and-flowers/daisy-parts.png';
+import paintNodes from '../../../assets/lessons/model-grass-and-flowers/paint-nodes.png';
+import paintModifier from '../../../assets/lessons/model-grass-and-flowers/paint-modifier.png';
+import linkMenu from '../../../assets/lessons/model-grass-and-flowers/link-menu.png';
+import flowersBuilt from '../../../assets/lessons/model-grass-and-flowers/flowers-built.png';
+import convertMenu from '../../../assets/lessons/model-grass-and-flowers/convert-menu.png';
+import exporter from '../../../assets/lessons/model-grass-and-flowers/exporter.png';
+import vertexColors from '../../../assets/lessons/model-grass-and-flowers/vertex-colors.png';
+import importLodsOff from '../../../assets/lessons/model-grass-and-flowers/import-lods-off.png';
+import advanced from '../../../assets/lessons/model-grass-and-flowers/advanced.png';
+
+## What you will build
+
+The meadow's ground is bare. This module grows a field on it, and this lesson makes the pieces: three **clumps** of grass, each a patch of about 95 curved blades, and two flowers, a **daisy** and a **cup**. All five meshes go into one `grass.glb`. Nothing is drawn in the meadow yet. Lesson 31 gives them a shader and lesson 32 scatters them.
+
+<Figure
+	src={clumpsView}
+	alt="Blender's viewport showing three clumps of grass blades side by side, shaded red from dark at the roots to light at the tips, each blade bent in its own direction."
+	caption="Three clumps, shown by their vertex colors: the red is each blade's wind phase."
+/>
+
+<Figure
+	src={flowersView}
+	alt="Blender's viewport showing a daisy with white petals and a yellow center on a dark green stem, and a cup flower with white petals curling up, beside the edge of a red clump."
+	caption="The two flowers, shown by their vertex colors."
+/>
+
+The figures in this lesson are from Blender 5.2.
+
+## Why grass comes in clumps
+
+A meadow needs a lot of blades, a few hundred to a square meter, and a game cannot afford to treat each one as a separate thing. Godot draws many copies of one mesh cheaply with a `MultiMeshInstance3D`, but it pays a fixed cost for every copy, however small the mesh is. A copy of a 16-blade tuft costs nearly as much as a copy of a 95-blade patch. So the efficient grass is **a few large patches**, and the patches must be big enough to have many blades each and still tile into one carpet when you scatter them with their edges overlapping.
+
+Three decisions fix the clump's look:
+
+- **Blades are tiny, thin, and bent.** A blade is a quad from the foot to a joint, and a triangle from the joint to the tip: five vertices, three triangles. It is 5 to 7 centimeters wide at the foot and 28 to 36 centimeters tall, and it bends, the tip leaning 15 to 50 degrees from upright. A straight blade looks like a spike, and a bent one like grass.
+- **Each blade faces away from the center, give or take 40 degrees.** The clump fans out like a shaving brush, and neighboring clumps blend.
+- **Each blade carries two numbers for the shader.** They are stored in the vertex colors:
+
+| Channel | Holds | Used for |
+|---|---|---|
+| Red | A random number per blade, its **phase** | Wind, so blades do not sway in step |
+| Alpha | The vertex's share of its blade's height, 0 at the foot and 1 at the tip | Color, from dark roots to light tips, and how far the vertex moves in the wind |
+
+The grass is not shaded from a texture. The shader of lesson 31 reads the ground's color under the blade, and the alpha tells it where on the blade the vertex is.
+
+## A new file
+
+<Steps>
+
+1. Start Blender from the file you set up in lesson 8, and press <Kbd keys="A" /> and <Kbd keys="X" /> over the 3D view, then <Kbd keys="Enter" />, to delete the camera, the light, and the cube. This scene starts empty.
+
+2. Choose **File > Save As** (<Kbd keys="Shift+Ctrl+S" mac="Shift+Cmd+S" />), go to your project's `art_source` folder, make a `nature\grass` folder inside it with the **Create New Directory** button, and save the file there as `grass.blend`.
+
+</Steps>
+
+## One blade
+
+<Steps>
+
+1. Press <Kbd keys="Shift+A" /> and type `plane`, then <Kbd keys="Enter" />. Press <Kbd keys="F2" />, type `blade_low`, and press <Kbd keys="Enter" />. This is the plane's name now, and the name you will keep.
+
+2. With the pointer over the 3D view, press <Kbd keys="Numpad 1" /> for the front view, and <Kbd keys="Tab" /> for Edit Mode. Press <Kbd keys="A" /> to select the four vertices, then stand the plane up, narrow it, and set it on the ground. Type each of these with the pointer over the view, and press <Kbd keys="Enter" /> after the number:
+
+	| Keys | Does |
+	|---|---|
+	| <Kbd keys="R" />, <Kbd keys="X" />, `90` | Turns it 90 degrees about X, so it stands |
+	| <Kbd keys="S" />, <Kbd keys="X" />, `0.5` | Makes it 1 meter wide |
+	| <Kbd keys="S" />, <Kbd keys="Z" />, `0.275` | Makes it 0.55 meters tall |
+	| <Kbd keys="G" />, <Kbd keys="Z" />, `0.275` | Lifts it so its foot is at 0 |
+
+	<Figure
+		src={quad}
+		alt="Blender in front view and Edit Mode: a flat rectangle one meter wide and a little over half a meter tall, standing on the red line of the X axis."
+		caption="The first half of the blade: a quad from the foot to the joint."
+	/>
+
+3. Draw a box around the two vertices at the top: press <Kbd keys="B" />, and drag from just above and left of the top-left vertex to just below and right of the top-right one. Press <Kbd keys="S" />, <Kbd keys="X" />, `0.6`, <Kbd keys="Enter" /> to narrow the row to 0.6, the joint. Then press <Kbd keys="E" /> and type `0`, <Kbd keys="Tab" />, `0`, <Kbd keys="Tab" />, `0.45`, and <Kbd keys="Enter" />: a copy of the row rises to 1 meter.
+
+	<Figure
+		src={tipRow}
+		alt="The blade in Edit Mode: the quad, with a second row of two vertices, 0.6 wide, standing a long way above it, joined to it by a rectangle."
+		caption="The copy of the joint row, at the height of the tip."
+	/>
+
+4. The copy's two vertices become one: choose **Mesh > Merge > At Center** in the 3D view's header. The rectangle becomes a triangle, and the blade is done: five vertices, a quad, and a triangle. Press <Kbd keys="Tab" /> to leave Edit Mode and <Kbd keys="Home" /> to see it all.
+
+	<Figure
+		src={blade}
+		alt="The blade in Blender's front view: a wide trapezoid at the bottom narrowing at the joint, and a triangle above it ending in a point."
+		caption="One blade: the foot is 1 meter wide, the joint is 0.6 wide at 0.55 meters, and the tip is at 1 meter."
+	/>
+
+</Steps>
+
+The blade is **one meter tall and one meter wide on purpose**. The group will scale every copy to its own height and width, so the number you type later is the size in meters.
+
+<Aside type="caution" title="Choose At Center, not At Cursor">
+The menu has both. **At Cursor** moves the tip to the 3D cursor, at the origin, and the blade comes out with its tip on the ground. If that happens, press <Kbd keys="Ctrl+Z" mac="Cmd+Z" /> and merge again.
+</Aside>
+
+## Three bends
+
+A straight blade looks like a spike. You will make three bent copies, bent 15, 32, and 50 degrees from upright, and the group will pick one at random for each blade. Bending moves two rows of vertices forward, along **Y**, and a little up, so the blade keeps its height of 1.
+
+<Steps>
+
+1. Over the 3D view, press <Kbd keys="Shift+D" />, then <Kbd keys="Esc" />: that makes a copy and drops it where it was. Press <Kbd keys="F2" />, type `blade_mid`, and press <Kbd keys="Enter" />. Do it again from the copy for `blade_high`. The outliner now lists `blade_high`, `blade_low`, and `blade_mid`: three straight blades on top of each other.
+
+	<Figure
+		src={threeBlades}
+		alt="Blender's front view with the three blades on top of each other, one selected, and the outliner listing blade_high, blade_low, and blade_mid."
+		caption="Three copies, in place."
+	/>
+
+2. Click `blade_low` in the outliner, press <Kbd keys="Tab" />, and in the front view box-select the two vertices of the joint row, as before. Press <Kbd keys="G" /> and type the first row of the table, X, Y, and Z with <Kbd keys="Tab" /> between them, and press <Kbd keys="Enter" />. Then box-select the tip, press <Kbd keys="G" />, and type the second row's tip number. Press <Kbd keys="Tab" /> to leave Edit Mode. Do the same for the other two blades:
+
+	| Blade | Bend | Move the joint row by | Move the tip by |
+	|---|---|---|---|
+	| `blade_low` | 15 degrees | `0`, `0.04`, `0.0047` | `0`, `0.1317`, `0` |
+	| `blade_mid` | 32 degrees | `0`, `0.0883`, `0.0206` | `0`, `0.2868`, `0` |
+	| `blade_high` | 50 degrees | `0`, `0.147`, `0.0528` | `0`, `0.4663`, `0` |
+
+	The numbers come from bending a blade along a circular arc: the tip of a blade leaning an angle of A from upright is `tan(A / 2)` forward of its foot when it is one meter high, and the joint is a little less. They keep every tip at a height of 1 meter.
+
+	<Figure
+		src={bends}
+		alt="Blender's viewport with the three blades standing on the same spot, seen at an angle: the first leans a little, the second more, the third most, each with a kink at the joint."
+		caption="The three bends together: 15, 32, and 50 degrees."
+	/>
+
+</Steps>
+
+## Put the blades in a collection
+
+The blades are the **source** the clump's group will copy, not part of the final model. Put them in a collection of their own, hidden.
+
+<Steps>
+
+1. In the outliner, click the **New Collection** button at the top right. A second collection appears under **Scene Collection**. Click it, press <Kbd keys="F2" />, name it `grass_blades`, and press <Kbd keys="Enter" />.
+
+2. Over the 3D view, press <Kbd keys="A" /> to select the three blades, then <Kbd keys="M" />, type `grass_blades`, and press <Kbd keys="Enter" />. The blades move into the collection.
+
+3. Click the eye next to `grass_blades` to hide it, then click the other collection, press <Kbd keys="F2" />, name it `grass`, and press <Kbd keys="Enter" />. New objects go into the collection you clicked last, so everything you export is in `grass`.
+
+	<Figure
+		src={collections}
+		alt="Blender's outliner showing two collections, grass, empty, and grass_blades with its eye closed."
+		caption="One collection for the model, one for the hidden blades."
+	/>
+
+</Steps>
+
+## The clump's footprint
+
+The group scatters its blades over a face. That face is a circle 0.45 meters in radius: a patch a little under a meter across, about the size of two clumps per square meter of ground, with their edges overlapping.
+
+<Steps>
+
+1. Over the 3D view, press <Kbd keys="Shift+A" />, type `circle`, and press <Kbd keys="Enter" />. Rename it `grass_clump_a`.
+
+2. Press <Kbd keys="Tab" />, <Kbd keys="A" />, and <Kbd keys="F" /> to fill the circle with a face. Press <Kbd keys="S" />, type `0.45`, and press <Kbd keys="Enter" />. Press <Kbd keys="Numpad 7" /> and <Kbd keys="Home" /> to see it from above, and <Kbd keys="Tab" /> to leave Edit Mode.
+
+	<Figure
+		src={footprint}
+		alt="Blender's top view of a flat filled circle, about a meter across."
+		caption="The footprint: a filled circle, 0.45 meters in radius."
+	/>
+
+</Steps>
+
+## The Grass Clump group
+
+You build this group the way you built lesson 26's: in the Geometry Nodes workspace, with the nodes added by <Kbd keys="Shift+A" />, named with <Kbd keys="F2" />, filled in, and linked, in three chapters. Lesson 26's **The group** section explains the three things you do in every chapter, if they are not fresh. There are 24 nodes this time, besides the group's two ends.
+
+<Steps>
+
+1. Click the **Geometry Nodes** tab at the top of the window. With `grass_clump_a` selected, click **New** in the node editor's header. Blender makes a group and a Geometry Nodes modifier. Rename the group `Grass Clump`: double-click its name in the header, or press <Kbd keys="F2" /> over it.
+
+	<Figure
+		src={newGroup}
+		alt="The Geometry Nodes workspace: a spreadsheet, the 3D view with the filled circle, and below them the node editor with a Group Input joined to a Group Output."
+		caption="A new group on the footprint."
+	/>
+
+2. Point at the node editor and press <Kbd keys="Ctrl+Space" mac="Cmd+Space" /> to make it fill the window.
+
+</Steps>
+
+The group has one input besides the geometry, a whole number named **Seed**. You will not add it in a menu: when you link the **Group Input**'s empty socket, the small gray circle under **Geometry**, to a node's input, Blender makes a new group input with that input's name and type. The tables say which link does it: **Group Input, Seed** goes to **Blade feet, Seed** in the first chapter, so the group's input is named `Seed`, and changing it re-rolls the clump.
+
+### Chapter 1: Blade feet
+
+The first chapter picks the points the blades grow from, and stores two numbers on every point: its phase and its height. Storing them on the points means they travel with each blade when the blades are made.
+
+<Steps>
+
+1. Add these nodes, name them, and set their values:
+
+	| Node | Settings |
+	|---|---|
+	| **Blade feet**, from Distribute Points on Faces | method **Random**, Density `150` |
+	| **Wind phase**, from Random Value | type **Float**, Min `0`, Max `1`, Seed `1` |
+	| **Store phase**, from Store Named Attribute | type **Float**, domain **Point**, Name `phase` |
+	| **Blade height**, from Random Value | type **Float**, Min `0.28`, Max `0.36`, Seed `2` |
+	| **Store height**, from Store Named Attribute | type **Float**, domain **Point**, Name `height` |
+
+2. Make these links:
+
+	| From | To |
+	|---|---|
+	| Group Input, Geometry | Blade feet, Mesh |
+	| Group Input, Seed | Blade feet, Seed |
+	| Blade feet, Points | Store phase, Geometry |
+	| Wind phase, Value | Store phase, Value |
+	| Store phase, Geometry | Store height, Geometry |
+	| Blade height, Value | Store height, Value |
+	| Store height, Geometry | Group Output, Geometry |
+
+	<Figure
+		src={feetNodes}
+		alt="Blender's node editor: a Group Input with Geometry and Seed, joined to a Blade feet node, then two Store nodes in a row, then a Group Output, with two Random Value nodes below feeding the stores."
+		caption="Chapter 1: the points, with a phase and a height on each."
+	/>
+
+</Steps>
+
+A density of 150 points per square meter over a circle of 0.636 square meters gives about 95 blades. The number varies a little from one seed to the next: **Distribute Points on Faces** rolls for every point.
+
+### Chapter 2: Blades
+
+The second chapter puts a blade on every point: one of the three, at random, turned to face away from the center, scaled to its own width and height. Its own height is the number stored in chapter 1, read back.
+
+<Steps>
+
+1. Add these nodes, name them, and set their values. **Blades** has a **Collection** field: click it and choose `grass_blades` from the list.
+
+	| Node | Settings |
+	|---|---|
+	| **Blades**, from Collection Info | space **Relative**, Collection **grass_blades**, **Separate Children** checked, **Reset Children** checked |
+	| **Pick a blade**, from Random Value | type **Integer**, Min `0`, Max `2`, Seed `3` |
+	| **Position**, from Position | nothing |
+	| **Outward**, from Vector Math | operation **Normalize** |
+	| **Wobble**, from Random Value | type **Vector**, Min `-0.84, -0.84, 0`, Max `0.84, 0.84, 0`, Seed `4` |
+	| **Add wobble**, from Vector Math | operation **Add** |
+	| **Turn away**, from Align Rotation to Vector | axis **Y**, pivot **Z** |
+	| **Blade width**, from Random Value | type **Float**, Min `0.05`, Max `0.07`, Seed `5` |
+	| **Read height**, from Named Attribute | type **Float**, Name `height` |
+	| **Blade size**, from Combine XYZ | nothing |
+	| **Blade on each point**, from Instance on Points | **Pick Instance** checked |
+	| **Realize blades**, from Realize Instances | nothing |
+
+2. Make these links. **Blade feet**'s output is already joined to **Group Output**: the link from **Realize blades** replaces it.
+
+	| From | To |
+	|---|---|
+	| Store height, Geometry | Blade on each point, Points |
+	| Blades, Instances | Blade on each point, Instance |
+	| Pick a blade, Value | Blade on each point, Instance Index |
+	| Position, Position | Outward, Vector |
+	| Outward, Vector | Add wobble, Vector |
+	| Wobble, Value | Add wobble, Vector (second) |
+	| Add wobble, Vector | Turn away, Vector |
+	| Turn away, Rotation | Blade on each point, Rotation |
+	| Blade width, Value | Blade size, X |
+	| Read height, Attribute | Blade size, Y |
+	| Read height, Attribute | Blade size, Z |
+	| Blade size, Vector | Blade on each point, Scale |
+	| Blade on each point, Instances | Realize blades, Geometry |
+	| Realize blades, Geometry | Group Output, Geometry |
+
+	<Figure
+		src={bladesNodes}
+		alt="Blender's node editor: the first chapter at the left, and to its right a Collection Info node, Random Value nodes, vector math nodes, and an Instance on Points node feeding a Realize Instances node and the Group Output."
+		caption="Chapter 2: a blade on each point."
+	/>
+
+</Steps>
+
+How it works, in the order the data flows:
+
+- **Collection Info** with **Separate Children** hands over the three blades as three instances, and **Reset Children** drops their positions, so each blade starts at its own origin, at the ground.
+- **Pick Instance** on **Instance on Points** puts one of them on each point, the one numbered by **Pick a blade**: 0, 1, or 2. This is why the blades are in their own collection.
+- **Turn away** turns each blade about the vertical so its bend points the way the **Add wobble** vector does. **Outward** is the point's position from the clump's center, as a direction, so the blade bends away from the center. **Wobble** adds a random vector of up to 0.84 either way, which is a turn of up to about 40 degrees from straight out.
+- **Blade size** is the blade's scale: the width on X, the height on Y and Z. Because the blades are one meter wide and tall, the number is the size in meters.
+
+<Figure
+	src={bladesView}
+	alt="Blender's viewport showing a clump of about 95 gray blades, tall at the middle and fanning outward, each bent in its own direction."
+	caption="The clump so far."
+/>
+
+### Chapter 3: Colors
+
+The last chapter writes the vertex colors. The phase becomes red. The alpha is each vertex's height above the ground, divided by its blade's height: 0 at the foot, 1 at the tip. Green and blue stay 0.
+
+<Steps>
+
+1. Add these nodes, name them, and set their values:
+
+	| Node | Settings |
+	|---|---|
+	| **Read phase**, from Named Attribute | type **Float**, Name `phase` |
+	| **Blade position**, from Position | nothing |
+	| **Height above ground**, from Separate XYZ | nothing |
+	| **Read height again**, from Named Attribute | type **Float**, Name `height` |
+	| **Share of height**, from Math | operation **Divide**, Clamp **on** |
+	| **Pack colors**, from Combine Color | mode **RGB**, Green `0`, Blue `0` |
+	| **Store colors**, from Store Named Attribute | type **Color**, domain **Point**, Name `Col` |
+
+2. Make these links:
+
+	| From | To |
+	|---|---|
+	| Blade position, Position | Height above ground, Vector |
+	| Height above ground, Z | Share of height, Value |
+	| Read height again, Attribute | Share of height, Value (second) |
+	| Read phase, Attribute | Pack colors, Red |
+	| Share of height, Value | Pack colors, Alpha |
+	| Realize blades, Geometry | Store colors, Geometry |
+	| Pack colors, Color | Store colors, Value |
+	| Store colors, Geometry | Group Output, Geometry |
+
+	<Figure
+		src={colorsNodes}
+		alt="Blender's node editor: a Realize blades node at the left joined to a Store colors node, with a Read phase, a Pack colors, and a small chain of Position, Separate XYZ, Divide, and Read height again nodes feeding it, and a Group Output at the right."
+		caption="Chapter 3: the vertex colors."
+	/>
+
+</Steps>
+
+The **Divide** works because each blade is a straight scale of a blade whose tip is exactly 1 meter high: a vertex's height above the ground, over its blade's height, is its share of the way to the tip. **Clamp** keeps it between 0 and 1.
+
+The name `Col` is the name the exporter writes as the mesh's vertex colors. Press <Kbd keys="Ctrl+Space" mac="Cmd+Space" /> over the editor to put the other editors back, and click the **Layout** tab.
+
+## Three clumps
+
+One group makes three clumps if each gets its own seed and size: seed `1` at its real size, `2` a little taller, `3` a little shorter, so the field's height varies from patch to patch.
+
+<Steps>
+
+1. Click the **Modifiers** tab, the wrench, in the Properties editor. The modifier's one field is **Seed**. Click it, press <Kbd keys="Ctrl+A" mac="Cmd+A" />, type `1`, and press <Kbd keys="Enter" />.
+
+	<Figure
+		src={seed}
+		alt="The Properties editor's modifier tab: a Geometry Nodes modifier running the Grass Clump group, with one field, Seed, set to 1."
+		caption="The group's input, on the modifier."
+	/>
+
+2. Click `grass_clump_a` in the outliner, and over the 3D view press <Kbd keys="Shift+D" />, <Kbd keys="Esc" />, <Kbd keys="F2" />, type `grass_clump_b`, and press <Kbd keys="Enter" />. Set its **Seed** to `2`, press <Kbd keys="S" />, type `1.125`, press <Kbd keys="Enter" />, then <Kbd keys="G" />, <Kbd keys="X" />, `-1`, <Kbd keys="Enter" /> to move it a meter to one side.
+
+3. Click `grass_clump_a` again and make `grass_clump_c` the same way, with **Seed** `3`, size `0.875`, and a move of `1` along X.
+
+	<Figure
+		src={threeClumps}
+		alt="Blender's top view of three clumps side by side, each a scatter of fanned-out gray blades, the left one a little larger and the right one a little smaller, all three selected."
+		caption="Three clumps: three seeds, three sizes."
+	/>
+
+</Steps>
+
+A scale of 1.125 puts the blades at 0.315 to 0.405 meters, and 0.875 at 0.245 to 0.315, so the three clumps stand 0.36, 0.405, and 0.315 meters at their tallest.
+
+### Make them plain meshes
+
+The group and the scale only mean something in Blender. The exported meshes must be plain geometry, with the blades already made and the scale already part of them.
+
+<Steps>
+
+1. Click each clump in the outliner in turn, move the pointer over the modifier's panel, and press <Kbd keys="Ctrl+A" mac="Cmd+A" />. The modifier is applied and disappears. Do it for all three.
+
+2. Over the 3D view press <Kbd keys="A" /> to select all three clumps, then <Kbd keys="Ctrl+A" mac="Cmd+A" /> to open the **Apply** menu. Choose **Scale**.
+
+	<Figure
+		src={applyMenu}
+		alt="Blender's Apply menu open over the 3D view, listing Location, Rotation, Scale, All Transforms, and more, with the three clumps selected behind it."
+		caption="Apply, then Scale: a scale of 1.125 becomes taller blades."
+	/>
+
+</Steps>
+
+Each clump is now a mesh of about 475 vertices and 285 triangles: 95 blades of three triangles each.
+
+## The flowers
+
+A flower is a few separate parts, each a simple shape you make by hand, then joined: a **stem**, a **center**, and **petals**. Every part gets its color from a short group of its own, so by the time you join them the colors are in the mesh. The petals' mask goes in alpha, as the blade's share of its height does for grass: 1 for a petal, 0 for the rest. The shader will use it to let the petals flutter and to tint them from a list of colors.
+
+First hide the clumps, so the origin is free: over the 3D view press <Kbd keys="A" />, then <Kbd keys="H" />, and <Kbd keys="Alt+A" /> to deselect.
+
+### The stem and the center
+
+Both are the same shape: a square, pulled up, with its top drawn together to a point.
+
+<Steps>
+
+1. Press <Kbd keys="Shift+A" />, type `plane`, press <Kbd keys="Enter" />, and press <Kbd keys="F2" /> to name it `stem`. Press <Kbd keys="Tab" />, <Kbd keys="A" />, and <Kbd keys="S" />, type `0.012`, and press <Kbd keys="Enter" />: a square 2.4 centimeters across. Press <Kbd keys="E" />, type `0`, <Kbd keys="Tab" />, `0`, <Kbd keys="Tab" />, `0.3`, and press <Kbd keys="Enter" />. The top four vertices are selected. Choose **Mesh > Merge > At Center**, and press <Kbd keys="Tab" /> to leave Edit Mode.
+
+2. Make the `center` the same way, from a new plane: scale `0.03`, extrude `0, 0, 0.012`, merge at center. Then, in Object Mode, press <Kbd keys="G" />, <Kbd keys="Z" />, `0.295`, and <Kbd keys="Enter" />, to set it on the top of the stem.
+
+</Steps>
+
+### The petal
+
+A petal is a diamond 9 centimeters long and 5 wide, with its inner tip at the object's origin. The origin is where the petal turns when you rotate it, and it is the top of the stem.
+
+<Steps>
+
+1. Add a plane, name it `petal`, enter Edit Mode, and select all. Turn it into a diamond and shape it: <Kbd keys="R" />, <Kbd keys="Z" />, `45`, <Kbd keys="Enter" />; then <Kbd keys="S" />, <Kbd keys="X" />, `0.032`, <Kbd keys="Enter" />; then <Kbd keys="S" />, <Kbd keys="Y" />, `0.018`, <Kbd keys="Enter" />; then <Kbd keys="G" />, <Kbd keys="X" />, `0.045`, <Kbd keys="Enter" />. One tip is at the origin and the other is 9 centimeters along X.
+
+2. Leave Edit Mode. Press <Kbd keys="G" />, <Kbd keys="Z" />, `0.3`, <Kbd keys="Enter" /> to put the petal's origin at the top of the stem, and <Kbd keys="R" />, <Kbd keys="Y" />, `15`, <Kbd keys="Enter" /> to tilt its outer tip 15 degrees below level.
+
+	<Figure
+		src={daisyParts}
+		alt="Blender's front view: a tall dark gray stem from the origin, with a flat square pyramid at its top and one petal leaning off to the right."
+		caption="Three parts: the stem, the center, and one petal."
+	/>
+
+</Steps>
+
+### Painting a part
+
+The colors come from a group named **Paint Part** with four inputs: **Red**, **Green**, **Blue**, and **Alpha**. It packs them into a color and stores it as `Col`, so it is two nodes. You build it on the stem.
+
+<Steps>
+
+1. Click `stem`, click the **Geometry Nodes** tab, and click **New**. Rename the group `Paint Part`, and make the node editor fill the window.
+
+2. Add these nodes, name them, and set their values:
+
+	| Node | Settings |
+	|---|---|
+	| **Pack color**, from Combine Color | mode **RGB** |
+	| **Store color**, from Store Named Attribute | type **Color**, domain **Point**, Name `Col` |
+
+3. Make these links. Each of the four links from **Group Input** starts at its empty socket, and makes a new input named for the socket it lands on:
+
+	| From | To |
+	|---|---|
+	| Group Input, Red | Pack color, Red |
+	| Group Input, Green | Pack color, Green |
+	| Group Input, Blue | Pack color, Blue |
+	| Group Input, Alpha | Pack color, Alpha |
+	| Group Input, Geometry | Store color, Geometry |
+	| Pack color, Color | Store color, Value |
+	| Store color, Geometry | Group Output, Geometry |
+
+	<Figure
+		src={paintNodes}
+		alt="Blender's node editor: a Group Input with Geometry, Red, Green, Blue, and Alpha, a Pack color node, a Store color node, and a Group Output."
+		caption="Paint Part: four numbers in, one vertex color out."
+	/>
+
+4. Go back to the Layout workspace and the modifier tab. The modifier has four fields. For the stem, a dark green, type `0.05`, `0.14`, `0.02`, and `0`: click each field, press <Kbd keys="Ctrl+A" mac="Cmd+A" />, type, and press <Kbd keys="Enter" />.
+
+	<Figure
+		src={paintModifier}
+		alt="The Properties editor's modifier tab: the Paint Part group with Red 0.05, Green 0.14, Blue 0.02, and Alpha 0."
+		caption="The stem's color, with an alpha of 0: not a petal."
+	/>
+
+</Steps>
+
+The numbers are linear color values, which is what the shader reads, so a dark green looks like `0.05, 0.14, 0.02` and not like a hex code.
+
+### Copy the modifier, paint the rest
+
+The center and the petal need the same modifier with other numbers.
+
+<Steps>
+
+1. Click `center`, then <Kbd keys="Ctrl" /> and click `petal`, and <Kbd keys="Ctrl" /> and click `stem` last, so the stem is the active object. In the 3D view's header choose **Object > Link/Transfer Data > Copy Modifiers**.
+
+	<Figure
+		src={linkMenu}
+		alt="Blender's Object menu open on Link/Transfer Data, with its submenu listing Link Objects to Scene, Link Object Data, Link Materials, Copy Modifiers, and more."
+		caption="Copy Modifiers puts the stem's modifier on the other two."
+	/>
+
+2. Click `center` and set its fields to `1`, `0.58`, `0.04`, `0`: a yellow, with alpha 0. Click `petal` and set `1`, `1`, `1`, `1`: white petals, with alpha 1. White is the color the shader will tint, and the alpha of 1 is what lets it.
+
+</Steps>
+
+### The daisy's petals, and the cup
+
+The daisy has eight petals 45 degrees apart. Copy the petal and turn each copy about its own origin, which is the top of the stem. A copy keeps the modifier and its values.
+
+<Steps>
+
+1. Click `petal`, and over the 3D view press <Kbd keys="Shift+D" />, <Kbd keys="Esc" />, then <Kbd keys="R" />, <Kbd keys="Z" />, `45`, <Kbd keys="Enter" />. The copy is now the active object. Press <Kbd keys="Shift+D" />, <Kbd keys="Esc" />, <Kbd keys="R" />, <Kbd keys="Z" />, `45`, <Kbd keys="Enter" /> again, and keep going until there are seven copies, eight petals in all.
+
+2. For the cup flower, which has five petals that rise instead of drooping, click `petal`, press <Kbd keys="Shift+D" />, <Kbd keys="Esc" />, and move it with <Kbd keys="G" />, `0.5`, <Kbd keys="Tab" />, `0`, <Kbd keys="Tab" />, `-0.04`, <Kbd keys="Enter" />: half a meter to the side, and down to the cup's lower top at 0.26. Then <Kbd keys="R" />, <Kbd keys="Y" />, `-70`, <Kbd keys="Enter" />: the 15 degrees of droop plus a turn of 70 the other way leaves the petal rising 55 degrees. Make four more copies, each turned `72` about Z.
+
+3. Click `stem`, press <Kbd keys="Shift+D" />, <Kbd keys="Esc" />, then <Kbd keys="S" />, <Kbd keys="Z" />, `0.8667`, <Kbd keys="Enter" /> to make it 0.26 tall, and <Kbd keys="G" />, <Kbd keys="X" />, `0.5`, <Kbd keys="Enter" /> to put it under the cup.
+
+	<Figure
+		src={flowersBuilt}
+		alt="Blender's front view: a tall stem with a flat ring of petals at its top, and a petal selected, with the outliner listing petal_copy objects."
+		caption="The daisy's eight petals around the top of its stem."
+	/>
+
+</Steps>
+
+### Join the parts
+
+<Steps>
+
+1. Select the daisy's parts: click `center`, then <Kbd keys="Ctrl" /> and click each `petal`, `petal_copy`, and finally `stem`, so the stem is active. In the header choose **Object > Convert > Mesh**. That applies the **Paint Part** modifiers, and the colors become part of each mesh.
+
+	<Figure
+		src={convertMenu}
+		alt="Blender's Object menu open on Convert, its submenu listing Mesh, Curve, Curves, Point Cloud, and Grease Pencil."
+		caption="Convert to Mesh applies every selected object's modifiers."
+	/>
+
+2. Press <Kbd keys="Ctrl+J" mac="Cmd+J" /> to join them into the active object, the stem. Press <Kbd keys="F2" /> and name it `flower_daisy`. It is 28 triangles.
+
+3. Do the same for the cup: its five petals, then its stem last. Name it `flower_cup`. It is 16 triangles. Because the stem was scaled, the joined object has a scale of 0.867: press <Kbd keys="Ctrl+A" mac="Cmd+A" /> over the 3D view, and choose **Scale**.
+
+4. Move the daisy `2` meters along X and the cup `3`, so the flowers stand apart from the clumps, and press <Kbd keys="Alt+H" /> to bring the clumps back. Name each mesh after its object, since Godot shows the mesh's name: click the object, open the **Data** tab, and rename the mesh in the field at its top, as you did in lesson 24. Do it for all five.
+
+</Steps>
+
+<Aside type="tip" title="See the colors">
+In the 3D view's header, open **Viewport Shading**, and set **Color** to **Attribute**. The petals turn white, the centers yellow, and the clumps' blades show the phases as shades of red, as in the figures at the top.
+</Aside>
+
+## Export
+
+<Steps>
+
+1. Click the `grass` collection in the outliner and click the **Collection** tab in the Properties editor. Under **Exporters** click **+** and choose **glTF 2.0**.
+
+2. Click the folder button beside **File Path**, go to your project's `art` folder, make a `nature\grass` folder in it, and name the file `grass.glb`.
+
+	<Figure
+		src={exporter}
+		alt="The Properties editor's Collection tab: an exporter named glTF 2.0 with the file path ending in grass.glb, the format glTF Binary, and its Data section open."
+		caption="The collection's exporter."
+	/>
+
+3. Open **Data > Mesh** and uncheck **UVs**: the shader will not read them, and a file without them is smaller. Leave **Vertex Colors** as it is. The meshes have no material, so **Use Vertex Color** set to **Material** with **Export Active Vertex Color When No Material** checked writes the active color, `Col`.
+
+	<Figure
+		src={vertexColors}
+		alt="The exporter's Mesh section: Apply Modifiers and UVs unchecked, Normals checked, and a Vertex Colors section with Use Vertex Color set to Material and Export All Vertex Colors and Export Active Vertex Color When No Material both checked."
+		caption="The exporter's vertex color settings: the defaults write Col."
+	/>
+
+4. Click **Export All**, then save the file with <Kbd keys="Ctrl+S" mac="Cmd+S" />.
+
+</Steps>
+
+The file holds five meshes: `grass_clump_a`, `grass_clump_b`, `grass_clump_c`, `flower_daisy`, and `flower_cup`, about 70 kilobytes in all.
+
+## Import into Godot
+
+<Steps>
+
+1. Switch to Godot. It imports `grass.glb` when it sees the new file. Click `art/nature/grass/grass.glb` in the FileSystem dock and open the **Import** tab.
+
+2. Under **Meshes**, uncheck **Generate LODs**, and click **Reimport**. Godot makes simpler copies of a mesh for when it is far away. A clump is already a few triangles per blade, and the scatter will draw hundreds of them together, so the importer's rule for choosing a level, which depends on the distance to the camera, would swap blades out of a patch as you zoom.
+
+	<Figure
+		src={importLodsOff}
+		alt="Godot's Import dock for grass.glb: the Meshes section with Ensure Tangents checked, Generate LODs unchecked, and Create Shadow Meshes checked, and a Reimport button."
+		caption="Generate LODs off."
+	/>
+
+3. Click **Advanced...** to see the file. Its scene tree lists the five meshes, and the preview shows the grass in red and the flowers in their own colors: Godot draws the vertex colors.
+
+	<Figure
+		src={advanced}
+		alt="Godot's Advanced Import Settings window: a tree listing flower_cup, flower_daisy, grass_clump_a, grass_clump_b, and grass_clump_c, and a preview of three red clumps with a white daisy and a white flower with a green stem."
+		caption="The five meshes, with their vertex colors."
+	/>
+
+</Steps>
+
+Click **Close**. The meshes read back as the lesson promised: each clump has 665 vertices and 285 triangles, each with vertex colors, the daisy 28 triangles, the cup 16.
+
+## Try it
+
+- Change **Density** in **Blade feet** from `150` to `100` for a thinner clump, or `200` for a denser one.
+- Change **Min** and **Max** in **Blade height** to `0.15` and `0.2` for a short lawn.
+- Make a fourth bend: duplicate `blade_high` and move its tip by `0.62` in Y, and change **Max** in **Pick a blade** from `2` to `3`. Blades that nearly lie down read as windswept.
+- Give the cup more petals: add a sixth and turn the copies by 60 degrees.
+
+## If it does not work
+
+- **The clump is empty.** **Blades** has no **Collection**, or `grass_blades` is empty. Choose `grass_blades` in its field.
+- **There are far fewer than 95 blades, or only one kind.** **Pick Instance** is unchecked, so only the first blade is used, or **Separate Children** is unchecked.
+- **All the blades lean the same way.** **Outward** is not linked to **Add wobble**, or **Turn away**'s axis is **X**.
+- **The blades lie flat on the ground.** A blade is flat if **Reset Children** is off, or the **Blade size** values are not linked to **Y** and **Z**.
+- **The tip of a blade is at the origin.** You chose **At Cursor** and not **At Center** when merging. Undo and merge again.
+- **The colors are white in Godot.** The meshes need the `Col` attribute, and the exporter must write the active color. Check that **Store colors** names it exactly `Col`.
+- **A petal is dark in Blender's Attribute view.** Its **Paint Part** values are not `1, 1, 1, 1`. The modifier is applied when you convert, so check the values before that step.
+
+## Checkpoint
+
+Your project now contains:
+
+<FileTree>
+- art
+  - nature
+    - grass
+      - **grass.glb**
+- art_source
+  - nature
+    - grass
+      - **grass.blend**
+</FileTree>
+
+Commit your work: `git add .` and `git commit -m "Model a grass clump and two flowers"`. Lesson 31 gives the clumps their shader.
+
+<Checkpoint />

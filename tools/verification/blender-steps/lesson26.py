@@ -231,8 +231,8 @@ def rename(d, x, y, text):
     yield 0.5
 
 
-def build_chapter(d, ui, tree, nodes, chapter):
-    (origin_x, origin_y), columns = LAYOUT[chapter['key']]
+def build_chapter(d, ui, tree, nodes, chapter, spec=spec, layout=LAYOUT, prefix='l26'):
+    (origin_x, origin_y), columns = layout[chapter['key']]
     count = len(chapter['nodes'])
     rows = -(-count // columns)
     # Two reroutes at the chapter's corners, with the nodes it links from, fit the view to it.
@@ -252,11 +252,11 @@ def build_chapter(d, ui, tree, nodes, chapter):
     ui.redraw()
     yield 1.5
     d.log('SCALE {} {}'.format(chapter['key'], round(ui.scale(), 3)))
-    d.shot('l26_{}_framed'.format(chapter['key']))
+    d.shot(prefix + '_{}_framed'.format(chapter['key']))
     for index, (key, search, settings, inputs) in enumerate(chapter['nodes']):
         x, y = origin_x + (index % columns) * COLUMN, origin_y - (index // columns) * ROW
         before = len(tree.nodes)
-        node = yield from ui.place(search, x, y, shot='l26_node' if key == 'pos' else None)
+        node = yield from ui.place(search, x, y, shot=prefix + '_node' if key == 'pos' else None)
         if len(tree.nodes) != before + 1:
             raise RuntimeError('adding {} made {} nodes'.format(search, len(tree.nodes) - before))
         nodes[key] = node
@@ -275,7 +275,7 @@ def build_chapter(d, ui, tree, nodes, chapter):
         if node.label != spec.LABELS[key]:
             raise RuntimeError('label of {} is {!r}'.format(key, node.label))
         d.log('PLACED {} as {} at {}'.format(key, node.name, tuple(round(v) for v in node.location)))
-    d.shot('l26_{}_placed'.format(chapter['key']))
+    d.shot(prefix + '_{}_placed'.format(chapter['key']))
     # The values, typed into the fields while every field is still showing.
     for key, search, settings, inputs in chapter['nodes']:
         if not inputs:
@@ -285,12 +285,14 @@ def build_chapter(d, ui, tree, nodes, chapter):
         for name, value in inputs.items():
             yield from ui.set_value(node, name, value, found)
     ui.redraw()
-    d.shot('l26_{}_values'.format(chapter['key']))
+    d.shot(prefix + '_{}_values'.format(chapter['key']))
     for key, search, settings, inputs in chapter['nodes']:
         node = nodes[key]
         for name, value in inputs.items():
             got = spec.socket(node, name, False).default_value
             expected = value
+            if name == 'Collection':
+                got = got.name if got else None
             sequence = hasattr(got, '__len__') and not isinstance(got, str)
             same = all(abs(a - b) < 1e-4 for a, b in zip(got, expected)) if sequence else (got == expected if isinstance(expected, str) else abs(got - expected) < 1e-4)
             d.log('VALUE {} {} = {} {}'.format(key, name, tuple(got) if sequence else got, 'ok' if same else 'WRONG, wanted {}'.format(expected)))
@@ -302,16 +304,34 @@ def build_chapter(d, ui, tree, nodes, chapter):
     involved = {key for _, _, key, _ in chapter['links']} | {a for a, _, _, _ in chapter['links']}
     for key in involved:
         positions[key] = yield from ui.sockets(nodes[key])
-    ordered = sorted(chapter['links'], key=lambda link: (link[2], -ui.index_of(nodes[link[2]], link[3], False)))
+    # Links from the Group Input go in reading order, each after measuring the Group Input again: dragging from its empty
+    # socket makes a new group input named after the socket it lands on, which moves the rows.
+    def order(link):
+        index = ui.index_of(nodes[link[2]], link[3], False)
+        return (link[2], index if link[0] == 'in' else -index)
+
+    ordered = sorted(chapter['links'], key=order)
     for a, output, b, name in ordered:
-        start = (positions[a]['right'], positions[a]['out'][ui.index_of(nodes[a], output, True)])
-        end = (positions[b]['left'], positions[b]['in'][ui.index_of(nodes[b], name, False)])
+        if a == 'in':
+            positions['in'] = yield from ui.sockets(nodes['in'])
+        names = [item.name for item in ui.drawn(nodes[a], True)]
+        if a == 'in':
+            # Wires leaving the Group Input read as extra glyphs, so its rows are placed by their even spacing, 22.4 node
+            # units, down from the first row.
+            top = positions['in']['out'][0]
+            row_pitch = 22.4 * ui.scale()
+            positions['in']['out'] = [top - number * row_pitch for number in range(len(names))]
+        out_index = names.index(output) if output in names else names.index('')
+        start = (positions[a]['right'], positions[a]['out'][out_index])
+        end = (positions[b]['left'], ui.input_y(nodes[b], name, positions[b]))
         yield from ui.link(start, end)
     ui.redraw()
     for a, output, b, name in chapter['links']:
         found = [link for link in tree.links if link.from_node == nodes[a] and link.to_node == nodes[b] and link.to_socket == spec.socket(nodes[b], name, False)]
         d.log('LINK {}.{} -> {}.{} {}'.format(a, output, b, name, 'ok' if found else 'MISSING'))
         if not found:
+            d.shot(prefix + '_missing')
+            d.log('SOCKETS {} {}'.format(b, positions[b]))
             raise RuntimeError('missing link {}.{} -> {}.{}'.format(a, output, b, name))
     # Tidy the chapter into the order the data flows, and fit the view to it for the figure.
     for key, (column, row) in chapter['flow'].items():
@@ -319,8 +339,8 @@ def build_chapter(d, ui, tree, nodes, chapter):
     nodes['out'].location = (origin_x + (last + 1.3) * COLUMN, origin_y - 150)
     ui.frame([nodes[key] for key in chapter['flow']] + [nodes['out']] + ([nodes['in']] if chapter['key'] == 'clumps' else []))
     yield 1.0
-    d.shot('l26_{}_linked'.format(chapter['key']))
-    yield from restore_shot(d, 'l26_{}_view'.format(chapter['key']))
+    d.shot(prefix + '_{}_linked'.format(chapter['key']))
+    yield from restore_shot(d, prefix + '_{}_view'.format(chapter['key']))
 
 
 def restore_shot(d, name):

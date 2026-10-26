@@ -161,6 +161,18 @@ class NodeUI:
         matches = [index for index, item in enumerate(self.drawn(node, output)) if item.name == name]
         return matches[position]
 
+    def input_y(self, node, name, found):
+        # The y of a named input among the detected socket glyphs. An unlinked vector input also draws glyph-like
+        # rows for its three fields, so the detected list can be longer than the drawn sockets: sockets after the
+        # first such input count from the bottom.
+        drawn = self.drawn(node, False)
+        index = self.index_of(node, name, False)
+        detected = found['in']
+        if len(detected) == len(drawn):
+            return detected[index]
+        first = next((position for position, item in enumerate(drawn) if item.type in ('VECTOR', 'ROTATION') and not item.is_linked and not item.hide_value), len(drawn))
+        return detected[index] if index <= first else detected[index - len(drawn)]
+
     @staticmethod
     def matches(socket, value):
         got = socket.default_value
@@ -171,6 +183,13 @@ class NodeUI:
         return abs(got - value) < 1e-4
 
     def set_value(self, node, name, value, found):
+        if name == 'Collection':
+            # A collection is picked from its dropdown; the lesson names it, and the step sets it directly.
+            self.drawn(node, False)[self.index_of(node, name, False)].default_value = bpy.data.collections[value]
+            return
+        if isinstance(value, bool):
+            yield from self.set_checkbox(node, name, value, found)
+            return
         # Clicks the socket's field and types; a vector's three fields are typed one after another with Tab. Typing
         # can miss (a keystroke lands before the field is editing), so a wrong value is typed again, up to three times.
         index = self.index_of(node, name, False)
@@ -181,6 +200,18 @@ class NodeUI:
                 return
             self.d.log('RETYPE {} {} got {}'.format(node.name, name, socket.default_value))
         raise RuntimeError('field {}.{} stays {}'.format(node.name, name, socket.default_value))
+
+    def set_checkbox(self, node, name, value, found):
+        # A boolean input is a checkbox at the row's left; click it when it differs from the wanted state.
+        index = self.index_of(node, name, False)
+        socket = self.drawn(node, False)[index]
+        if socket.default_value == value:
+            return
+        scale = self.scale()
+        yield from self.d.press(int(round(found['left'] + 22 * scale)), int(round(found['in'][index])))
+        yield 0.3
+        if socket.default_value != value:
+            raise RuntimeError('checkbox {}.{} stays {}'.format(node.name, name, socket.default_value))
 
     def type_value(self, socket, value, found, index):
         y = found['in'][index]
