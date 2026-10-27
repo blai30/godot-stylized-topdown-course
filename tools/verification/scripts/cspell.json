@@ -147,6 +147,8 @@
     "WeightedNormal",
     "WorldEnvironment",
     "worldspace",
-    "Xcode"
+    "Xcode",
+    "Perlin",
+    "Midlevel"
   ]
 }

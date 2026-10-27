@@ -1,0 +1,718 @@
+---
+title: Model the bank kit
+description: Model a kit of earth bank pieces in Blender, one straight piece by hand and three corners from the same steps, so that any piece fits beside any other, then import it into Godot as a MeshLibrary, shade it, and edge a small pond with it.
+sidebar:
+  order: 44
+  label: "44. Model the bank kit"
+lesson:
+  number: 44
+  minutes: 130
+  learn:
+    - How a bank kit lets a few pieces edge any pond, and the one rule that makes the pieces fit together
+    - How to model a wall in rows, weight a vertex group, and rough it up with a Displace modifier
+    - How to import a glb straight into Godot as a MeshLibrary and swap in your own material
+    - How to place the pieces on a second GridMap, half a cell off the ground's
+  prerequisites: [8, 9, 16, 17, 18]
+---
+
+import { Aside, Code, FileTree, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Solution from '../../../components/Solution.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import piece1 from '../../../checkpoints/44/pieces/piece-1.gdshader?raw';
+import bankMaterial from '../../../checkpoints/44/files/art/water/bank.tres?raw';
+import clodNoise from '../../../checkpoints/44/files/art/water/clod_noise.tres?raw';
+import kit from '../../../assets/lessons/model-the-bank-kit/kit.png';
+import saveName from '../../../assets/lessons/model-the-bank-kit/save-name.png';
+import collection from '../../../assets/lessons/model-the-bank-kit/collection.png';
+import plane from '../../../assets/lessons/model-the-bank-kit/plane.png';
+import frontSelected from '../../../assets/lessons/model-the-bank-kit/front-selected.png';
+import top from '../../../assets/lessons/model-the-bank-kit/top.png';
+import subdivided from '../../../assets/lessons/model-the-bank-kit/subdivided.png';
+import wall from '../../../assets/lessons/model-the-bank-kit/wall.png';
+import group from '../../../assets/lessons/model-the-bank-kit/group.png';
+import displace from '../../../assets/lessons/model-the-bank-kit/displace.png';
+import displaceView from '../../../assets/lessons/model-the-bank-kit/displace-view.png';
+import landBevel from '../../../assets/lessons/model-the-bank-kit/land-bevel.png';
+import waterCorner from '../../../assets/lessons/model-the-bank-kit/water-corner.png';
+import diagonal from '../../../assets/lessons/model-the-bank-kit/diagonal.png';
+import pieces from '../../../assets/lessons/model-the-bank-kit/pieces.png';
+import lipSelected from '../../../assets/lessons/model-the-bank-kit/lip-selected.png';
+import lipFlat from '../../../assets/lessons/model-the-bank-kit/lip-flat.png';
+import material from '../../../assets/lessons/model-the-bank-kit/material.png';
+import exporterPanel from '../../../assets/lessons/model-the-bank-kit/exporter-panel.png';
+import exportName from '../../../assets/lessons/model-the-bank-kit/export-name.png';
+import importScene from '../../../assets/lessons/model-the-bank-kit/import-scene.png';
+import importLibrary from '../../../assets/lessons/model-the-bank-kit/import-library.png';
+import createShader from '../../../assets/lessons/model-the-bank-kit/create-shader.png';
+import shaderEditor from '../../../assets/lessons/model-the-bank-kit/shader.png';
+import newResource from '../../../assets/lessons/model-the-bank-kit/new-resource.png';
+import materialGround from '../../../assets/lessons/model-the-bank-kit/material-ground.png';
+import clodNoiseShot from '../../../assets/lessons/model-the-bank-kit/clod-noise.png';
+import clodNormals from '../../../assets/lessons/model-the-bank-kit/clod-normals.png';
+import saveMaterial from '../../../assets/lessons/model-the-bank-kit/save-material.png';
+import useExternal from '../../../assets/lessons/model-the-bank-kit/use-external.png';
+import externalPath from '../../../assets/lessons/model-the-bank-kit/external-path.png';
+import bankNode from '../../../assets/lessons/model-the-bank-kit/bank-node.png';
+import pond from '../../../assets/lessons/model-the-bank-kit/pond.png';
+import pondClose from '../../../assets/lessons/model-the-bank-kit/pond-close.png';
+import pondWall from '../../../assets/lessons/model-the-bank-kit/pond-wall.png';
+import pondDusk from '../../../assets/lessons/model-the-bank-kit/pond-dusk.png';
+import pondNight from '../../../assets/lessons/model-the-bank-kit/pond-night.png';
+
+## What you will build
+
+The meadow is about to get a pond. A pond is a hole in the ground with water in it, and the edge of the hole is where it looks like a pond or does not. This module gives the hole a real bank: a wall of earth about three quarters of a meter deep, with a lumpy lip, turf hanging over its top, and a ragged line where the grass stops. This lesson models the bank, and you will see it before there is any water.
+
+<Figure
+	src={kit}
+	alt="Seven gray pieces in a row in Blender's viewport, seen from above and in front: five with a flat top and a lumpy, uneven wall, the fourth and fifth wrapping around a rounded corner, and two thin pieces with only a short sliver of wall at their corners."
+	caption="The kit: three straight pieces, two land corners, a water corner, and a diagonal."
+/>
+
+The bank is a **kit** of seven pieces, each half a meter square, that you place on a second GridMap beside the ground's. Painting the pond's outline is the ground's job. Placing the right piece at each corner of that outline is the bank's, and lesson 47 does it with code. Here you model the pieces and place twelve of them by hand around a small pond, to see that they fit.
+
+## How a bank kit works
+
+The ground is a grid of cells half a meter on a side. A pond is some of those cells taken out. Each cell on the pond's edge has land on one side and water on the other, so the bank has to go between cells, along their shared edges and around their corners.
+
+A kit that puts one piece on every ground cell needs a different piece for almost every neighbor. There is a trick that needs far fewer, called a **dual grid**. Put the bank's grid half a cell off the ground's, so that each bank cell sits on a corner of the ground grid and covers the four ground cells that meet there. Each of those four cells is land or water, so there are sixteen cases, and only four shapes:
+
+| Water around the corner | Piece | What it looks like |
+|---|---|---|
+| None, or all four | nothing | all land is ground, all water is water |
+| Two cells side by side | straight | a wall along the cell's middle |
+| One cell | water corner | land on three sides, a notch of water in one corner |
+| Three cells | land corner | one land cell, so the wall curves around it |
+| Two cells diagonally | diagonal | two notches, in opposite corners |
+
+The straight, the water corner, and the land corner can each be turned in four ways. The diagonal has only two that look different, and a turn of a quarter turn makes the other. That is fourteen cases, from four shapes. The kit has three straight pieces and two land corners so that a long bank does not repeat itself, and one each of the others, whose walls are too short to show a pattern.
+
+The pieces share three rules, and the rest of the lesson is how to meet them.
+
+- **The top is flat at 0.012 meters.** The ground tiles sit at 0.008 and reach 0.2 meters past their cells, as lesson 17 made them. The bank's top has to cover that overhang and sit just above it, so the bank takes the ground's own color and the two join without a seam.
+- **The wall stands 0.2 meters into the water's cell.** That is as far as the ground's overhang reaches. A wall closer to the land would stand under the overhang. It also means a pond needs at least three cells across to show any water: a one-cell channel is only 0.1 meters wide between its two walls.
+- **Every piece meets its neighbor the same way.** Where a piece ends, on any of its four edges, the wall is exactly 0.2 meters from the middle of the edge, and the wall's vertices are at exactly the same heights. Anything that moves the wall near an edge would open a crack, so the lumps you add die away to nothing before the edge.
+
+The wall's foot is at -0.75 meters, which is the bed of the lake, and the water will be at -0.35. So the wall shows 0.35 meters above the water and 0.4 under it. Blender's Z is up, and Godot's is too, but Blender's Y is Godot's Z flipped, so the water side of every piece, which Godot sees at +Z, is at -Y in Blender: toward you in the front view.
+
+## A file and a collection
+
+<Steps>
+
+1. Open Blender. It starts with the scene you saved as your startup file in lesson 8. Choose **File > Save As...** (<Kbd keys="Ctrl+Shift+S" mac="Cmd+Shift+S" />), click the path field, press <Kbd keys="Ctrl+A" mac="Cmd+A" />, type the path of a new `water` folder inside your project's `art_source` folder, ending with a separator, and press <Kbd keys="Enter" />. Blender asks to create it: click **Create**. Type `bank.blend` as the file name and click **Save As**.
+
+	<Figure
+		src={saveName}
+		alt="Blender's File Browser with the file name bank.blend typed in and the Save As button at the right."
+		caption="Saving into art_source/water."
+	/>
+
+2. Delete the starting cube: with the pointer over the 3D view, press <Kbd keys="A" />, <Kbd keys="X" />, and <Kbd keys="Enter" />.
+
+3. The Outliner holds the startup file's **Collection**. Click it, press <Kbd keys="F2" /> with the pointer over the Outliner, type `bank`, and press <Kbd keys="Enter" />. Everything in this collection is exported in one file.
+
+	<Figure
+		src={collection}
+		alt="Blender with an empty 3D viewport and, in the Outliner, a collection named bank."
+		caption="One collection for the whole kit."
+	/>
+
+</Steps>
+
+## The straight piece
+
+A piece is a top and a wall. You build the top as a flat plane, then pull the wall down from the edge that faces the water.
+
+### The top
+
+<Steps>
+
+1. With the pointer over the viewport, press <Kbd keys="Shift+A" />, type `plane`, and press <Kbd keys="Enter" />. Press <Kbd keys="F2" />, press <Kbd keys="Ctrl+A" mac="Cmd+A" />, type `bank_straight_a`, and press <Kbd keys="Enter" />.
+
+2. Press <Kbd keys="Numpad 7" /> for the top view and <Kbd keys="Tab" /> for Edit Mode. Press <Kbd keys="A" /> to select the plane, then <Kbd keys="S" />, type `0.25`, and press <Kbd keys="Enter" />. A plane is 2 meters across, so now it is 0.5, the size of a cell. Press <Kbd keys="Numpad ." /> to frame it.
+
+	<Figure
+		src={plane}
+		alt="Blender's top view of a flat square selected in Edit Mode, filling most of the viewport, with an orange outline and four corner vertices."
+		caption="The cell, 0.5 meters on a side."
+	/>
+
+3. The wall will stand 0.2 meters from the middle, so the top must end there and not at the edge, which is at 0.25. The water is toward -Y, the bottom of the screen. Press <Kbd keys="B" /> and drag a box around the two vertices at the bottom, so only they are selected. Press <Kbd keys="G" />, <Kbd keys="Y" />, type `0.05`, and press <Kbd keys="Enter" />. The bottom edge moves up by 5 centimeters.
+
+	<Figure
+		src={frontSelected}
+		alt="The square in top view with its two bottom vertices selected in orange before they are moved."
+		caption="The waterline edge, selected."
+	/>
+
+4. Press <Kbd keys="A" />, then <Kbd keys="G" />, <Kbd keys="Z" />, type `0.012`, and press <Kbd keys="Enter" />. The top is now at its height.
+
+	<Figure
+		src={top}
+		alt="The plane in top view, now shorter at the bottom, with its four vertices."
+		caption="The top: 0.5 meters wide, 0.45 meters deep, at height 0.012."
+	/>
+
+</Steps>
+
+### The wall
+
+The wall is the waterline edge pulled down in rows. The rows give the lumps something to move: a flat wall of two triangles cannot have any.
+
+<Steps>
+
+1. Select the waterline edge again, with <Kbd keys="B" /> and a drag around the two bottom vertices. Choose **Edge > Subdivide**. In the panel that opens at the bottom left, set **Number of Cuts** to `15`. The edge is now 16 segments, one every 3.1 centimeters, which is how fine the lumps can be.
+
+	<Figure
+		src={subdivided}
+		alt="The top view of the plane with its bottom edge now showing 17 small orange vertices in a row."
+		caption="Fifteen cuts: seventeen vertices on the edge."
+	/>
+
+2. With the new vertices selected, press <Kbd keys="E" />, <Kbd keys="Z" />, type `-0.0635`, and press <Kbd keys="Enter" />. A row of faces hangs from the edge. Now press <Kbd keys="Shift+R" />, **Repeat Last**, eleven more times. Each press extrudes another row of the same height. Twelve rows of 6.35 centimeters are 0.762 meters, so the foot of the wall lands at 0.012 - 0.762 = -0.75.
+
+3. Press <Kbd keys="Numpad 1" /> for the front view and <Kbd keys="Home" /> to frame everything. The wall is a grid of 16 columns by 12 rows.
+
+	<Figure
+		src={wall}
+		alt="The front view of the wall in Edit Mode: a rectangle of 16 columns and 12 rows of small gray faces, with the bottom row's vertices selected in orange."
+		caption="The wall: 16 columns, 12 rows, and nothing yet to see."
+	/>
+
+</Steps>
+
+### A mask for the lumps
+
+You will roughen the wall with a modifier. It must not touch two places: the wall's two ends, so that it meets its neighbors, and the foot. It should move the lip only half as far as the wall, which gives the shore its wandering line. A **vertex group** holds a weight from 0 to 1 for each vertex, and a modifier can take it as a mask: a vertex with weight 0 stays put, one with weight 1 moves all the way.
+
+The mask is built by selecting rings of vertices from the outside in. The wall's border is open mesh, so Blender can find it for you.
+
+<Steps>
+
+1. Press <Kbd keys="Alt+A" mac="Option+A" /> to select nothing. Choose **Select > Select All by Trait > Non Manifold**. In the panel at the bottom left, check that **Boundaries** is on. The border is selected: the wall's two ends, its foot, and the top's other three sides, 43 vertices in all.
+
+2. Choose **Select > Invert** (<Kbd keys="Ctrl+I" mac="Cmd+I" />). Now the lip and the inside of the wall are selected, 180 vertices.
+
+3. Click the **Data** tab in the Properties editor, the green triangle. Under **Vertex Groups**, click **+**, double-click the new group's name, and type `lumps`. In the **Weight** field below the list, which says `1.0`, type `0.5`, then click **Assign**. Every selected vertex gets half weight.
+
+4. Choose **Select > Select More/Less > Less** (<Kbd keys="Ctrl+Numpad -" mac="Cmd+Numpad -" />). The selection shrinks by one ring: the lip, the row above the foot, and the first column inside each end drop out, leaving 130 vertices. Set **Weight** to `1.0` and click **Assign**.
+
+	<Figure
+		src={group}
+		alt="The front view of the wall with an inner block of vertices selected in orange, leaving two columns on each side, one row at the top, and two rows at the bottom unselected."
+		caption="The inner block is weight 1. The next ring in has weight 0.5, and the border has none."
+	/>
+
+</Steps>
+
+Moving from the end inward, a vertex's weight is 0, then 0.5, then 1, and the 0.5 is what turns a cliff into a slope. The first two columns are 6 centimeters, close to the 7 the lumps need to die away in.
+
+Press <Kbd keys="Tab" /> to return to Object Mode, and slide the piece a meter off the origin: <Kbd keys="G" />, <Kbd keys="X" />, type `1`, and press <Kbd keys="Enter" />. You will see why when the lumps go on.
+
+## Two more straight pieces
+
+The kit has three straight pieces so a long bank does not repeat. The geometry is the same, and the lumps will differ because the pieces sit at different places.
+
+<Steps>
+
+1. With the piece selected in Object Mode, press <Kbd keys="Shift+D" />, <Kbd keys="Enter" />, then <Kbd keys="G" />, <Kbd keys="X" />, type `0.7`, and press <Kbd keys="Enter" />. The copy comes with the vertex group. Press <Kbd keys="F2" />, type `bank_straight_b`, and press <Kbd keys="Enter" />.
+
+2. Do it once more from the copy for `bank_straight_c`. The three pieces now sit at X = 1.0, 1.7, and 2.4.
+
+</Steps>
+
+## The land corner
+
+When the land is one cell, the wall curves around it, and the water side is a quarter circle of radius 0.2 meters. In the dual grid the land is at the back left of the piece, so the arc is at the front right.
+
+<Steps>
+
+1. Add a plane as you did before and name it `bank_land_corner_a`, then press <Kbd keys="Numpad 7" />, <Kbd keys="Tab" />, <Kbd keys="A" />, <Kbd keys="S" />, `0.25`, <Kbd keys="Enter" />, <Kbd keys="Numpad ." />. This piece is at the origin, so the others are out of the way.
+
+2. The top reaches 0.2 meters from the middle at the front and at the right. Box select the two right vertices with <Kbd keys="B" />, press <Kbd keys="G" />, <Kbd keys="X" />, `-0.05`, <Kbd keys="Enter" />. Box select the two front vertices, which are now at x = -0.25 and 0.2, and press <Kbd keys="G" />, <Kbd keys="Y" />, `0.05`, <Kbd keys="Enter" />. Then press <Kbd keys="A" />, <Kbd keys="G" />, <Kbd keys="Z" />, `0.012`, <Kbd keys="Enter" />.
+
+3. Select the front right vertex and choose **Vertex > Bevel Vertices** (<Kbd keys="Ctrl+Shift+B" mac="Cmd+Shift+B" />). In the panel, set **Amount** to `0.2` and **Segments** to `6`. The corner becomes a quarter circle that ends at the middle of the front edge and the middle of the right edge.
+
+	<Figure
+		src={landBevel}
+		alt="The top view of a square whose front right corner is rounded into an arc made of six segments, with the arc's seven vertices selected in orange."
+		caption="The land corner's top, with its quarter circle."
+	/>
+
+4. Subdivide the two straight parts of the waterline so they have the same 3 centimeter columns. Box select the front edge's two vertices, choose **Edge > Subdivide**, and set **Number of Cuts** to `7`: its 25 centimeters become 8 segments. Do the same for the right edge's two vertices. The arc's six segments are 5 centimeters each, which is fine for a curve.
+
+5. Select the back left vertex, the only one that is not on the waterline, and press <Kbd keys="Ctrl+I" mac="Cmd+I" /> to invert. The 23 vertices of the waterline are selected. Extrude the wall as before: <Kbd keys="E" />, <Kbd keys="Z" />, `-0.0635`, <Kbd keys="Enter" />, then <Kbd keys="Shift+R" /> eleven times.
+
+6. Make the vertex group as before: **Select > Select None**, **Select All by Trait > Non Manifold**, **Select > Invert**, a new group `lumps`, **Weight** `0.5`, **Assign**, **Select > Select More/Less > Less**, **Weight** `1.0`, **Assign**. The border has 48 vertices, the inside 252, and the inner block 190.
+
+7. Press <Kbd keys="Tab" />, slide the piece to X = 3.1, and make a copy for `bank_land_corner_b` at 3.8, as you did the straight pieces.
+
+</Steps>
+
+## The two notches
+
+The water corner and the diagonal have a very short wall. When three cells are land and one is water, the water is a small notch in one corner of the piece. The wall that holds it back is 0.2 meters from the middle on both of the notch's sides, so where they meet it cuts the corner of the square by 5 centimeters.
+
+<Steps>
+
+1. Add another plane, name it `bank_water_corner_a`, and set it up in top view as before, but do not move any vertices: the whole 0.5 meter square is land except the notch. Raise it to 0.012.
+
+2. Select the front right vertex and choose **Vertex > Bevel Vertices**. Set **Amount** to `0.05` and **Segments** to `1`. A single flat cut replaces the corner, 7 centimeters long.
+
+	<Figure
+		src={waterCorner}
+		alt="Blender in Edit Mode on a square piece seen from above and in front: a flat square top with its front right corner cut off and a short wall hanging from the cut."
+		caption="The water corner, with its one short wall."
+	/>
+
+3. Select the two vertices of the cut and extrude the wall: <Kbd keys="E" />, <Kbd keys="Z" />, `-0.0635`, <Kbd keys="Enter" />, then <Kbd keys="Shift+R" /> eleven times. Slide the piece to X = 4.5.
+
+4. The diagonal is the same twice: another plane named `bank_diagonal_a`, raised, with the front left and back right corners cut by 0.05. Select the four vertices of the two cuts, with <Kbd keys="B" /> once for each pair and <Kbd keys="Shift" /> for the second, extrude the wall as before, and slide the piece to X = 5.2.
+
+	<Figure
+		src={diagonal}
+		alt="A square piece with two opposite corners cut off and a short wall hanging from each cut."
+		caption="The diagonal: two cuts, on opposite corners."
+	/>
+
+</Steps>
+
+These pieces have no vertex group and no modifier. A wall 7 centimeters long has no room for lumps.
+
+<Figure
+	src={pieces}
+	alt="The top view of seven pieces in a row: three squares with a flat bottom edge, two squares whose lower right corner is rounded, one square with a cut corner, and one with two cut corners."
+	caption="The seven tops, left to right. The wall is under each one's lower edge."
+/>
+
+## All the lumps at once
+
+The five lumpy pieces have a vertex group named `lumps`. They get their lumps from one modifier on the first straight piece, copied to the others and then applied.
+
+### The modifier
+
+A **Displace** modifier moves each vertex along its normal by the value of a texture. A procedural texture gives it a lumpy pattern with no image.
+
+<Steps>
+
+1. Click `bank_straight_a` in the Outliner, so it is the only piece selected. Click the **Modifiers** tab, the blue wrench, then **Add Modifier**, **Deform**, and **Displace**. Rename the modifier `Lumps`.
+
+2. Click **New** in the modifier's **Texture** field. Click the **Texture** tab, the checkered square at the bottom of the tabs, and set **Type** to **Clouds**. Set **Noise Basis** to **Improved Perlin**, **Size** to `0.3`, and **Depth** to `3`.
+
+3. Back on the modifier, set **Coordinates** to **Global**, **Direction** to **Normal**, **Strength** to `0.3`, **Midlevel** to `0.4`, and **Vertex Group** to `lumps`.
+
+	<Figure
+		src={displace}
+		alt="The modifier's panel in the Properties editor: a modifier named Lumps with texture Lumps, Coordinates Global, Direction Normal, Strength 0.300, Midlevel 0.400, and the vertex group lumps."
+		caption="The Displace modifier."
+	/>
+
+</Steps>
+
+Here is what each setting does. The Clouds texture makes soft noise with values from 0 to 1, with features about 0.3 meters wide at three levels of detail. The modifier moves a vertex by **Strength** times the texture minus **Midlevel**, so the lumps are mostly outward, up to 0.3 times 0.6 = 18 centimeters, and a few hollows go 12 centimeters inward. **Direction** is **Normal**, so a vertex moves straight out of the wall, whichever way the wall faces: that is what lets the same modifier work on a curved piece. **Coordinates** is **Global**, which reads the texture at the vertex's place in the world and not on the piece. That is why you slid the piece a meter: two pieces at different places get different lumps, from one modifier and one texture.
+
+### Copy and apply
+
+<Steps>
+
+1. In the Outliner, click `bank_land_corner_a`, <Kbd keys="Ctrl" />-click `bank_land_corner_b`, `bank_straight_b`, and `bank_straight_c`, and last <Kbd keys="Ctrl" />-click `bank_straight_a`, which makes it the active object. Choose **Object > Link/Transfer Data > Copy Modifiers**. Each of the five now has a `Lumps` modifier.
+
+2. Choose **Object > Convert > Mesh**. The modifiers are applied, and the lumps are real geometry.
+
+	<Figure
+		src={displaceView}
+		alt="Five gray pieces in a row seen from the front and above, each with a flat top and a smooth lumpy wall, the fourth and fifth curved around a corner."
+		caption="The lumps, applied. Each piece's lumps are different."
+	/>
+
+</Steps>
+
+The lip moved with the lumps, half as far, and that is what you want sideways. But it also rose and fell, and it holds the top: a top that rises or falls would show through the ground or float above it. In the front view you will flatten it, so the lip's outline wanders and its height does not.
+
+<Steps>
+
+1. With the five pieces still selected, press <Kbd keys="Tab" />. Blender edits all five at once. Press <Kbd keys="Numpad 1" /> and <Kbd keys="Home" />, then <Kbd keys="Alt+Z" mac="Option+Z" /> for X-ray, which lets a box select reach the vertices at the back.
+
+2. Press <Kbd keys="B" /> and drag a box that takes the lip and the top of all five pieces, and nothing lower.
+
+	<Figure
+		src={lipSelected}
+		alt="The front view in Edit Mode on five pieces seen as grids of black dots, with the top row of each, the lip, selected in orange."
+		caption="The lip and top vertices, selected. The wall's first row is below the box."
+	/>
+
+3. Scale the selection flat. In the header, click **Pivot Point** and choose **3D Cursor**, which sits at the origin, at height 0. Press <Kbd keys="S" />, <Kbd keys="Z" />, type `0`, and press <Kbd keys="Enter" />: every selected vertex goes to height 0. Press <Kbd keys="G" />, <Kbd keys="Z" />, type `0.012`, and press <Kbd keys="Enter" />. Set **Pivot Point** back to **Median Point**.
+
+	<Figure
+		src={lipFlat}
+		alt="The same front view after the flattening: the lip and top of each piece in a straight line."
+		caption="The lips are flat again, at 0.012."
+	/>
+
+4. Press <Kbd keys="Alt+Z" mac="Option+Z" /> to leave X-ray, and <Kbd keys="Tab" /> to leave Edit Mode.
+
+</Steps>
+
+The lip's outline still wanders in the top view, by up to a few centimeters: a bank that is straight to a ruler looks like a wall, and one that wanders looks dug.
+
+## Smooth shading
+
+<Steps>
+
+1. Select all the pieces with <Kbd keys="A" />. Choose **Object > Shade Auto Smooth** and set the angle to `30` degrees. The lumps shade smoothly and the sharp edge between the top and the wall stays sharp.
+
+2. Choose **Object > Convert > Mesh** again, to apply it.
+
+	<Figure
+		src={kit}
+		alt="Seven pieces in a row, with smooth, lumpy walls and sharp, flat tops."
+		caption="The kit, smoothed."
+	/>
+
+</Steps>
+
+## One material
+
+Godot's importer wants a material in each mesh, and one for the whole kit means one material to change in Godot.
+
+<Steps>
+
+1. Select all the pieces and make `bank_straight_a` active. Click the **Material** tab, the red sphere, click **New**, and name the material `bank_earth`.
+
+2. Choose **Object > Link/Transfer Data > Link Materials**. Every piece has the material.
+
+	<Figure
+		src={material}
+		alt="The Material tab with the material bank_earth in the slot of the active object, and the piece list in the Outliner."
+		caption="One material, shared by the seven pieces."
+	/>
+
+3. Save with <Kbd keys="Ctrl+S" mac="Cmd+S" />.
+
+</Steps>
+
+## Export
+
+Export the kit as you exported the character in lesson 36: the collection's own glTF exporter, into `art`.
+
+<Steps>
+
+1. Click the **Collection** tab, and in the **Exporters** panel, click **+** and choose **glTF 2.0**.
+
+2. Click the folder button at the right of **File Path**. In the File Browser, type the path of a new `water` folder inside your project's `art` folder, and press <Kbd keys="Enter" />. Click **Create** when Blender offers to create it. Type `bank_kit.glb` as the file name and click **Accept**.
+
+	<Figure
+		src={exportName}
+		alt="Blender's File Browser with the name bank_kit.glb typed in."
+		caption="The exporter's file, in art/water."
+	/>
+
+3. Click the export button at the right end of the exporter's **glTF 2.0** title, and then save the file.
+
+	<Figure
+		src={exporterPanel}
+		alt="The Collection tab with the exporter: File Path ../../art/water/bank_kit.glb, Format glTF Binary, and the Collection, Include, Transform, Data, and Animation sections."
+		caption="The exporter's settings."
+	/>
+
+</Steps>
+
+### Check the kit
+
+A kit is only a kit if the pieces fit, and a crack between two of them would show as a line of sky through the bank. The glb can be read back, and these numbers came from this lesson's run:
+
+- the file has seven meshes, named as you named the objects: 401 triangles for each straight piece, 550 for each land corner, 27 for the water corner, and 52 for the diagonal, 2,382 in all;
+- every piece's lowest point is -0.75 and its highest 0.012, and each spans -0.25 to 0.25 in both directions, a half meter square;
+- the wall's vertices on the edges of every piece are all exactly 0.2 meters from the edge's middle, and they all lie on the same 12 heights below 0.012, at the lip and then at 6.35 centimeters apart;
+- the lumps reach at most 4 centimeters past the cell's edge on the water side, and a pond three cells wide leaves room for that.
+
+## Into Godot
+
+Godot imports a glb, as you have done for the rocks and trees, as a scene. It can also import one as a **MeshLibrary**, the resource a GridMap paints from, so there is no scene to build and export: the file is the library.
+
+<Steps>
+
+1. Open your project in Godot. It imports `art/water/bank_kit.glb` as it starts. In the **FileSystem** dock, click the file, and click the **Import** tab, next to **Scene**.
+
+	<Figure
+		src={importScene}
+		alt="The Import dock for bank_kit.glb: Import As Scene, with the Nodes, Meshes, Materials, and glTF sections below."
+		caption="The Import dock, importing a scene."
+	/>
+
+2. Open the **Import As** list at the top, which says **Scene**, and choose **Mesh Library**. Check **Use Node Names**, so the items are named for your objects and not for Blender's `Plane.003`. Under **Meshes**, uncheck **Generate LODs**: a bank piece is already small, and a simpler copy of it would show a crack.
+
+3. Click **Reimport**. Godot says that the imported resource is currently loaded and all instances will be replaced: click **OK**.
+
+	<Figure
+		src={importLibrary}
+		alt="The Import dock with Import As Mesh Library, Use Node Names checked, Generate LODs unchecked, and the Reimport button."
+		caption="The kit as a MeshLibrary."
+	/>
+
+</Steps>
+
+The file now loads as a MeshLibrary with seven items, `bank_diagonal_a`, `bank_land_corner_a` and `b`, `bank_straight_a`, `b`, and `c`, and `bank_water_corner_a`, every one with the material `bank_earth`, which Godot made from Blender's.
+
+## The bank shader
+
+The bank has two surfaces that must look like different things: a top that is exactly the ground, and a wall of earth. It has no texture of its own, no UVs, and no vertex colors. The shader tells them apart by height, since the top is flat at 0.012 and the wall is everything below, and it reads the wall's pattern from where the wall is in the world.
+
+<Steps>
+
+1. Click **Shader Editor** at the bottom of the window. In its **File** menu, choose **New Shader...**. Set **Path** to `res://art/shaders/bank.gdshader`, keep **Mode** on **Spatial**, and click **Create**.
+
+	<Figure
+		src={createShader}
+		alt="The Create Shader dialog: Type Shader, Mode Spatial, Template Default, Path res://art/shaders/bank.gdshader."
+		caption="A new shader beside the others."
+	/>
+
+</Steps>
+
+Type into it, in this order, so that:
+
+- `shader_type spatial;` is followed by `#include` lines for `stylized_lit.gdshaderinc` and `ground_color.gdshaderinc`, from lessons 17 and 23, so the wall lights like everything else and the top can ask for the ground's color;
+- a comment says that these are the ground's own textures and noise, so the top of a piece is exactly the ground's color and joins the land without a seam, above five uniforms the ground shader has: `albedo_texture` (a `sampler2D` with `source_color`, `filter_linear_mipmap`, and `repeat_enable`), `albedo_tint` (a `vec3` with `source_color`, `vec3(1.0)`), `texture_scale` (`0.5`), `edge_noise` (a `sampler2D` with `filter_linear_mipmap` and `repeat_enable`), and `edge_noise_scale` (`0.4`);
+- a group of uniforms named `earth` follows, opened with `group_uniforms earth;`, and closed with `group_uniforms;`. Each has a comment: `earth_color`, a `vec3` with `source_color`, `vec3(0.44, 0.32, 0.20)`, the wall's dark brown, which is in its own shadow most of the day; `clod_height`, a `sampler2D` with `filter_linear_mipmap` and `repeat_enable`, and `clod_normals`, a `sampler2D` with `hint_normal`, `filter_linear_mipmap`, and `repeat_enable`, one noise shown as a height map and as a normal map, read on the wall's own plane; `clod_scale`, a `float` with `hint_range(0.1, 4.0)`, `1.0`, how many times the clods repeat per meter; `clod_relief`, `hint_range(0.0, 2.0)`, `0.9`, how strongly the clods tilt the light on the wall; `sky_lean`, `hint_range(0.0, 1.0)`, `0.35`, how far the wall's light leans toward the sky, so that it reads as warm earth and not as a black outline; and `depth_darkening`, `hint_range(0.0, 1.0)`, `0.2`, how much darker the wall is at the water than at the lip;
+- a second group, `turf`, holds `turf_length`, a `vec2`, `vec2(0.035, 0.085)`, how far the grass hangs over the top of the wall, in meters, at least and at most, and `turf_blades`, `hint_range(5.0, 60.0)`, `30.0`, how many blades hang per meter of wall;
+- three constants follow, each with a comment: `TOP`, `0.012`, the height of a piece's top, from this lesson; `LIP`, `0.005`, how far below it the wall begins; and `WALL_DEPTH`, `0.35`, how deep the wall takes to darken fully, in meters;
+- three varyings, `vec2 world_xz`, `vec3 world_normal`, and `float height`, are filled in `vertex()`: the world position's `xz`, the normal turned by `MODEL_NORMAL_MATRIX`, and `VERTEX.y`, the vertex's own height, which does not change when the GridMap puts the piece somewhere else;
+- `fragment()` starts with `float wall = 1.0 - smoothstep(TOP - LIP - 0.004, TOP - LIP, height);`, a comment saying that the top is flat at `TOP` and the wall is below it, so the height alone tells them apart, and `vec3 ground = ground_color(albedo_texture, albedo_tint, texture_scale, edge_noise, edge_noise_scale, world_xz);`;
+- the wall is read on its own vertical plane. `bool along_x = abs(world_normal.z) > abs(world_normal.x);` says whether the wall faces along z, and `vec2 plane = vec2(along_x ? world_xz.x : world_xz.y, height);` is the wall's own two coordinates, along it and up it;
+- `float clod = texture(clod_height, plane * clod_scale).r;`, `float depth = clamp((TOP - height) / WALL_DEPTH, 0.0, 1.0);`, and `vec3 earth = earth_color * (0.8 + 0.4 * clod) * mix(1.0, 1.0 - depth_darkening, depth);` make the earth: its color, brighter on the clods and darker in the cracks, and darker toward the water;
+- the turf hangs over the top. `float blade` is `abs(fract(plane.x * turf_blades + texture(edge_noise, world_xz * edge_noise_scale * 2.0).r * 4.0) - 0.5) * 2.0`, a zigzag along the wall that the noise bends; `float length_noise` is `texture(edge_noise, vec2(plane.x * 3.0, 0.5)).r`; `float hang` is `mix(turf_length.x, turf_length.y, length_noise) * (1.0 - 0.6 * blade)`; and `earth = mix(earth, ground * 0.85, step(TOP - height, hang));` paints the ground's color, a little darker, wherever the wall is within `hang` of its top;
+- `ALBEDO = mix(ground, earth, wall);` and `ROUGHNESS = 0.95;` finish the color;
+- a comment says that the clods tilt the wall's normal on its plane, and the whole normal leans toward the sky. `vec3 bump = texture(clod_normals, plane * clod_scale).xyz * 2.0 - 1.0;` unpacks the normal map; `vec3 across = along_x ? vec3(1.0, 0.0, 0.0) : vec3(0.0, 0.0, 1.0);` is the direction along the wall; `vec3 bumped = normalize(world_normal + clod_relief * (bump.x * across + bump.y * vec3(0.0, 1.0, 0.0)));` tilts the normal; `vec3 leaned = normalize(mix(bumped, vec3(0.0, 1.0, 0.0), sky_lean));` leans it; and `NORMAL = normalize(mix(NORMAL, (VIEW_MATRIX * vec4(leaned, 0.0)).xyz, wall));` puts it into view space, on the wall only;
+- the last line, with a comment that the sky's glow, which the day animation already sets for the rim, lifts the wall that the sun never lights, is `EMISSION += soft_rim(NORMAL, INV_VIEW_MATRIX, ALBEDO) + wall * rim_color.rgb * rim_strength * ALBEDO * 2.2;`.
+
+<Solution>
+	<Code code={piece1} lang="gdshader" title="art/shaders/bank.gdshader" />
+</Solution>
+
+Save it with <Kbd keys="Ctrl+Alt+S" mac="Cmd+Option+S" />.
+
+<Figure
+	src={shaderEditor}
+	alt="The Shader Editor showing bank.gdshader: the include lines, a comment about the ground's own textures, and the first uniforms."
+	caption="The bank shader."
+/>
+
+<Aside type="note" title="Why the wall faces the sky">
+The wall faces the camera, and the sun never lights it, so under plain lighting it is a black strip along every bank. In a real pond the sky lights a wall like that, and the day animation's rim glow stands for the sky in this template. Leaning the wall's normal toward the sky, and adding the same glow that lifts the rim, makes it read as warm shadowed earth. The turf at the top is the ground's own color, drawn over the wall in blades, because a flat line where the earth meets the grass reads as a cut paper edge.
+</Aside>
+
+## The material
+
+Godot makes a material for a shader as a resource you can edit in the Inspector. Here there is no node to put one on, so you make the resource on its own.
+
+<Steps>
+
+1. At the top of the Inspector, open the resource options, the menu with the small arrow, and choose **New Resource**. Type `ShaderMaterial` in the search field, click **ShaderMaterial**, and click **Create**.
+
+	<Figure
+		src={newResource}
+		alt="The Create New Resource dialog with ShaderMaterial typed in the search field and the matching class selected."
+		caption="A resource of its own."
+	/>
+
+2. Click the **Shader** field's arrow, choose **Quick Load...**, type `bank`, and press <Kbd keys="Enter" />. The shader's uniforms appear under **Shader Parameters**.
+
+3. For **Albedo Texture**, choose **Quick Load...** and pick `grass_detail.png`. For **Edge Noise**, pick `edge_noise.tres`. Set **Albedo Tint** to the grass tile's own tint, `#95CC5A`. The top of every piece now matches the ground.
+
+	<Figure
+		src={materialGround}
+		alt="The Inspector showing a ShaderMaterial: Shader bank, and under Shader Parameters Albedo Texture, Albedo Tint a light green, Texture Scale 0.5, Edge Noise, and Edge Noise Scale 0.4, then the Earth group with Earth Color."
+		caption="The ground's textures on the bank's material."
+	/>
+
+4. The clods are one noise, shown twice. Click **Clod Height**'s field, choose **New NoiseTexture2D**, and click the texture to open it. Set **Width** and **Height** to `256` and check **Seamless**. For **Noise**, choose **New FastNoiseLite**, click it, and set **Noise Type** to **Simplex Smooth**, **Frequency** to `0.03`, and **Fractal Octaves** to `3`.
+
+	<Figure
+		src={clodNoiseShot}
+		alt="The Inspector showing the NoiseTexture2D with a gray cloudy preview, Width 256, Height 256, and its Noise, a FastNoiseLite."
+		caption="The clods as a height map."
+	/>
+
+5. Click the **Noise** field's arrow and choose **Save As...**. Save the noise as `clod_noise.tres` in `art/water`, so that the other texture can share it.
+
+6. Click **Clod Normals**'s field, choose **New NoiseTexture2D**, and open it. Set **Width** and **Height** to `256`, check **Seamless** and **As Normal Map**, and set **Bump Strength** to `5`. For **Noise**, choose **Quick Load...** and pick `clod_noise.tres`.
+
+	<Figure
+		src={clodNormals}
+		alt="The Inspector showing the second NoiseTexture2D, with a blue and purple normal map preview, As Normal Map checked, and Bump Strength 5."
+		caption="The same noise as a normal map."
+	/>
+
+7. In the Inspector's resource options, choose **Save Resource As...** and save the material as `bank.tres` in `art/water`.
+
+	<Figure
+		src={saveMaterial}
+		alt="The Save Resource dialog with the folder art/water and the file name bank.tres."
+		caption="The material, saved."
+	/>
+
+</Steps>
+
+<Solution label="Show the full bank.tres">
+	<Code code={bankMaterial} lang="ini" title="art/water/bank.tres" />
+</Solution>
+
+<Solution label="Show the full clod_noise.tres">
+	<Code code={clodNoise} lang="ini" title="art/water/clod_noise.tres" />
+</Solution>
+
+### Swap it in
+
+The library's items still use the material Godot made from Blender's. The importer can replace it with a file of yours, and keep replacing it every time Blender exports again.
+
+<Steps>
+
+1. Select `bank_kit.glb` in the FileSystem dock and click **Advanced...** in the Import dock. Click the **Materials** tab. It lists one material, `bank_earth`: click it.
+
+2. Check **Enabled** under **Use External**. A **Path** field appears.
+
+	<Figure
+		src={useExternal}
+		alt="The right side of the Advanced Import Settings window: a Use External section with Enabled checked and an empty Path field with a folder button."
+		caption="Use External, enabled."
+	/>
+
+3. Click the folder button beside **Path** and pick `art/water/bank.tres`.
+
+	<Figure
+		src={externalPath}
+		alt="The same section with the Path field showing the bank.tres file."
+		caption="The material file for the kit."
+	/>
+
+4. Click **Reimport**, and **OK** if Godot asks to replace the loaded resource. All seven items now use `bank.tres`.
+
+</Steps>
+
+## A pond in the meadow
+
+The kit is ready, and the only way to see it work is to put it on the ground. You will take out a pond of nine ground cells and fit twelve pieces around it. Lesson 45 puts water in it, and lesson 47 places the pieces with code.
+
+<Steps>
+
+1. Open `levels/meadow.tscn`. Select **GroundTiles**. In the 3D view, choose the **GridMap**'s erase tool in the palette at the bottom of the window and erase a block of 3 by 3 cells in a free patch of grass, the cells with x from -2 to 0 and z from -4 to -2, which stand between the pines and the path. If you prefer, erase them from code, as this lesson's run did.
+
+2. Select **Meadow**, click **+**, search for `GridMap`, click **Create**, and rename it `Bank`. In the Inspector, set **Mesh Library** with **Quick Load...** to `bank_kit.glb`, and set **Cell > Size** to `0.5, 0.5, 0.5`. Turn **Center Y** off. Under **Transform**, set **Position** to `-0.25, 0, -0.25`. The bank's grid is now half a cell off the ground's, so each cell is at a corner of the ground grid.
+
+	<Figure
+		src={bankNode}
+		alt="The Godot editor with a GridMap named Bank selected: the Inspector showing Mesh Library bank, Cell Size 0.5, 0.5, 0.5, Center Y off, and Position -0.25, 0, -0.25, and the palette at the bottom listing seven pieces."
+		caption="The Bank GridMap, with its seven pieces in the palette."
+	/>
+
+3. Paint twelve pieces. Pick a piece in the palette, move the pointer over the grid, and press <Kbd keys="S" /> to turn the piece a quarter turn about the vertical axis until the preview's wall lies over the pond. This table lists them: the cell is the GridMap's cell, and the turns are quarter turns from how the piece comes out of Blender.
+
+	| Cell (x, z) | Piece | Turns |
+	|---|---|---|
+	| -2, -4 | bank_water_corner_a | 0 |
+	| -2, -3 | bank_straight_a | 1 |
+	| -2, -2 | bank_straight_b | 1 |
+	| -2, -1 | bank_water_corner_a | 1 |
+	| -1, -4 | bank_straight_c | 0 |
+	| -1, -1 | bank_straight_a | 2 |
+	| 0, -4 | bank_straight_b | 0 |
+	| 0, -1 | bank_straight_c | 2 |
+	| 1, -4 | bank_water_corner_a | 3 |
+	| 1, -3 | bank_straight_c | 3 |
+	| 1, -2 | bank_straight_b | 3 |
+	| 1, -1 | bank_water_corner_a | 2 |
+
+4. A pond with nothing under it shows the sky, so give it a bed until lesson 45: add a **MeshInstance3D** named `PondBed` under **Meadow**, with a **PlaneMesh** 1.6 by 1.6 meters, at position `-0.25, -0.75, -1.25`, with a plain brown material. Press **Scatter** on **Grass**, so that no grass grows in the hole. Save the scene.
+
+5. Press <Kbd keys="F5" mac="Cmd+B" /> and walk to the pond.
+
+</Steps>
+
+<Figure
+	src={pond}
+	alt="The game from above: a small square pond in the meadow, a dark earth wall with turf along its far side and a brown floor, among grass, rocks, and a dirt path."
+	caption="The pond at the game's camera."
+/>
+
+<Figure
+	src={pondClose}
+	alt="A closer view of the pond: the far wall's earth, dark brown with a line of turf along its top, and a brown bed, with grass reaching the edges."
+	caption="Closer. The ground's grass reaches the bank's lip."
+/>
+
+<Figure
+	src={pondWall}
+	alt="The far wall of the pond very close: a brown wall with a ragged line of green turf hanging over its top and a straight edge where it ends."
+	caption="The wall, up close."
+/>
+
+<Figure
+	src={pondDusk}
+	alt="The pond at dusk, in warm light with long shadows, the grass golden and the bank a reddish brown."
+	caption="Dusk."
+/>
+
+<Figure
+	src={pondNight}
+	alt="The pond at night, in blue moonlight: the grass dark blue-green, the wall a dim blue-brown."
+	caption="Night."
+/>
+
+Check what you see. The grass runs right up to the lip with no seam, because the top is the ground's own color. The bank's line wanders by a few centimeters, and the corners are rounded and not square. The wall is dark but not black, and it changes with the hour: warm at dusk, and a dim blue at night.
+
+## Tune it
+
+Every number that sets the bank's look is a uniform, so you can change it in the material, with the game running or in the editor, and watch it change.
+
+- **`earth_color`** is the wall's brown. Make it redder for clay, or grayer for chalk.
+- **`clod_scale`** sets the clods' size: `1.0` repeats every meter, so `2.0` makes them half as big. **`clod_relief`** sets how sharply they catch the light. `0` shows none at all.
+- **`sky_lean`** is how far the wall's light turns toward the sky. At `0` the wall is a black strip against the grass. At `1` it is as lit as the top.
+- **`depth_darkening`** darkens the wall toward the water. The water will cover its lower half in lesson 45.
+- **`turf_length`** and **`turf_blades`** set how much grass hangs over the lip. A longer minimum gives a shaggy bank.
+
+## Try it
+
+- Make a fourth straight piece. Duplicate one at a new X, apply the lumps again, and add it to the list: nothing else changes, because the importer reads the pieces from the file.
+- Change the Displace **Size** to `0.15` before you apply it, and look at the pieces. Smaller features read as stones, larger ones as a rolling bank.
+- Look at the straight piece from the front and from above. Which of the three rules in the lesson would a piece break if it were 5 centimeters wider?
+
+## If it does not work
+
+- **The wall's edges have a gap where two pieces meet.** The lumps moved a vertex near the end, so the wall is not 0.2 meters from the edge's middle. Check the vertex group: the end column must have no weight, and the next one `0.5`. The group's first selection must have been made with **Non Manifold**, and the wall must be open at both ends.
+- **Select All by Trait finds 0 vertices.** The pieces were joined into a closed mesh, or the wall is not extruded from the lip's edge. The mesh has to be open at the ends and at the foot.
+- **The lip is not flat after the flattening.** **Pivot Point** was not set to **3D Cursor**, or the cursor is not at the origin. Press <Kbd keys="Shift+C" /> to bring the cursor back to the origin, and try the scale again.
+- **The wall is smooth like glass, with no lumps.** The Displace modifier's **Vertex Group** is empty, or the group has no weights. Check the modifier's panel and the **Data** tab.
+- **Every piece has the same lumps.** The modifier's **Coordinates** is **Local**, not **Global**.
+- **The library's items are named `bank_Plane_003`.** **Use Node Names** was not checked when you imported. Check it and reimport.
+- **The bank is gray, with no turf or clods.** The material did not change: the Advanced Import Settings' **Use External** is off, or its path is empty.
+- **The shader shows an error about `rim_color`.** The shared lighting include is not found, or its globals are not in **Project Settings > Globals > Shader Globals**. Lesson 23 made both.
+- **Each piece stands in the wrong place.** The **Bank** GridMap's position is not `-0.25, 0, -0.25`, or its **Cell > Size** is not `0.5`.
+- **A piece's wall faces the land.** It needs two more quarter turns: press <Kbd keys="S" /> twice with the piece selected in the palette, or use the table.
+- **The pond is full of grass.** Press **Scatter** on the **Grass** node after you erase the ground cells.
+
+## Checkpoint
+
+Your project now contains:
+
+<FileTree>
+- art
+  - shaders
+    - **bank.gdshader**
+  - water
+    - **bank.tres**
+    - **bank_kit.glb**
+    - bank_kit.glb.import, with Mesh Library, the node names, no LODs, and the external material
+    - **clod_noise.tres**
+- art_source
+  - water
+    - **bank.blend**
+- levels
+  - meadow.tscn, with a hole in the ground, a `Bank` GridMap with twelve pieces, and a `PondBed`
+</FileTree>
+
+Commit your work: `git add .` and `git commit -m "Model the bank kit"`. In the next lesson you put water in the pond: a shader that reads how deep the water is and fades from clear to deep blue.
+
+<Checkpoint />

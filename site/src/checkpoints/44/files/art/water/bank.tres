@@ -1,0 +1,38 @@
+[gd_resource type="ShaderMaterial" format=3 uid="uid://gaco100w7n5m"]
+
+[ext_resource type="Shader" uid="uid://bymexdb8g4xml" path="res://art/shaders/bank.gdshader" id="1_cx6xn"]
+[ext_resource type="Texture2D" uid="uid://cgfsldyki64n8" path="res://art/ground/grass_detail.png" id="2_qdtma"]
+[ext_resource type="FastNoiseLite" uid="uid://b2uct8vflc665" path="res://art/water/clod_noise.tres" id="3_5w4hf"]
+[ext_resource type="Texture2D" uid="uid://brjcn7cipilxo" path="res://art/ground/edge_noise.tres" id="4_0x5l4"]
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_bfvvi"]
+width = 256
+height = 256
+noise = ExtResource("3_5w4hf")
+seamless = true
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_5mrks"]
+width = 256
+height = 256
+noise = ExtResource("3_5w4hf")
+seamless = true
+as_normal_map = true
+bump_strength = 5.0
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_cx6xn")
+shader_parameter/albedo_texture = ExtResource("2_qdtma")
+shader_parameter/albedo_tint = Color(0.584, 0.8, 0.353, 1)
+shader_parameter/texture_scale = 0.5
+shader_parameter/edge_noise = ExtResource("4_0x5l4")
+shader_parameter/edge_noise_scale = 0.4
+shader_parameter/earth_color = Color(0.44, 0.32, 0.2, 1)
+shader_parameter/clod_height = SubResource("NoiseTexture2D_bfvvi")
+shader_parameter/clod_normals = SubResource("NoiseTexture2D_5mrks")
+shader_parameter/clod_scale = 1.0
+shader_parameter/clod_relief = 0.9
+shader_parameter/sky_lean = 0.35
+shader_parameter/depth_darkening = 0.2
+shader_parameter/turf_length = Vector2(0.035, 0.085)
+shader_parameter/turf_blades = 30.0
