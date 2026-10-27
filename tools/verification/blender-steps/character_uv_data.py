@@ -21,11 +21,11 @@ def center(name):
     return (column + 0.5) * CELL, (row + 0.5) * CELL
 
 # The face patch's features, in 512 px image coordinates (x across, y down from the top). Each is where lesson 38's
-# Blender run maps a point on the head: u = 0.25 + 0.5 * (x - xmin) / (xmax - xmin), v = 0.5 + 0.5 * (z - zmin) / (zmax - zmin),
-# with the head's bounds x -0.1094 to 0.1094 and z 1.52 to 1.80, from the log of that run.
+# Blender run maps a point on the head: u = 0.5 + 0.45 * x / (xmax - xmin), v = 0.525 + 0.45 * (z - zmin) / (zmax - zmin),
+# with the head's bounds x -0.115 to 0.115 and z 1.55 to 1.80, from the log of that run.
 FACE_FEATURES = {
-    'eye_left': (314.5, 100.5), 'eye_right': (197.5, 100.5), 'mouth': (256.0, 178.0),
-    'blush_left': (355.5, 155.5), 'blush_right': (156.5, 155.5),
+    'eye_left': (306.1, 123.3), 'eye_right': (205.9, 123.3), 'mouth': (256.0, 197.1),
+    'blush_left': (341.1, 174.1), 'blush_right': (170.9, 174.1),
 }
 EYE = (36, 50)
 EYE_SHINE = (11, 14)

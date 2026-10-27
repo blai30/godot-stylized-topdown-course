@@ -1,0 +1,230 @@
+---
+title: Skinning with weight painting
+description: Attach the character's mesh to its skeleton with automatic weights, look at the weights in Weight Paint mode, test them by posing, limit every vertex to four bones, and make the skirt and pack rigid so they do not stretch.
+sidebar:
+  order: 40
+  label: "40. Skinning with weight painting"
+lesson:
+  number: 40
+  minutes: 75
+  learn:
+    - What weights are, and how a vertex follows several bones at once
+    - How to parent a mesh to an armature with automatic weights
+    - How to read weights in Weight Paint mode and test them by posing
+    - How to limit a vertex to four bones and make a part follow one bone rigidly
+  prerequisites: [37, 39]
+---
+
+import { Aside, FileTree, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import poseFinal from '../../../assets/lessons/skinning/pose-final.png';
+import start from '../../../assets/lessons/skinning/start.png';
+import selected from '../../../assets/lessons/skinning/selected.png';
+import parentMenu from '../../../assets/lessons/skinning/parent-menu.png';
+import parented from '../../../assets/lessons/skinning/parented.png';
+import groups from '../../../assets/lessons/skinning/groups.png';
+import weightsArm from '../../../assets/lessons/skinning/weights-arm.png';
+import weightsLeg from '../../../assets/lessons/skinning/weights-leg.png';
+import weightsHips from '../../../assets/lessons/skinning/weights-hips.png';
+import poseAutomatic from '../../../assets/lessons/skinning/pose-automatic.png';
+import limited from '../../../assets/lessons/skinning/limited.png';
+import rigid from '../../../assets/lessons/skinning/rigid.png';
+
+## What you will build
+
+A character that bends. Until now the mesh and the skeleton are two separate objects. **Skinning** attaches the mesh to the bones: each **vertex** of the mesh is given a **weight** for each bone near it, a number from 0 to 1 saying how much that bone moves the vertex. A vertex in the middle of the elbow follows the upper arm half as much and the lower arm half as much, so the elbow bends instead of tearing.
+
+<Figure
+	src={poseFinal}
+	alt="Blender's front view with the character's left leg lifted forward and its spine and left arm bent, the mesh following the skeleton, and the skirt and pack moving with the hips and chest."
+	caption="The finished character, posed."
+/>
+
+## Weights
+
+A vertex's weights across all bones add up to 1. That is the **normalized** rule: a vertex that is 0.6 the thigh and 0.4 the hips is entirely accounted for. The weights live in **vertex groups**, one group for each bone and with the bone's name, and the **Armature** modifier reads them to deform the mesh.
+
+The course keeps each vertex to at most **four bones**: glTF's standard skin carries four per vertex, and every game engine reads four. Blender's automatic weights do not respect that, so one step below fixes it.
+
+## Parent with automatic weights
+
+<Steps>
+
+1. Open `character.blend` from lesson 39. Click the mesh in the viewport, then **Shift**-click one of the skeleton's bones, so both objects are selected and the **armature** is the active one: the last object you select is the active one. (You can also click the two in the Outliner, with **Ctrl** held for the second.) The Outliner lists both.
+
+	<Figure
+		src={selected}
+		alt="The viewport with the character and its skeleton both highlighted, and the Outliner showing Armature highlighted brighter than body."
+		caption="Both selected, the armature active."
+	/>
+
+2. Hover the viewport and press <Kbd keys="Ctrl+P" mac="Cmd+P" />. Under **Armature Deform**, choose **With Automatic Weights**.
+
+	<Figure
+		src={parentMenu}
+		alt="The Set Parent To menu with Object entries, then Armature Deform, With Empty Groups, With Envelope Weights, and With Automatic Weights."
+		caption="Set Parent To."
+	/>
+
+3. Blender finds the bones near each vertex and weights them by distance. The mesh is now a child of the armature, with an **Armature** modifier and 22 vertex groups.
+
+	<Figure
+		src={parented}
+		alt="The viewport after parenting, and the Outliner with the Armature holding the mesh."
+		caption="The mesh is now the armature's child."
+	/>
+
+4. Click the mesh once more to select only it, and open the **Object Data** tab of the Properties editor. **Vertex Groups** lists one group for each bone.
+
+	<Figure
+		src={groups}
+		alt="The Object Data tab with the Vertex Groups list showing LeftToes, RightUpperLeg, RightLowerLeg, RightFoot, and RightToes."
+		caption="A vertex group for every bone."
+	/>
+
+</Steps>
+
+## Look at the weights
+
+Automatic weights are a good first guess, and a first guess to check.
+
+<Steps>
+
+1. With the mesh selected, change the **mode** in the viewport header from **Object Mode** to **Weight Paint**. The mesh colors by the weights of the active vertex group: red is a weight of 1, blue is 0, and blue means none (Blender may show black where a vertex has no group at all).
+
+2. In the Vertex Groups list, click `LeftUpperArm`. The upper arm is red, and the weight fades toward the shoulder and the chest.
+
+	<Figure
+		src={weightsArm}
+		alt="The mesh in Weight Paint mode: the left upper arm is red and yellow, fading through green to blue across the shoulder and the upper chest, and the rest is black."
+		caption="LeftUpperArm: red on the arm, fading into the chest."
+	/>
+
+3. Click `LeftUpperLeg`, then `Hips`. The thigh is red in its group, and `Hips` covers the trunk with a broad, soft glow.
+
+	<Figure
+		src={weightsLeg}
+		alt="The mesh in Weight Paint mode for LeftUpperLeg: the left thigh in red and yellow, fading to blue at the knee and at the hip."
+		caption="LeftUpperLeg."
+	/>
+
+	<Figure
+		src={weightsHips}
+		alt="The mesh in Weight Paint mode for Hips: a broad glow in green and blue across the torso with a bright spot near the waist."
+		caption="Hips reaches a long way up the body."
+	/>
+
+4. Change the mode back to **Object Mode**.
+
+</Steps>
+
+## Test it by posing
+
+The real test of weights is a pose. Select the armature, change the mode to **Pose Mode**, select a bone, and open the **Bone** tab of the Properties editor. Under **Transform**, **Rotation** has three fields, `X`, `Y`, and `Z`, in the bone's own axes. Type the numbers below into them. (You can also rotate with <Kbd keys="R" />, but its axes are the viewport's, so the numbers would differ.) This pose bends three bones:
+
+| Bone | Rotation `X`, `Y`, `Z` | Effect |
+|---|---|---|
+| `LeftUpperArm` | `0`, `80`, `0` | the left arm swings |
+| `LeftUpperLeg` | `-60`, `0`, `0` | the left leg lifts forward |
+| `Spine` | `25`, `0`, `0` | the body bends forward |
+
+<Figure
+	src={poseAutomatic}
+	alt="The character posed in front view: the left arm raised, the left leg lifted, and the skirt twisted and skewed across the hips, with its left side stretched toward the lifted leg."
+	caption="The automatic weights, posed. The skirt tears at the hip."
+/>
+
+Most of the body does well. The skirt does not: its hem is pulled along with the lifted leg, because the leg's bone is the nearest to it. A skirt, a pack, a belt, and a backpack should not stretch, so they need different weights. Clear the pose (<Kbd keys="Alt+R" /> and <Kbd keys="Alt+G" /> with every bone selected) and go back to the mesh.
+
+## Four bones, and normalized
+
+Blender made the weights without Godot's limit in mind. In the reference run the automatic weights give some vertices as many as nine bones, 54 vertices have more than four, and the weights of some vertices add to 0.857 instead of 1.
+
+<Steps>
+
+1. Select the mesh and change to **Weight Paint** mode. Open the **Weights** menu in the header, choose **Limit Total**, and set **Limit** to `4` in the panel that opens at the lower left. Every vertex keeps only its four strongest bones.
+
+2. Choose **Weights > Normalize All**. It rescales each vertex's weights so they add to 1 again.
+
+	<Figure
+		src={limited}
+		alt="The mesh in Weight Paint mode after Limit Total and Normalize All, with the Weights menu's last operator panel at the lower left."
+		caption="Limited to four bones, and normalized."
+	/>
+
+</Steps>
+
+The reference run reads it back: the most bones on any vertex is now 4, and every vertex's weights add to exactly 1.
+
+## Rigid parts
+
+A part that should not bend takes one bone and nothing else: its weights are `1` for that bone and absent for every other. This is **rigid** skinning. The skirt is a good case. It is part of the hips, which are one solid piece, and it would have no reason to follow the legs. The pack is another: it rides on the back.
+
+<Steps>
+
+1. Change to **Edit Mode** (<Kbd keys="Tab" />). In vertex select mode (<Kbd keys="1" />), turn on X-ray (<Kbd keys="Alt+Z" />). In the front view, press <Kbd keys="Alt+A" /> to deselect everything, <Kbd keys="B" />, and drag a box from the left of the skirt just below its hem, at `z` 0.79, to the right of the belt at `z` 1.005, covering the whole hips from side to side. It selects the 44 vertices of the hips and the skirt.
+
+2. Hover the viewport, press <Kbd keys="Ctrl+G" mac="Cmd+G" /> for the Vertex Groups menu, and choose **Remove from All**: the selected vertices have no weights now.
+
+3. Click `Hips` in the Vertex Groups list. Check that **Weight** is `1.000` and click **Assign**. The 44 vertices belong to `Hips` alone, at weight 1.
+
+4. In the right view (<Kbd keys="Numpad 3" />), where the character faces the screen's left and the pack is on the right, clear the selection and box-select the pack: a box from the pack's front edge at `y` 0.15 to its back, and from `z` 1.05 to 1.42. It selects 9 vertices. Remove them from all groups, click `UpperChest` in the list, and click **Assign**.
+
+	<Figure
+		src={rigid}
+		alt="The Object Data tab in Edit Mode with the Vertex Groups list, the Assign, Remove, Select, and Deselect buttons, and a Weight field of 1.000, and the character from the side."
+		caption="Assign sets the selected vertices' weight in the active group."
+	/>
+
+5. Press <Kbd keys="Tab" /> to leave Edit Mode.
+
+</Steps>
+
+The reference run reads these back too: the 44 hip and skirt vertices are in the `Hips` group only, at weight 1, and so are the 9 of the pack, in `UpperChest`.
+
+## Test again
+
+Pose the three bones as before.
+
+<Figure
+	src={poseFinal}
+	alt="The character posed in front view with its left leg lifted forward and its arm and spine bent, the skirt staying with the hips and the pack with the chest."
+	caption="The same pose: the skirt stays with the hips, and the pack with the chest."
+/>
+
+The leg lifts out of the skirt, the arm bends at the shoulder, and the body bends at the waist. Clear the pose again (select every bone in Pose Mode, then <Kbd keys="Alt+R" />), leave Pose Mode, and save the file with <Kbd keys="Ctrl+S" mac="Cmd+S" />.
+
+<Aside type="note" title="Painting the weights by hand">
+This lesson fixes weights by assigning, because the character's parts are blocks and a part is either on a bone or it is not. For a soft character, Weight Paint mode has brushes: **Draw** adds weight to the active group, with a mode that subtracts, and **Blur** and **Smooth** soften a hard edge. Check the names in your version of Blender, which has changed its brushes before. The technique is the same: pose, look, paint, and pose again.
+</Aside>
+
+## Try it
+
+- In Weight Paint mode, pick `LeftLowerArm` and look at the elbow. A vertex there should be about half upper arm and half lower arm.
+- Pose the neck and head: select `Head` and rotate it. Does the hair follow it as a block?
+- Give the belt its own rigid weights, on `Spine`, so it does not stretch when the spine bends.
+
+## If it does not work
+
+- **With Automatic Weights is greyed out.** The armature is not the active object. Select the mesh first and the armature last.
+- **The mesh does not move with the bones.** It has no Armature modifier, or the modifier points at no armature. Parent it again.
+- **Some vertices do not move.** They have no weights: Weight Paint mode shows them blue in every group. Select them in Edit Mode and assign them to a group.
+- **Limit Total is not in the Weights menu.** You are not in Weight Paint mode. Change the mode and open the menu again.
+- **Assign has no effect.** No vertices are selected, or the active group is not the one you meant. Check the list's highlighted row.
+- **A rigid part still stretches.** The vertices were not removed from the other groups first: they keep their old weights, and Assign only adds one. Remove them from all groups, then assign.
+
+## Checkpoint
+
+Your project now contains:
+
+<FileTree>
+- art_source
+  - character
+    - **character.blend**, with the mesh skinned to the armature
+</FileTree>
+
+Commit your work: `git add .` and `git commit -m "Skin the character"`. In the next lesson you export the character and import it into Godot with a bone map.
+
+<Checkpoint />

@@ -97,6 +97,7 @@ export const modules: Module[] = [
 			{ number: 41, title: 'Export your character and import it with a BoneMap', slug: 'import-with-a-bonemap' },
 			{ number: 42, title: 'Import the Universal Animation Library', slug: 'import-ual' },
 			{ number: 43, title: 'AnimationTree: walk the meadow', slug: 'animation-tree' },
+			{ number: 63, title: 'Bonus: rig any character you download', slug: 'bonus-any-character' },
 		],
 	},
 	{

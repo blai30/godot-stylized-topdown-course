@@ -81,7 +81,7 @@ Blender can show an image in the 3D viewport as an **image empty**: an object th
 
 <Steps>
 
-1. Hover the viewport and press <Kbd keys="Numpad 1" />, for the front view. Choose **Add > Image > Reference**, find `character_front.png` in the File Browser that opens, and click **Add Empty Image/Drag**.
+1. Hover the viewport and press <Kbd keys="Numpad 1" />, for the front view. Choose **Add > Image > Reference**, find `character_front.png` in the File Browser that opens, and click the button at the lower right of the browser that adds the image.
 
 	<Figure
 		src={referenceBrowser}
@@ -145,7 +145,7 @@ Do the side view the same way, from the left.
 </Steps>
 
 <Aside type="note" title="Which way the character faces">
-Blender's front view looks along +Y, so a character that faces the front view faces -Y. Blender's glTF exporter turns -Y into +Z, the direction Godot calls forward, which is where the capsule's nose has pointed since lesson 6. The sheet's side view has the character facing right in the left view, which is -Y. Everything you build in this module faces -Y.
+Blender's front view looks along +Y, so a character that faces the front view faces -Y. Blender's glTF exporter turns a model that faces -Y into one that faces +Z in Godot. That is the way imported models face, and the way the player's `LookAt` turns the capsule's nose (lesson 6) when `PlayerMovement` passes `useModelFront`. The sheet's side view has the character facing right in the left view, which is -Y. Everything you build in this module faces -Y.
 </Aside>
 
 ## A collection for the character
@@ -154,7 +154,7 @@ The sheets must not go into the file Godot reads. A **collection** is a folder o
 
 <Steps>
 
-1. Click **New Collection** in the Outliner's header, the icon at the top right. A new collection, **Collection 2**, appears below `Collection`.
+1. Click empty space in the Outliner so no collection is selected, then click **New Collection** in its header, the icon at the top right. A new collection, **Collection 2**, appears below `Collection`.
 
 	<Figure
 		src={newCollection}

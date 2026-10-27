@@ -45,7 +45,7 @@ The character's colors. One small picture, 512 by 512 pixels, holds all of them:
 
 <Figure
 	src={textureFile}
-	alt="A 512 pixel picture: the top half is skin color with two dark eyes with white shines, two pink blushes, and a small mouth, and the bottom half has two rows of four flat color squares: dark red-brown, blue, cream, and skin on the upper row, and dark brown, slate, brown, and tan on the lower."
+	alt="A 512 pixel picture: the top half is skin color with two dark eyes with white shines, two pink blushes, and a small mouth, and the bottom half has two rows of four flat color squares: skin, dark red-brown, blue, and cream on the upper row, and dark brown, slate, brown, and tan on the lower."
 	caption="The finished texture: a face above, eight colors below."
 />
 
@@ -111,17 +111,19 @@ Every part is blue now. Next, the parts that need another color.
 
 ## The body's colors, by box select
 
-Press <Kbd keys="Alt+Z" /> over the 3D viewport to turn on X-ray, so a box selects faces on both sides. Then, for each part in the table, press <Kbd keys="Alt+A" /> to deselect, press <Kbd keys="B" /> and drag a box over the part in the front view (each drag **adds** to the selection), and place it on its swatch in the UV editor: <Kbd keys="A" />, <Kbd keys="S" />, `0`, <Kbd keys="Enter" />, then **X** and **Y** in the sidebar.
+Press <Kbd keys="Alt+Z" /> over the 3D viewport to turn on X-ray, so a box selects faces on both sides. Then, for each part in the table, press <Kbd keys="Alt+A" /> to deselect, press <Kbd keys="B" /> and drag a box over the part in the view the table names (each drag **adds** to the selection), and place it on its swatch in the UV editor: <Kbd keys="A" />, <Kbd keys="S" />, `0`, <Kbd keys="Enter" />, then **X** and **Y** in the sidebar.
 
-| Part | What to box | `X` | `Y` | Swatch |
-|---|---|---|---|---|
-| Neck | the neck, between the shoulders and the head | `0.125` | `0.375` | skin |
-| Legs | both legs from the hips to the boots' tops | `0.375` | `0.125` | trousers |
-| Boots | both boots | `0.625` | `0.125` | boots |
-| Sleeves | each arm, from the shoulder pad to the glove (two boxes) | `0.875` | `0.375` | shirt |
-| Gloves | each hand (two boxes) | `0.125` | `0.125` | leather |
+| Part | What to box | View | `X` | `Y` | Swatch |
+|---|---|---|---|---|---|
+| Neck | the neck, between the collar and the jaw | front | `0.125` | `0.375` | skin |
+| Legs | both legs, from the skirt to the boot shafts | front | `0.375` | `0.125` | trousers |
+| Boots | both boots | front | `0.625` | `0.125` | boots |
+| Sleeves | each arm, from the shoulder to the glove (two boxes) | front | `0.875` | `0.375` | shirt |
+| Gloves | each hand (two boxes) | front | `0.125` | `0.125` | leather |
+| Belt | the belt band | front | `0.125` | `0.125` | leather |
+| Pack | the pack's faces, behind the body | right, <Kbd keys="Numpad 3" /> | `0.875` | `0.125` | pack |
 
-Check each selection against the sheet's colors: the neck skin, the legs slate, and so on. A face counts as inside a box when its center is, so a box can cut a part short: widen it until the whole part is in. The reference run's boxes selected 7 faces for the neck, 19 for the legs, 26 for the boots, 10 for the sleeves, and 10 for the gloves.
+Check each selection against the sheet's colors. A face counts as inside a box when its center is, so a box can cut a part short: widen it until the whole part is in. The reference run's boxes selected 12 faces for the neck, 16 for the legs, 26 for the boots, 10 for the sleeves, 10 for the gloves, 18 for the belt, and 12 for the pack.
 
 <Figure
 	src={bodies}
@@ -129,34 +131,15 @@ Check each selection against the sheet's colors: the neck skin, the legs slate, 
 	caption="The body's parts, each on its swatch."
 />
 
-## The pieces, by Select Linked
-
-The head, hair, nose, pack, and belt are separate pieces that were joined into the body. They are not touching the rest, so **Select Linked** takes a whole piece from one click: click one of its faces and press <Kbd keys="Ctrl+L" mac="Cmd+L" />. It selects every face connected to that one.
-
-| Piece | Click | View | `X` | `Y` | Swatch |
-|---|---|---|---|---|---|
-| `nose` | its front face | front | `0.125` | `0.375` | skin |
-| `fringe_1`, `fringe_2`, `fringe_3` | each block of fringe | front | `0.375` | `0.375` | hair |
-| `belt` | its front | front | `0.125` | `0.125` | leather |
-| `hair` | a side of the cap | right, <Kbd keys="Numpad 3" /> | `0.375` | `0.375` | hair |
-| `hair_back` | its back | back, <Kbd keys="Ctrl+Numpad 1" mac="Cmd+Numpad 1" /> | `0.375` | `0.375` | hair |
-| `pack` | its back | back | `0.875` | `0.125` | pack |
-
-Press <Kbd keys="Alt+A" /> before each click, and place each piece with <Kbd keys="A" />, <Kbd keys="S" />, `0`, <Kbd keys="Enter" />, and the sidebar numbers. The shoulder pads and the skirt keep the tunic color, and the shirt's color is on the sleeves only.
-
-<Figure
-	src={pieces}
-	alt="The UV editor showing all the points placed on their swatches, and the 3D viewport with the head selected in front view."
-	caption="Every piece is on its swatch."
-/>
+The shoulders, the chest, the skirt, and the hips keep the tunic's color.
 
 ## The head's face
 
-The head is the one part with a painted face. Instead of collapsing it, you **project** it: the head's front is flattened onto the picture as if a projector looked at it from the front, and the eyes land where you paint them.
+The head is the one part with a painted face. Instead of collapsing it, you **project** it: the head's front is flattened onto the picture as if a projector looked at it from the front, and the eyes land where you paint them. The head's own faces start at the jaw, at `z` 1.55.
 
 <Steps>
 
-1. In the front view, click a face of the head and press <Kbd keys="Ctrl+L" mac="Cmd+L" />. All 80 faces of the head are selected.
+1. In the front view, press <Kbd keys="Alt+A" />, <Kbd keys="B" />, and drag a box over the whole head, from the jaw to the top. It selects 38 faces.
 
 2. Hover the 3D viewport, press <Kbd keys="F3" />, type `project from view bounds`, and press <Kbd keys="Enter" />. **Project from View (Bounds)** gives the faces the UVs they have from the front, stretched to fill the whole picture.
 
@@ -168,33 +151,41 @@ The head is the one part with a painted face. Instead of collapsing it, you **pr
 
 	<Figure
 		src={projected}
-		alt="The UV editor with the head's UVs filling the whole picture as a round faceted shape, and the 3D viewport with the head selected."
+		alt="The UV editor with the head's UVs filling the whole picture as a faceted shape, and the 3D viewport with the head selected."
 		caption="The head's UVs fill the whole picture."
 	/>
 
-3. The face patch is the picture's top half and the head must fit it. In the UV editor press <Kbd keys="A" />, <Kbd keys="S" />, `0.5`, and <Kbd keys="Enter" />, and set **X** to `0.5` and **Y** to `0.75`. The head's UVs now cover `U` from 0.25 to 0.75 and `V` from 0.5 to 1.
+3. The face patch is the picture's top half, and the head must fit it with a little room. In the UV editor press <Kbd keys="A" />, <Kbd keys="S" />, `0.45`, and <Kbd keys="Enter" />. Then set **X** to `0.5` and **Y** to `0.7747`. If your head selection differs a little from the reference's, your sidebar may need a slightly different Y: after typing it, the head's UVs should span `U` 0.275 to 0.725 and `V` 0.525 to 0.975, so adjust Y until the bottom and top of the shape sit at those heights. The sidebar shows the selection's **median**, the average of its points, and the head's points are not spread evenly, so the median is a little above the middle of its bounds: `0.7747` puts the bounds' middle on `0.75`. The head's UVs now cover `U` from 0.275 to 0.725 and `V` from 0.525 to 0.975.
 
 	<Figure
 		src={headUv}
-		alt="The UV editor with the head's faceted UVs filling the top half of the picture, centered, and the UV Vertex panel reading X 0.500 and Y 0.750."
+		alt="The UV editor with the head's faceted UVs filling most of the top half of the picture, centered, and the UV Vertex panel reading X 0.500 and Y 0.775."
 		caption="The head in the face patch."
+	/>
+
+4. The hair is part of the head. In the right view (<Kbd keys="Numpad 3" />), box select the faces above the brow, `z` from 1.70 to the top, and the faces at the back of the head, and place them on the hair swatch: `X` `0.375`, `Y` `0.375`. The reference run selects 24 faces.
+
+	<Figure
+		src={pieces}
+		alt="The UV editor with all the points placed on their swatches and the head's UVs in the top half, and the 3D viewport with the hair faces selected."
+		caption="The hair is on its swatch and the face stays in the patch."
 	/>
 
 </Steps>
 
-Where to paint the eyes: the head's bounds, `X` from -0.1094 to 0.1094 and `Z` from 1.52 to 1.80, map straight onto the face patch (`U` from 0.25 to 0.75 and `V` from 0.5 to 1), so a point on the head has a spot on the picture:
+Where to paint the eyes: the head's bounds, `X` from -0.115 to 0.115 and `Z` from 1.55 to 1.80, map straight onto the face patch, so a point on the head has a spot on the picture:
 
-`U = 0.25 + 0.5 × (X + 0.1094) / 0.2188`, `V = 0.5 + 0.5 × (Z - 1.52) / 0.28`.
+`U = 0.5 + 0.45 × X / 0.23`, `V = 0.525 + 0.45 × (Z - 1.55) / 0.25`.
 
-The eyes go at `X` of ±0.05 and `Z` of 1.69, the mouth at `X` 0 and `Z` 1.605, and the cheeks at `X` of ±0.085 and `Z` of 1.63. In the picture's pixels, which count from the top left, that is:
+The eyes go at `X` of ±0.05 and `Z` of 1.68, the mouth at `X` 0 and `Z` 1.60, and the cheeks at `X` of ±0.085 and `Z` of 1.625. In the picture's pixels, which count from the top left, that is:
 
 | Feature | Pixel `x`, `y` |
 |---|---|
-| Left eye (the character's left, `+X`) | `314`, `100` |
-| Right eye | `198`, `100` |
-| Mouth | `256`, `178` |
-| Left cheek | `356`, `156` |
-| Right cheek | `157`, `156` |
+| Left eye (the character's left, `+X`) | `306`, `123` |
+| Right eye | `206`, `123` |
+| Mouth | `256`, `197` |
+| Left cheek | `341`, `174` |
+| Right cheek | `171`, `174` |
 
 Save the file with <Kbd keys="Ctrl+S" mac="Cmd+S" />.
 
@@ -220,7 +211,7 @@ The picture is small and flat, so you paint it with selections and fills, as you
 		caption="A grid of 128 pixels."
 	/>
 
-3. For each swatch, choose the **Rectangular Selection Tool**, drag a rectangle over its cell, set the foreground color from the table, and press <Kbd keys="Shift+Backspace" /> to fill. Deselect with <Kbd keys="Ctrl+Shift+A" mac="Cmd+Shift+A" /> before the next rectangle.
+3. For each swatch, choose the **Rectangular Selection Tool**, drag a rectangle over its cell (turn on **View > Snap to Grid** so its edges land on the grid lines), set the foreground color from the table, and press <Kbd keys="Shift+Backspace" /> to fill. Deselect with <Kbd keys="Ctrl+Shift+A" mac="Cmd+Shift+A" /> before the next rectangle.
 
 	| Swatch | Cell, from the left, from the bottom | Hue | Saturation | Value |
 	|---|---|---|---|---|
@@ -254,7 +245,7 @@ The picture is small and flat, so you paint it with selections and fills, as you
 	| Each eye | `36` by `50` | 260 | 30 | 22 |
 	| Each cheek | `40` by `22` | 355 | 38 | 100 |
 	| Mouth | `18` by `7` | 355 | 55 | 55 |
-	| Each eye's shine, up and in from the eye's center by 6 and 12 pixels | `11` by `14` | 0 | 0 | 100 |
+	| Each eye's shine, 6 pixels left of the eye's center and 12 pixels up from it | `11` by `14` | 0 | 0 | 100 |
 
 	<Figure
 		src={features}
@@ -310,10 +301,9 @@ Lesson 41 gives the character a proper material. To see that the UVs and the pic
 
 ## If it does not work
 
-- **The UV editor shows nothing after you select faces.** UV Sync Selection is on, or no faces are selected. Turn sync off and select faces in the 3D viewport.
+- **The UV editor shows nothing after you select faces.** No faces are selected in the 3D viewport. With sync off, the UV editor shows only selected faces.
 - **A part has a stripe of two colors.** Its corners were not all moved: UV Sync Selection was on, or you did not press <Kbd keys="A" /> in the UV editor before scaling. Select the part again and place it.
 - **A box select misses part of a limb.** X-ray is off, or the box does not reach the face centers. Press <Kbd keys="Alt+Z" /> and widen the box.
-- **Ctrl+L selects more than one piece.** The pieces touch, or you clicked on the body. Click a face of the piece itself.
 - **The face is mirrored or upside down on the model.** The head was projected from the back. Project it from the front view.
 - **The face is a blur of colors.** The texture's filter is Linear and the model is small. Set **Texture > Filter** to **Nearest** on the material.
 

@@ -1,0 +1,258 @@
+---
+title: The armature on Godot humanoid bone names
+description: Build the character's skeleton in Blender with the bone names Godot's humanoid profile expects, so any animation library made for the profile can move it. Make the spine, one arm, and one leg by typing positions, then mirror them.
+sidebar:
+  order: 39
+  label: "39. The armature on Godot humanoid bone names"
+lesson:
+  number: 39
+  minutes: 75
+  learn:
+    - What an armature is, and why bone names matter for sharing animations
+    - How to make a chain of connected bones and type their positions
+    - How to start a branch with a single bone and give it a parent
+    - How Symmetrize makes the right side from the left, with the names flipped
+  prerequisites: [37, 38]
+---
+
+import { Aside, FileTree, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import display from '../../../assets/lessons/the-armature/display.png';
+import start from '../../../assets/lessons/the-armature/start.png';
+import firstBone from '../../../assets/lessons/the-armature/first-bone.png';
+import boneTab from '../../../assets/lessons/the-armature/bone-tab.png';
+import spine from '../../../assets/lessons/the-armature/spine.png';
+import relations from '../../../assets/lessons/the-armature/relations.png';
+import parent from '../../../assets/lessons/the-armature/parent.png';
+import arm from '../../../assets/lessons/the-armature/arm.png';
+import leg from '../../../assets/lessons/the-armature/leg.png';
+import symmetrizeSearch from '../../../assets/lessons/the-armature/symmetrize-search.png';
+import symmetrized from '../../../assets/lessons/the-armature/symmetrized.png';
+import side from '../../../assets/lessons/the-armature/side.png';
+
+## What you will build
+
+The character's **armature**: a skeleton of 22 bones, named the way Godot's humanoid profile names them. The skeleton does not change how the character looks. It is what lesson 40 attaches the mesh to, and what an animation moves.
+
+<Figure
+	src={display}
+	alt="Blender's front view with the character's skeleton drawn in front of it, each bone labeled: Head, Neck, UpperChest, Chest, Spine, Hips, shoulders, upper and lower arms, hands, upper and lower legs, feet, and toes."
+	caption="The finished skeleton, with names shown."
+/>
+
+## Why the names matter
+
+An **animation** is a set of tracks, and each track says "rotate the bone called this". An animation made for a skeleton can move any other skeleton whose bones have the same names. The names in this lesson are the ones in Godot's **SkeletonProfileHumanoid**, the list Godot uses to **retarget**: to take an animation made for one body and play it on another. That is why lesson 42 can play the Universal Animation Library's walk and run on a character you modeled. Lesson 41 shows the map between your names and the library's.
+
+The profile names 56 bones. A top-down character needs only 22 of them:
+
+| Part | Bones |
+|---|---|
+| Spine | `Hips`, `Spine`, `Chest`, `UpperChest`, `Neck`, `Head` |
+| Each arm | `Shoulder`, `UpperArm`, `LowerArm`, `Hand` |
+| Each leg | `UpperLeg`, `LowerLeg`, `Foot`, `Toes` |
+
+There are no fingers, because the hands are mitts, no eyes or jaw, because the face is painted, and no `Root` bone, because the game moves the character by moving its body, not by animating a bone.
+
+## The first bone
+
+<Steps>
+
+1. Open `character.blend` from lesson 38. It opens in the UV Editing workspace: click **Layout** at the top. Hover the viewport and press <Kbd keys="Numpad 1" /> for the front view.
+
+	<Figure
+		src={start}
+		alt="Blender's Layout workspace with the textured character's mesh in front view over the reference sheet."
+		caption="The character, ready for a skeleton."
+	/>
+
+2. Press <Kbd keys="Shift+A" />, type `armature`, and press <Kbd keys="Enter" />. An armature object with one bone appears at the origin, 1 meter tall. Press <Kbd keys="Tab" /> to enter Edit Mode.
+
+	<Figure
+		src={firstBone}
+		alt="The viewport in Edit Mode with a single bone drawn at the origin, running straight up, and the Outliner listing Armature beside body."
+		caption="A new armature has one bone."
+	/>
+
+3. Open the **Bone** tab of the Properties editor, the last tab with a bone icon. It shows the active bone's **Transform**: its **Head** and **Tail**, the two ends, as `X`, `Y`, and `Z`.
+
+	<Figure
+		src={boneTab}
+		alt="The Bone properties: the name Bone, and Head X Y Z and Tail X Y Z fields."
+		caption="The Bone tab: a bone's name, head, and tail."
+	/>
+
+</Steps>
+
+## The spine
+
+A bone is a line from a **head** to a **tail**. The bone's head is where it pivots. You will type each bone's name and its ends.
+
+<Steps>
+
+1. Click the bone's name field at the top of the Bone tab, press <Kbd keys="Ctrl+A" mac="Cmd+A" /> to select the old name, and type `Hips`. Set **Head** to `0`, `0`, `0.9` and **Tail** to `0`, `0`, `1`.
+
+2. Hover the viewport and press <Kbd keys="E" /> and <Kbd keys="Enter" />: this **extrudes** a new bone from the tail of the last, **connected** to it, so its head starts where the last bone's tail is. Rename the new bone `Spine` and set only its **Tail** to `0`, `0`, `1.12`.
+
+3. Do the same for the rest of the spine, one bone at a time:
+
+	| Bone | Tail `Z` |
+	|---|---|
+	| `Chest` | `1.27` |
+	| `UpperChest` | `1.40` |
+	| `Neck` | `1.52` |
+	| `Head` | `1.80` |
+
+	<Figure
+		src={spine}
+		alt="The front view in Edit Mode with a chain of bones running up the middle of the character from the hips to the top of the head, and the Bone tab showing Head with Head Z 1.52 and Tail Z 1.8."
+		caption="The spine: six bones in a chain."
+	/>
+
+</Steps>
+
+The `Head` bone's head, its pivot, is at the base of the skull, at the chin, `1.52`, and its tail is the top of the head. The hips bone starts at the top of the legs. A joint of the body is wherever one bone's tail meets another's head.
+
+## The left arm
+
+The arm does not start from the end of the spine, but from the side of the chest. A bone that starts somewhere else needs to be a **new** bone, with the parent you choose.
+
+<Steps>
+
+1. Hover the viewport and press <Kbd keys="Shift+A" />. A new bone appears at the origin. Click it to make it the active bone. Rename it `LeftShoulder`, and set **Head** to `0`, `0`, `1.4` and **Tail** to `0.2`, `0`, `1.365`. The shoulder bone runs from the base of the neck to the shoulder's edge.
+
+2. Open the **Relations** panel on the Bone tab. Its **Parent** field says which bone this one hangs from, and **Connected** whether its head is fixed to the parent's tail. Click the **Parent** field and choose `UpperChest`.
+
+	<Figure
+		src={relations}
+		alt="The Bone tab with the Relations panel open: Parent is empty, Connected is off, and Local Location and Inherit Rotation are on."
+		caption="The Relations panel."
+	/>
+
+	<Figure
+		src={parent}
+		alt="The Parent field's list open, with the bones Hips, Spine, Chest, UpperChest, Neck, and Head."
+		caption="Choose the parent from the list."
+	/>
+
+3. With the shoulder active, extrude the rest of the arm with <Kbd keys="E" /> and <Kbd keys="Enter" />, renaming each bone and setting its tail:
+
+	| Bone | Tail `X`, `Y`, `Z` |
+	|---|---|
+	| `LeftUpperArm` | `0.295`, `0`, `1.163` |
+	| `LeftLowerArm` | `0.391`, `0`, `0.962` |
+	| `LeftHand` | `0.432`, `0`, `0.855` |
+
+	The arm bones follow the arm of the mesh: the same line you extruded in lesson 37.
+
+	<Figure
+		src={arm}
+		alt="The front view in Edit Mode with a chain of three bones from the character's left shoulder, along the arm, and to the hand, on the right of the picture."
+		caption="The left arm."
+	/>
+
+</Steps>
+
+## The left leg
+
+The leg also hangs from a point that is not an end of the chain: the side of the hips.
+
+<Steps>
+
+1. Press <Kbd keys="Shift+A" /> for a new bone, click it, and rename it `LeftUpperLeg`. Set **Head** to `0.1`, `0`, `0.9` and **Tail** to `0.1`, `0`, `0.5`. In **Relations**, set **Parent** to `Hips`.
+
+2. Extrude the rest of the leg:
+
+	| Bone | Tail `X`, `Y`, `Z` |
+	|---|---|
+	| `LeftLowerLeg` | `0.1`, `0`, `0.12` |
+	| `LeftFoot` | `0.1`, `-0.1`, `0.05` |
+	| `LeftToes` | `0.1`, `-0.2`, `0.03` |
+
+	The foot and toes point forward, toward -Y, the way the character faces.
+
+	<Figure
+		src={leg}
+		alt="The front view with the left leg's bones, from the hip to the toes, on the right of the picture."
+		caption="The left leg."
+	/>
+
+</Steps>
+
+## The right side
+
+<Steps>
+
+1. Hover the viewport and press <Kbd keys="A" /> to select every bone. Press <Kbd keys="F3" />, type `symmetrize`, and press <Kbd keys="Enter" />. **Symmetrize** copies the bones on one side of the center line to the other, and changes `Left` to `Right` in their names. It also keeps the parents: `RightShoulder` hangs from `UpperChest`, and `RightUpperLeg` from `Hips`.
+
+	<Figure
+		src={symmetrizeSearch}
+		alt="The F3 search box with symmetrize typed and Armature, Symmetrize listed."
+		caption="The F3 search finds Armature > Symmetrize."
+	/>
+
+2. The skeleton now has 22 bones.
+
+	<Figure
+		src={symmetrized}
+		alt="The front view in Edit Mode with a complete skeleton: the spine up the middle, and an arm and a leg on each side."
+		caption="Both sides."
+	/>
+
+</Steps>
+
+## See the skeleton
+
+<Steps>
+
+1. Press <Kbd keys="Tab" /> for Object Mode. Open the **Object Data** tab of the Properties editor (the armature icon, the one before the Bone tab) and open **Viewport Display**. Turn on **Names** and **In Front**. **In Front** draws the bones over the mesh, so you can see them inside it.
+
+	<Figure
+		src={display}
+		alt="Blender's front view with the skeleton drawn in front of the character and every bone labeled."
+		caption="Names and In Front on."
+	/>
+
+2. Press <Kbd keys="Ctrl+Numpad 3" mac="Cmd+Numpad 3" /> for the left view.
+
+	<Figure
+		src={side}
+		alt="The left view with the skeleton: the spine is a vertical line through the body, the legs are vertical lines, and the toes point forward."
+		caption="From the side."
+	/>
+
+3. Save the file with <Kbd keys="Ctrl+S" mac="Cmd+S" />.
+
+</Steps>
+
+The reference run checks the skeleton against the profile: the 22 names match the profile's names exactly, and each bone's parent is the one in the table above.
+
+## Try it
+
+- Select a bone in Edit Mode and press <Kbd keys="G" />. Move it, and look at the tail of its parent: connected bones move together.
+- Hide the mesh (<Kbd keys="H" /> over `body` in Object Mode) and look at the skeleton alone. Could you tell it is a person?
+- Open the Bone tab for `LeftHand` and look at its **Roll**. Roll turns a bone around its own length. It matters when a bone twists, and the animations in lesson 42 are made for bones whose rolls agree with the library's.
+
+## If it does not work
+
+- **A new bone is not the active one.** The Bone tab still shows the last bone. Click the new bone in the viewport, near its middle.
+- **The Relations panel shows the wrong bone.** The Bone tab shows the active bone, and the new bone is not active yet. Click the new bone in the viewport.
+- **Symmetrize puts the right side on the same side.** Some bones are not selected, or the center line is not at `X` 0. Select every bone and check that `Hips` starts at `X` 0.
+- **A bone is `Bone.001` instead of the name you typed.** The rename did not take. Click the name field and type it again.
+- **The bones are hidden inside the mesh.** Turn on **In Front** in the armature's Viewport Display.
+
+## Checkpoint
+
+Your project now contains:
+
+<FileTree>
+- art_source
+  - character
+    - **character.blend**, with the armature of 22 bones beside the mesh
+</FileTree>
+
+Commit your work: `git add .` and `git commit -m "Add the character's armature"`. In the next lesson you attach the mesh to the skeleton.
+
+<Checkpoint />

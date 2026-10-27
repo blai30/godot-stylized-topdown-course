@@ -1,0 +1,221 @@
+---
+title: "AnimationTree: walk the meadow"
+description: Add an AnimationTree with a blend space on speed to the character, feed it the player's speed from a short script, match the clips' strides to the player's speeds so feet do not slide, and walk the character through the meadow.
+sidebar:
+  order: 43
+  label: "43. AnimationTree: walk the meadow"
+lesson:
+  number: 43
+  minutes: 75
+  learn:
+    - What an AnimationTree is, and how a BlendSpace1D mixes clips by a number
+    - How to feed the tree the player's speed from C#
+    - How to stretch a clip so a planted foot keeps still on the ground
+    - How the whole character pipeline fits together
+  prerequisites: [6, 41, 42]
+---
+
+import { Aside, Code, FileTree, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Solution from '../../../components/Solution.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import playerAnimation from '../../../checkpoints/43/files/src/Player/PlayerAnimation.cs?raw';
+import characterScene from '../../../checkpoints/43/files/art/character/character.tscn?raw';
+import treeAdded from '../../../assets/lessons/animation-tree/tree-added.png';
+import treeRoot from '../../../assets/lessons/animation-tree/tree-root.png';
+import idle from '../../../assets/lessons/animation-tree/idle.png';
+import walk0 from '../../../assets/lessons/animation-tree/walk-0.png';
+import walk1 from '../../../assets/lessons/animation-tree/walk-1.png';
+import run0 from '../../../assets/lessons/animation-tree/run-0.png';
+import run1 from '../../../assets/lessons/animation-tree/run-1.png';
+import stopped from '../../../assets/lessons/animation-tree/stopped.png';
+
+## What you will build
+
+The character, alive: standing still when you let go of the keys, jogging when you walk, running when you hold **Shift**, and blending smoothly between the three as it speeds up and slows down. One node, an **AnimationTree**, does the choosing, and a short script tells it how fast the player is moving.
+
+<Figure
+	src={run0}
+	alt="The game at noon: the character mid-run in the grass, leaning forward with one foot ahead."
+	caption="Running through the meadow."
+/>
+
+## Why a tree, and not a player
+
+An **AnimationPlayer** plays one clip at a time and you tell it which. That is enough for a prop. A character needs to choose by what is happening, and to blend: the step from standing to jogging should be a few frames of both, not a jump. An **AnimationTree** reads clips from an AnimationPlayer and mixes them by rules you give it. The simplest rule is a **blend space**: a line of numbers with a clip at each point, and a **blend position** that picks where on the line to be. At a point, the clip plays alone. Between two points, the tree mixes both, in proportion to how near it is to each.
+
+Here the line is speed in meters per second, the clips are idle at 0, jog at 3.5 (the player's walking speed), and run at 6 (its sprint speed), and the blend position is the player's speed.
+
+## The tree
+
+<Steps>
+
+1. Open `art/character/character.tscn`. Select the root, click **+**, search for `AnimationTree`, and click **Create**.
+
+	<Figure
+		src={treeAdded}
+		alt="The character scene with a new AnimationTree node under the root and the Inspector showing its Tree Root empty."
+		caption="An AnimationTree beside the AnimationPlayer."
+	/>
+
+2. In the Inspector, set **Tree Root** to a new **AnimationNodeBlendSpace1D**, and **Anim Player** to the `AnimationPlayer`. Click the blend space to open it, and set **Min Space** to `0`, **Max Space** to `6`, and **Sync Mode** to the option that syncs the clips (the checkpoint file stores `sync_mode = 1`). Syncing keeps the clips in step as they blend, so a foot does not lose its beat.
+
+3. In the **Animation Tree** panel at the bottom, the blend space is a line. Choose the **Add Point** tool and click the line near the left end: choose the animation `idle`. Select the point and set its position to `0` in the Inspector. Add `jog` and set its position to `3.5`, and `run` at `6`.
+
+	<Figure
+		src={treeRoot}
+		alt="The character scene in the editor after the blend space is built."
+		caption="The blend space: idle at 0, jog at 3.5, run at 6."
+	/>
+
+</Steps>
+
+The reference run builds the same tree from code and reads it back: three blend points. If you use the full UAL, point at its names: `Idle`, `Jog_Fwd`, and `Sprint`.
+
+## Stretch the clips to the ground
+
+A jog clip is a loop, made so that one foot is on the ground while the body goes past. If the body moves faster or slower than the clip assumes, the foot slides on the ground like a skater. The fix is to play the clip faster or slower until the foot stays where it is put.
+
+A planted foot in a clip moves backward, relative to the body, at a certain speed, the clip's **stride speed**. The reference run measured it on this character by playing the clip and reading the foot's position over the part of the clip where the foot is planted. To measure your own, play the clip in the editor and note how far the planted foot moves back over how many seconds, or simply adjust the timeline until the feet look still. For this character the result was: the jog's stride speed is **5.04 m/s**, the same in both feet. The clip lasts 0.933 seconds. At 3.5 m/s the foot must go back at 3.5, so the clip must run slower by the ratio 3.5 over 5.04, or last 0.933 × 5.04 / 3.5 = **1.34 seconds**. At 6 m/s, the run's stride speed is about 5.0 on your character (its feet are less clean), and the clip lasts 0.667 s, so it must last 0.667 × 5.0 / 6 = **0.56 seconds**.
+
+`length × stride speed ÷ speed`
+
+<Steps>
+
+1. Click the `jog` point in the blend space. Turn on **Use Custom Timeline**, and set **Timeline Length** to `1.344`. Set **Loop Mode** to **Linear**.
+
+2. Click the `run` point and set **Timeline Length** to `0.556`, and its **Loop Mode** to **Linear**. The idle needs nothing.
+
+</Steps>
+
+<Aside type="note" title="Another character, another number">
+These two numbers belong to this skeleton and this library. A character with longer legs would have a longer stride speed for the same clip, and a different timeline. If your feet slide, change the length: shorter makes the foot go back faster. A little slide is hard to see from the game's camera, and it is a common trade in games.
+</Aside>
+
+## The script
+
+The tree has a blend position, `parameters/blend_position`. The script sets it from the speed of the body the character stands in.
+
+<Steps>
+
+1. In your editor, create `src/Player/PlayerAnimation.cs`. Save the code below into it.
+
+2. Click **Build Project** in Godot's toolbar.
+
+</Steps>
+
+Write the script so that:
+
+- it has `using Godot;` and is in the namespace `TopDownTemplate.Player;`;
+- a comment says it blends the character's clips by how fast the body it stands in is moving. `PlayerAnimation` is a `partial class` that inherits **`AnimationTree`**: the script is the tree;
+- a `private static readonly StringName` named `BlendPosition` holds `"parameters/blend_position"`, and a `private CharacterBody3D? _body` holds the body;
+- `_Ready()` sets `_body` to `Owner?.GetParent() as CharacterBody3D`, with a comment: the character is a child of the player's body, so its owner's parent is the body. It then sets `Active = true`, with a comment: the tree is off in the editor, so a saved scene never keeps the pose of a clip, and on when the game runs;
+- `_Process(double delta)` returns when `_body` is `null`. Otherwise it makes the speed from `new Vector2(_body.Velocity.X, _body.Velocity.Z).Length()`, with a comment: only the walk along the ground counts, because falling is not a stride, and calls `Set(BlendPosition, speed)`.
+
+<Solution>
+	<Code code={playerAnimation} lang="csharp" title="src/Player/PlayerAnimation.cs" />
+</Solution>
+
+<Steps>
+
+3. Select the `AnimationTree` node. Click **Script**'s empty field, choose **Quick Load...**, and pick `PlayerAnimation.cs`. Set **Active** off for now, so the editor does not pose the character, and save the scene.
+
+</Steps>
+
+<Solution label="Show the full character.tscn">
+	<Code code={characterScene} lang="ini" title="art/character/character.tscn" />
+</Solution>
+
+## Walk the meadow
+
+Press <Kbd keys="F5" mac="Cmd+B" /> to run. Stand still, then walk, then hold <Kbd keys="Shift" /> and run, then let go.
+
+<Figure
+	src={idle}
+	alt="The character standing in the grass, in an idle pose, seen from above."
+	caption="Standing still: the idle."
+/>
+
+<Figure
+	src={walk0}
+	alt="The character walking, one foot forward, from above and behind."
+	caption="Walking: the jog at 3.5 meters per second."
+/>
+
+<Figure
+	src={walk1}
+	alt="The character a moment later in the walk, with the other foot forward."
+	caption="A moment later."
+/>
+
+<Figure
+	src={run0}
+	alt="The character running, leaning forward with long strides, under the camera."
+	caption="Running."
+/>
+
+<Figure
+	src={run1}
+	alt="The character a moment later in the run, with an arm swung forward."
+	caption="A moment later in the run."
+/>
+
+<Figure
+	src={stopped}
+	alt="The character standing again in the grass after stopping."
+	caption="After stopping, the tree returns to the idle."
+/>
+
+The reference run reads the blend position back while it plays: 3.5 while walking, 6 while sprinting, and 0 when stopped, and the character takes the three poses above.
+
+The player's speed rises over a fraction of a second, because `PlayerMovement`'s **Acceleration** moves it toward its target by 30 m/s each second. The blend position follows it, so the idle slides into the jog and the jog into the run instead of jumping. That smoothness is what the blend space is for.
+
+## The whole pipeline
+
+You made a character that moves, from nothing:
+
+| Lesson | What it made |
+|---|---|
+| 35 | The design, and a reference sheet |
+| 36 | A blockout at the right size |
+| 37 | One box-modeled mesh |
+| 38 | UVs and a painted texture |
+| 39 | A skeleton on the humanoid names |
+| 40 | Weights: the mesh follows the bones |
+| 41 | The import with a BoneMap, and the player scene |
+| 42 | A library of clips, fitted onto your skeleton |
+| 43 | A tree that picks the clip from the speed |
+
+The same steps make the next character, with the character's own design, and every later character gets the animations for free.
+
+## Try it
+
+- Change `PlayerMovement`'s **Speed** to `2` and watch the jog's feet slide: its clip is now too fast for the ground. Set it back to `3.5`.
+- Add a point `wave` or `hurt` to the blend space at `-1`, with **Min Space** `-1`, and see the clip play when the blend position is negative. What would you need to drive it?
+
+## If it does not work
+
+- **The character does not animate.** `Active` is off: the script's `_Ready()` turns it on. Check that the script is on the `AnimationTree` and the project is built.
+- **The character slides around in a T-pose.** The tree's **Anim Player** is empty, or points to the wrong node. It must be `../AnimationPlayer`.
+- **The legs move but the character slides forward.** The timeline lengths are off. Check the formula, and your clip's stride speed.
+- **The character stays in the idle.** `_body` is `null`: the tree is not in the player scene. The character must be a child of the player's body.
+- **The blend jumps.** Syncing is off in the blend space, or **Acceleration** on `PlayerMovement` is very high. Set the blend space's **Sync Mode** as above.
+- **The clip names are wrong.** The names in the blend space must match the library's: `Idle`, `Jog_Fwd`, `Sprint` for the full UAL.
+
+## Checkpoint
+
+Your project now contains:
+
+<FileTree>
+- art
+  - character
+    - character.tscn, with the `AnimationTree` and its script
+- src
+  - Player
+    - **PlayerAnimation.cs**
+</FileTree>
+
+Commit your work: `git add .` and `git commit -m "Animate the character"`. That finishes the character. In the next module you make the water.
+
+<Checkpoint />

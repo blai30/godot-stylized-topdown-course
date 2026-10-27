@@ -1,0 +1,170 @@
+---
+title: "Bonus: rig any character you download"
+description: Bring in a character model you did not make, such as one from an asset pack or an artist, check it, import it with a BoneMap so it takes the humanoid names, and play the animation library on it.
+sidebar:
+  order: 63
+  label: "63. Bonus: rig any character you download"
+lesson:
+  number: 63
+  minutes: 45
+  learn:
+    - What to check on a character model before importing it
+    - How the BoneMap's auto-mapper finds a skeleton's humanoid bones whatever they are called
+    - How to read the map and fix a bone it got wrong
+    - How to play the same animation library on a character made by someone else
+  prerequisites: [41, 42]
+---
+
+import { Aside, FileTree, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import advanced from '../../../assets/lessons/bonus-any-character/advanced.png';
+import skeleton from '../../../assets/lessons/bonus-any-character/skeleton.png';
+import boneMapNew from '../../../assets/lessons/bonus-any-character/bone-map-new.png';
+import autoMapped from '../../../assets/lessons/bonus-any-character/auto-mapped.png';
+import walkPose from '../../../assets/lessons/bonus-any-character/walk-pose.png';
+
+## What you will build
+
+Nothing new is modeled. You take a character someone else made, with a skeleton whose bones are called whatever its artist called them, and make it walk with the library from lesson 42. Everything the last lessons built, a BoneMap on the humanoid profile and a fitted animation, is what makes this a few minutes' work.
+
+<Figure
+	src={walkPose}
+	alt="The Godot editor with a low-poly character in a walking pose in the viewport, the scene tree showing root, GeneralSkeleton, and Mesh, and the Animation panel showing the walk."
+	caption="A character from another source, playing the library's walk."
+/>
+
+## What you need
+
+A character model that is **humanoid** (two arms, two legs, a head, an upright body), **rigged** (a skeleton, and a mesh skinned to it), and in **glTF** (`.glb` or `.gltf`). Good free sources:
+
+- **Quaternius** (`https://quaternius.com`): CC0 character packs, many already rigged on a humanoid skeleton. The same artist made the animation library you used, so those characters are the nearest match.
+- **Mixamo** (Adobe): thousands of characters and animations, exported as `.fbx`. Godot 4.8 imports FBX itself, but a `.glb` converted in Blender (**File > Import > FBX**, then **File > Export > glTF 2.0**) is the format this course has used throughout.
+- A character an artist made for you in Blender: ask for a `.glb`, with the skeleton, in a T-pose or an A-pose.
+
+<Aside type="caution" title="This lesson's model">
+The model in this lesson is a stand-in: it is the character you made, exported again with its bones renamed in the style of other tools (`pelvis`, `spine_01`, `upperarm_l`, `thigh_l`, and two toe bones with names that mean nothing, `zz_a` and `zz_b`). It is in the reference project as `art_source/character/foreign_character.glb`. The steps are the ones for a downloaded character, but they were run on this file, not on a pack from Quaternius: a pack may show different options, and you should read what Godot reports for yours.
+</Aside>
+
+## Check the model first
+
+A few minutes before importing saves an afternoon after. Open the file in Blender (or look at it in Godot's Advanced Import Settings preview) and check:
+
+| Check | What you want | If not |
+|---|---|---|
+| **Scale** | about 1.7 m for an adult | set **Root Scale** on the import |
+| **Facing** | faces +Z in Godot, the way your player turns | rotate it in Blender before exporting, or put the model in a `Node3D` turned half a turn |
+| **Rest pose** | a T-pose or an A-pose, arms away from the body | the Rest Fixer can mend small differences, a bent rest pose is better fixed in Blender |
+| **Skeleton** | one armature, one skin | one skeleton per character, so that the map has one target |
+| **Bone count** | any, a body and fingers is fine | bones the profile has no name for stay unmapped |
+| **Weights** | at most four bones for a vertex | Limit Total in Blender (lesson 40) |
+
+## Import it
+
+<Steps>
+
+1. Copy the `.glb` into your project's `art/character` folder (this lesson's stand-in is in the reference project at `art_source/character/foreign_character.glb`). Click it in the FileSystem dock, open the **Import** tab, and click **Advanced...**. The scene tree lists the model's nodes: its armature, its skeleton, and its mesh. The preview shows how it looks.
+
+	<Figure
+		src={advanced}
+		alt="The Advanced Import Settings window for the foreign character: the scene tree with root, Skeleton3D, and Mesh, and a preview of a white low-poly character."
+		caption="The model in Advanced Import Settings."
+	/>
+
+2. Click **Skeleton3D**. Its **Bone Map** is empty. Choose **New BoneMap** and set its **Profile** to **New SkeletonProfileHumanoid**, as in lesson 41.
+
+	<Figure
+		src={skeleton}
+		alt="The Advanced Import Settings window with Skeleton3D selected and its Bone Map field empty."
+		caption="The skeleton, with no map yet."
+	/>
+
+	<Figure
+		src={boneMapNew}
+		alt="The new BoneMap opened with an empty Profile."
+		caption="A new map."
+	/>
+
+3. Godot auto-maps. It does not match by name alone: it looks at the **shape** of the skeleton, the chain from the hips up through the spine and neck to the head, and out along each arm and leg, and names each bone for the part of the body it is. That is why it finds `pelvis`, `upperarm_l`, and `thigh_l` as easily as `Hips`, `LeftUpperArm`, and `LeftUpperLeg`.
+
+	<Figure
+		src={autoMapped}
+		alt="The Bone Map opened with a human figure showing green dots for the mapped bones, and the Retarget options."
+		caption="Auto-mapped."
+	/>
+
+</Steps>
+
+## Read the map
+
+The reference run reads the map back for this model: **22 of 56** bones are mapped, and every one is the right one:
+
+| Profile bone | This model's bone |
+|---|---|
+| `Hips` | `pelvis` |
+| `Spine`, `Chest`, `UpperChest` | `spine_01`, `spine_02`, `torso_top` |
+| `Neck`, `Head` | `neck_01`, `head` |
+| `LeftShoulder`, `LeftUpperArm`, `LeftLowerArm`, `LeftHand` | `clavicle_l`, `upperarm_l`, `lowerarm_l`, `hand_l` |
+| `LeftUpperLeg`, `LeftLowerLeg`, `LeftFoot`, `LeftToes` | `thigh_l`, `calf_l`, `foot_l`, `zz_a` |
+
+The right side matches the same way. Even the two toe bones named `zz_a` and `zz_b` were found, because they are the last bones of the legs.
+
+Check yours the same way. On the figure in the map, click each dot and read the bone it names; if a dot is empty, or names the wrong bone, click the **bone field** beside the profile bone's name and pick the right one from the skeleton's list. The usual mistakes are:
+
+- the spine bones off by one, when the model has more spine bones than the profile has (it has `Spine`, `Chest`, and `UpperChest`): set the ones you want by hand and leave the rest unmapped;
+- left and right swapped, when a model is built facing the other way: check that `LeftUpperArm` is on the character's left;
+- the shoulder bones (`LeftShoulder`) taken for the upper arm, when the model has no shoulder bone: leave `LeftShoulder` empty.
+
+## Reimport and check
+
+<Steps>
+
+1. Click **Reimport**. Godot renames the skeleton's bones to the profile's names, and makes the skeleton unique with the name `GeneralSkeleton`.
+
+2. Choose **Scene > New Inherited Scene...** and pick the model. The scene tree shows the skeleton as `GeneralSkeleton`. The reference run reads its 22 bones: `Hips`, `Spine`, `Chest`, `UpperChest`, the arms, `Neck`, `Head`, and the legs, all by the profile's names.
+
+3. Add an **AnimationPlayer** to the root, and load the library into it, as in lesson 42 (**Animation > Manage Animations... > Load Library**). Pick `walk` and press play.
+
+	<Figure
+		src={walkPose}
+		alt="The foreign character in the editor in a walking pose, with the Animation panel showing the walk clip's tracks for Hips and the legs."
+		caption="The walk, on a character the library never met."
+	/>
+
+</Steps>
+
+The character walks, and the library's 14 clips are all there to play, with no work on the clips.
+
+## Then the rest of the pipeline
+
+The rest of the character pipeline is the same as for yours:
+
+| Step | Lesson |
+|---|---|
+| Give it a material: if the model has textures, set **Extract** under **Materials** in the Import dock to **Extract Once**, to get editable materials | 41 |
+| Make an inherited scene and save it | 41 |
+| Put it in the player scene, and keep the collision and `PushPoint` | 41 |
+| Add the `AnimationTree` and `PlayerAnimation` script | 43 |
+| Set the clips' timeline lengths from the character's own stride speed | 43 |
+
+Only the numbers change: the stride speed depends on the character's legs.
+
+## Try it
+
+- Break the map on purpose: set `LeftUpperArm` to `lowerarm_l` in the map, reimport, and play the walk. The arm will move wrongly: its clip's rotations land on the wrong bone. Set it back.
+- Unmap `LeftToes` and `RightToes`. The feet no longer flex, and everything else is the same.
+- Find a model with a skeleton in a T-pose and another in an A-pose, and import both. Compare their arms in the walk. If one looks wrong, turn on **Rest Fixer > Fix Silhouette** in the Retarget options.
+
+## If it does not work
+
+- **The map has no green dots.** The profile is not set. Choose **New SkeletonProfileHumanoid**.
+- **The character is tiny or huge.** Set **Root Scale** in the Nodes options of the import.
+- **The character walks backward, or on its side.** Its facing is wrong: turn it in Blender before exporting.
+- **An arm or a leg bends in the wrong place.** Its bone is mapped to the wrong profile bone. Fix it in the map.
+- **The mesh is not skinned.** The model has more than one skeleton, or the mesh is not parented to the armature. Check it in Blender.
+- **Godot reports "Auto Mapping couldn't guess" for some bones.** For bones the profile has no name for, it is expected.
+
+## Checkpoint
+
+Your project is as lesson 43 left it, plus the model you imported. Nothing here changes the course's template: the character you made stays the player.

@@ -1,0 +1,330 @@
+---
+title: Export your character and import it with a BoneMap
+description: Export the skinned character from Blender, import it into Godot with a BoneMap on the humanoid profile so its bones get the names animations expect, save the map for reuse, give the character its material, and put it in the player scene in place of the capsule.
+sidebar:
+  order: 41
+  label: "41. Export your character and import it with a BoneMap"
+lesson:
+  number: 41
+  minutes: 75
+  learn:
+    - How to export a skinned character with the collection exporter
+    - What a BoneMap is, and how Godot's humanoid profile maps your bones to the names animations use
+    - How to save a BoneMap as a resource for reuse
+    - How to build the character scene and put it in the player in place of the capsule
+  prerequisites: [11, 24, 36, 39, 40]
+---
+
+import { Aside, Code, FileTree, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Solution from '../../../components/Solution.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import exported from '../../../assets/lessons/import-with-a-bonemap/exported.png';
+import boneMapFile from '../../../checkpoints/41/files/art/character/humanoid_bone_map.tres?raw';
+import characterScene from '../../../checkpoints/41/files/art/character/character.tscn?raw';
+import playerScene from '../../../checkpoints/41/files/world/player/player.tscn?raw';
+import exporter from '../../../assets/lessons/import-with-a-bonemap/exporter.png';
+import animationOff from '../../../assets/lessons/import-with-a-bonemap/animation-off.png';
+import importDock from '../../../assets/lessons/import-with-a-bonemap/import-dock.png';
+import advanced from '../../../assets/lessons/import-with-a-bonemap/advanced.png';
+import skeletonSelected from '../../../assets/lessons/import-with-a-bonemap/skeleton-selected.png';
+import boneMapMenu from '../../../assets/lessons/import-with-a-bonemap/bone-map-menu.png';
+import boneMapNew from '../../../assets/lessons/import-with-a-bonemap/bone-map-new.png';
+import profileMenu from '../../../assets/lessons/import-with-a-bonemap/profile-menu.png';
+import autoMapped from '../../../assets/lessons/import-with-a-bonemap/auto-mapped.png';
+import boneMapSaveMenu from '../../../assets/lessons/import-with-a-bonemap/bone-map-save-menu.png';
+import boneMapSave from '../../../assets/lessons/import-with-a-bonemap/bone-map-save.png';
+import boneMapSaved from '../../../assets/lessons/import-with-a-bonemap/bone-map-saved.png';
+import inheritDialog from '../../../assets/lessons/import-with-a-bonemap/inherit-dialog.png';
+import inherited from '../../../assets/lessons/import-with-a-bonemap/inherited.png';
+import material from '../../../assets/lessons/import-with-a-bonemap/material.png';
+import materialSave from '../../../assets/lessons/import-with-a-bonemap/material-save.png';
+import characterSceneShot from '../../../assets/lessons/import-with-a-bonemap/character-scene.png';
+import playerBefore from '../../../assets/lessons/import-with-a-bonemap/player-before.png';
+import selectScene from '../../../assets/lessons/import-with-a-bonemap/select-scene.png';
+import playerAfter from '../../../assets/lessons/import-with-a-bonemap/player-after.png';
+import noonClose from '../../../assets/lessons/import-with-a-bonemap/noon-close.png';
+import turned from '../../../assets/lessons/import-with-a-bonemap/turned.png';
+
+## What you will build
+
+The character in the game: exported from Blender, imported with a map that gives its bones the names of Godot's humanoid profile, wearing its painted texture, and standing in the player scene where the capsule was. The next two lessons make it move.
+
+<Figure
+	src={noonClose}
+	alt="The game at noon, zoomed in: the character with brown-red hair, a blue tunic, cream sleeves, and dark trousers stands in the grass among two pines."
+	caption="The character in the meadow."
+/>
+
+## Export from Blender
+
+<Steps>
+
+1. Open `character.blend`. Open the **Collection** tab of the Properties editor with the `character` collection active. It still has the glTF exporter from lesson 36, writing `art/character/character.glb`, and now the collection holds the mesh and the armature.
+
+	<Figure
+		src={exporter}
+		alt="The Collection properties with the glTF 2.0 exporter: File Path ending in character.glb, Format glTF Binary, and the Collection, Include, Transform, Data, and Animation sections collapsed."
+		caption="The exporter from lesson 36, writing character.glb."
+	/>
+
+2. Uncheck **Animation** in the exporter. The character has no clips of its own: lesson 42 brings a library of them.
+
+	<Figure
+		src={animationOff}
+		alt="The exporter panel with the Animation checkbox unchecked."
+		caption="No animation in this file."
+	/>
+
+3. Click **Export All**, then save the Blender file.
+
+	<Figure
+		src={exported}
+		alt="Blender after the export, with the character and its skeleton in the viewport."
+		caption="Exported."
+	/>
+
+</Steps>
+
+The reference run reads the file back: one skin with 22 joints named for the bones, and each vertex carries `JOINTS_0` and `WEIGHTS_0`, one set of four. Four is what glTF's standard skin carries and what the course asks for, which is why lesson 40 limited every vertex to four bones.
+
+## Import with a BoneMap
+
+Godot reads the glb as a scene with a **Skeleton3D**. The skeleton's bones have your names, which here happen to be the profile's, but a character from another artist may have `upper_arm.L` or `mixamorig:LeftArm`. A **BoneMap** says, for each bone of the humanoid profile, which bone of this skeleton plays that part. Godot then renames the bones to the profile's names, so every skeleton ends up with the same ones and animations made for one can play on any other.
+
+<Steps>
+
+1. Open your Godot project. In the FileSystem dock, click `art/character/character.glb`, and click the **Import** tab at the top of the Scene dock.
+
+	<Figure
+		src={importDock}
+		alt="The Import dock for character.glb with its import options and an Advanced button."
+		caption="The Import dock."
+	/>
+
+2. Click **Advanced...** at the bottom of the dock. Click **Skeleton3D** in the scene tree on the left. Its options include **Retarget > Bone Map**, empty.
+
+	<Figure
+		src={advanced}
+		alt="The Advanced Import Settings window: the scene tree on the left with Armature, Skeleton3D, and body, a 3D preview of the white character in the middle, and the Scene options on the right."
+		caption="Advanced Import Settings."
+	/>
+
+	<Figure
+		src={skeletonSelected}
+		alt="The Advanced Import Settings window with Skeleton3D selected and its options on the right: Script, Skip Import, Load Pose, and Bone Map, empty."
+		caption="Select the Skeleton3D."
+	/>
+
+3. Click the **Bone Map** field and choose **New BoneMap**.
+
+	<Figure
+		src={boneMapMenu}
+		alt="The Bone Map field's menu listing New BoneMap, Quick Load, and Load."
+		caption="New BoneMap."
+	/>
+
+4. Click the new **BoneMap** to open it. It has one field, **Profile**. Click it and choose **New SkeletonProfileHumanoid**.
+
+	<Figure
+		src={boneMapNew}
+		alt="The Bone Map opened, with a Profile field that is empty."
+		caption="A BoneMap has a profile."
+	/>
+
+	<Figure
+		src={profileMenu}
+		alt="The Profile field's menu listing New SkeletonProfile, New SkeletonProfileHumanoid, Quick Load, and Load."
+		caption="The humanoid profile."
+	/>
+
+5. When the profile is set, Godot **auto-maps**: it matches the skeleton's bone names to the profile's by name and shape. The window shows a figure with the matched bones lit in green.
+
+	<Figure
+		src={autoMapped}
+		alt="The Advanced Import Settings window with the Bone Map opened: a Profile, a human figure with green dots for the mapped bones, and the Retarget options with Rename Bones, Make Unique, and Skeleton Name GeneralSkeleton."
+		caption="Auto-mapped: 22 bones of the profile's 56 are green."
+	/>
+
+</Steps>
+
+The reference run reads the map back: **22 of 56** bones are mapped, each to the bone of the same name. The 34 left over are the profile's fingers, eyes, jaw, and `Root`, which your character does not have. That is as it should be: a map does not need every bone, only the ones the skeleton has.
+
+The other **Retarget** options matter too, and their defaults are right:
+
+| Option | Value | What it does |
+|---|---|---|
+| **Rename Bones** | on | renames each bone to its profile name |
+| **Make Unique** | on | makes the skeleton a node with a unique name in the scene |
+| **Skeleton Name** | `GeneralSkeleton` | the unique name, so any scene can say `%GeneralSkeleton` |
+| **Normalize Position Tracks** | on | when animations are imported with this skeleton, scales their position tracks to its size (it matters for the library in lesson 42) |
+
+## Save the map
+
+The map lives inside this one import. Save it as a file, so you can use it again: a second character built on the same bones, or a reimport after a change, takes the same map from a file, with no new mapping.
+
+<Steps>
+
+1. Click the **Bone Map**'s arrow and choose **Save As...**.
+
+	<Figure
+		src={boneMapSaveMenu}
+		alt="The Bone Map resource menu with Save As... listed."
+		caption="Save As..."
+	/>
+
+2. Save it as `humanoid_bone_map.tres` in `art/character`.
+
+	<Figure
+		src={boneMapSave}
+		alt="The Save Resource dialog with the folder art/character and the file name humanoid_bone_map.tres."
+		caption="A file for the map."
+	/>
+
+	<Figure
+		src={boneMapSaved}
+		alt="The Advanced Import Settings window after saving, with the Bone Map's Path now res://art/character/humanoid_bone_map.tres."
+		caption="The map's path is now a file."
+	/>
+
+3. Click **Reimport**.
+
+</Steps>
+
+<Solution label="Show humanoid_bone_map.tres">
+	<Code code={boneMapFile} lang="ini" title="art/character/humanoid_bone_map.tres" />
+</Solution>
+
+The reference run reads the imported scene: its skeleton is named `GeneralSkeleton`, unique in the scene, with 22 bones, and the mesh has its skin.
+
+## The character scene
+
+<Steps>
+
+1. Choose **Scene > New Inherited Scene...** and pick `art/character/character.glb`, as you did for the rocks and the tree.
+
+	<Figure
+		src={inheritDialog}
+		alt="The Open Base Scene dialog with character.glb selected."
+		caption="An inherited scene from the glb."
+	/>
+
+	<Figure
+		src={inherited}
+		alt="The Godot editor with the inherited scene: the Scene dock lists character, Armature, GeneralSkeleton, and body, and the viewport shows the white character."
+		caption="The skeleton is called GeneralSkeleton."
+	/>
+
+2. Select the `body` mesh. Under **Geometry**, set **Material Override** to a new **ShaderMaterial**. Open it and set **Shader** to `art/palette/palette_lit.gdshader`, the shader the rocks use: it reads a picture by UV, with the wrapped light and the soft rim. Set its **Palette** to `art/character/character_texture.png`.
+
+	<Figure
+		src={material}
+		alt="The Inspector with the body mesh's Material Override, a ShaderMaterial with the palette_lit shader and the Palette set to character_texture.png, and the textured character in the viewport."
+		caption="The painted texture on the character."
+	/>
+
+3. Click the material's arrow, choose **Save As...**, and save it as `art/character/character.tres`.
+
+	<Figure
+		src={materialSave}
+		alt="The Save Resource dialog with the folder art/character and the file name character.tres."
+		caption="Save the material."
+	/>
+
+4. Save the scene as `art/character/character.tscn`.
+
+	<Figure
+		src={characterSceneShot}
+		alt="The saved character scene in the editor, with the textured character in the viewport."
+		caption="The character scene."
+	/>
+
+</Steps>
+
+<Solution label="Show character.tscn">
+	<Code code={characterScene} lang="ini" title="art/character/character.tscn" />
+</Solution>
+
+## Put it in the player
+
+The player scene still has the capsule from lesson 6, a collision shape, and the `PushPoint` node from lesson 33.
+
+<Steps>
+
+1. Open `world/player/player.tscn`.
+
+	<Figure
+		src={playerBefore}
+		alt="The player scene with the capsule and its nose in the viewport, and the Scene dock listing CollisionShape3D, Body, Nose, and PushPoint."
+		caption="The player scene with the capsule."
+	/>
+
+2. Select `Body` and press <Kbd keys="Delete" mac="Cmd+Backspace" />. Do the same for `Nose`. Keep `CollisionShape3D` and `PushPoint`.
+
+3. Select `Player`, click **Instantiate Child Scene**, type `character.tscn`, and press <Kbd keys="Enter" />.
+
+	<Figure
+		src={selectScene}
+		alt="The Select Scene dialog with character.tscn typed and listed."
+		caption="Instantiate the character."
+	/>
+
+	<Figure
+		src={playerAfter}
+		alt="The player scene with the character standing inside the capsule's collision shape, and the Scene dock listing CollisionShape3D, PushPoint, and character."
+		caption="The player, with the character."
+	/>
+
+4. Save the scene.
+
+</Steps>
+
+The character stands at the player's origin, with its feet on the ground, and faces +Z, the way the capsule's nose pointed, so `PlayerMovement`'s turn toward where it walks works with no change.
+
+<Solution label="Show player.tscn">
+	<Code code={playerScene} lang="ini" title="world/player/player.tscn" />
+</Solution>
+
+## Try it
+
+Press <Kbd keys="F5" mac="Cmd+B" /> to run. Walk with the movement keys.
+
+<Figure
+	src={turned}
+	alt="The game at noon with the character after walking right: it has turned to face the right, in the grass."
+	caption="The character turns to face where it walks."
+/>
+
+- The grass parts around the character as it did around the capsule, because the `PushPoint` is still on the player.
+- The character slides: it does not move its legs yet. Lesson 42 brings the clips, and lesson 43 plays them.
+- Open `humanoid_bone_map.tres` in the Inspector and click a bone in its figure. The right side lists the bone it is mapped to. If your skeleton has other names, this is where you would choose them.
+
+## If it does not work
+
+- **The Bone Map shows no green bones.** The profile is empty. Set **Profile** to a **SkeletonProfileHumanoid**.
+- **Some bones are not matched.** Their names differ from the profile's. Click a bone on the figure and pick the skeleton's bone for it by hand.
+- **The character is white in the scene.** The material is not on the mesh. Select `body` and check **Material Override**.
+- **The character is lying on its back or facing away.** The glTF exporter's **+Y Up** is off, or the character faced +Y in Blender. Check lessons 36 and 37.
+- **The skeleton is not named `GeneralSkeleton`.** **Rename Bones** or **Make Unique** is off. Turn them on and click **Reimport**.
+- **The skin looks wrong at a joint.** A vertex may have more than four bones, and the extra ones were dropped on export: go back to lesson 40 and run Limit Total.
+
+## Checkpoint
+
+Your project now contains:
+
+<FileTree>
+- art
+  - character
+    - character.glb, imported with the BoneMap
+    - **humanoid_bone_map.tres**
+    - **character.tres**
+    - **character.tscn**
+- world
+  - player
+    - player.tscn, with the character in place of the capsule
+</FileTree>
+
+Commit your work: `git add .` and `git commit -m "Import the character with a BoneMap"`. In the next lesson you bring in a library of animations. The library is a skeleton of its own, so it gets a map of its own.
+
+<Checkpoint />

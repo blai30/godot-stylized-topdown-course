@@ -41,7 +41,7 @@ No code in this lesson, and nothing in the game changes yet. The work is decidin
 
 ## The character
 
-A low-poly adventurer: a figure built from a few dozen simple, flat-shaded shapes, each of which you can see as a facet, in the style of many asset-store characters. It has realistic proportions, the height of the capsule you have walked the meadow with since lesson 6, and a plain outfit: a blue tunic over a cream shirt, a belt, slate trousers, brown boots and gloves, a tan pack, and short auburn hair.
+A low-poly adventurer: a figure of simple, flat-shaded shapes, each of which you can see as a facet, in the style of many asset-store characters. It has realistic proportions, the height of the capsule you have walked the meadow with since lesson 6, and a plain outfit: a blue tunic over a cream shirt, a belt, slate trousers, brown boots and gloves, a tan pack, and short auburn hair.
 
 Three decisions shape that character, and each comes from the game's camera.
 
@@ -104,7 +104,7 @@ The sheet is 2048 pixels wide and 1024 tall: two square views side by side, 1024
 
 3. Fill the bottom layer's paper: set the foreground color to a very light gray (value `94%`, saturation `0`), choose **Select > Select All**, press <Kbd keys="Shift+Backspace" /> to fill the selection with the foreground color, and choose **Select > Deselect**. An opaque sheet exports at its full size.
 
-4. Choose **Settings > Dockers > Grid and Guides**. Set **X spacing** to `123` (**Y spacing** follows it) and check **Show grid**.
+4. Choose **Settings > Dockers > Grid and Guides**. Set **X spacing** to `123` (**Y spacing** follows it), **Subdivision** to `1`, and check **Show grid**.
 
 	<Figure
 		src={grid}
@@ -116,7 +116,7 @@ The sheet is 2048 pixels wide and 1024 tall: two square views side by side, 1024
 
 ## Draw the front view
 
-The figure is a stack of simple shapes: rectangles, ellipses, and a few polygons. You select a shape with a selection tool and fill it with the foreground color, the technique of lesson 7's swatches. The table below gives each shape's corners in meters on the sheet: across from the view's center line, up from the ground. The front view's center is at pixel 512 across, and the side view's at 1536. Multiply meters by `512` to get pixels, and read heights off the grid.
+The figure is a stack of simple shapes: rectangles, ellipses, and a few polygons. You select a shape with a selection tool and fill it with the foreground color, the technique of lesson 7's swatches. The table below gives each shape's corners in meters on the sheet: across from the view's center line, up from the ground. The front view's center is at pixel 512 across, and the side view's at 1536. Multiply meters by `512` to get pixels: a point `across` meters from a view's center line and `up` meters above the ground is at pixel `x` = the center's pixel plus `across` times 512, and pixel `y` = 984 minus `up` times 512, counting `y` down from the top. Krita shows the pointer's pixel position in the status bar at the bottom, and a selection's position and size in the Tool Options docker. Turn on **View > Snap to Grid** to make edges land on the grid lines, and check a selection's numbers in Tool Options when a shape has to be exact.
 
 <Steps>
 
@@ -148,7 +148,7 @@ Look at it before you go on. The arms hang a little away from the body, so each 
 
 ## Draw the side view
 
-The side view uses the same heights, so the two lines up. Its center line is pixel 1536, and across now means forward: positive numbers are in front of the character, negative behind.
+The side view uses the same heights, so the two line up. Its center line is pixel 1536, and across now means forward: positive numbers are in front of the character, negative behind.
 
 <Steps>
 

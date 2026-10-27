@@ -1,0 +1,9 @@
+[gd_scene format=3 uid="uid://16j0kb5x0ul"]
+
+[ext_resource type="PackedScene" uid="uid://cocsn3e36p1de" path="res://art/character/character.glb" id="1_ygy38"]
+[ext_resource type="Material" uid="uid://c2ojj1m2ik24h" path="res://art/character/character.tres" id="2_icqo3"]
+
+[node name="character" unique_id=1112501027 instance=ExtResource("1_ygy38")]
+
+[node name="body" parent="Armature/GeneralSkeleton" parent_id_path=PackedInt32Array(1515369305) index="0" unique_id=1349599084]
+material_override = ExtResource("2_icqo3")

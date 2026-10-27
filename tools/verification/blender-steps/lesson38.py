@@ -172,10 +172,10 @@ def steps(d):
     if STOP == 'tunic':
         return
 
-    FRONT = (0, 2)
-    yield from box_select('neck', 'NUMPAD_1', False, [((-0.07, 1.45), (0.07, 1.52))], FRONT)
+    FRONT, SIDE = (0, 2), (1, 2)
+    yield from box_select('neck', 'NUMPAD_1', False, [((-0.09, 1.45), (0.09, 1.545))], FRONT)
     yield from place('skin', 'neck')
-    yield from box_select('legs', 'NUMPAD_1', False, [((-0.2, 0.22), (0.2, 0.88))], FRONT)
+    yield from box_select('legs', 'NUMPAD_1', False, [((-0.2, 0.22), (0.2, 0.78))], FRONT)
     yield from place('trousers', 'legs')
     yield from box_select('boots', 'NUMPAD_1', False, [((-0.2, -0.02), (0.2, 0.19))], FRONT)
     yield from place('boots', 'boots')
@@ -183,35 +183,19 @@ def steps(d):
     yield from place('shirt', 'sleeves')
     yield from box_select('gloves', 'NUMPAD_1', False, [((0.28, 0.78), (0.46, 0.955)), ((-0.46, 0.78), (-0.28, 0.955))], FRONT)
     yield from place('leather', 'gloves')
-    over_view()
-    d.key('Z', alt=True)
-    yield 0.4
+    yield from box_select('belt', 'NUMPAD_1', False, [((-0.23, 0.99), (0.23, 1.05))], FRONT)
+    yield from place('leather', 'belt')
+    yield from box_select('pack', 'NUMPAD_3', False, [((0.15, 1.05), (0.30, 1.42))], SIDE)
+    yield from place('pack', 'pack')
     d.shot('l38_bodies')
     if STOP == 'boxes':
         return
 
-    # The separate pieces: click a face, Ctrl+L for the rest of the piece.
-    away, toward = (lambda n: n.y < -0.5), (lambda n: n.y > 0.5)
-    yield from island('nose', 'NUMPAD_1', False, (0.0, -0.157, 1.64), away)
-    yield from place('skin', 'nose')
-    for number, x in enumerate((-0.08, 0.0, 0.08), 1):
-        yield from island('fringe_%d' % number, 'NUMPAD_1', False, (x, -0.145, 1.75), away)
-        yield from place('hair', 'fringe_%d' % number)
-    yield from island('belt', 'NUMPAD_1', False, (0.0, -0.15, 1.03), away)
-    yield from place('leather', 'belt')
-    yield from island('hair', 'NUMPAD_3', False, (0.135, 0.02, 1.72), lambda n: n.x > 0.5)
-    yield from place('hair', 'hair')
-    yield from island('hair_back', 'NUMPAD_1', True, (0.0, 0.2, 1.65), toward)
-    yield from place('hair', 'hair_back')
-    yield from island('pack', 'NUMPAD_1', True, (0.0, 0.25, 1.22), toward)
-    yield from place('pack', 'pack')
-    d.shot('l38_pieces')
-    if STOP == 'pieces':
-        return
-
-    # The head: front view, its faces selected, then Project From View (Bounds) puts the whole front on the image.
-    yield from island('head', 'NUMPAD_1', False, (0.06, -0.12, 1.68), lambda n: n.y < -0.3)
+    # The head: its faces, projected from the front onto the face patch; then the hair, over the top of it.
+    yield from box_select('head', 'NUMPAD_1', False, [((-0.13, 1.555), (0.13, 1.83))], FRONT)
     over_view()
+    d.key('NUMPAD_1')
+    yield 0.6
     d.key('F3')
     yield 0.8
     d.type_text('project from view bounds')
@@ -224,30 +208,39 @@ def steps(d):
     layer = bm.loops.layers.uv.active
     points = [loop[layer].uv.copy() for face in bm.faces if face.select for loop in face.loops]
     d.log('PROJECTED faces {} u {:.3f} to {:.3f} v {:.3f} to {:.3f}'.format(selected_count(), min(p.x for p in points), max(p.x for p in points), min(p.y for p in points), max(p.y for p in points)))
-    # Half the size, and moved up to the face patch's center.
+    head_faces = [face for face in mesh().faces if face.select]
+    head_points = [vert.co.copy() for face in head_faces for vert in face.verts]
+    xs, zs = [p.x for p in head_points], [p.z for p in head_points]
+    xmin, xmax, zmin, zmax = min(xs), max(xs), min(zs), max(zs)
+    d.log('HEAD BOUNDS x {:.4f} {:.4f} z {:.4f} {:.4f}'.format(xmin, xmax, zmin, zmax))
     over_uv()
     d.key('A')
     yield 0.3
     d.key('S')
-    d.type_text('0.5')
+    d.type_text('0.45')
     d.key('RET')
     yield 0.6
-    yield from type_field(UV_X, FACE_CENTER[0])
-    yield from type_field(UV_Y, FACE_CENTER[1])
+    # The sidebar shows the selection's median, which is not the middle of its bounds for a head: type the median that puts
+    # the bounds' middle on the patch's center.
+    points = [loop[layer].uv.copy() for face in mesh().faces if face.select for loop in face.loops]
+    median = sum(points, Vector((0, 0))) / len(points)
+    middle = Vector(((min(p.x for p in points) + max(p.x for p in points)) / 2, (min(p.y for p in points) + max(p.y for p in points)) / 2))
+    target = Vector(FACE_CENTER) + (median - middle)
+    d.log('HEAD median {:.4f} {:.4f} bounds middle {:.4f} {:.4f} typed {:.4f} {:.4f}'.format(median.x, median.y, middle.x, middle.y, target.x, target.y))
+    yield from type_field(UV_X, target.x)
+    yield from type_field(UV_Y, target.y)
     points = [loop[layer].uv.copy() for face in mesh().faces if face.select for loop in face.loops]
     d.log('HEAD UV u {:.3f} to {:.3f} v {:.3f} to {:.3f}'.format(min(p.x for p in points), max(p.x for p in points), min(p.y for p in points), max(p.y for p in points)))
     d.shot('l38_head_uv')
+    yield from box_select('hair', 'NUMPAD_3', False, [((-0.2, 1.705), (0.2, 1.83)), ((0.05, 1.555), (0.2, 1.705))], SIDE)
+    yield from place('hair', 'hair')
+    d.shot('l38_pieces')
     if STOP == 'head':
         return
 
     # Where the eyes go: the head's own bounds map linearly onto the face patch, so a point on the face has a place on it.
-    head_faces = [face for face in mesh().faces if face.select]
-    head_points = [vert.co for face in head_faces for vert in face.verts]
-    xs, zs = [p.x for p in head_points], [p.z for p in head_points]
-    xmin, xmax, zmin, zmax = min(xs), max(xs), min(zs), max(zs)
-    d.log('HEAD BOUNDS x {:.4f} {:.4f} z {:.4f} {:.4f}'.format(xmin, xmax, zmin, zmax))
-    for name, (x, z) in (('eye_left', (0.05, 1.69)), ('eye_right', (-0.05, 1.69)), ('mouth', (0.0, 1.605)), ('blush_left', (0.085, 1.63)), ('blush_right', (-0.085, 1.63))):
-        u = 0.25 + 0.5 * (x - xmin) / (xmax - xmin)
+    for name, (x, z) in (('eye_left', (0.05, 1.68)), ('eye_right', (-0.05, 1.68)), ('mouth', (0.0, 1.60)), ('blush_left', (0.085, 1.625)), ('blush_right', (-0.085, 1.625))):
+        u = 0.5 + 0.45 * x / (xmax - xmin)
         v = 0.5 + 0.5 * (z - zmin) / (zmax - zmin)
         d.log('FACE {} u {:.4f} v {:.4f}'.format(name, u, v))
 
