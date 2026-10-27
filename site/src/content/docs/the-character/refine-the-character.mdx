@@ -1,0 +1,356 @@
+---
+title: Refine the body, head, and clothing
+description: Model the character the way most artists model a body, from one box. Extrude and inset a half torso into arms, legs, and a neck, mirror it, add the head, hair, pack, and clothing as separate shapes, join them, shade them flat, and export the character.
+sidebar:
+  order: 37
+  label: "37. Refine the body, head, and clothing"
+lesson:
+  number: 37
+  minutes: 90
+  learn:
+    - How to model a body from one box with extrude, inset, and scale
+    - How a Mirror modifier models half a symmetric body
+    - When to add a shape as a separate piece instead of extruding it
+    - How to join pieces into one flat-shaded mesh and export it
+  prerequisites: [9, 36]
+---
+
+import { Aside, FileTree, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import threeQuarter from '../../../assets/lessons/refine-the-character/three-quarter.png';
+import deleteBlockout from '../../../assets/lessons/refine-the-character/delete.png';
+import halfTorso from '../../../assets/lessons/refine-the-character/half-torso.png';
+import deleteFace from '../../../assets/lessons/refine-the-character/delete-face.png';
+import mirror from '../../../assets/lessons/refine-the-character/mirror.png';
+import armFace from '../../../assets/lessons/refine-the-character/arm-face.png';
+import arm from '../../../assets/lessons/refine-the-character/arm.png';
+import legs from '../../../assets/lessons/refine-the-character/legs.png';
+import bodyFront from '../../../assets/lessons/refine-the-character/body-front.png';
+import bodySide from '../../../assets/lessons/refine-the-character/body-side.png';
+import neck from '../../../assets/lessons/refine-the-character/neck.png';
+import applied from '../../../assets/lessons/refine-the-character/applied.png';
+import pieceHead from '../../../assets/lessons/refine-the-character/piece-head.png';
+import pieceSkirt from '../../../assets/lessons/refine-the-character/piece-skirt.png';
+import selectSearch from '../../../assets/lessons/refine-the-character/select-search.png';
+import front from '../../../assets/lessons/refine-the-character/front.png';
+import side from '../../../assets/lessons/refine-the-character/side.png';
+import back from '../../../assets/lessons/refine-the-character/back.png';
+import top from '../../../assets/lessons/refine-the-character/top.png';
+import exportName from '../../../assets/lessons/refine-the-character/export-name.png';
+import meadow from '../../../assets/lessons/refine-the-character/meadow.png';
+
+## What you will build
+
+The character's real mesh: one flat-shaded model of about 530 triangles, 1.8 meters tall, that fits the blockout you built in lesson 36. You model it the way most artists model a body. Start with one box, make it half of the torso, and grow the rest from it by **extruding** (pulling a face out into a new part of the mesh) and **insetting** (shrinking a face inward, to leave a border). A **Mirror** modifier makes the other half for free. Shapes that are not part of the skin, the head, hair, pack, belt, and shoulder pads, are separate pieces, joined at the end.
+
+<Figure
+	src={threeQuarter}
+	alt="Blender's 3D viewport with a gray low-poly character standing on the ground: a faceted head with a hair cap and blocks of fringe, a neck, a body with round shoulder pads, a belt, a skirt, and arms and legs made from simple extruded boxes."
+	caption="The refined character, flat shaded."
+/>
+
+<Aside type="note" title="Why box modeling and not a pile of shapes">
+Lesson 36 stacked separate boxes because a blockout only has to answer the question of size. A real body is one connected surface: its shoulder, elbow, and knee are places where the same mesh bends, and the skinning in lesson 40 depends on that. Pulling a body out of one box, with a mirror for the symmetry, is the standard way to get there. Artists who start from a sphere or a plane and "sculpt" with extrudes and edge loops are doing the same thing with a different first shape. A low-poly character is a good place to learn it, because every face is visible and every one counts.
+</Aside>
+
+## Clear the blockout
+
+The blockout was a ruler. Keep the two reference images and delete its parts.
+
+<Steps>
+
+1. Open `character.blend` from lesson 36. Hover the 3D viewport and press <Kbd keys="F3" /> to search every menu, type `select all by type mesh`, and press <Kbd keys="Enter" />. It selects every mesh and leaves the reference images alone, because they are empties.
+
+	<Figure
+		src={selectSearch}
+		alt="Blender's operator search box open over the viewport with the blockout in the background."
+		caption="The F3 search finds menu items by name."
+	/>
+
+2. Press <Kbd keys="X" /> and choose **Delete**. The `character` collection is empty and the two references stay.
+
+	<Figure
+		src={deleteBlockout}
+		alt="The viewport in front view with the delete confirmation over the reference sheet."
+		caption="Only the references stay."
+	/>
+
+</Steps>
+
+## Half a torso
+
+<Steps>
+
+1. With `character` active in the Outliner, hover the viewport and choose **Add > Mesh > Cube** (<Kbd keys="Shift+A" />). Rename it `body` with <Kbd keys="F2" />.
+
+2. Press <Kbd keys="Tab" /> to enter Edit Mode and <Kbd keys="A" /> to select everything. Press <Kbd keys="S" /> and type `0.1`, <Kbd keys="Tab" />, `0.14`, <Kbd keys="Tab" />, `0.265`, then <Kbd keys="Enter" />. A cube is 2 m wide, so these are half sizes: the box is 0.2 m across, 0.28 m deep, and 0.53 m tall.
+
+3. Press <Kbd keys="G" /> and type `0.1`, <Kbd keys="Tab" />, `0`, <Kbd keys="Tab" />, `1.165`, then <Kbd keys="Enter" />. The box now spans `x` from 0 to 0.2 and `z` from 0.9 to 1.43: the torso and hips of the left half of the body, up to the shoulders.
+
+	<Figure
+		src={halfTorso}
+		alt="Blender in Edit Mode with the half-torso box lying beside the center line of the front reference sheet, covering the left half of the sheet's torso and hips."
+		caption="Half the torso: its right face is on the center line."
+	/>
+
+4. Press <Kbd keys="3" /> for face select mode. Press <Kbd keys="Ctrl+Numpad 3" mac="Cmd+Numpad 3" /> for the left view, click the face that faces the center line, press <Kbd keys="X" />, and choose **Faces**. It faces the other half of the body, which the Mirror modifier will make, so it must go.
+
+	<Figure
+		src={deleteFace}
+		alt="The Delete menu in Edit Mode listing Vertices, Edges, Faces, Only Edges and Faces, and Only Faces."
+		caption="Delete the face on the center line."
+	/>
+
+</Steps>
+
+## The Mirror modifier
+
+<Steps>
+
+1. Open the **Modifiers** tab, the wrench, and choose **Add Modifier**. Type `mirror`, and press <Kbd keys="Enter" />. The axis is **X**, and **Merge** is on at `0.001 m`, which welds the two halves where their points meet on the center line.
+
+	<Figure
+		src={mirror}
+		alt="The Mirror modifier's panel with Axis X selected, Bisect and Flip off, Clipping off, and Merge on at 0.001 m."
+		caption="From now on, whatever you do on the left half happens on the right."
+	/>
+
+</Steps>
+
+## Extrude the arms
+
+<Steps>
+
+1. In the right view (<Kbd keys="Numpad 3" />), click the face on the +X side of the torso. Press <Kbd keys="I" />, type `0.09`, and press <Kbd keys="Enter" /> to **inset** it: it shrinks into a smaller face with a border.
+
+2. Press <Kbd keys="S" />, <Kbd keys="Z" />, type `0.29`, and press <Kbd keys="Enter" />, and press <Kbd keys="G" />, <Kbd keys="Z" />, type `0.2` and press <Kbd keys="Enter" />. The face is now the size of the top of an arm and sits at the shoulder.
+
+	<Figure
+		src={armFace}
+		alt="The right view with a small square selected on the side of the torso near the shoulder."
+		caption="The shoulder face, ready to extrude."
+	/>
+
+3. Press <Kbd keys="E" /> and type `0.04`, <Kbd keys="Enter" />. Press <Kbd keys="R" />, <Kbd keys="Y" />, type `69.4`, and press <Kbd keys="Enter" />. The new face now tilts down. Press <Kbd keys="E" /> and type `0.43`, <Kbd keys="Enter" />: the arm. Extrude `0.015`, scale it by `1.25`, and extrude `0.1`: the cuff and the hand.
+
+4. Press <Kbd keys="Numpad 1" /> for the front view.
+
+	<Figure
+		src={arm}
+		alt="The front view with the left arm angled down from the shoulder, ending in a slightly wider hand, and the right arm doing the same on the other side."
+		caption="Both arms, from one extrusion."
+	/>
+
+</Steps>
+
+## Extrude the legs
+
+<Steps>
+
+1. In the bottom view (<Kbd keys="Ctrl+Numpad 7" mac="Cmd+Numpad 7" />), click the bottom face of the half torso. Press <Kbd keys="I" />, type `0.035`, and press <Kbd keys="Enter" /> to leave a gap at the center, and press <Kbd keys="S" />, type `1`, <Kbd keys="Tab" />, `0.62`, <Kbd keys="Tab" />, `1`, and press <Kbd keys="Enter" /> to narrow it into a leg's footprint.
+
+2. Extrude down in four steps. For each, press <Kbd keys="E" />, type the distance, press <Kbd keys="Enter" />, then <Kbd keys="S" /> and the scale:
+
+	| Part | Extrude | Scale after |
+	|---|---|---|
+	| Thigh | `0.4` | `0.95` |
+	| Shin | `0.3` | `0.95` |
+	| Boot shaft | `0.1` | `1.15` |
+	| Boot | `0.1` | none |
+
+	The mesh now ends at `z = 0`, the ground.
+
+	<Figure
+		src={legs}
+		alt="The front view of both legs, each a long box that narrows at the knee and widens at the boot, standing on the ground line."
+		caption="The legs."
+	/>
+
+3. In the front view, click the front face of the boot and extrude it `0.13` forward.
+
+	<Figure
+		src={bodyFront}
+		alt="The front view in Edit Mode: the whole body from neck to boots over the reference sheet, with a seam down the middle from the mirror."
+		caption="From the front."
+	/>
+
+	<Figure
+		src={bodySide}
+		alt="The left view: the body as a tall box with legs and a boot reaching forward, over the side reference sheet."
+		caption="From the side."
+	/>
+
+</Steps>
+
+## The neck
+
+<Steps>
+
+1. In the top view, click the top face of the torso (it is the only face looking up at `z = 1.43`). Press <Kbd keys="E" />, type `0`, and press <Kbd keys="Enter" /> to make a copy of the face in place. Press <Kbd keys="S" /> and scale to `0.25`, <Kbd keys="Tab" />, `0.4`, <Kbd keys="Tab" />, `1`. Scaling is around the face's own center, which is 0.1 m from the center line, so the face leaves the center line. Press <Kbd keys="G" /> and type `-0.075`, <Kbd keys="Tab" />, `0`, <Kbd keys="Tab" />, `0`, and <Kbd keys="Enter" /> to put it back, between 0 and 0.05.
+
+2. Press <Kbd keys="E" /> and type `0.14`: the neck rises to `z = 1.57`, where the head will cover its top.
+
+	<Figure
+		src={neck}
+		alt="The front view with the narrow neck rising from the center of the shoulders."
+		caption="The neck: 0.1 m wide once mirrored."
+	/>
+
+</Steps>
+
+## Apply the mirror
+
+The pieces you add next are symmetric by themselves and must not be mirrored a second time. **Apply** the modifier, which turns its result into real faces.
+
+<Steps>
+
+1. Press <Kbd keys="Tab" /> for Object Mode. Hover the Mirror modifier's panel and press <Kbd keys="Ctrl+A" mac="Cmd+A" />. The modifier is gone and the mesh now holds both halves: 112 faces.
+
+	<Figure
+		src={applied}
+		alt="The Modifiers tab with no modifiers, and the viewport showing the full mirrored body."
+		caption="The modifier is applied. The mesh is whole."
+	/>
+
+</Steps>
+
+## Pieces
+
+Some shapes are not the body's skin: a head is a ball sitting on a neck, hair is a cap sitting on a head, a pack is a box sitting on a back. Each is a primitive, added, sized, and moved into place. For every piece in the table:
+
+<Steps>
+
+1. Press <Kbd keys="Shift+A" />, type `ico sphere` or `cube`, and press <Kbd keys="Enter" />.
+
+2. Open the **Add** panel at the lower left, and set its values: for an ico sphere, **Subdivisions** and **Radius**, for a cube **Size** `2`, and **Location** and, for the fringe, **Rotation Y**.
+
+3. Press <Kbd keys="F2" /> and name it. Press <Kbd keys="S" />, type the three **half sizes** with <Kbd keys="Tab" /> between them, press <Kbd keys="Enter" />, then <Kbd keys="Ctrl+A" mac="Cmd+A" /> and choose **Scale**, and <Kbd keys="S" /> again to be sure nothing is still scaled.
+
+</Steps>
+
+An **ico sphere** is a sphere made from triangles, so its facets are even. At **Subdivisions** `2` it has 80 faces; at `1`, 20.
+
+| Piece | Shape | Subdivisions | Half sizes | Location | Rotation `Y` |
+|---|---|---|---|---|---|
+| `head` | ico sphere | `2` | `0.115`, `0.125`, `0.14` | `0`, `0`, `1.66` | none |
+| `nose` | cube | none | `0.017`, `0.022`, `0.027` | `0`, `-0.135`, `1.64` | none |
+| `hair` | ico sphere | `2` | `0.135`, `0.14`, `0.125` | `0`, `0.02`, `1.675` | none |
+| `hair_back` | ico sphere | `1` | `0.11`, `0.08`, `0.11` | `0`, `0.115`, `1.65` | none |
+| `fringe_1` | cube | none | `0.035`, `0.035`, `0.035` | `-0.08`, `-0.105`, `1.745` | `18` |
+| `fringe_2` | cube | none | `0.035`, `0.035`, `0.035` | `0`, `-0.11`, `1.755` | none |
+| `fringe_3` | cube | none | `0.035`, `0.035`, `0.035` | `0.08`, `-0.105`, `1.745` | `-18` |
+| `pack` | cube | none | `0.14`, `0.07`, `0.15` | `0`, `0.18`, `1.22` | none |
+| `belt` | cube | none | `0.21`, `0.15`, `0.03` | `0`, `0`, `1.03` | none |
+| `skirt` | cube | none | `0.22`, `0.155`, `0.085` | `0`, `0`, `0.86` | none |
+| `pad.L` | ico sphere | `1` | `0.085`, `0.085`, `0.075` | `0.215`, `0`, `1.40` | none |
+| `pad.R` | ico sphere | `1` | `0.085`, `0.085`, `0.075` | `-0.215`, `0`, `1.40` | none |
+
+<Figure
+	src={pieceHead}
+	alt="The viewport with the head, nose, hair, and fringe pieces on the neck, showing a faceted ball with a hair cap and block fringe."
+	caption="The head and hair."
+/>
+
+<Figure
+	src={pieceSkirt}
+	alt="The character from the front with the pack, belt, skirt, and shoulder pads added to the body."
+	caption="Pack, belt, skirt, and pads."
+/>
+
+The character faces -Y, like the blockout, so the nose and the fringe have negative `Y` and the pack, behind it, has positive `Y`. The pads and `pad.R`'s mirror image are two pieces, because the Mirror modifier is gone.
+
+## Join, flatten, and check
+
+<Steps>
+
+1. Select every mesh with <Kbd keys="F3" />, `select all by type mesh`. Then <Kbd keys="Ctrl" />-click `body` in the Outliner, so it is the **active** object, the one the others join into. Press <Kbd keys="Ctrl+J" mac="Cmd+J" />. Thirteen objects become one: `body`.
+
+2. Press <Kbd keys="F3" />, type `shade flat`, and press <Kbd keys="Enter" />. Every face now has its own light, and the facets show.
+
+3. Check: the mesh has 374 faces and 528 triangles, and its lowest point is `z = 0` and its highest `1.8`.
+
+</Steps>
+
+<Figure
+	src={front}
+	alt="The finished character from the front, over the reference sheet: a faceted head with hair, narrow neck, shoulder pads, body, belt, skirt, arms with hands, legs, and boots."
+	caption="Front."
+/>
+
+<Figure
+	src={side}
+	alt="The finished character from the left: the pack on the back, the nose and fringe at the front, and boots reaching forward."
+	caption="Side."
+/>
+
+<Figure
+	src={back}
+	alt="The finished character from the back: the pack on the middle of the back and the back of the hair."
+	caption="Back."
+/>
+
+<Figure
+	src={top}
+	alt="The character from above: the head and hair on top, the shoulder pads on both sides, and the boots below."
+	caption="Top: what the game camera sees."
+/>
+
+## Export it
+
+Use the same exporter as in lesson 36, on the `character` collection.
+
+<Steps>
+
+1. Open the **Collection** tab, click the exporter's folder button, and save `character.glb` in the `art/character` folder of your Godot project, next to `character_blockout.glb`.
+
+	<Figure
+		src={exportName}
+		alt="Blender's File Browser in art/character with character.glb as the file name."
+		caption="A new file name on the same exporter."
+	/>
+
+2. Click **Export All**, then save the Blender file with <Kbd keys="Ctrl+S" mac="Cmd+S" />.
+
+</Steps>
+
+Blender's glTF exporter keeps flat shading by writing each corner of a face separately, so the facets survive into Godot. Drop `character.glb` into the meadow as you did the blockout, to see how it reads.
+
+<Figure
+	src={meadow}
+	alt="The game at noon, close: the gray character with a hair cap and shoulder pads standing in the grass between two pines."
+	caption="The character in the meadow, with Godot's default material. Lesson 38 gives it color."
+/>
+
+## Try it
+
+- Extrude the body's hand into a thumb: select a hand's front face, inset it, extrude. How many extra faces does it cost?
+- Move the `skirt` up by 0.05 and check the side view. Which is better, a long tunic or a short one?
+- Hover the viewport and press <Kbd keys="Numpad 7" /> for the top view. Is the head the biggest shape, as it should be for your camera?
+
+## If it does not work
+
+- **A mirrored half is missing.** The center-line face is still there, or the half torso is not touching the center line. The box must span `x` from 0 to 0.2.
+- **The mirror creates a gap in the middle of the neck.** The neck's face was scaled and left off the center line. Move it back with the `-0.075` step.
+- **The pieces appear twice.** You added them while the Mirror modifier was still on `body`, or you added them before applying it. Apply the modifier first.
+- **Joining makes `reference_front` part of the body.** The empties were selected. Use `select all by type mesh`, which skips them.
+- **The shading is smooth in Godot.** You did not use Shade Flat before the export, or you ran Shade Auto Smooth. Run `shade flat` and export again.
+
+## Checkpoint
+
+Your project now contains:
+
+<FileTree>
+- art
+  - character
+    - character_blockout.glb
+    - **character.glb**
+- art_source
+  - character
+    - **character.blend**, with the character joined into `body`
+</FileTree>
+
+Commit your work: `git add .` and `git commit -m "Model the character"`. In the next lesson you unwrap the character and paint its colors.
+
+<Checkpoint />
