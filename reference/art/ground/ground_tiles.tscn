@@ -6,6 +6,7 @@
 [ext_resource type="Texture2D" uid="uid://brjcn7cipilxo" path="res://art/ground/edge_noise.tres" id="3_t4twk"]
 [ext_resource type="Texture2D" uid="uid://dl0r3pghhe2x3" path="res://art/ground/dirt_albedo.png" id="4_joqt5"]
 [ext_resource type="Shader" uid="uid://b5045s65yoco8" path="res://art/shaders/lake_bed.gdshader" id="6_gb887"]
+[ext_resource type="Texture2D" uid="uid://mrdcpi12ckdt" path="res://art/water/wave_normals.tres" id="7_joqt5"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_815wc"]
 render_priority = 0
@@ -65,6 +66,8 @@ shader_parameter/albedo_tint = Color(0.45, 0.43, 0.36, 1)
 shader_parameter/texture_scale = 0.5
 shader_parameter/edge_noise = ExtResource("3_t4twk")
 shader_parameter/edge_noise_scale = 0.4
+shader_parameter/wave_normals = ExtResource("7_joqt5")
+shader_parameter/caustics = 0.7
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_1a7nq"]
 material = SubResource("ShaderMaterial_5wsld")

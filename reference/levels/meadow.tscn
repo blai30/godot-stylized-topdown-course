@@ -597,7 +597,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0, -3)
 transform = Transform3D(0.31465855, 0, 0.8645172, 0, 0.92, 0, -0.8645172, 0, 0.31465855, -7.5, 0, -0.5)
 
 [node name="TreeOak3" parent="Trees" unique_id=1939371252 instance=ExtResource("9_x3fdv")]
-transform = Transform3D(-0.88468426, 0, -0.61946255, 0, 1.08, 0, 0.61946255, 0, -0.88468426, -2.6, 0, -4.8)
+transform = Transform3D(-0.88468426, 0, -0.61946255, 0, 1.08, 0, 0.61946255, 0, -0.88468426, -0.3, 0, -3)
 
 [node name="TreeOak4" parent="Trees" unique_id=1671738266 instance=ExtResource("9_x3fdv")]
 transform = Transform3D(-0.76604444, 0, 0.64278764, 0, 1, 0, -0.64278764, 0, -0.76604444, 4.5, 0, -4.2)

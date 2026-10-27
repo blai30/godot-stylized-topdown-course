@@ -1,0 +1,19 @@
+[gd_resource type="ShaderMaterial" format=3 uid="uid://bqmcmbkgjyim3"]
+
+[ext_resource type="Shader" uid="uid://dpm7a6476cn5d" path="res://art/shaders/water.gdshader" id="1_rca7i"]
+[ext_resource type="Texture2D" uid="uid://mrdcpi12ckdt" path="res://art/water/wave_normals.tres" id="2_qi7wc"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_rca7i")
+shader_parameter/wave_normals = ExtResource("2_qi7wc")
+shader_parameter/scatter_color = Color(0.039, 0.055, 0.141, 1)
+shader_parameter/absorption = Vector3(3, 1.5, 1)
+shader_parameter/min_opacity = 0.25
+shader_parameter/wave_strength = 0.8
+shader_parameter/wave_meters = Vector3(30, 9, 2.5)
+shader_parameter/wave_speed = Vector3(0.025, 0.06, 0.13)
+shader_parameter/wave_angle = Vector3(0, 0.52, -0.7)
+shader_parameter/wave_weight = Vector3(0.6, 0.45, 0.2)
+shader_parameter/calm_thickness = 0.3
+shader_parameter/reflection_boost = 0.28

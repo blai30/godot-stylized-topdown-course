@@ -1,0 +1,392 @@
+---
+title: "The water shader: waves, refraction, and the shoreline"
+description: Give the water the sky and the light, waves from one noise texture, a bed bent by the ripples, reflections of the clouds and the shore, and a faint foam line where the water is thin, and judge it at noon, dusk, and night.
+sidebar:
+  order: 46
+  label: "46. The water shader: waves, refraction, and the shoreline"
+lesson:
+  number: 46
+  minutes: 130
+  learn:
+    - How Godot's own sky reflection can be put on water with a metal surface and Fresnel
+    - How one seamless noise texture becomes three layers of waves
+    - How refraction bends the bed seen through the water, and how to keep the bank from bleeding in
+    - How a short march through the screen finds the reflections of trees and banks
+    - How thin water gives a ragged foam line at every edge
+  prerequisites: [23, 27, 45]
+---
+
+import { Aside, Code, FileTree, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Solution from '../../../components/Solution.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import piece1 from '../../../checkpoints/46/pieces/piece-1.gdshader?raw';
+import piece2 from '../../../checkpoints/46/pieces/piece-2.gdshader?raw';
+import piece3 from '../../../checkpoints/46/pieces/piece-3.gdshader?raw';
+import piece4 from '../../../checkpoints/46/pieces/piece-4.gdshader?raw';
+import piece5 from '../../../checkpoints/46/pieces/piece-5.gdshader?raw';
+import piece6 from '../../../checkpoints/46/pieces/piece-6.gdshader?raw';
+import waveNormals from '../../../checkpoints/46/files/art/water/wave_normals.tres?raw';
+import waterMaterial from '../../../checkpoints/46/files/art/water/water.tres?raw';
+import newNoise from '../../../assets/lessons/water-waves/new-noise.png';
+import waveNoise from '../../../assets/lessons/water-waves/wave-noise.png';
+import saveNoise from '../../../assets/lessons/water-waves/save-noise.png';
+import light from '../../../assets/lessons/water-waves/light.png';
+import lightEditor from '../../../assets/lessons/water-waves/light-editor.png';
+import waveParam from '../../../assets/lessons/water-waves/wave-param.png';
+import waves from '../../../assets/lessons/water-waves/waves.png';
+import wavesClose from '../../../assets/lessons/water-waves/waves-close.png';
+import refractionWall from '../../../assets/lessons/water-waves/refraction-wall.png';
+import refractionClose from '../../../assets/lessons/water-waves/refraction-close.png';
+import reflection from '../../../assets/lessons/water-waves/reflection.png';
+import reflectionWall from '../../../assets/lessons/water-waves/reflection-wall.png';
+import lakeBedParam from '../../../assets/lessons/water-waves/lake-bed-param.png';
+import final from '../../../assets/lessons/water-waves/final.png';
+import finalClose from '../../../assets/lessons/water-waves/final-close.png';
+import finalWall from '../../../assets/lessons/water-waves/final-wall.png';
+import dusk from '../../../assets/lessons/water-waves/dusk.png';
+import night from '../../../assets/lessons/water-waves/night.png';
+import wide from '../../../assets/lessons/water-waves/wide.png';
+import shaderEditor from '../../../assets/lessons/water-waves/shader-editor.png';
+
+## What you will build
+
+Lesson 45's water is the right color and nothing else: flat, dark, and the same at noon and at midnight. This lesson makes it look like water. It reflects the sky and the shore, it moves with the wind, it bends the bed under it a little, and where it meets a bank it leaves a thin pale line. At dusk it turns warm, and at night it goes dark.
+
+<Figure
+	src={finalClose}
+	alt="A close view of the pond at noon: blue water with soft ripples, the earth bank above it reflected in the water as a darker band, and a thin pale foam line along the bank's foot."
+	caption="The finished water, close: the bank in its reflection and the foam line at its foot."
+/>
+
+You build it in five steps, each a version of the shader you can run. The shader grows from about 60 lines to 210, and every look value in it is a uniform in a group in the Inspector, so you can tune the water without touching the code.
+
+## The sky and the light
+
+The first step changes how the water is lit. Lesson 45's water was unshaded, so its color was the same in every light. Real water is lit, and it also reflects the sky, and Godot already has a sky: the one the day animation turns through the hours, which every shiny surface can reflect.
+
+A surface reflects the sky in Godot when it is a metal, and a metal's color is how much of the sky it reflects. So the water is declared a perfect metal, `METALLIC = 1.0`, and its `ALBEDO` is not a color but a number: the share of the sky that it reflects. That number is the **Fresnel** reflectance: how much a surface reflects grows as you look at it more edge-on. For water it is about 2 percent looking straight down, and rises toward 100 percent at a grazing angle, by Schlick's formula `F0 + (1 - F0) * pow(1 - facing, 5)`, where `facing` is how directly the surface faces the eye.
+
+The template's camera looks down at about 55 degrees, a long way from a grazing angle, so the formula alone gives a faint reflection of 2 or 3 percent. A pond in a game wants more, so a `reflection_boost` is added on top. It is a number you can change.
+
+A metal has no diffuse color, so the water's own color, the scatter, cannot go out through `ALBEDO`. It goes through a `light()` function instead, which adds it to each light's specular. That is also what makes it follow the day: the sun's color tints it warm at dusk, and a night without a sun leaves it dark.
+
+<Steps>
+
+1. Open `art/shaders/water.gdshader`. Remove `render_mode unshaded;`. The shader now reads the lighting, and the color's job is split in three: the sky's share in `ALBEDO`, the bed in `EMISSION`, and the scatter in `light()`.
+
+</Steps>
+
+Edit the shader so that:
+
+- the depth reading is a function: a comment says it is the view-space position of the opaque scene at a screen position, and `vec3 scene_at(vec2 uv, mat4 inverse_projection)` holds lesson 45's three lines on `uv` and returns `position.xyz / position.w`. In `fragment()`, `vec3 behind = scene_at(SCREEN_UV, INV_PROJECTION_MATRIX);` replaces them, and `float thickness = length(behind - VERTEX);` stays;
+- a group named `reflection` holds one uniform, `reflection_boost`, a `float` with `hint_range(0.0, 1.0)` and `0.28`, with a comment: what the water reflects on top of Fresnel, which alone is faint at this camera angle. The `color` group ends before it, and `group_uniforms;` ends this one;
+- a constant `WATER_F0` is `0.02`, with a comment: water's reflectance facing the eye;
+- `varying vec3 scatter_lit;` has a comment: the scatter's color, set in `fragment()` for `light()`;
+- after `transmitted`, `fragment()` has a comment that Godot's reflection of the sky needs a surface that reflects: a metal tinted by how much it should reflect. `float facing = clamp(dot(NORMAL, VIEW), 0.0, 1.0);` and `float reflectance = clamp(WATER_F0 + (1.0 - WATER_F0) * pow(1.0 - facing, 5.0) + reflection_boost, 0.0, 1.0);` follow;
+- `scatter_lit` is what the water's own color is, less the share the bed shows through and the share the sky takes: `max(scatter_color * (1.0 - transmitted) * (1.0 - reflectance), vec3(0.0001))`, and the least is there because a later step raises it to a power;
+- the outputs are `ALBEDO = vec3(reflectance);`, `METALLIC = 1.0;`, `EMISSION = bed * transmitted * (1.0 - reflectance);`, and `ROUGHNESS = 0.08;`. The bed was drawn lit already, so it goes out as emission, and a low roughness gives a sharp reflection;
+- a `light()` function has a comment: each light adds the scatter, wrapped so the side away from the sun keeps some of the sky's light. It sets `float wrapped = clamp((dot(NORMAL, LIGHT) + 0.6) / 1.6, 0.0, 1.0);` and adds `scatter_lit * wrapped * ATTENUATION * LIGHT_COLOR / PI` to `SPECULAR_LIGHT`.
+
+<Solution label="Show the shader after this step">
+	<Code code={piece1} lang="gdshader" title="art/shaders/water.gdshader" />
+</Solution>
+
+Save the shader and run the game.
+
+<Figure
+	src={light}
+	alt="The pond from above in light blue, with a smooth flat surface and a darker band where the bank's foot meets the water."
+	caption="Step 1: the sky's blue on top, the bed under it, and no waves yet."
+/>
+
+The pond is bluer and lighter, and a flat sky is what it reflects: a clear blue. It is smooth as glass because the surface is exactly level.
+
+## The waves
+
+Waves are not a change in the surface's height: the water stays flat, so the line where it meets the bank is exact. They are a change in its normal, the direction it faces, which is what lights and reflects. The normal comes from a **normal map**, a texture that stores a direction in each pixel, and you can make one in Godot without a painting program.
+
+<Steps>
+
+1. In the Inspector, open the resource options, the menu with the small arrow, and choose **New Resource**. Search for `NoiseTexture2D`, and create it.
+
+	<Figure
+		src={newNoise}
+		alt="The Create New Resource dialog with NoiseTexture2D typed in the search field."
+		caption="A resource of its own."
+	/>
+
+2. Set **Width** and **Height** to `256`. Check **Seamless**, so the texture can repeat without a visible seam, and **As Normal Map**, so it stores a direction and not a brightness. Set **Bump Strength** to `6`. Open **Noise**, choose **New FastNoiseLite**, click it, and set **Noise Type** to **Simplex Smooth** and **Frequency** to `0.02`.
+
+	<Figure
+		src={waveNoise}
+		alt="The Inspector showing a NoiseTexture2D with a purple and blue normal map preview, Width 256, Height 256, Seamless and As Normal Map checked, Bump Strength 6, and a FastNoiseLite under Noise."
+		caption="The ripples: a smooth noise as a normal map."
+	/>
+
+3. In the resource options, choose **Save Resource As...** and save it as `wave_normals.tres` in `art/water`.
+
+</Steps>
+
+<Solution label="Show the full wave_normals.tres">
+	<Code code={waveNormals} lang="ini" title="art/water/wave_normals.tres" />
+</Solution>
+
+The water will read this one texture three times, as three layers of ripples at different sizes, speeds, and angles, which crossed make a pattern that never visibly repeats.
+
+The wind decides which way the waves go and how big they are. The template already has a wind: `wind_direction` and `wind_strength` are the shader globals from lesson 27, and its include file reads them. The water includes it too.
+
+Edit the shader so that:
+
+- `#include "res://art/shaders/wind.gdshaderinc"` follows `shader_type spatial;`, and a `uniform sampler2D wave_normals : filter_linear_mipmap, repeat_enable;` with a comment, a seamless normal map of ripples, follows the other two samplers;
+- a group named `waves` follows `color`, with these uniforms, each with a comment: `wave_strength`, a `float` with `hint_range(0.0, 2.0)` and `0.8`; `wave_meters`, a `vec3`, `vec3(30.0, 9.0, 2.5)`: how far each of the three layers repeats, in meters, the big one first; `wave_speed`, `vec3(0.025, 0.06, 0.13)`: how far each layer drifts a second, in repeats; `wave_angle`, `vec3(0.0, 0.52, -0.7)`: each layer's angle from the wind, in radians; `wave_weight`, `vec3(0.6, 0.45, 0.2)`: each layer's weight; and `calm_thickness`, a `float` with `hint_range(0.0, 1.0)` and `0.3`: the waves calm to nothing where the water is thinner than this, in meters, so the edge stays clean;
+- a varying `vec2 world_xz` holds the world position of the vertex, set in a `vertex()` function: `(MODEL_MATRIX * vec4(VERTEX, 1.0)).xz`;
+- a function `vec2 rotate(vec2 value, float angle)` turns a 2D vector by an angle, with the cosine and sine written out;
+- a function `vec2 wave_slope(vec2 position, float heading)` has a comment: the slope of the waves at a point, in world space, three layers of the ripple texture drifting across each other. It loops over the three layers: `float angle = heading + wave_angle[layer];`, `vec2 frame = rotate(position, -angle) / wave_meters[layer];` turns the point into the layer's own frame, so the texture is laid along the wind, and `frame.x -= TIME * wave_speed[layer];` drifts it. Then `vec2 layer_slope = (texture(wave_normals, frame).rg - 0.5) * 2.0;` reads the slope, and `slope += wave_weight[layer] * rotate(layer_slope, angle);` turns it back and adds it in. It returns `slope`;
+- in `fragment()`, after `thickness`, a comment says waves are bigger in the wind and calm where the water is thin. `vec2 heading_xz = normalize(wind_direction);` and `float heading = atan(heading_xz.y, heading_xz.x);` find the wind's angle. `float strength = wave_strength * mix(0.5, 1.0, wind_strength) * smoothstep(0.0, calm_thickness, thickness);` is half strength in no wind and full in the strongest, calming to nothing at the bank. `vec2 slope = wave_slope(world_xz, heading) * strength;`, `vec3 normal_world = normalize(vec3(slope.x, 1.0, slope.y));`, and `NORMAL = normalize((VIEW_MATRIX * vec4(normal_world, 0.0)).xyz);` set the surface's normal, turned into view space.
+
+<Solution label="Show the shader after this step">
+	<Code code={piece2} lang="gdshader" title="art/shaders/water.gdshader" />
+</Solution>
+
+<Steps>
+
+1. Save the shader. Open `art/water/water.tres`. Under **Shader Parameters**, set **Wave Normals** to `wave_normals.tres` with **Quick Load...**, and save the material with **Save Resource** in the resource options.
+
+	<Figure
+		src={waveParam}
+		alt="The Inspector showing the water's ShaderMaterial with its Wave Normals parameter set to a noise texture, and the Color, Waves, and Reflection groups of parameters."
+		caption="The texture on the water's material."
+	/>
+
+2. Run the game.
+
+</Steps>
+
+<Figure
+	src={waves}
+	alt="The pond from above in blue, with soft light and dark ripples across it and a darker band at the bank's foot."
+	caption="Step 2: waves, and the sky's reflection moving with them."
+/>
+
+<Figure
+	src={wavesClose}
+	alt="A close view of the pond: blue water with soft bands of lighter and darker ripples."
+	caption="Close: three layers of ripples crossing."
+/>
+
+The ripples are subtle, and meant to be. They show where the sky's reflection tilts, a light and a dark that drift across the pond, and they will show more in the next step, where they bend the bed.
+
+## Refraction
+
+Looking down through water at a bed, the view ray bends where it enters the surface, and a rippled surface bends it a different way at every point, so the bed seems to wobble. Refraction in a shader is a lie that looks right: read the picture of the bed from a point slightly off the true one, off by the waves' slope, and farther off the deeper the water.
+
+The lie has a catch. Near the bank the shifted point can land on the bank's wall in front of the water, or on grass, and the water shows pieces of the bank that are above it: the bank seems to bleed into the water. The shader checks. If the shifted point is in front of the water's surface, it is not under water, and the shader falls back to the true point.
+
+Edit the shader so that:
+
+- a group named `refraction` follows `waves`, with `refraction_strength`, a `float` with `hint_range(0.0, 0.2)` and `0.06`, and `refraction_depth`, a `float` with `hint_range(0.0, 4.0)` and `1.5`: refraction bends the bed by at most this many meters of water's worth;
+- a function `vec2 screen_of(vec3 position, mat4 projection)` has a comment: the screen position of a view-space position. It multiplies `projection * vec4(position, 1.0)` and returns `clip.xy / clip.w * 0.5 + 0.5`;
+- in `fragment()`, where the bed was read, a comment says the bed is read where the waves bend the view ray, and that a bent sample in front of the surface would show the bank bleeding in, so it falls back. `vec2 bed_uv = SCREEN_UV;` is the true point. `vec3 bend = (VIEW_MATRIX * vec4(normal_world.x, 0.0, normal_world.z, 0.0)).xyz * refraction_strength * min(thickness, refraction_depth);` is the shift in view space. `vec2 bent = SCREEN_UV + screen_of(VERTEX + bend, PROJECTION_MATRIX) - screen_of(VERTEX, PROJECTION_MATRIX);` is the shifted point on the screen. `vec3 bent_behind = scene_at(bent, INV_PROJECTION_MATRIX);` is what lies there, and `if (bent_behind.z < VERTEX.z)` says it is behind the water, so `bed_uv = bent;` and `thickness = length(bent_behind - VERTEX);` use it. `vec3 bed = textureLod(screen_texture, bed_uv, 0.0).rgb;` finishes.
+
+<Solution label="Show the shader after this step">
+	<Code code={piece3} lang="gdshader" title="art/shaders/water.gdshader" />
+</Solution>
+
+Save the shader and run the game.
+
+<Figure
+	src={refractionWall}
+	alt="The bank's far wall close up: the earth wall's foot dips into the blue water, with the water's surface softly bending the wall under it."
+	caption="Step 3: the wall's foot, seen through the ripples."
+/>
+
+<Figure
+	src={refractionClose}
+	alt="A close view of the pond's water, with the bed wobbling under the ripples."
+	caption="Close: the bed wobbles under the surface."
+/>
+
+Look at the wall's foot. It is seen through the water, and the ripples wobble it, and it does not bleed up over the surface. Set `refraction_strength` to `0.2` to see what the fallback is for, then put it back.
+
+## Reflections
+
+The sky is already reflected, through the metal. What is missing is everything else: the bank's wall reflected in the water at its foot, the trees on the shore, the clouds. This step adds the clouds, a plane of noise overhead, and a **screen-space reflection**: a short march along the reflected ray through the picture, to find what it hits.
+
+A tree on the pond's north shore gives the water something to reflect. In `levels/meadow.tscn`, select `Trees/TreeOak3` and set its **Position** to `-0.3, 0, -3.0`, a meter beyond the pond's north bank. Save the scene.
+
+The march works in the picture the camera has already drawn. Starting at the water's surface, it steps along the reflected ray in 24 steps up to 8 meters, and at each step looks at the picture's depth where that point projects on the screen. The first step where the ray is behind what the picture shows is a hit. It then halves the last step four times to find the hit's place, and reads the picture's color there. If the ray leaves the screen, or finds nothing, there is no reflection and the sky shows.
+
+It has limits, and the shader works around them. A reflection of a far object, a few pixels across, would shimmer, so it fades out when a pixel covers more water than `reflect_fade`. A hit has a `reflect_thickness`, so a ray does not hit a surface that it passes far behind, and the hit fades as the ray's distance reaches `reflect_reach`.
+
+Edit the shader so that:
+
+- the `reflection` group gets `reflect_reach`, a `float` with `hint_range(1.0, 16.0)` and `8.0`, and `reflect_thickness`, a `float` with `hint_range(0.1, 4.0)` and `1.0`, with a comment: how far the screen-space reflection looks, in meters, and how far behind a surface it still counts as a hit; and `reflect_fade`, a `vec2`, `vec2(0.06, 0.08)`, with a comment: the reflection fades out as a pixel grows from x to y meters, where a tree's reflection is a few pixels;
+- a group named `clouds` follows `reflection`, with a comment: the reflected clouds lie on a plane this many meters over the water, are this many meters across, and drift this fast. `cloud_height`, a `float` with `hint_range(1.0, 60.0)` and `12.0`, `cloud_meters`, `hint_range(10.0, 200.0)`, `70.0`, `cloud_speed`, `hint_range(0.0, 3.0)`, `0.5`, and `cloud_opacity`, `hint_range(0.0, 1.0)`, `0.3`;
+- two constants, each with a comment: `REFLECT_STEPS`, an `int`, `24`, and `REFLECT_REFINE`, `4`: the reflection march's steps, a constant because a loop needs one. Two globals, `global uniform vec4 rim_color : source_color;` and `global uniform float rim_strength;`, have a comment: the day animation's sky glow, which also tints the reflected clouds and fades them at night;
+- a function `vec3 reflection_hit(vec3 origin, vec3 direction, mat4 projection, mat4 inverse_projection)` has a comment: where a view-space ray first passes behind the opaque scene, refined by bisection, with `xy` the screen position and `z` how much to trust it. It steps `along = reflect_reach * float(i) / float(REFLECT_STEPS)`, finds `point`, and the screen position `uv`, and returns `vec3(0.0)` if `uv` is off the screen. `float behind = scene_at(uv, inverse_projection).z - point.z;` is how far the ray is behind the scene, and when `behind` is greater than 0 and less than `reflect_thickness`, the loop refines: `before` and `after` bracket the crossing, and four times `middle` is halfway, with `after = middle` if the scene is in front of the probe and `before = middle` if not. The result is `vec3(hit, smoothstep(0.0, 0.06, min(edge.x, edge.y)) * (1.0 - after / reflect_reach))`, where `edge` is how near the hit is to the screen's border, so the reflection fades toward it;
+- in `fragment()`, after `reflectance`, `vec3 toward_eye = vec3(0.0, 0.0, 1.0);` is the direction to the camera, which for an orthographic camera is the same everywhere, and `vec3 reflected = reflect(-toward_eye, NORMAL);` is the ray's direction. `float meters_per_pixel = max(length(dFdx(world_xz)), length(dFdy(world_xz)));` is how much water one pixel covers. `vec3 hit = reflection_hit(VERTEX, reflected, PROJECTION_MATRIX, INV_PROJECTION_MATRIX);` is the march, `float found = hit.z * (1.0 - smoothstep(reflect_fade.x, reflect_fade.y, meters_per_pixel));` is how much to trust it, and `vec3 seen = textureLod(screen_texture, hit.xy, 0.0).rgb * found;` is the color;
+- the clouds follow. `vec3 cloud_normal` is `normalize(mix((VIEW_MATRIX * vec4(0.0, 1.0, 0.0, 0.0)).xyz, NORMAL, 0.3))`, which lets the waves bend the clouds only a little, or they scatter into speckle. `vec3 reflected_world = mat3(INV_VIEW_MATRIX) * reflect(-toward_eye, cloud_normal);` is the ray in the world. `vec2 cloud_at` is `world_xz + reflected_world.xz * (cloud_height / max(reflected_world.y, 0.1)) - normalize(wind_direction) * TIME * cloud_speed`, where the ray meets the cloud plane, drifted with the wind. `float cloud_noise = texture(wave_normals, cloud_at / cloud_meters).r;` reads the same texture as a cloud pattern, `float cover = smoothstep(0.45, 0.7, cloud_noise) * cloud_opacity * (1.0 - found);` is how much cloud there is where nothing nearer is reflected, and `vec3 cloud_color = rim_color.rgb * rim_strength * 2.0;` is the clouds' color, the day animation's sky glow, so they fade at night;
+- the sky's share is now what is left after the found reflections and the clouds: `float sky_share = reflectance * (1.0 - found) * (1.0 - cover);`, and `ALBEDO = vec3(sky_share);`. The emission adds the reflections: `EMISSION = bed * transmitted * (1.0 - reflectance) + seen * reflectance + cloud_color * cover * reflectance;`.
+
+<Solution label="Show the shader after this step">
+	<Code code={piece4} lang="gdshader" title="art/shaders/water.gdshader" />
+</Solution>
+
+Save the shader and run the game.
+
+<Figure
+	src={reflection}
+	alt="The pond from above in blue with soft ripples, the bank's earth wall reflected as a dark band below its foot, and a pale cloud shape in the water."
+	caption="Step 4: the bank reflected, and the clouds."
+/>
+
+<Figure
+	src={reflectionWall}
+	alt="A close view of the bank's foot: the earth wall above the water and its reflection below it, wobbling with the ripples."
+	caption="The wall and its reflection."
+/>
+
+The wall's reflection is a dark ragged band below the wall's foot, bent by the ripples, and the tree trunk on the shore stands in the water too. The sky's blue shows between them.
+
+## The edge
+
+A last step finishes the edges: a thin pale line where the water is thin, which is **foam**, and a slow change in the water's color from place to place.
+
+The foam is where the thickness is small, which is along the foot of every bank, and around anything standing in the water, because the shader already knows the thickness. A line a fixed width would be a ruler's edge, so the width wanders with a noise, and the line is ragged.
+
+The color change reads a slow noise, too: the same texture, read at two sizes and drifting, whose value lifts or lowers the scatter's color a little from place to place, so the water is not quite the same everywhere. These noises are called `mottle`.
+
+Edit the shader so that:
+
+- `color_wobble`, a `float` with `hint_range(0.0, 0.6)` and `0.3`, ends the `color` group, with a comment: how much the color wobbles from place to place, as a share;
+- a group named `edge` follows `clouds`, with `hairline`, a `float` with `hint_range(0.0, 1.0)` and `0.35`, `hairline_color`, a `vec3` with `source_color` and `vec3(0.9, 0.93, 0.95)`, and `hairline_thickness`, a `vec2`, `vec2(0.08, 0.16)`, with a comment: the hairline is as thick as two pixels' worth of the water's thickness, between these two meters;
+- in `fragment()`, after the bed, `float mottle` has a comment: a slow patchwork of noise, for the color's wobble and the foam's ragged width. It is `0.6 * texture(wave_normals, world_xz / 7.0 + vec2(TIME * 0.004, 0.0)).g + 0.4 * texture(wave_normals, world_xz / 2.3 - vec2(0.0, TIME * 0.01)).b`;
+- after `transmitted`, `float wobble = (mottle * 2.0 - 1.0) * color_wobble;` has a comment: the color wobbles a little from place to place, as if the water were not quite the same everywhere. A comment says foam is where the water is thin, along the bank and around anything standing in it, and a noise moves how thin counts, so the edge is ragged. `float foam_width = clamp(2.0 * fwidth(thickness), hairline_thickness.x, hairline_thickness.y) * (0.5 + 1.5 * mottle);` is the width, as two pixels' worth of the thickness, kept between the two limits, and `float line = hairline * pow(1.0 - smoothstep(0.0, foam_width, thickness), 2.0);` is the foam;
+- `scatter_lit` raises its color to a power that the wobble moves: `pow(max(scatter_color * (1.0 - transmitted) * (1.0 - reflectance), vec3(0.0001)), vec3(1.0 + wobble))`;
+- the outputs make way for the foam, which is a light that the water does not reflect: `EMISSION = (bed * transmitted * (1.0 - reflectance) + seen * reflectance + cloud_color * cover * reflectance) * (1.0 - line) + hairline_color * line;` and `ROUGHNESS = mix(0.08, 0.6, line);`.
+
+<Solution label="Show the shader after this step">
+	<Code code={piece5} lang="gdshader" title="art/shaders/water.gdshader" />
+</Solution>
+
+The lake bed gets a last touch of its own: **caustics**, the bright net that sunlight draws on a pool's floor. They are two ripple layers drifting across each other, bright where both are near the edge of a crest. Add to `lake_bed.gdshader` a `uniform sampler2D wave_normals : filter_linear_mipmap, repeat_enable;`, a `uniform float caustics : hint_range(0.0, 2.0) = 0.7;` with a comment, how bright the caustics are, and in `fragment()`, after `ALBEDO`, two lines for `first` and `second`, each `1.0 - abs(texture(wave_normals, ...).r * 2.0 - 1.0)` at its own size, `world_xz / 1.7` and `world_xz / 1.1`, drifting at different speeds, and `ALBEDO *= 1.0 + caustics * pow(first * second, 4.0) * 5.0;`.
+
+<Solution label="Show the full lake_bed.gdshader">
+	<Code code={piece6} lang="gdshader" title="art/shaders/lake_bed.gdshader" />
+</Solution>
+
+<Steps>
+
+1. Save both shaders. Open `art/ground/ground_tiles.tscn`, select **Water**, and set the **Wave Normals** parameter of its material to `wave_normals.tres` with **Quick Load...**.
+
+	<Figure
+		src={lakeBedParam}
+		alt="The Godot editor with the ground tiles scene open, the Water tile selected, and its material's Wave Normals parameter set to a noise texture."
+		caption="The wave texture on the lake bed's material."
+	/>
+
+2. Save the scene and choose **Scene > Export As... > MeshLibrary...**, over `art/ground/ground_tiles.meshlib`, as in lesson 45. Run the game.
+
+</Steps>
+
+<Figure
+	src={shaderEditor}
+	alt="The Shader Editor showing the final water shader, with its groups of uniforms for color, waves, refraction, reflection, clouds, and edge."
+	caption="The finished shader: six groups of uniforms."
+/>
+
+<Figure
+	src={final}
+	alt="The pond at noon from above: blue water with the earth bank above it reflected, a pale line along the bank's foot, and green grass around."
+	caption="Step 5: the finished water, at noon."
+/>
+
+<Figure
+	src={finalWall}
+	alt="The bank's far wall close up at noon: earth above, a thin pale ragged foam line at the foot, a dark reflection of the wall, and blue water below."
+	caption="The foam line at the bank's foot."
+/>
+
+## Noon, dusk, and night
+
+The shader was built to follow the day, and the day animation drives it. Run the game and let `DayClock` turn, or set its time in the Inspector.
+
+<Figure
+	src={dusk}
+	alt="The pond at dusk: the water a pale violet with a warm band at the bank, the grass golden around it."
+	caption="Dusk. The sun's warm light turns the water violet."
+/>
+
+<Figure
+	src={night}
+	alt="The pond at night: dark blue water, a dim bank, and the grass dark blue-green."
+	caption="Night. The water is dark, with no sun to light it."
+/>
+
+<Figure
+	src={wide}
+	alt="The meadow from above at noon, with the pond a small blue square among grass, trees, rocks, and dirt patches."
+	caption="The pond in the meadow."
+/>
+
+At dusk the sun's color, which the day animation turns warm, lights the scatter, and the sky's reflection is violet, so the water goes from blue to a pale violet. At night there is only the moon, and the scatter, which is lit by it, goes dark, and the clouds fade with the rim's glow. Lesson 45's water would have stayed the same blue in the dark.
+
+## Tune it
+
+Every group is something you can change in the material, with the game running.
+
+- **`color`**: `scatter_color`, `absorption`, `min_opacity` as in lesson 45, and `color_wobble`, how much the color varies. At `0` the water is one color everywhere.
+- **`waves`**: `wave_strength` scales all the ripples. `wave_meters` are the three layers' sizes, `wave_speed` how fast each drifts, and `wave_weight` how much each counts. Make the first layer's weight `0` to lose the slow swell.
+- **`refraction`**: `refraction_strength` is how much the bed wobbles. `0` gives a sheet of glass over the bed.
+- **`reflection`**: `reflection_boost` is how mirror-like the water is. At `0` the reflection is the faint 2 to 3 percent of Fresnel alone. `reflect_reach` is how far the march looks, and `reflect_thickness` and `reflect_fade` decide what counts as a hit.
+- **`clouds`**: `cloud_height`, `cloud_meters`, `cloud_speed`, and `cloud_opacity` set the clouds' reflection. At `0` opacity there are none.
+- **`edge`**: `hairline` is how bright the foam is, `hairline_color` its color, and `hairline_thickness` how wide it gets.
+
+## What is left out
+
+The water is a template's water, and some things were left out on purpose. A simpler version of the shader, one that reads no screen, would run on a low-end device such as the Steam Deck, and a game that targets one would keep two. The reflected clouds here are a cheap stand-in, and Module 10's real clouds could share their noise. The bed is flat, with no depth to its middle, and the water has no foam from things that move through it, such as the player.
+
+## Try it
+
+- Paint a wider pond, ten cells across, and look at the middle: it is the same color as the edge, because the bed is flat. The only gradient is at the walls.
+- Set `wave_strength` to `2` and `refraction_strength` to `0.2`, a stormy pond. Then set `wind_strength` in Project Settings to `0` and watch the waves calm.
+- Move a rock into the pond at its shallow edge. Where the rock meets the water there is a foam line around it, from the same shader.
+
+## If it does not work
+
+- **The water is black or white.** The shader has an error, shown in the Shader Editor's footer. A common one is a missing semicolon or a comma where a group ends.
+- **The pond has no waves.** The material's **Wave Normals** is empty. Open `water.tres` and set it.
+- **The waves are a coarse, blocky pattern.** The noise texture is not seamless, or its **Width** and **Height** are small. Check both, at `256`.
+- **The bank shows through the water as stripes.** The refraction's fallback is missing: `if (bent_behind.z < VERTEX.z)` must guard the shifted point.
+- **There are no reflections of the tree.** The tree must be north of the water and near its edge, and the camera must see it. The march only reflects what is on the screen.
+- **The foam is a wide white band.** `hairline_thickness` is too large, or `hairline` is `1`.
+- **The water does not get darker at night.** The `light()` function is missing, or the scatter goes into `EMISSION` and not `scatter_lit`.
+- **The wall's reflection flickers.** The camera is too far out, so a pixel covers too much water. Zoom in, or raise `reflect_fade`.
+
+## Checkpoint
+
+Your project now contains:
+
+<FileTree>
+- art
+  - ground
+    - ground_tiles.meshlib, with the lake bed's new material
+  - shaders
+    - **lake_bed.gdshader**, with caustics
+    - **water.gdshader**, 210 lines
+  - water
+    - **wave_normals.tres**
+    - water.tres, with its wave texture
+- levels
+  - meadow.tscn, with a tree on the pond's north shore
+</FileTree>
+
+<Solution label="Show the full water.tres">
+	<Code code={waterMaterial} lang="ini" title="art/water/water.tres" />
+</Solution>
+
+Commit your work: `git add .` and `git commit -m "Add the water shader: waves, refraction, and the shoreline"`. In the next lesson you write the code that places the bank pieces for you.
+
+<Checkpoint />

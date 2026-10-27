@@ -729,3 +729,109 @@ return "no Run item in the File menu"
         {'op': 'sleep', 'seconds': 8},
     ]
 
+
+
+def _inspector_menu(item_text):
+    # One item of the Inspector's resource options menu, as picking it from the menu does.
+    return eval_(f'''
+var dock = plugin._find_class(plugin.get_tree().root, "InspectorDock")
+for menu in plugin._collect(dock, "MenuButton", ""):
+	if menu.tooltip_text.begins_with("Extra resource"):
+		var popup: PopupMenu = menu.get_popup()
+		for i in popup.item_count:
+			if popup.get_item_text(i) == "{item_text}":
+				popup.id_pressed.emit(popup.get_item_id(i))
+				return ""
+return "no {item_text} item in the resource options"
+''')
+
+
+def new_standalone_resource(type_name, capture=None):
+    # The Inspector's resource options > New Resource, the type searched, and Create: a resource with no node to hold it.
+    steps = [
+        _inspector_menu('New Resource'),
+        {'op': 'wait', 'frames': 40},
+        eval_(f'''
+for window in plugin._windows(plugin.get_tree().root):
+	if window.visible and window.get_class() == "CreateDialog":
+		var edit: LineEdit = plugin._collect(window, "LineEdit", "")[0]
+		edit.text = "{type_name}"
+		edit.text_changed.emit(edit.text)
+		return ""
+return "no Create New Resource dialog"
+'''),
+        {'op': 'wait', 'frames': 30},
+    ]
+    if capture:
+        steps.append({'op': 'capture', 'name': capture, 'window': 'class:CreateDialog'})
+    steps += [
+        eval_('''
+for window in plugin._windows(plugin.get_tree().root):
+	if window.visible and window.get_class() == "CreateDialog":
+		window.get_ok_button().pressed.emit()
+		return ""
+return "no Create New Resource dialog"
+'''),
+        {'op': 'wait', 'frames': 40},
+    ]
+    return steps
+
+
+def save_resource_as(path, capture=None):
+    # The Inspector's resource options > Save Resource As..., the folder and name typed, and Save.
+    folder, name = path.rsplit('/', 1)
+    steps = [
+        _inspector_menu('Save Resource As...'),
+        {'op': 'wait', 'frames': 30},
+        eval_(f'''
+for window in plugin._windows(plugin.get_tree().root):
+	if window.visible and window is EditorFileDialog:
+		window.current_dir = "{folder}"
+		window.current_file = "{name}"
+		return ""
+return "no Save Resource dialog"
+'''),
+        {'op': 'wait', 'frames': 20},
+    ]
+    if capture:
+        steps.append({'op': 'capture', 'name': capture, 'window': 'class:EditorFileDialog'})
+    steps += [
+        eval_('''
+for window in plugin._windows(plugin.get_tree().root):
+	if window.visible and window is EditorFileDialog:
+		window.get_ok_button().pressed.emit()
+		return ""
+'''),
+        {'op': 'wait', 'frames': 40},
+    ]
+    return steps
+
+
+def save_resource():
+    # The Inspector's resource options > Save Resource, for a resource that already has a file.
+    return [_inspector_menu('Save Resource'), {'op': 'wait', 'frames': 30}]
+
+
+def export_mesh_library(folder='res://art/ground', name='ground_tiles.meshlib'):
+    # Scene > Export As... > MeshLibrary..., over the existing file, and Godot's question about replacing it answered.
+    return [
+        {'op': 'menu', 'path': ['Scene', 'Export As...', 'MeshLibrary...']},
+        {'op': 'wait', 'frames': 40},
+        eval_(f'''
+for window in plugin._windows(plugin.get_tree().root):
+	if window.visible and window is FileDialog:
+		window.current_dir = "{folder}"
+		window.current_file = "{name}"
+		window.get_ok_button().pressed.emit()
+		return ""
+return "no Export Mesh Library dialog"
+'''),
+        {'op': 'wait', 'frames': 30},
+        eval_('''
+for window in plugin._windows(plugin.get_tree().root):
+	if window.visible and window is ConfirmationDialog and not window is FileDialog:
+		window.get_ok_button().pressed.emit()
+		return ""
+'''),
+        {'op': 'wait', 'frames': 40},
+    ]

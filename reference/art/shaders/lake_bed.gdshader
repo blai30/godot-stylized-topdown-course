@@ -11,6 +11,10 @@ uniform float texture_scale = 0.5;
 uniform sampler2D edge_noise : filter_linear_mipmap, repeat_enable;
 uniform float edge_noise_scale = 0.4;
 
+// The water's ripples, which the caustics read, and how bright the caustics are.
+uniform sampler2D wave_normals : filter_linear_mipmap, repeat_enable;
+uniform float caustics : hint_range(0.0, 2.0) = 0.7;
+
 varying vec2 world_xz;
 
 void vertex() {
@@ -19,6 +23,10 @@ void vertex() {
 
 void fragment() {
 	ALBEDO = ground_color(albedo_texture, albedo_tint, texture_scale, edge_noise, edge_noise_scale, world_xz);
+	// Caustics: two ripple layers drifting across each other, bright where both are near a crest's edge.
+	float first = 1.0 - abs(texture(wave_normals, world_xz / 1.7 + vec2(TIME * 0.03, 0.0)).r * 2.0 - 1.0);
+	float second = 1.0 - abs(texture(wave_normals, world_xz / 1.1 - vec2(0.0, TIME * 0.045)).g * 2.0 - 1.0);
+	ALBEDO *= 1.0 + caustics * pow(first * second, 4.0) * 5.0;
 	ROUGHNESS = 0.95;
 	EMISSION += soft_rim(NORMAL, INV_VIEW_MATRIX, ALBEDO);
 }

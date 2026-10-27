@@ -149,6 +149,7 @@
     "worldspace",
     "Xcode",
     "Perlin",
-    "Midlevel"
+    "Midlevel",
+    "Schlick"
   ]
 }
