@@ -1,0 +1,347 @@
+---
+title: Blockout
+description: Build the character's body in Blender from cubes and spheres against your two reference sheets, check it by eye and by measurement, and drop it into the meadow beside the capsule to judge its size.
+sidebar:
+  order: 36
+  label: "36. Blockout"
+lesson:
+  number: 36
+  minutes: 75
+  learn:
+    - How to show reference images behind a model in Blender
+    - How to build a body from simple shapes at exact sizes with typed numbers
+    - How to check a model against its reference sheets and by measurement
+    - How to keep references out of an export with a collection of their own
+  prerequisites: [8, 9, 24, 35]
+---
+
+import { Aside, FileTree, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import threeQuarter from '../../../assets/lessons/character-blockout/three-quarter.png';
+import saveName from '../../../assets/lessons/character-blockout/save-name.png';
+import deleteMenu from '../../../assets/lessons/character-blockout/delete-menu.png';
+import referenceBrowser from '../../../assets/lessons/character-blockout/reference-browser.png';
+import referenceAdded from '../../../assets/lessons/character-blockout/reference-added.png';
+import referenceLocated from '../../../assets/lessons/character-blockout/reference-located.png';
+import referenceData from '../../../assets/lessons/character-blockout/reference-data.png';
+import sideAdded from '../../../assets/lessons/character-blockout/side-added.png';
+import references from '../../../assets/lessons/character-blockout/references.png';
+import newCollection from '../../../assets/lessons/character-blockout/new-collection.png';
+import collection from '../../../assets/lessons/character-blockout/collection.png';
+import partHead from '../../../assets/lessons/character-blockout/part-head.png';
+import partTorso from '../../../assets/lessons/character-blockout/part-torso.png';
+import partArm from '../../../assets/lessons/character-blockout/part-arm.png';
+import front from '../../../assets/lessons/character-blockout/front.png';
+import frontXray from '../../../assets/lessons/character-blockout/front-xray.png';
+import sideXray from '../../../assets/lessons/character-blockout/side-xray.png';
+import exporterPanel from '../../../assets/lessons/character-blockout/exporter-panel.png';
+import exportName from '../../../assets/lessons/character-blockout/export-name.png';
+import meadowClose from '../../../assets/lessons/character-blockout/meadow-close.png';
+import meadow from '../../../assets/lessons/character-blockout/meadow.png';
+
+## What you will build
+
+A **blockout** of the character: its body in big, simple shapes, at its real size and in its real proportions, standing exactly on the outlines you drew in lesson 35. A blockout has no detail and no color. It answers one question before any detail exists: is it the right size and shape? A mistake found now costs a minute. The same mistake found after the body is skinned costs an afternoon.
+
+<Figure
+	src={threeQuarter}
+	alt="Blender's 3D viewport showing a gray figure built from boxes and a sphere: a round head with a flatter cap, a neck, a square torso, a skirt block, angled arms with square hands, long square legs, long boots, and a pack on the back."
+	caption="The blockout: fourteen parts, no detail."
+/>
+
+You work in Blender and finish with one check in Godot. The body is 1.8 meters tall, so it matches the capsule it will replace.
+
+## A file and an empty scene
+
+<Steps>
+
+1. Open Blender. It starts with the scene you saved as your startup file in lesson 8. Choose **File > Save As...** (<Kbd keys="Ctrl+Shift+S" mac="Cmd+Shift+S" />), go to your project's `art_source/character` folder, which holds the sheet from lesson 35, and save as `character.blend`.
+
+	<Figure
+		src={saveName}
+		alt="Blender's File Browser in the Save As dialog with the character folder open, the file name character.blend, and the Save As button."
+		caption="Saved next to the reference sheet."
+	/>
+
+2. Hover the 3D viewport, press <Kbd keys="A" /> to select everything, and press <Kbd keys="X" />. Choose **Delete** in the menu. The scene is empty: a character file needs no cube, camera, or light.
+
+	<Figure
+		src={deleteMenu}
+		alt="Blender's 3D viewport in front view with a Delete confirmation menu open over it."
+		caption="Delete the starting objects."
+	/>
+
+</Steps>
+
+## Put the sheets behind the viewport
+
+Blender can show an image in the 3D viewport as an **image empty**: an object that draws a picture and nothing else. You will put your front view behind the model, where it is seen from the front, and your side view behind it, where it is seen from the left.
+
+<Steps>
+
+1. Hover the viewport and press <Kbd keys="Numpad 1" />, for the front view. Choose **Add > Image > Reference**, find `character_front.png` in the File Browser that opens, and click **Add Empty Image/Drag**.
+
+	<Figure
+		src={referenceBrowser}
+		alt="Blender's File Browser listing the character folder with character_front.png typed into its file name field and the Add Empty Image button at the lower right."
+		caption="Add > Image > Reference opens a File Browser."
+	/>
+
+	The image appears facing you, standing on the origin, and 5 meters wide: Blender turned it to face the view you were in.
+
+	<Figure
+		src={referenceAdded}
+		alt="The front view showing the reference sheet's figure inside a gray square much bigger than the grid cells, centered on the origin."
+		caption="The sheet is too big and too low: the origin is at its middle."
+	/>
+
+2. Open the **Object** tab of the Properties editor and set **Location** `Y` to `1` and `Z` to `0.922`. The `Y` moves the image behind the model, because the front view looks along +Y. The `Z` lifts the sheet until its ground line is at zero. The sheet is 1024 pixels tall, which is 2 meters at 512 pixels per meter, and its ground line is 984 pixels down, so the sheet's center is 984 minus 512, or 472 pixels, above the ground: 0.922 meters.
+
+	<Figure
+		src={referenceLocated}
+		alt="The Object properties with Location 0, 1, 0.922 and Rotation 90, 0, 0, and the sheet sitting behind the origin."
+		caption="Behind the model, and lifted."
+	/>
+
+3. Open the **Data** tab of the Properties editor, the last one, and set:
+
+	- **Size** to `2`. The sheet is 2 meters wide. **Offset** `-0.5` and `-0.5` already centers it.
+	- **Depth** to **Back**, so the model always draws in front of the picture.
+	- **Only Axis Aligned** on, so the picture shows only when you look straight at it, and does not clutter the view from other angles.
+	- **Opacity** on, set to `0.6`, so the grid and the model show through.
+
+	<Figure
+		src={referenceData}
+		alt="The Empty properties: Display As Image, Size 2 m, Offset -0.50 and -0.50, Depth Back, Side Both, Show In Orthographic and Perspective on, Only Axis Aligned on, and Opacity on at 0.600."
+		caption="The Data tab for an image empty."
+	/>
+
+4. Press <Kbd keys="F2" /> over the viewport and name it `reference_front`.
+
+</Steps>
+
+Do the side view the same way, from the left.
+
+<Steps>
+
+5. Press <Kbd keys="Ctrl+Numpad 3" mac="Cmd+Numpad 3" /> for the left view and add `character_side.png` with **Add > Image > Reference**. Blender turns it to face the left view. Set **Location** `X` to `1` (behind the model as seen from the left), `Y` to `0`, and `Z` to `0.922`. On the **Data** tab, set the same four values: **Size** `2`, **Depth** **Back**, **Only Axis Aligned** on, **Opacity** on at `0.6`. Name it `reference_side`.
+
+	<Figure
+		src={sideAdded}
+		alt="The left view with the side reference sheet added: its figure faces right, with the pack on the left."
+		caption="The side sheet in the left view. The character faces right."
+	/>
+
+6. Press <Kbd keys="Numpad 1" />, then <Kbd keys="Home" /> to frame everything, and scroll in a few steps. The ground line of the sheet lies on the red X axis.
+
+	<Figure
+		src={references}
+		alt="The front view with the reference sheet centered, its ground line on the red axis, and the outliner listing reference_front and reference_side."
+		caption="Both sheets are in place."
+	/>
+
+</Steps>
+
+<Aside type="note" title="Which way the character faces">
+Blender's front view looks along +Y, so a character that faces the front view faces -Y. Blender's glTF exporter turns -Y into +Z, the direction Godot calls forward, which is where the capsule's nose has pointed since lesson 6. The sheet's side view has the character facing right in the left view, which is -Y. Everything you build in this module faces -Y.
+</Aside>
+
+## A collection for the character
+
+The sheets must not go into the file Godot reads. A **collection** is a folder of objects, and an exporter takes one collection's objects only, so the character goes in a collection of its own.
+
+<Steps>
+
+1. Click **New Collection** in the Outliner's header, the icon at the top right. A new collection, **Collection 2**, appears below `Collection`.
+
+	<Figure
+		src={newCollection}
+		alt="The Outliner showing Collection with the two reference empties, and a new Collection 2 below it."
+		caption="A new collection."
+	/>
+
+2. Click **Collection 2** in the Outliner to make it the active collection, then hover the Outliner and press <Kbd keys="F2" /> and name it `character`. New objects go into the active collection.
+
+	<Figure
+		src={collection}
+		alt="The Outliner with Collection holding the references and character highlighted below it, and the viewport header reading character."
+		caption="The 3D viewport's header names the active collection."
+	/>
+
+</Steps>
+
+## The parts
+
+Each part is a shape you add, name, size, and place. The shapes are **cubes** and **UV spheres**. A cube is 2 meters wide and a sphere has a 1 meter radius, so the numbers you type with <Kbd keys="S" /> are **half** the part's size. For every part:
+
+<Steps>
+
+1. Hover the viewport, press <Kbd keys="Shift+A" />, type `cube` or `uv sphere`, and press <Kbd keys="Enter" />.
+
+2. Press <Kbd keys="F2" /> and give it the part's name.
+
+3. Press <Kbd keys="S" />, type the three half sizes with <Kbd keys="Tab" /> between them, and press <Kbd keys="Enter" />. Then press <Kbd keys="Ctrl+A" mac="Cmd+A" /> and choose **Scale**, so the size becomes the mesh's own and the object's scale goes back to `1`.
+
+4. Press <Kbd keys="G" />, type the location's `X`, `Y`, and `Z` with <Kbd keys="Tab" /> between them, and press <Kbd keys="Enter" />.
+
+5. For the arms, press <Kbd keys="R" />, <Kbd keys="Y" />, type the turn in degrees, and press <Kbd keys="Enter" />.
+
+</Steps>
+
+| Part | Shape | Half sizes `X`, `Y`, `Z` | Location | Turn about `Y` |
+|---|---|---|---|---|
+| `head` | uv sphere | `0.115`, `0.125`, `0.14` | `0`, `0`, `1.66` | none |
+| `hair` | uv sphere | `0.135`, `0.14`, `0.10` | `0`, `0.015`, `1.70` | none |
+| `neck` | cube | `0.05`, `0.05`, `0.05` | `0`, `0`, `1.48` | none |
+| `torso` | cube | `0.20`, `0.14`, `0.205` | `0`, `0`, `1.225` | none |
+| `skirt` | cube | `0.20`, `0.14`, `0.11` | `0`, `0`, `0.91` | none |
+| `pack` | cube | `0.14`, `0.065`, `0.15` | `0`, `0.205`, `1.22` | none |
+| `arm.L` | cube | `0.05`, `0.05`, `0.245` | `0.285`, `0`, `1.19` | `-20.7` |
+| `arm.R` | cube | `0.05`, `0.05`, `0.245` | `-0.285`, `0`, `1.19` | `20.7` |
+| `glove.L` | cube | `0.05`, `0.05`, `0.06` | `0.38`, `0`, `0.91` | none |
+| `glove.R` | cube | `0.05`, `0.05`, `0.06` | `-0.38`, `0`, `0.91` | none |
+| `leg.L` | cube | `0.065`, `0.065`, `0.40` | `0.10`, `0`, `0.50` | none |
+| `leg.R` | cube | `0.065`, `0.065`, `0.40` | `-0.10`, `0`, `0.50` | none |
+| `boot.L` | cube | `0.07`, `0.125`, `0.05` | `0.10`, `-0.065`, `0.05` | none |
+| `boot.R` | cube | `0.07`, `0.125`, `0.05` | `-0.10`, `-0.065`, `0.05` | none |
+
+These numbers come straight from the sheet: the head's half height `0.14` is half of the head's 0.28 m, from 1.52 to 1.80, and its location `1.66` is the middle of that. The pack's `Y` is `0.205` because the pack is behind the body, and behind is +Y. The `.L` and `.R` suffixes are Blender's convention for the character's left and right: the character faces -Y, so its left side is +X.
+
+<Figure
+	src={partHead}
+	alt="The front view after the head: a gray sphere sitting on the sheet's head, with Move in the operator panel and the Outliner listing the character collection with head in it."
+	caption="The head, the first part."
+/>
+
+<Figure
+	src={partTorso}
+	alt="The front view with the head, hair, neck, and torso placed over the sheet."
+	caption="The torso fills the sheet's tunic."
+/>
+
+<Figure
+	src={partArm}
+	alt="The front view with the left arm added, tilted so its top is nearer the body, ending in the glove's place."
+	caption="The arm is turned about 20 degrees so its hand hangs where the sheet puts it."
+/>
+
+<Aside type="tip" title="Why the turn is minus twenty point seven">
+The sheet's arm runs from the shoulder at 0.20 across and 1.42 up to the hand at 0.37 across and 0.97 up. That is 0.17 across over 0.45 down, and the angle whose tangent is 0.17 over 0.45 is 20.7 degrees. A rotation about the `Y` axis tilts the top of a part toward -X by a negative angle, which is what the arm on the +X side needs.
+</Aside>
+
+## Check it against the sheets
+
+<Steps>
+
+1. Click the skirt in the viewport to select it, press <Kbd keys="Numpad ." /> to frame it, and scroll out until the whole figure fits. Press <Kbd keys="Alt+Z" /> to turn on X-ray, which shows the parts as see-through, so you can see the sheet through them.
+
+	<Figure
+		src={frontXray}
+		alt="The front view in X-ray: the gray blockout parts line up with the sheet's figure behind them, with the arms sitting on the sleeves and the legs on the trousers."
+		caption="Front view in X-ray: the parts sit on the sheet's shapes."
+	/>
+
+2. Press <Kbd keys="Ctrl+Numpad 3" mac="Cmd+Numpad 3" /> for the left view and compare again.
+
+	<Figure
+		src={sideXray}
+		alt="The left view in X-ray: the torso, skirt, legs, boots, head, and the pack on the back line up with the side sheet's figure."
+		caption="Left view: the pack stands behind the body and the boots reach forward."
+	/>
+
+3. Press <Kbd keys="Alt+Z" /> again to turn X-ray off, and <Kbd keys="Numpad 1" /> for the front view.
+
+</Steps>
+
+The picture matches because you typed the sheet's own numbers. The measurement matches too. The reference project reads the parts' combined bounds back from Blender: **0.86 m wide** (the gloves' outer edges), **0.46 m deep** (the pack's back to the boots' toes), and **1.80 m tall**, from the soles on the ground to the top of the head and hair. Every part's origin is at its center, which the next lessons change when they join the parts.
+
+<Figure
+	src={front}
+	alt="The front view of the finished blockout, solid gray, standing on the red axis in front of the faint sheet."
+	caption="The finished blockout from the front."
+/>
+
+## Export it for a size check
+
+You will not use this file in the game. You need to see the body next to the capsule, so export it with the collection exporter, as in lesson 24, to `art/character`.
+
+<Steps>
+
+1. Open the **Collection** tab of the Properties editor with the `character` collection active. Under **Exporters**, click **+** and choose **glTF 2.0**.
+
+	<Figure
+		src={exporterPanel}
+		alt="The Collection properties with the Exporters list holding glTF 2.0, an Export All button, and the exporter's File Path, Format glTF Binary, and Copyright fields."
+		caption="An exporter on the character collection."
+	/>
+
+2. Click the folder button beside **File Path**, go to the `art` folder of your Godot project, make a folder named `character`, and save as `character_blockout.glb`.
+
+	<Figure
+		src={exportName}
+		alt="Blender's File Browser in the art/character folder with character_blockout.glb typed as the file name."
+		caption="The file goes into the Godot project."
+	/>
+
+3. Click **Export All**. Then save the Blender file with <Kbd keys="Ctrl+S" mac="Cmd+S" />.
+
+</Steps>
+
+The file holds the fourteen parts and no pictures, because the reference empties are not in the exported collection.
+
+## See it in the meadow
+
+Open your Godot project. Godot imports `character_blockout.glb` on its own. Open `levels/meadow.tscn`, drag `character_blockout.glb` from the FileSystem dock into the 3D viewport, and set its **Position** to `0.9, 0, 0`, beside the player. Press <Kbd keys="F5" mac="Cmd+B" /> to run.
+
+<Figure
+	src={meadowClose}
+	alt="The game at noon, zoomed in: the gray capsule on the left and the pale blockout figure standing beside it at the same height, in the grass between two pines."
+	caption="The capsule and the blockout, side by side."
+/>
+
+The head of the blockout is as high as the top of the capsule. Run the game and zoom out with the wheel: from the starting view the blockout is a small figure, but its head, arms out from the body, and legs still read.
+
+<Figure
+	src={meadow}
+	alt="The game at noon, zoomed out: the capsule and the pale figure beside it, in the meadow between oaks and pines."
+	caption="At the starting zoom."
+/>
+
+Godot names each part after its Blender object but swaps the dot for an underscore, so `arm.L` becomes `arm_L`: a node name cannot hold a dot. The importer reads the glb's 14 meshes as `MeshInstance3D` nodes. Delete the instance from the meadow again, because the blockout was only a check: select it in the Scene dock and press <Kbd keys="Delete" mac="Cmd+Backspace" />, and save the scene.
+
+## Try it
+
+- Move the `pack` down 0.1 meters and look at the side view. Does it still read as a pack, or as a belt bag?
+- Widen `torso` by 0.05 on each side and look at the front view against the sheet. How much wider can it get before it stops matching?
+- Turn X-ray off and press <Kbd keys="Numpad 7" /> for the top view. This is closest to the camera's own view. The head and hair are the largest shapes, then the shoulders.
+
+## If it does not work
+
+- **The reference image is not visible.** The image empty is showing only when you look straight at it: check that you are in the front view (<Kbd keys="Numpad 1" />) for `reference_front` and the left view (<Kbd keys="Ctrl+Numpad 3" mac="Cmd+Numpad 3" />) for `reference_side`. Check **Only Axis Aligned** and **Opacity** on the Data tab.
+- **The sheet is the wrong size or is floating.** **Size** must be `2` and **Location** `Z` must be `0.922`. The ground line of the sheet should lie on the red axis.
+- **A part is far too big or too small.** The values you type with <Kbd keys="S" /> are half sizes, because a cube is 2 meters wide. If a part is double the sheet, you typed full sizes.
+- **A part is missing from the export.** It is in the wrong collection. Drag it to `character` in the Outliner, or check which collection was active when you added it: the viewport's header names it.
+- **The exported figure is on its side or backward in Godot.** The glTF exporter's **+Y Up** option is off, or you built the character facing +Y. Check the exporter's **Transform** section, and the figure's facing in the left view.
+- **The reference pictures are in the exported file.** The empties are in the `character` collection. Move them to `Collection`.
+
+## Checkpoint
+
+Your project now contains:
+
+<FileTree>
+- art
+  - character
+    - character_blockout.glb
+- art_source
+  - character
+    - character_sheet.kra
+    - character_front.png
+    - character_side.png
+    - **character.blend**, with the two reference empties and the `character` collection of fourteen parts
+</FileTree>
+
+Commit your work: `git add .` and `git commit -m "Block out the character"`. In the next lesson you turn these fourteen boxes into a body.
+
+<Checkpoint />
