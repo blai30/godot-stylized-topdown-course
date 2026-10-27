@@ -1,0 +1,254 @@
+---
+title: Design a character that reads from above
+description: Choose a character's proportions and colors for a camera that looks down at 55 degrees, test that its silhouette still reads when it is tiny, and draw the front and side reference sheets you will model from in Krita.
+sidebar:
+  order: 35
+  label: "35. Design a character that reads from above"
+lesson:
+  number: 35
+  minutes: 60
+  learn:
+    - How to measure a character in head units and choose proportions for a high camera
+    - How to test a silhouette by looking at it small
+    - How to choose colors that separate a character from the meadow
+    - How to draw front and side reference sheets in Krita and export them for Blender
+  prerequisites: [7, 14]
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import sheet from '../../../assets/lessons/design-the-character/sheet.png';
+import newDimensions from '../../../assets/lessons/design-the-character/new-dimensions.png';
+import grid from '../../../assets/lessons/design-the-character/grid.png';
+import frontView from '../../../assets/lessons/design-the-character/front-view.png';
+import far from '../../../assets/lessons/design-the-character/far.png';
+import front from '../../../assets/lessons/design-the-character/front.png';
+import side from '../../../assets/lessons/design-the-character/side.png';
+
+## What you will build
+
+The plan for the character that replaces the capsule: how tall it is, how its body is divided, and what colors it wears. Then the plan as a picture, a **reference sheet** with a front view and a side view at one scale, drawn in Krita and exported as two images. In the next lesson you place them behind Blender's viewport and build the character's body against them.
+
+<Figure
+	src={sheet}
+	alt="Krita showing a light gray canvas with a grid, and two flat-colored figures on it: a front view on the left with a blue tunic, cream sleeves, slate trousers, brown boots, and a brown cap of hair, and a side view on the right with a tan pack on the back."
+	caption="The reference sheet: the front view and the side view, at the same scale."
+/>
+
+No code in this lesson, and nothing in the game changes yet. The work is deciding, and deciding on paper is cheap: moving a shoulder in a drawing takes a second, and moving it in a skinned model takes an hour.
+
+## The character
+
+A low-poly adventurer: a figure built from a few dozen simple, flat-shaded shapes, each of which you can see as a facet, in the style of many asset-store characters. It has realistic proportions, the height of the capsule you have walked the meadow with since lesson 6, and a plain outfit: a blue tunic over a cream shirt, a belt, slate trousers, brown boots and gloves, a tan pack, and short auburn hair.
+
+Three decisions shape that character, and each comes from the game's camera.
+
+### Proportions in head units
+
+Artists measure a body in **head units**, the height of the head, because it gives a ruler that works at any size. A realistic adult is about seven and a half head units tall. Toy and cartoon characters are two or three: a big head and short legs. Which to choose depends on what the camera sees.
+
+Your camera looks down at 55 degrees from 60 meters away through an orthographic lens, so a character is a few dozen pixels tall. A big head would survive that, but this character is built to be rigged on a humanoid skeleton and animated by a real animation library, and those clips were made for realistic proportions. A toy body with a realistic clip bends in the wrong places. So the character uses seven and a half head units, 1.8 meters.
+
+| Landmark | Height above the ground | In head units |
+|---|---|---|
+| Top of the head | 1.80 m | 7.5 |
+| Chin | 1.52 m | 6.3 |
+| Shoulders | 1.42 m | 5.9 |
+| Belt | 1.00 to 1.06 m | 4.2 to 4.4 |
+| Hips, where the legs start | 0.90 m | 3.75 |
+| Knees | about 0.50 m | 2.1 |
+| Soles | 0 m | 0 |
+
+One head unit is `0.24` meters. The grid you draw on in a moment has lines at every head unit, so you read these heights straight off the picture.
+
+### A silhouette that survives being small
+
+A **silhouette** is a shape filled in as one color. From above and far away, the player sees little else. A character's silhouette needs parts that stick out in different directions: a head distinct from the shoulders, arms hanging free of the torso, legs with a gap, a pack that breaks the back's outline. A character that is a single blob, or whose arms are glued to its sides, turns into a gray smudge at your camera's zoom.
+
+Your sheet's front view has the head, the shoulders, two arms with a gap on each side, and two legs with a gap between them. The side view has the pack's step on the back and the boots reaching forward. You will test both small, below.
+
+### Colors that separate it from the meadow
+
+A character is always seen on grass, so its colors have to separate from green by **hue** or by **value** (lesson 7). These are the character's colors as [hue, saturation, and value](/reference/glossary/#hue) numbers, the same three you used for the palette:
+
+| Part | Hue | Saturation | Value | Why |
+|---|---|---|---|---|
+| Tunic | 206 | 71% | 64% | A strong blue, far from the green around 100 |
+| Shirt (sleeves) | 39 | 17% | 94% | Nearly white, the lightest thing on the character, so the arms read against the grass |
+| Hair | 12 | 66% | 48% | A warm brown-red, the opposite of green, and what the camera sees most from above |
+| Trousers | 214 | 26% | 37% | A dark, quiet blue-gray |
+| Boots | 26 | 52% | 42% | A leather brown |
+| Pack | 30 | 62% | 66% | A lighter tan that breaks the tunic's blue |
+| Belt and gloves | 22 | 60% | 36% | The darkest brown |
+| Skin | 24 | 36% | 91% | A warm light |
+
+You will not paint with these numbers until lesson 38, where they join your palette. For now they are on the sheet as flat colors, so you can judge the figure as it will look.
+
+## A canvas with a grid
+
+The sheet is 2048 pixels wide and 1024 tall: two square views side by side, 1024 pixels each. It uses 512 pixels per meter, so the figure is 922 pixels tall and a head unit is 123 pixels. The ground line is 984 pixels from the top, which is eight head units, so the grid lines land on the ground, and the chin, and every landmark in the table.
+
+<Steps>
+
+1. Open Krita and choose **File > New...** (<Kbd keys="Ctrl+N" mac="Cmd+N" />). On the **Dimensions** tab, set **Width** to `2048` and **Height** to `1024` pixels.
+
+	<Figure
+		src={newDimensions}
+		alt="Krita's Create new document dialog on the Dimensions tab with Width 2048 and Height 1024 in Pixels."
+		caption="Two views side by side: 2048 by 1024."
+	/>
+
+2. On the **Content** tab, set **Name** to `character_sheet` and click **Create**.
+
+3. Fill the bottom layer's paper: set the foreground color to a very light gray (value `94%`, saturation `0`), choose **Select > Select All**, press <Kbd keys="Shift+Backspace" /> to fill the selection with the foreground color, and choose **Select > Deselect**. An opaque sheet exports at its full size.
+
+4. Choose **Settings > Dockers > Grid and Guides**. Set **X spacing** to `123` (**Y spacing** follows it) and check **Show grid**.
+
+	<Figure
+		src={grid}
+		alt="Krita showing a light gray canvas with a grid of 123 pixel squares, and the Grid and Guides docker with spacing 123 px and Show grid checked."
+		caption="A grid of one head unit, 123 pixels. The bottom line is the ground."
+	/>
+
+</Steps>
+
+## Draw the front view
+
+The figure is a stack of simple shapes: rectangles, ellipses, and a few polygons. You select a shape with a selection tool and fill it with the foreground color, the technique of lesson 7's swatches. The table below gives each shape's corners in meters on the sheet: across from the view's center line, up from the ground. The front view's center is at pixel 512 across, and the side view's at 1536. Multiply meters by `512` to get pixels, and read heights off the grid.
+
+<Steps>
+
+1. Choose the **Rectangular Selection Tool** (<Kbd keys="Ctrl+R" mac="Cmd+R" />), drag a rectangle from one corner to its opposite corner, set the foreground color to the part's color, and press <Kbd keys="Shift+Backspace" /> to fill. Press <Kbd keys="Ctrl+Shift+A" mac="Cmd+Shift+A" /> to deselect before the next shape. A drag that starts at the edge of an old selection resizes it instead of starting a new one.
+
+	| Part | Color | Rectangle, from one corner to the other |
+	|---|---|---|
+	| Each leg | trousers | `0.035` to `0.165` across (both sides of the center), `0.10` to `0.90` up |
+	| Each boot | boots | `0.03` to `0.17` across, `0` to `0.10` up |
+	| Tunic skirt | tunic | `-0.20` to `0.20` across, `0.80` to `1.02` up |
+	| Torso | tunic | `-0.20` to `0.20` across, `1.02` to `1.43` up |
+	| Belt | belt | `-0.20` to `0.20` across, `1.00` to `1.06` up |
+	| Each glove | glove | `0.33` to `0.43` across, `0.85` to `0.97` up |
+	| Neck | skin | `-0.05` to `0.05` across, `1.43` to `1.53` up |
+
+2. Choose the **Polygonal Selection Tool**, click the four corners of each sleeve, and press <Kbd keys="Enter" /> to close it. Fill it with the shirt color. For the right-hand sleeve use the corners `(0.20, 1.42)`, `(0.34, 1.40)`, `(0.40, 0.98)`, and `(0.33, 0.97)` as across and up; for the left-hand sleeve use the same with the across numbers negated.
+
+3. Choose the **Elliptical Selection Tool** (<Kbd keys="J" />), drag the head from `(-0.115, 1.52)` to `(0.115, 1.80)` and fill it with skin. Then drag the hair from `(-0.135, 1.60)` to `(0.135, 1.80)` and fill it with hair.
+
+	<Figure
+		src={frontView}
+		alt="Krita with the front view finished on the left half of the canvas: a blue tunic and belt, cream sleeves hanging at an angle, brown gloves, slate legs, brown boots, a skin-colored face, and a round brown cap of hair."
+		caption="The front view, as flat shapes."
+	/>
+
+</Steps>
+
+Look at it before you go on. The arms hang a little away from the body, so each is its own shape against the grass. The legs have a gap. The head is a shape on its own, its width a little more than half the shoulders'.
+
+## Draw the side view
+
+The side view uses the same heights, so the two lines up. Its center line is pixel 1536, and across now means forward: positive numbers are in front of the character, negative behind.
+
+<Steps>
+
+1. With the rectangle tool, draw these shapes:
+
+	| Part | Color | Rectangle, from one corner to the other |
+	|---|---|---|
+	| Legs | trousers | `-0.065` to `0.065` across, `0.10` to `0.90` up |
+	| Boots | boots | `-0.06` to `0.19` across, `0` to `0.10` up |
+	| Tunic skirt | tunic | `-0.14` to `0.14` across, `0.80` to `1.02` up |
+	| Torso | tunic | `-0.14` to `0.14` across, `1.02` to `1.43` up |
+	| Belt | belt | `-0.145` to `0.145` across, `1.00` to `1.06` up |
+	| Pack | bag | `-0.27` to `-0.14` across, `1.07` to `1.37` up |
+	| Glove | glove | `-0.04` to `0.08` across, `0.86` to `0.98` up |
+	| Neck | skin | `-0.05` to `0.05` across, `1.43` to `1.53` up |
+
+2. With the polygon tool, draw the arm from `(-0.05, 1.42)`, `(0.05, 1.42)`, `(0.07, 0.98)`, and `(-0.03, 0.98)` in the shirt color.
+
+3. With the ellipse tool, draw the head from `(-0.125, 1.52)` to `(0.125, 1.80)` in skin and the hair from `(-0.145, 1.60)` to `(0.12, 1.80)` in hair.
+
+</Steps>
+
+<Figure
+	src={sheet}
+	alt="The finished reference sheet in Krita: the front view on the left and the side view on the right, standing on the same ground line."
+	caption="Both views stand on the ground line, and the heads reach the same height."
+/>
+
+## The squint test
+
+Your game camera makes the character tiny, so test the picture at a tiny size.
+
+<Steps>
+
+1. Choose **View > Zoom Out** (<Kbd keys="Ctrl+-" mac="Cmd+-" />) three times, or set the zoom field at the lower right to about `25%`.
+
+	<Figure
+		src={far}
+		alt="Krita with the sheet zoomed out to a small picture in the middle of the window: two small figures, one seen from the front and one from the side, still clearly people."
+		caption="Small, the shapes still read: a head, shoulders, arms, legs, and a pack."
+	/>
+
+2. Squint, or look at the picture from across the room. Can you tell which way the side view faces? Can you tell where the arms end?
+
+</Steps>
+
+If either answer is no, change the sheet now. Widen the gap between an arm and the torso, put a step in the pack, or lighten the shirt, and look again. You have not modeled anything, so every change is a few seconds.
+
+## Save and export the two views
+
+Blender takes one image per view, so you copy each half of the sheet out of the picture and export it by itself.
+
+<Steps>
+
+1. Choose **File > Save As...**, go to your project's `art_source` folder, make a folder named `character` in it, and save `character_sheet.kra` there. The `.kra` keeps the layers for later.
+
+2. Choose the **Rectangular Selection Tool** and drag a rectangle over the left half of the sheet, from the top-left corner to the middle of the bottom edge: 1024 by 1024 pixels. Choose **Edit > Copy** (<Kbd keys="Ctrl+C" mac="Cmd+C" />).
+
+3. Choose **Edit > Paste into New Image** (<Kbd keys="Ctrl+Shift+N" mac="Cmd+Shift+N" />). A new image of 1024 by 1024 pixels opens, holding the front view.
+
+4. Choose **File > Export...**, name it `character_front.png` in the same `character` folder, click **Save**, and click **OK** in the PNG options. Close the new image and discard its changes: the PNG is the output.
+
+5. Back in the sheet, select the right half the same way, copy it, paste it into a new image, and export it as `character_side.png`.
+
+</Steps>
+
+<Figure
+	src={front}
+	alt="The exported front view: a light gray square with the flat-colored figure in the middle."
+	caption="character_front.png, 1024 by 1024, shown at half size."
+/>
+
+<Figure
+	src={side}
+	alt="The exported side view: a light gray square with the flat-colored figure seen from its side, the pack on the left."
+	caption="character_side.png, with the character facing right."
+/>
+
+Both images have the ground at the same pixel row and the character's center line in the middle, so one number, `512` pixels per meter, converts a pixel on either image into a length in Blender.
+
+## Try it
+
+- Move the pack higher or lower on the side view and run the squint test again. Which position breaks the silhouette more?
+- Fill the figure in solid black and look at it small. This is the silhouette test in its pure form. Undo afterward.
+- Change the hair to the tunic's blue and compare it against green grass at small size. Which color shows the head better from above?
+
+## If it does not work
+
+- **A shape lands in the wrong place or is the wrong size.** The selection tool was already holding an old selection and your drag resized it. Deselect (<Kbd keys="Ctrl+Shift+A" mac="Cmd+Shift+A" />) before each shape, undo the bad fill (<Kbd keys="Ctrl+Z" mac="Cmd+Z" />), and draw it again.
+- **The grid lines do not reach the feet.** The grid origin is the canvas's top-left corner, and 984 is exactly eight cells of 123. If your ground is elsewhere, the canvas is not 2048 by 1024, or the spacing is not 123.
+- **An exported half is small and cut off to the figure.** The sheet's paper layer is see-through, so Krita trims the pasted image to what is painted. Fill the paper (step 3 of the canvas) and export again.
+- **Krita asks about saving the pasted image when you close it.** Discard it. The PNG is already exported.
+
+## Checkpoint
+
+Your project now contains, outside `res://`:
+
+- `art_source/character/character_sheet.kra`, the sheet with its layers.
+- `art_source/character/character_front.png` and `character_side.png`, each 1024 by 1024.
+
+Nothing in the Godot project changes in this lesson, so there is no commit to make for the game. If your `art_source` folder is in your repository, commit your work: `git add .` and `git commit -m "Add the character reference sheet"`. In the next lesson you build the body in Blender against these two images.
+
+<Checkpoint />
