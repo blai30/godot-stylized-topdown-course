@@ -131,6 +131,7 @@ export const modules: Module[] = [
 			{ number: 54, title: 'More nature: bushes and a glowing mineral rock', slug: 'more-nature' },
 			{ number: 55, title: 'A Theme and a pause panel', slug: 'theme-and-pause-panel' },
 			{ number: 56, title: 'Performance and exporting a build', slug: 'performance-and-export' },
+			{ number: 57, title: 'Bonus: autumn leaf color', slug: 'bonus-autumn-leaves' },
 		],
 	},
 	{
@@ -138,11 +139,11 @@ export const modules: Module[] = [
 		title: 'Make it a template',
 		directory: 'make-it-a-template',
 		lessons: [
-			{ number: 57, title: 'Clean up and draw the art library boundary', slug: 'clean-up' },
-			{ number: 58, title: 'Copy the template into a new game', slug: 'copy-the-template' },
-			{ number: 59, title: 'Bonus: a grid cursor for tactics games', slug: 'bonus-grid-cursor' },
-			{ number: 60, title: 'Bonus: click to move for action RPGs', slug: 'bonus-click-to-move' },
-			{ number: 61, title: 'Bonus: tile-snapped movement for farming games', slug: 'bonus-tile-movement' },
+			{ number: 58, title: 'Clean up and draw the art library boundary', slug: 'clean-up' },
+			{ number: 59, title: 'Copy the template into a new game', slug: 'copy-the-template' },
+			{ number: 60, title: 'Bonus: a grid cursor for tactics games', slug: 'bonus-grid-cursor' },
+			{ number: 61, title: 'Bonus: click to move for action RPGs', slug: 'bonus-click-to-move' },
+			{ number: 62, title: 'Bonus: tile-snapped movement for farming games', slug: 'bonus-tile-movement' },
 		],
 	},
 ];

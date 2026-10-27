@@ -1,0 +1,18 @@
+[gd_resource type="ShaderMaterial" format=3 uid="uid://ls5qbbc3t7ob"]
+
+[ext_resource type="Shader" uid="uid://c70osic5cobt1" path="res://art/shaders/foliage.gdshader" id="1_jv6fs"]
+[ext_resource type="Texture2D" uid="uid://bxf4exhmt2ub3" path="res://art/nature/tree_oak/leaf_atlas.png" id="2_28lpr"]
+
+[sub_resource type="Gradient" id="Gradient_jv6fs"]
+offsets = PackedFloat32Array(0, 0.4471878, 0.7453125, 1)
+colors = PackedColorArray(0.41960785, 0.12156863, 0.078431375, 1, 0.8, 0.3019608, 0.101960786, 1, 0.93333334, 0.54901963, 0.12156863, 1, 0.98039216, 0.8, 0.2784314, 1)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_28lpr"]
+gradient = SubResource("Gradient_jv6fs")
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_jv6fs")
+shader_parameter/leaf_atlas = ExtResource("2_28lpr")
+shader_parameter/leaf_color = Color(0.408, 0.765, 0.263, 1)
+shader_parameter/autumn_ramp = SubResource("GradientTexture1D_28lpr")
