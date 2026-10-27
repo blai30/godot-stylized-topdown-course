@@ -16,4 +16,11 @@ public partial class GroundMap : GridMap
 		var item = GetCellItem(LocalToMap(local));
 		return item == InvalidCellItem ? null : Tiles?.Find(item);
 	}
+
+	// Whether the ground in a cell is water.
+	public bool IsWater(Vector3I cell)
+	{
+		var item = GetCellItem(cell);
+		return item != InvalidCellItem && Tiles?.Find(item)?.IsWater == true;
+	}
 }
