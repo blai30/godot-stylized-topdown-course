@@ -31,7 +31,7 @@ Nothing new is modeled. You take a character someone else made, with a skeleton 
 
 <Figure
 	src={walkPose}
-	alt="The Godot editor with a low-poly character in a walking pose in the viewport, the scene tree showing root, GeneralSkeleton, and Mesh, and the Animation panel showing the walk."
+	alt="The Godot editor with a realistic textured man in a walking pose in the viewport, the scene tree showing Armature, GeneralSkeleton, Eyebrows, Eyes, and the body, and the Animation panel showing the walk."
 	caption="A character from another source, playing the library's walk."
 />
 
@@ -43,9 +43,11 @@ A character model that is **humanoid** (two arms, two legs, a head, an upright b
 - **Mixamo** (Adobe): thousands of characters and animations, exported as `.fbx`. Godot 4.8 imports FBX itself, but a `.glb` converted in Blender (**File > Import > FBX**, then **File > Export > glTF 2.0**) is the format this course has used throughout.
 - A character an artist made for you in Blender: ask for a `.glb`, with the skeleton, in a T-pose or an A-pose.
 
-<Aside type="caution" title="This lesson's model">
-The model in this lesson is a stand-in: it is the character you made, exported again with its bones renamed in the style of other tools (`pelvis`, `spine_01`, `upperarm_l`, `thigh_l`, and two toe bones with names that mean nothing, `zz_a` and `zz_b`). It is in the reference project as `art_source/character/foreign_character.glb`. The steps are the ones for a downloaded character, but they were run on this file, not on a pack from Quaternius: a pack may show different options, and you should read what Godot reports for yours.
-</Aside>
+## The model in this lesson
+
+The lesson uses the **Superhero Male** from Quaternius's **Universal Base Characters** (the free Standard pack, CC0, from `https://quaternius.com`): a realistic, skinned, textured man with hair, eyes, and a 65-bone skeleton with fingers. In the pack, open `Base Characters/Godot - UE` and take `Superhero_Male_FullBody.gltf`, its `.bin` file, and the textures `T_Superhero_Male_Dark.png`, `T_Superhero_Male_Normal.png`, `T_Superhero_Male_Roughness.png`, `T_Hair_1_BaseColor.png`, `T_Eye_Brown.png`, `T_Hair_1_Normal.png`, and `T_Eye_Normal.png`. Put them in one folder, `art/character/superhero`. The `.gltf` is a glTF in several files: the `.bin` holds its geometry and the pictures are the textures, and all must sit beside it.
+
+One snag: the glTF asks for the two normal maps as `T_Hair_1_Normal_png.png` and `T_Eye_Normal_png.png`. If you copy the files under their pack names, Godot cannot find them and reports it in the Output panel. Copy each of those two once more and rename the copy to the name the glTF asks for. The reference project has them already: `art_source/character/superhero`.
 
 ## Check the model first
 
@@ -64,11 +66,11 @@ A few minutes before importing saves an afternoon after. Open the file in Blende
 
 <Steps>
 
-1. Copy the `.glb` into your project's `art/character` folder (this lesson's stand-in is in the reference project at `art_source/character/foreign_character.glb`). Click it in the FileSystem dock, open the **Import** tab, and click **Advanced...**. The scene tree lists the model's nodes: its armature, its skeleton, and its mesh. The preview shows how it looks.
+1. Copy the files into your project's `art/character/superhero` folder, as above. Click it in the FileSystem dock, open the **Import** tab, and click **Advanced...**. The scene tree lists the model's nodes: its armature, its skeleton, and its meshes (the body, the eyes, and the eyebrows). The preview shows how it looks.
 
 	<Figure
 		src={advanced}
-		alt="The Advanced Import Settings window for the foreign character: the scene tree with root, Skeleton3D, and Mesh, and a preview of a white low-poly character."
+		alt="The Advanced Import Settings window for the Superhero: the scene tree with Armature, Skeleton3D, and the meshes, and a preview of a man in a neutral pose."
 		caption="The model in Advanced Import Settings."
 	/>
 
@@ -98,17 +100,18 @@ A few minutes before importing saves an afternoon after. Open the file in Blende
 
 ## Read the map
 
-The reference run reads the map back for this model: **22 of 56** bones are mapped, and every one is the right one:
+The reference run reads the map back for this model: **53 of 56** bones are mapped, the same as the animation library. Every bone of the profile has a partner except `LeftEye`, `RightEye`, and `Jaw`, which this skeleton does not have. The map is a long list, since the skeleton has fingers; its main entries are:
 
 | Profile bone | This model's bone |
 |---|---|
+| `Root` | `root` |
 | `Hips` | `pelvis` |
-| `Spine`, `Chest`, `UpperChest` | `spine_01`, `spine_02`, `torso_top` |
-| `Neck`, `Head` | `neck_01`, `head` |
+| `Spine`, `Chest`, `UpperChest` | `spine_01`, `spine_02`, `spine_03` |
+| `Neck`, `Head` | `neck_01`, `Head` |
 | `LeftShoulder`, `LeftUpperArm`, `LeftLowerArm`, `LeftHand` | `clavicle_l`, `upperarm_l`, `lowerarm_l`, `hand_l` |
-| `LeftUpperLeg`, `LeftLowerLeg`, `LeftFoot`, `LeftToes` | `thigh_l`, `calf_l`, `foot_l`, `zz_a` |
+| `LeftThumbMetacarpal`, `LeftIndexProximal`, ... | `thumb_01_l`, `index_01_l`, ... |
 
-The right side matches the same way. Even the two toe bones named `zz_a` and `zz_b` were found, because they are the last bones of the legs.
+The right side matches the same way. This pack was made by the same artist as the animation library, on the same skeleton, so it maps cleanly; a skeleton from another source may leave a few gaps.
 
 Check yours the same way. On the figure in the map, click each dot and read the bone it names; if a dot is empty, or names the wrong bone, click the **bone field** beside the profile bone's name and pick the right one from the skeleton's list. The usual mistakes are:
 
@@ -122,19 +125,19 @@ Check yours the same way. On the figure in the map, click each dot and read the 
 
 1. Click **Reimport**. Godot renames the skeleton's bones to the profile's names, and makes the skeleton unique with the name `GeneralSkeleton`.
 
-2. Choose **Scene > New Inherited Scene...** and pick the model. The scene tree shows the skeleton as `GeneralSkeleton`. The reference run reads its 22 bones: `Hips`, `Spine`, `Chest`, `UpperChest`, the arms, `Neck`, `Head`, and the legs, all by the profile's names.
+2. Choose **Scene > New Inherited Scene...** and pick the model. The scene tree shows the skeleton as `GeneralSkeleton`. The reference run reads its 65 bones: the profile's names for the ones it maps (`Hips`, `Spine`, `Chest`, the arms, the legs, the fingers), and the model's own for the four fingertip bones the profile has no name for.
 
-3. Add an **AnimationPlayer** to the root, and load the library into it, as in lesson 42 (**Animation > Manage Animations... > Load Library**). Pick `walk` and press play.
+3. Add an **AnimationPlayer** to the root, and load the library into it, as in lesson 42 (**Animation > Manage Animations... > Load Library**). Pick `Walk` and press play.
 
 	<Figure
 		src={walkPose}
-		alt="The foreign character in the editor in a walking pose, with the Animation panel showing the walk clip's tracks for Hips and the legs."
+		alt="The Superhero in the editor in a walking pose, with the Animation panel showing the walk clip's tracks for Hips and the legs."
 		caption="The walk, on a character the library never met."
 	/>
 
 </Steps>
 
-The character walks, and the library's 14 clips are all there to play, with no work on the clips.
+The character walks, and the library's 43 clips are all there to play, with no work on the clips.
 
 ## Then the rest of the pipeline
 

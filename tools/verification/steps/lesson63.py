@@ -9,8 +9,8 @@ from bonemap_ui import ADVANCED, select_node, new_humanoid_bone_map
 
 steps = [
     {'op': 'sleep', 'seconds': 30},
-    {'op': 'fs', 'path': 'res://art/character/foreign_character.glb'},
-    *click_file('foreign_character.glb'),
+    {'op': 'fs', 'path': 'res://art/character/superhero/Superhero_Male_FullBody.gltf'},
+    *click_file('Superhero_Male_FullBody.gltf'),
     click_tab('Import'),
     {'op': 'wait', 'frames': 40},
     open_advanced(),
@@ -44,7 +44,7 @@ print("[probe] mapped detail ", " ".join(mapped))
     {'op': 'press', 'find': {'window': 'Advanced', 'type': 'Button', 'text': 'Reimport'}},
     {'op': 'sleep', 'seconds': 6},
     eval_('''
-var root = load("res://art/character/foreign_character.glb").instantiate()
+var root = load("res://art/character/superhero/Superhero_Male_FullBody.gltf").instantiate()
 var skeleton := root.find_child("GeneralSkeleton", true, false) as Skeleton3D
 var names := []
 for i in skeleton.get_bone_count():
@@ -58,18 +58,18 @@ root.free()
     {'op': 'wait', 'frames': 40},
     {'op': 'press', 'find': {'window': 'Open Base Scene', 'type': 'Button', 'text': 'tooltip:Go to parent folder'}},
     {'op': 'wait', 'frames': 20},
-    open_in_file_dialog('art', 'character'),
+    open_in_file_dialog('art', 'character', 'superhero'),
     {'op': 'wait', 'frames': 20},
     eval_('''
 for window in plugin._windows(plugin.get_tree().root):
 	if window.visible and window is EditorFileDialog:
 		for list in plugin._collect(window, "ItemList", ""):
 			for i in list.item_count:
-				if list.get_item_text(i) == "foreign_character.glb":
+				if list.get_item_text(i) == "Superhero_Male_FullBody.gltf":
 					list.select(i)
 					list.item_selected.emit(i)
 					return ""
-return "no foreign_character.glb in the dialog"
+return "no Superhero_Male_FullBody.gltf in the dialog"
 '''),
     {'op': 'wait', 'frames': 20},
     {'op': 'press', 'find': {'window': 'Open Base Scene', 'type': 'Button', 'text': 'Open'}},
@@ -80,8 +80,8 @@ return "no foreign_character.glb in the dialog"
     eval_('''
 var root := editor.get_edited_scene_root()
 var player := root.get_node("AnimationPlayer") as AnimationPlayer
-player.add_animation_library("", load("res://art/animations/ual_clips.glb"))
-player.play("walk")
+player.add_animation_library("", load("res://art/animations/UAL1_Standard.glb"))
+player.play("Walk")
 player.advance(0.4)
 print("[probe] foreign clips ", player.get_animation_list().size())
 '''),
@@ -97,8 +97,8 @@ var root := editor.get_edited_scene_root()
     eval_('''
 for window in plugin._windows(plugin.get_tree().root):
 	if window.visible and window is EditorFileDialog:
-		window.current_dir = "res://art/character"
-		window.current_file = "foreign_character.tscn"
+		window.current_dir = "res://art/character/superhero"
+		window.current_file = "superhero.tscn"
 		window.get_ok_button().pressed.emit()
 '''),
     {'op': 'wait', 'frames': 40},

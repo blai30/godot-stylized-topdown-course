@@ -45,7 +45,7 @@ The character, alive: standing still when you let go of the keys, jogging when y
 
 An **AnimationPlayer** plays one clip at a time and you tell it which. That is enough for a prop. A character needs to choose by what is happening, and to blend: the step from standing to jogging should be a few frames of both, not a jump. An **AnimationTree** reads clips from an AnimationPlayer and mixes them by rules you give it. The simplest rule is a **blend space**: a line of numbers with a clip at each point, and a **blend position** that picks where on the line to be. At a point, the clip plays alone. Between two points, the tree mixes both, in proportion to how near it is to each.
 
-Here the line is speed in meters per second, the clips are idle at 0, jog at 3.5 (the player's walking speed), and run at 6 (its sprint speed), and the blend position is the player's speed.
+Here the line is speed in meters per second, the clips are `Idle` at 0, `Jog_Fwd` at 3.5 (the player's walking speed), and sprint at 6 (its sprint speed), and the blend position is the player's speed.
 
 ## The tree
 
@@ -61,31 +61,31 @@ Here the line is speed in meters per second, the clips are idle at 0, jog at 3.5
 
 2. In the Inspector, set **Tree Root** to a new **AnimationNodeBlendSpace1D**, and **Anim Player** to the `AnimationPlayer`. Click the blend space to open it, and set **Min Space** to `0`, **Max Space** to `6`, and **Sync Mode** to the option that syncs the clips (the checkpoint file stores `sync_mode = 1`). Syncing keeps the clips in step as they blend, so a foot does not lose its beat.
 
-3. In the **Animation Tree** panel at the bottom, the blend space is a line. Choose the **Add Point** tool and click the line near the left end: choose the animation `idle`. Select the point and set its position to `0` in the Inspector. Add `jog` and set its position to `3.5`, and `run` at `6`.
+3. In the **Animation Tree** panel at the bottom, the blend space is a line. Choose the **Add Point** tool and click the line near the left end: choose the animation `Idle`. Select the point and set its position to `0` in the Inspector. Add `Jog_Fwd` and set its position to `3.5`, and `Sprint` at `6`.
 
 	<Figure
 		src={treeRoot}
 		alt="The character scene in the editor after the blend space is built."
-		caption="The blend space: idle at 0, jog at 3.5, run at 6."
+		caption="The blend space: `Idle` at 0, `Jog_Fwd` at 3.5, `Sprint` at 6."
 	/>
 
 </Steps>
 
-The reference run builds the same tree from code and reads it back: three blend points. If you use the full UAL, point at its names: `Idle`, `Jog_Fwd`, and `Sprint`.
+The reference run builds the same tree from code and reads it back: three blend points.
 
 ## Stretch the clips to the ground
 
 A jog clip is a loop, made so that one foot is on the ground while the body goes past. If the body moves faster or slower than the clip assumes, the foot slides on the ground like a skater. The fix is to play the clip faster or slower until the foot stays where it is put.
 
-A planted foot in a clip moves backward, relative to the body, at a certain speed, the clip's **stride speed**. The reference run measured it on this character by playing the clip and reading the foot's position over the part of the clip where the foot is planted. To measure your own, play the clip in the editor and note how far the planted foot moves back over how many seconds, or simply adjust the timeline until the feet look still. For this character the result was: the jog's stride speed is **5.04 m/s**, the same in both feet. The clip lasts 0.933 seconds. At 3.5 m/s the foot must go back at 3.5, so the clip must run slower by the ratio 3.5 over 5.04, or last 0.933 × 5.04 / 3.5 = **1.34 seconds**. At 6 m/s, the run's stride speed is about 5.0 on your character (its feet are less clean), and the clip lasts 0.667 s, so it must last 0.667 × 5.0 / 6 = **0.56 seconds**.
+A planted foot in a clip moves backward, relative to the body, at a certain speed, the clip's **stride speed**. The reference run measured it on this character by playing the clip and reading the foot's position over the part of the clip where the foot is planted. To measure your own, play the clip in the editor and note how far the planted foot moves back over how many seconds, or simply adjust the timeline until the feet look still. For this character the result was: the jog's stride speed is **5.04 m/s**, the same in both feet. The clip lasts 0.933 seconds. At 3.5 m/s the foot must go back at 3.5, so the clip must run slower by the ratio 3.5 over 5.04, or last 0.933 × 5.04 / 3.5 = **1.34 seconds**. At 6 m/s, the sprint's stride speed is about 5.0 on your character (its feet are less clean), and the clip lasts 0.667 s, so it must last 0.667 × 5.0 / 6 = **0.56 seconds**.
 
 `length × stride speed ÷ speed`
 
 <Steps>
 
-1. Click the `jog` point in the blend space. Turn on **Use Custom Timeline**, and set **Timeline Length** to `1.344`. Set **Loop Mode** to **Linear**.
+1. Click the `Jog_Fwd` point in the blend space. Turn on **Use Custom Timeline**, and set **Timeline Length** to `1.344`. Set **Loop Mode** to **Linear**.
 
-2. Click the `run` point and set **Timeline Length** to `0.556`, and its **Loop Mode** to **Linear**. The idle needs nothing.
+2. Click the `Sprint` point and set **Timeline Length** to `0.556`, and its **Loop Mode** to **Linear**. The idle needs nothing.
 
 </Steps>
 
@@ -201,7 +201,7 @@ The same steps make the next character, with the character's own design, and eve
 - **The legs move but the character slides forward.** The timeline lengths are off. Check the formula, and your clip's stride speed.
 - **The character stays in the idle.** `_body` is `null`: the tree is not in the player scene. The character must be a child of the player's body.
 - **The blend jumps.** Syncing is off in the blend space, or **Acceleration** on `PlayerMovement` is very high. Set the blend space's **Sync Mode** as above.
-- **The clip names are wrong.** The names in the blend space must match the library's: `Idle`, `Jog_Fwd`, `Sprint` for the full UAL.
+- **The clip names are wrong.** The names in the blend space must match the library's: `Idle`, `Jog_Fwd`, and `Sprint`.
 
 ## Checkpoint
 

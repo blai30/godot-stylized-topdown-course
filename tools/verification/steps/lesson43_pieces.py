@@ -36,4 +36,4 @@ public partial class PlayerAnimation : AnimationTree
 
 # The blend space: the clip at each speed (meters per second), and the length it is stretched to so its planted foot keeps
 # still on the ground at that speed: the clip's length times its own stride speed over the speed it is played at.
-POINTS = [('idle', 0.0, None), ('jog', 3.5, 1.344), ('run', 6.0, 0.556)]
+POINTS = [('Idle', 0.0, None), ('Jog_Fwd', 3.5, 1.344), ('Sprint', 6.0, 0.556)]

@@ -2,14 +2,14 @@
 
 [ext_resource type="PackedScene" uid="uid://cocsn3e36p1de" path="res://art/character/character.glb" id="1_ygy38"]
 [ext_resource type="Material" uid="uid://c2ojj1m2ik24h" path="res://art/character/character.tres" id="2_icqo3"]
-[ext_resource type="AnimationLibrary" uid="uid://b7gnaoal8dct6" path="res://art/animations/ual_clips.glb" id="3_icqo3"]
+[ext_resource type="AnimationLibrary" uid="uid://dg500daiwe1qy" path="res://art/animations/UAL1_Standard.glb" id="3_icqo3"]
 [ext_resource type="Script" uid="uid://b06w6wead7jc" path="res://src/Player/PlayerAnimation.cs" id="4_qqi5v"]
 
 [sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_dqahd"]
-animation = &"idle"
+animation = &"Idle"
 
 [sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_y2fvu"]
-animation = &"jog"
+animation = &"Jog_Fwd"
 use_custom_timeline = true
 timeline_length = 1.344
 stretch_time_scale = true
@@ -17,7 +17,7 @@ start_offset = 0.0
 loop_mode = 1
 
 [sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_3h4yd"]
-animation = &"run"
+animation = &"Sprint"
 use_custom_timeline = true
 timeline_length = 0.556
 stretch_time_scale = true
@@ -43,10 +43,10 @@ blend_point_2/name = &"2"
 [node name="body" parent="Armature/GeneralSkeleton" parent_id_path=PackedInt32Array(1515369305) index="0" unique_id=1349599084]
 material_override = ExtResource("2_icqo3")
 
-[node name="AnimationPlayer" type="AnimationPlayer" parent="." index="1" unique_id=671078231]
+[node name="AnimationPlayer" type="AnimationPlayer" parent="." index="1" unique_id=326100395]
 libraries/ = ExtResource("3_icqo3")
 
-[node name="AnimationTree" type="AnimationTree" parent="." index="2" unique_id=875253534]
+[node name="AnimationTree" type="AnimationTree" parent="." index="2" unique_id=1084479628]
 active = false
 tree_root = SubResource("AnimationNodeBlendSpace1D_4yf3q")
 anim_player = NodePath("../AnimationPlayer")

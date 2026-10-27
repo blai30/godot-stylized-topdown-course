@@ -1,6 +1,6 @@
 ---
 title: Import the Universal Animation Library
-description: Bring in a library of ready-made animations, import it as an Animation Library with its own auto-mapped BoneMap so its clips retarget onto your character, set the walking clips to loop, and play them from an AnimationPlayer.
+description: Bring in a library of ready-made animations, import it as an Animation Library with its own auto-mapped BoneMap so its clips fit your character, check that the walking clips loop, and play them from an AnimationPlayer.
 sidebar:
   order: 42
   label: "42. Import the Universal Animation Library"
@@ -27,8 +27,7 @@ import advanced from '../../../assets/lessons/import-ual/advanced.png';
 import skeleton from '../../../assets/lessons/import-ual/skeleton.png';
 import boneMapNew from '../../../assets/lessons/import-ual/bone-map-new.png';
 import autoMapped from '../../../assets/lessons/import-ual/auto-mapped.png';
-import walk from '../../../assets/lessons/import-ual/walk.png';
-import loopWalk from '../../../assets/lessons/import-ual/loop-walk.png';
+import idleOptions from '../../../assets/lessons/import-ual/idle-options.png';
 import playerAdded from '../../../assets/lessons/import-ual/player-added.png';
 import playerLibrary from '../../../assets/lessons/import-ual/player-library.png';
 import walkPose from '../../../assets/lessons/import-ual/walk-pose.png';
@@ -40,7 +39,7 @@ import idle from '../../../assets/lessons/import-ual/idle.png';
 
 ## What you will build
 
-The character, walking in place. You import a library of animations, load it into the character, and play three of its clips, idle, walk, and run, from the editor and in the running game. The next lesson chooses the clip from how fast the player moves.
+The character, walking in place. You import a library of animations, load it into the character, and play three of its clips, `Idle`, `Walk`, and `Sprint`, from the editor and in the running game. The next lesson chooses the clip from how fast the player moves.
 
 <Figure
 	src={walk1}
@@ -50,23 +49,23 @@ The character, walking in place. You import a library of animations, load it int
 
 ## The library
 
-The **Universal Animation Library**, UAL, is a set of over a hundred humanoid animations by Quaternius: idles, walks, runs, jumps, fights, and more, released into the public domain (CC0), so you may use it in any game. It comes as a file with a skeleton and its clips and no mesh. The skeleton has its own bone names. After the import in this lesson, both skeletons have the profile's names, such as `LeftUpperArm`, and a track that rotates `LeftUpperArm` rotates yours. That is why a clip from the library plays on your character.
+The **Universal Animation Library**, UAL, is a set of over forty humanoid animations by Quaternius in its free Standard version: idles, walks, a jog, a sprint, jumps, fights, a dance, and more, released into the public domain (CC0), so you may use it in any game. It comes as a file with a skeleton, a plain mannequin mesh, and the clips. The skeleton has humanoid bone names of its own, and once you import it with a map, so does yours; that is why a clip from it can play on your character.
 
-You can download it from `https://quaternius.itch.io/universal-animation-library` (the free pack is enough). To keep this lesson working without a download, the course's reference project includes `art/animations/ual_clips.glb`, a small part of UAL with 14 clips, which you copy into your project.
+Download the pack from `https://quaternius.itch.io/universal-animation-library` (the free Standard pack is enough). Inside, the folder `Unreal-Godot` holds two glb files. Use `UAL1_Standard.glb`, the one without `_RM`: the `_RM` file has the character's movement baked into the clips (root motion), and your game moves the character itself.
 
 <Aside type="note" title="Clip names">
-The reference file's clips are called `idle`, `walk`, `jog`, and `run`, in lowercase. In the full download, they are `Idle_Loop`, `Walk_Loop`, `Jog_Fwd_Loop`, and `Sprint_Loop`: Godot drops the `_Loop` suffix when it imports them and sets the clip to loop, so you will see `Idle`, `Walk`, `Jog_Fwd`, and `Sprint`. The steps are the same; use your file's names wherever this lesson says `idle`, `walk`, and `run`.
+After the import you will see the names without their `_Loop` ending: `Idle_Loop` becomes `Idle`, `Walk_Loop` becomes `Walk`, `Jog_Fwd_Loop` becomes `Jog_Fwd`, and `Sprint_Loop` becomes `Sprint`. Godot also sets those clips to loop. The reference project keeps the file at `art/animations/UAL1_Standard.glb`.
 </Aside>
 
 ## Import it as an Animation Library
 
 <Steps>
 
-1. Copy `ual_clips.glb` into your project's `art/animations` folder, or the file you downloaded. Click it in the FileSystem dock and open the **Import** tab.
+1. Copy `UAL1_Standard.glb` into your project's `art/animations` folder. Click it in the FileSystem dock and open the **Import** tab.
 
 	<Figure
 		src={importDock}
-		alt="The Import dock for ual_clips.glb with Import As set to Scene."
+		alt="The Import dock for UAL1_Standard.glb with Import As set to Scene."
 		caption="By default a glb imports as a scene."
 	/>
 
@@ -122,33 +121,19 @@ Three bones with no match is expected, and Godot may warn about them in the Outp
 
 The renamed skeleton is called `GeneralSkeleton`, the same name your character's skeleton has. Every track in the library now reads `%GeneralSkeleton:Hips`, `%GeneralSkeleton:LeftUpperLeg`, and so on: a **unique name** `%GeneralSkeleton` and a bone name. A clip moves whichever skeleton in the scene has that unique name, and your character's has it.
 
-The reference run reads one clip back: `walk` has 52 tracks, and only one of them is a position track, `Hips`. Every other bone only rotates, because a position track on a leg would not fit a character with different leg lengths. The `Hips` position is rescaled by **Normalize Position Tracks**, which lesson 41's import turned on by default, so the walk's bob matches your character's size.
+The reference run reads one clip back: `Walk` has 58 tracks, and only one of them is a position track, `Hips`. Every other bone only rotates, because a position track on a leg would not fit a character with different leg lengths. The `Hips` position is rescaled by **Normalize Position Tracks**, which lesson 41's import turned on by default, so the walk's bob matches your character's size.
 
-## Make the walking clips loop
+## The clips already loop
 
-A clip ends when it reaches its last frame, unless it is set to **loop**. The walk and the run are cycles, so they must start over. The full UAL's clips already do. The reference file's do not, so set it.
+A clip ends when it reaches its last frame, unless it is set to **loop**. The walk and the run are cycles, so they must start over. Click `Idle` in the scene tree of the Advanced window: Godot read the `_Loop` ending of its original name and set its **Loop Mode** to **Linear**, which plays the clip again from its start. The reference run reads it back: `Idle`, `Walk`, `Jog_Fwd`, and `Sprint` all loop, and clips such as `Death01` and `Interact` do not.
 
-<Steps>
+<Figure
+	src={idleOptions}
+	alt="The Advanced Import Settings window with the Idle clip selected and its options Loop Mode, Save To File, and Slices."
+	caption="The Idle clip, with its import options."
+/>
 
-1. In the scene tree of the Advanced window, click `walk`. Its options appear: **Loop Mode**, **Save To File**, and **Slices**.
-
-	<Figure
-		src={walk}
-		alt="The Advanced Import Settings window with the walk clip selected and its options Loop Mode None, Save To File, and Slices."
-		caption="A clip's import options."
-	/>
-
-2. Set **Loop Mode** to **Linear**. Do the same for `idle`, `jog`, and `run`.
-
-	<Figure
-		src={loopWalk}
-		alt="The Advanced Import Settings window with the walk clip's Loop Mode set to Linear."
-		caption="Linear: play from the start again when the clip ends."
-	/>
-
-3. Click **Reimport**.
-
-</Steps>
+Click **Reimport** when you are done.
 
 ## Play it on the character
 
@@ -162,7 +147,7 @@ A clip ends when it reaches its last frame, unless it is set to **loop**. The wa
 		caption="An AnimationPlayer on the character."
 	/>
 
-2. With the `AnimationPlayer` selected, open the **Animation** panel at the bottom. Click **Animation**, choose **Manage Animations...**, click **Load Library**, and pick `art/animations/ual_clips.glb`. The library is loaded under the empty name, so its clips are called `idle`, `walk`, and so on.
+2. With the `AnimationPlayer` selected, open the **Animation** panel at the bottom. Click **Animation**, choose **Manage Animations...**, click **Load Library**, and pick `art/animations/UAL1_Standard.glb`. The library is loaded under the empty name, so its clips are called `Idle`, `Walk`, and so on.
 
 	<Figure
 		src={playerLibrary}
@@ -170,7 +155,7 @@ A clip ends when it reaches its last frame, unless it is set to **loop**. The wa
 		caption="The library's clips."
 	/>
 
-3. Choose `walk` in the Animation panel's clip list and press the play button. The character walks in place.
+3. Choose `Walk` in the Animation panel's clip list and press the play button. The character walks in place.
 
 	<Figure
 		src={walkPose}
@@ -214,7 +199,7 @@ Press <Kbd keys="F5" mac="Cmd+B" /> to run. Nothing plays in the game yet: the c
 	caption="The idle."
 />
 
-- In the Animation panel, play `jog`, `idle_fidget`, and `wave`. The library has more than walking.
+- In the Animation panel, play `Jog_Fwd`, `Dance`, and `Sword_Attack`. The library has more than walking.
 - Open the clip's tracks and look at `%GeneralSkeleton:Hips`: it is the only position track.
 
 ## If it does not work
@@ -232,7 +217,7 @@ Your project now contains:
 <FileTree>
 - art
   - animations
-    - ual_clips.glb, imported as an Animation Library
+    - UAL1_Standard.glb, imported as an Animation Library
   - character
     - character.tscn, with an `AnimationPlayer` and the library
 </FileTree>

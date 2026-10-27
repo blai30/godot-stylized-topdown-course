@@ -1,5 +1,5 @@
 # Lesson 42, in Godot: the Universal Animation Library imported as an Animation Library with its own auto-mapped BoneMap
-# (the reference project uses ual_clips.glb, UAL's clips on the humanoid names, CC0), read back, and the library loaded into an
+# (the reference project uses UAL1_Standard.glb, UAL's clips on the humanoid names, CC0), read back, and the library loaded into an
 # AnimationPlayer on the character, which plays Idle, Walk, and Run.
 import os
 import sys
@@ -10,8 +10,8 @@ from bonemap_ui import ADVANCED, select_node, new_humanoid_bone_map
 
 steps = [
     {'op': 'sleep', 'seconds': 40},
-    {'op': 'fs', 'path': 'res://art/animations/ual_clips.glb'},
-    *click_file('ual_clips.glb'),
+    {'op': 'fs', 'path': 'res://art/animations/UAL1_Standard.glb'},
+    *click_file('UAL1_Standard.glb'),
     click_tab('Import'),
     {'op': 'wait', 'frames': 40},
     {'op': 'capture', 'name': 'l42_import_dock', 'frames': 20},
@@ -34,23 +34,13 @@ return "no Import As option"
     select_node('Skeleton3D'),
     {'op': 'capture', 'name': 'l42_skeleton', 'window': 'Advanced'},
     *new_humanoid_bone_map('l42'),
-    # The library's looping clips are flagged to loop, one at a time: select the clip, set Loop Mode to Linear.
-    *[step for name in ('idle', 'walk', 'jog', 'run') for step in (
-        select_node(name),
-        eval_(ADVANCED + '''
-for row in plugin._collect(advanced, "EditorProperty", ""):
-	if str(row.get_edited_property()) == "settings/loop_mode":
-		row.emit_changed("settings/loop_mode", 1)
-		for i in 4:
-			await plugin.get_tree().process_frame
-		return ""
-return "no Loop Mode row"
-'''),
-        {'op': 'capture', 'name': 'l42_loop_' + name, 'window': 'Advanced'})],
+    # The clips ending in _Loop import as looping clips, without their suffix: check one in the Advanced window's tree.
+    select_node('Idle'),
+    {'op': 'capture', 'name': 'l42_idle_options', 'window': 'Advanced'},
     {'op': 'press', 'find': {'window': 'Advanced', 'type': 'Button', 'text': 'Reimport'}},
     {'op': 'sleep', 'seconds': 8},
     eval_('''
-var library = load("res://art/animations/ual_clips.glb")
+var library = load("res://art/animations/UAL1_Standard.glb")
 print("[probe] library class ", library.get_class())
 if library is AnimationLibrary:
 	var out := []
@@ -58,7 +48,7 @@ if library is AnimationLibrary:
 		var animation: Animation = library.get_animation(name)
 		out.append("%s loop %s tracks %d length %.2f" % [name, animation.loop_mode, animation.get_track_count(), animation.length])
 	print("[probe] clips\\\\n", "\\\\n".join(out))
-	var walk: Animation = library.get_animation("walk")
+	var walk: Animation = library.get_animation("Walk")
 	var tracks := []
 	for i in 6:
 		tracks.append(str(walk.track_get_path(i)) + " type " + str(walk.track_get_type(i)))
@@ -81,14 +71,14 @@ if library is AnimationLibrary:
     eval_('''
 var root := editor.get_edited_scene_root()
 var player := root.get_node("AnimationPlayer") as AnimationPlayer
-player.add_animation_library("", load("res://art/animations/ual_clips.glb"))
+player.add_animation_library("", load("res://art/animations/UAL1_Standard.glb"))
 print("[probe] player library ", player.get_animation_list())
 '''),
     {'op': 'wait', 'frames': 30},
     {'op': 'capture', 'name': 'l42_player_library', 'frames': 20},
     eval_('''
 var player := editor.get_edited_scene_root().get_node("AnimationPlayer") as AnimationPlayer
-player.play("walk")
+player.play("Walk")
 player.advance(0.4)
 await plugin.get_tree().process_frame
 '''),
@@ -108,14 +98,14 @@ player.stop()
         {'op': 'eval', 'code': 'var clock := tree.root.get_node("Meadow/WorldEnvironment/Day")\nclock.set("Running", false)\nclock.set("TimeOfDay", 0.5)'},
         {'op': 'eval', 'code': 'var player := tree.root.get_node("Meadow/Player") as CharacterBody3D\nplayer.global_position = Vector3(0, 0.05, 0)'},
         {'op': 'wheel', 'steps': 12}, {'op': 'wait', 'frames': 30},
-        {'op': 'eval', 'code': 'var animation := tree.root.get_node("Meadow/Player/character/AnimationPlayer") as AnimationPlayer\nanimation.play("walk")\nvar skeleton := tree.root.get_node("Meadow/Player").find_child("GeneralSkeleton", true, false) as Skeleton3D\nvar foot := skeleton.find_bone("LeftFoot")\nprint("[game] FOOT start ", skeleton.get_bone_global_pose(foot).origin, " clips ", animation.get_animation_list())'},
+        {'op': 'eval', 'code': 'var animation := tree.root.get_node("Meadow/Player/character/AnimationPlayer") as AnimationPlayer\nanimation.play("Walk")\nvar skeleton := tree.root.get_node("Meadow/Player").find_child("GeneralSkeleton", true, false) as Skeleton3D\nvar foot := skeleton.find_bone("LeftFoot")\nprint("[game] FOOT start ", skeleton.get_bone_global_pose(foot).origin, " clips ", animation.get_animation_list())'},
         {'op': 'sleep', 'seconds': 0.25}, {'op': 'capture', 'name': 'l42_walk_0', 'frames': 2},
         {'op': 'sleep', 'seconds': 0.25}, {'op': 'capture', 'name': 'l42_walk_1', 'frames': 2},
         {'op': 'sleep', 'seconds': 0.25}, {'op': 'capture', 'name': 'l42_walk_2', 'frames': 2},
         {'op': 'eval', 'code': 'var animation := tree.root.get_node("Meadow/Player/character/AnimationPlayer") as AnimationPlayer\nvar skeleton := tree.root.get_node("Meadow/Player").find_child("GeneralSkeleton", true, false) as Skeleton3D\nprint("[game] FOOT later ", skeleton.get_bone_global_pose(skeleton.find_bone("LeftFoot")).origin, " position ", animation.current_animation_position, " playing ", animation.current_animation)'},
-        {'op': 'eval', 'code': 'var animation := tree.root.get_node("Meadow/Player/character/AnimationPlayer") as AnimationPlayer\nanimation.play("run")'},
+        {'op': 'eval', 'code': 'var animation := tree.root.get_node("Meadow/Player/character/AnimationPlayer") as AnimationPlayer\nanimation.play("Sprint")'},
         {'op': 'sleep', 'seconds': 0.3}, {'op': 'capture', 'name': 'l42_run', 'frames': 2},
-        {'op': 'eval', 'code': 'var animation := tree.root.get_node("Meadow/Player/character/AnimationPlayer") as AnimationPlayer\nanimation.play("idle")'},
+        {'op': 'eval', 'code': 'var animation := tree.root.get_node("Meadow/Player/character/AnimationPlayer") as AnimationPlayer\nanimation.play("Idle")'},
         {'op': 'sleep', 'seconds': 0.5}, {'op': 'capture', 'name': 'l42_idle', 'frames': 2},
         {'op': 'quit'}]), 50),
 ]

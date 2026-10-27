@@ -23,7 +23,7 @@ def save(source, name, box=None, width=1400):
 
 for source, name in (('l42_import_dock', 'import-dock'), ('l42_library_dock', 'library-dock'), ('l42_advanced', 'advanced'),
                      ('l42_skeleton', 'skeleton'), ('l42_bone_map_new', 'bone-map-new'), ('l42_auto_mapped', 'auto-mapped'),
-                     ('l42_walk', 'walk'), ('l42_loop_walk', 'loop-walk'), ('l42_player_added', 'player-added'),
+                     ('l42_idle_options', 'idle-options'), ('l42_player_added', 'player-added'),
                      ('l42_player_library', 'player-library'), ('l42_walk_pose', 'walk-pose')):
     save(source, name)
 for index in range(3):
