@@ -1,0 +1,8 @@
+[gd_resource type="ShaderMaterial" format=3 uid="uid://bqmcmbkgjyim3"]
+
+[ext_resource type="Shader" uid="uid://dpm7a6476cn5d" path="res://art/shaders/water.gdshader" id="1_rca7i"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_rca7i")
+shader_parameter/scatter_color = Color(0.039, 0.055, 0.141, 1)

@@ -27,4 +27,7 @@ public partial class GroundTile : Resource
 
 	// How fast the player walks here, as a share of normal speed.
 	[Export(PropertyHint.Range, "0,2,0.05")] public float WalkSpeed { get; set; } = 1f;
+
+	// Whether this ground is the bed of a pond or a lake: water lies over it, and the bank kit edges it.
+	[Export] public bool IsWater { get; set; }
 }

@@ -1,0 +1,385 @@
+---
+title: "The water shader: depth and color"
+description: Give the pond a lake bed and a water surface, and write a shader that reads how much water lies over the bed and fades the bed from clear to deep blue, with the red absorbed first.
+sidebar:
+  order: 45
+  label: "45. The water shader: depth and color"
+lesson:
+  number: 45
+  minutes: 100
+  learn:
+    - How a plane can know how deep the water under it is, from the depth texture
+    - Why water fades by absorption, red first, and what a minimum opacity is for
+    - How to add a new kind of ground to the tile set, a mesh library, and the map
+    - How to keep a transparent surface out of the way of the ground it lies under
+  prerequisites: [15, 16, 17, 18, 23, 44]
+---
+
+import { Aside, Code, FileTree, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Solution from '../../../components/Solution.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import piece1 from '../../../checkpoints/45/pieces/piece-1.cs?raw';
+import piece2 from '../../../checkpoints/45/pieces/piece-2.gdshader?raw';
+import piece3 from '../../../checkpoints/45/pieces/piece-3.gdshader?raw';
+import piece4 from '../../../checkpoints/45/pieces/piece-4.gdshader?raw';
+import piece5 from '../../../checkpoints/45/pieces/piece-5.gdshader?raw';
+import waterMaterial from '../../../checkpoints/45/files/art/water/water.tres?raw';
+import tileSet from '../../../checkpoints/45/files/art/ground/ground_tile_set.tres?raw';
+import createLakeBed from '../../../assets/lessons/water-depth/create-lake-bed.png';
+import lakeBedShader from '../../../assets/lessons/water-depth/lake-bed-shader.png';
+import waterTile from '../../../assets/lessons/water-depth/water-tile.png';
+import tileSetShot from '../../../assets/lessons/water-depth/tile-set.png';
+import deleteBed from '../../../assets/lessons/water-depth/delete-bed.png';
+import createWater from '../../../assets/lessons/water-depth/create-water.png';
+import waterMaterialShot from '../../../assets/lessons/water-depth/water-material.png';
+import saveScene from '../../../assets/lessons/water-depth/save-scene.png';
+import waterInMeadow from '../../../assets/lessons/water-depth/water-in-meadow.png';
+import flat from '../../../assets/lessons/water-depth/flat.png';
+import thickness from '../../../assets/lessons/water-depth/thickness.png';
+import color from '../../../assets/lessons/water-depth/color.png';
+import dusk from '../../../assets/lessons/water-depth/dusk.png';
+import night from '../../../assets/lessons/water-depth/night.png';
+import wide from '../../../assets/lessons/water-depth/wide.png';
+import shaderEditor from '../../../assets/lessons/water-depth/shader-editor.png';
+
+## What you will build
+
+The pond from lesson 44 has a bank and a brown stand-in for a floor. In this lesson it gets the real thing: a **lake bed** under it, the part you can see through the water, and a **water surface** over it that tints the bed deep blue. The deeper the water, the bluer and the darker it gets, and where the water is shallow, by the bank, you see the bed through it.
+
+<Figure
+	src={color}
+	alt="The pond from above at noon: a small square of dark blue water, the earth bank above it fading from brown into the water, and green grass around it."
+	caption="The pond with its water: a deep blue-slate that the bank fades into."
+/>
+
+The water is not a texture or a mesh you model. It is a flat plane with a shader, and the shader looks at what is behind it. That is the whole lesson: how a plane finds out how much water lies between the camera and the bed, and what it does with the answer.
+
+## How the water knows its depth
+
+A shader draws one pixel of the plane at a time. For that pixel it knows where the plane is, but not what is under it: the bed, the bank, a rock standing in the water. Godot can tell it. When a shader declares a `sampler2D` with the hint `hint_depth_texture`, Godot gives it the **depth texture**, a picture of how far from the camera every opaque pixel in the frame is. Looking up this pixel's place in it gives how far away the bed is. The water's own distance is known too, so the difference is the **thickness**: how much water the view ray crosses before it meets something.
+
+The depth texture stores distance in a form the shader has to undo. It holds a number from 0 to 1 per pixel, the pixel's depth in clip space. Rebuilding the point in view space takes one multiplication by `INV_PROJECTION_MATRIX`, Godot's inverse of the camera's projection, and a division by the fourth component. With the camera's orthographic projection, as in this template, the answer is exact, and the same for every pixel on the screen.
+
+Water also takes light away unevenly. Red light is absorbed fastest, then green, then blue, so deep water is blue and the red is gone first. The shader keeps a share of each color that falls off exponentially with the thickness: `exp(-absorption * thickness)`, with a different rate for each of the three colors. The rest of what you see is the water's own color, the **scatter color**, a deep blue-slate. Shallow water, where the thickness is close to nothing, would show the bed at full strength and no water at all. Real water does not do that, and a game's would look like a hole, so the shader never lets less than a quarter of the scatter color go, with a **minimum opacity**.
+
+## A tile for the lake bed
+
+The lake bed is a tile, like grass and dirt. It is a flat square 75 centimeters under the ground, and where it is painted is where the water is.
+
+### Teaching the ground what water is
+
+<Steps>
+
+1. Open `src/Ground/GroundTile.cs`. At the end of the class, after `WalkSpeed`, add a property for whether a tile is water, with a comment: whether this ground is the bed of a pond or a lake, so that water lies over it and the bank kit edges it. It is `[Export] public bool IsWater { get; set; }`. Lesson 47 reads it to find where the banks go.
+
+2. Save the file and click the hammer, **Build Project**, so Godot sees the new property.
+
+</Steps>
+
+<Solution>
+	<Code code={piece1} lang="csharp" title="src/Ground/GroundTile.cs" />
+</Solution>
+
+### The lake bed's shader
+
+The bed uses the ground's own color functions, so the silt looks like the ground's pattern, darker and grayer.
+
+<Steps>
+
+1. In the Shader Editor, choose **File > New Shader...**, set **Path** to `res://art/shaders/lake_bed.gdshader`, and click **Create**.
+
+	<Figure
+		src={createLakeBed}
+		alt="The Create Shader dialog: Type Shader, Mode Spatial, Path res://art/shaders/lake_bed.gdshader."
+		caption="A shader for the lake bed."
+	/>
+
+</Steps>
+
+Type into it so that:
+
+- `shader_type spatial;` is followed by `#include` lines for `stylized_lit.gdshaderinc` and `ground_color.gdshaderinc`;
+- the uniforms are the ground's own, `albedo_texture` (a `sampler2D` with `source_color`, `filter_linear_mipmap`, and `repeat_enable`), `albedo_tint` (a `vec3` with `source_color`, `vec3(0.45, 0.43, 0.36)`, a gray-brown darker than the dirt, with a comment), `texture_scale` (`0.5`), `edge_noise` (a `sampler2D` with `filter_linear_mipmap` and `repeat_enable`), and `edge_noise_scale` (`0.4`), under a comment that these are the ground's textures and noise, so the lake bed is silt that continues the ground's own pattern;
+- a varying `vec2 world_xz` is the vertex's world position, set in `vertex()` from `MODEL_MATRIX`;
+- `fragment()` sets `ALBEDO = ground_color(albedo_texture, albedo_tint, texture_scale, edge_noise, edge_noise_scale, world_xz);`, `ROUGHNESS = 0.95;`, and adds `soft_rim(NORMAL, INV_VIEW_MATRIX, ALBEDO)` to `EMISSION`, as the ground does.
+
+<Solution>
+	<Code code={piece2} lang="gdshader" title="art/shaders/lake_bed.gdshader" />
+</Solution>
+
+Save it with <Kbd keys="Ctrl+Alt+S" mac="Cmd+Option+S" />.
+
+<Figure
+	src={lakeBedShader}
+	alt="The Shader Editor showing lake_bed.gdshader: the include lines, a comment about the ground's textures and noise, and the first uniforms."
+	caption="The lake bed's shader."
+/>
+
+### The tile and the library
+
+<Steps>
+
+1. Open `art/ground/ground_tiles.tscn`, the scene from lesson 16 that holds a mesh for each tile. Select the root, click **+**, search for `MeshInstance3D`, and create it. Rename it `Water`.
+
+2. In the Inspector, click the **Mesh** field and choose **New PlaneMesh**. Click the mesh, set **Size** to `0.5, 0.5`, a cell, and set **Center Offset** to `0, -0.75, 0`. The mesh is what the library keeps, and it is where the quad sits. The node's **Position** is only for placing the tile in this scene, so set it to `3, 0, 0`, beside the three tiles that are there. A tile with the height in the node's position would export at height 0.
+
+3. Click the **Material** field of the mesh, choose **New ShaderMaterial**, and click it. Set **Shader** to `lake_bed.gdshader` with **Quick Load...**. Under **Shader Parameters**, set **Albedo Texture** to `dirt_albedo.png` and **Edge Noise** to `edge_noise.tres`.
+
+	<Figure
+		src={waterTile}
+		alt="The Godot editor with the ground tiles scene open: the Scene dock lists GroundTiles with Grass, Sand, Dirt, and Water, the 3D viewport shows the three ground tiles and a brown square selected beyond them, and the Inspector shows a PlaneMesh of size 0.5 with Center Offset y -0.75 and a ShaderMaterial."
+		caption="The Water tile: a half-meter quad 75 centimeters down."
+	/>
+
+4. Save the scene. Choose **Scene > Export As... > MeshLibrary...** and save over `art/ground/ground_tiles.meshlib`. Click **OK** when Godot asks whether to replace it. The library now has four items: Grass, Sand, and Dirt keep their numbers, and Water is item 3, because the library numbers the scene's tiles in order.
+
+</Steps>
+
+### The tile as a resource
+
+<Steps>
+
+1. Open `art/ground/ground_tile_set.tres`. In the Inspector, click the **Tiles** array, click **Add Element**, and choose **New GroundTile** for the new element. Click the element to open it.
+
+2. Set **Display Name** to `Water`, **Item** to `3`, and **Layer** to `0`, and check **Is Water**. Leave **Grass Density** and the others at `0`, so nothing grows in it, and **Walk Speed** at `1`: lesson 48 keeps the player out of the pond by collision, which is better than slowing it, because a tile that slowed the player to a stop would trap anyone who walked in.
+
+	<Figure
+		src={tileSetShot}
+		alt="The Inspector showing the GroundTileSet resource with its Tiles array, and the Scene dock with the ground tiles scene."
+		caption="The tile set, with its fourth tile."
+	/>
+
+3. Save the resource.
+
+</Steps>
+
+<Solution label="Show the full ground_tile_set.tres">
+	<Code code={tileSet} lang="ini" title="art/ground/ground_tile_set.tres" />
+</Solution>
+
+### Paint the pond
+
+<Steps>
+
+1. Open `levels/meadow.tscn`. The stand-in bed from lesson 44, `PondBed`, goes: select it in the Scene dock and press <Kbd keys="Delete" mac="Cmd+Backspace" />. Godot asks **Delete node "PondBed"?**: click **OK**.
+
+	<Figure
+		src={deleteBed}
+		alt="The Godot editor with the PondBed node selected in the Scene dock and a prompt asking to delete the node."
+		caption="The stand-in bed goes."
+	/>
+
+2. Select **GroundTiles**, pick **Water** in the GridMap palette at the bottom of the window, and paint the nine cells of the pond, the ones you erased in lesson 44: x from -2 to 0 and z from -4 to -2. Save the scene.
+
+</Steps>
+
+The pond is now a lake bed of silt, in a ring of earth bank. There is no water yet, and the lake bed shows plainly.
+
+## The water surface
+
+The water is its own scene, a plane that you could use for a puddle or a river as easily as for this pond, because the shader reads only what is behind it.
+
+<Steps>
+
+1. Choose **Scene > New Scene**, click **Other Node**, search for `MeshInstance3D`, and click **Create**. Rename the root `Water`.
+
+2. In the Inspector, set **Mesh** to a **New PlaneMesh** and set its **Size** to `19.6, 19.6`. The meadow's ground fills 20 meters by 20, and the water must cover all of it, since you cannot know where the water will be. It must also not show beyond the meadow: the ground's edge reaches 20 centimeters out, so a plane 40 centimeters smaller has its edge under the land, where the depth test hides it.
+
+3. Under **Geometry**, set **Cast Shadow** to **Off**. Water's shadow would darken the bed twice.
+
+	<Figure
+		src={createWater}
+		alt="The Create Shader dialog: Type Shader, Mode Spatial, Path res://art/shaders/water.gdshader."
+		caption="A new shader for the water."
+	/>
+
+4. In the Shader Editor, choose **File > New Shader...** and set **Path** to `res://art/shaders/water.gdshader`.
+
+</Steps>
+
+### Step 1: a flat color
+
+Start with the simplest water there is: a flat color, partly transparent. Type into the shader so that:
+
+- `shader_type spatial;` is followed by `render_mode unshaded;`, because for now the color is not lit;
+- a `uniform vec3 scatter_color : source_color = vec3(0.039, 0.055, 0.141);` has a comment: what the water looks like when there is a lot of it, a deep blue-slate;
+- `fragment()` sets `ALBEDO = scatter_color;` and `ALPHA = 0.6;`.
+
+<Solution>
+	<Code code={piece3} lang="gdshader" title="art/shaders/water.gdshader" />
+</Solution>
+
+<Steps>
+
+1. Save the shader. Select the plane's root, click the mesh's **Material** field, choose **New ShaderMaterial**, click it, and set its **Shader** to `water.gdshader` with **Quick Load...**.
+
+	<Figure
+		src={waterMaterialShot}
+		alt="The Inspector showing a PlaneMesh with a ShaderMaterial whose Shader is water, and the Scatter Color parameter a deep blue."
+		caption="The water's material."
+	/>
+
+2. Click the material's arrow, choose **Save As...**, and save `water.tres` in `art/water`. Then save the scene as `water.tscn`, in the same folder.
+
+	<Figure
+		src={saveScene}
+		alt="The Save Scene As dialog with the folder art/water and the file name water.tscn."
+		caption="The water scene, saved."
+	/>
+
+3. Open `levels/meadow.tscn`. Select **Meadow**, click **Instantiate Child Scene**, and pick `water.tscn`. Set the new node's **Position** to `0, -0.35, 0`: the water is 35 centimeters under the ground, and 40 over the bed. Save the scene and run the game.
+
+	<Figure
+		src={waterInMeadow}
+		alt="The Godot editor with the meadow open, a Water node selected in the Scene dock, and the Inspector showing its mesh and its position."
+		caption="The water in the meadow, 35 centimeters under the ground."
+	/>
+
+</Steps>
+
+<Figure
+	src={flat}
+	alt="The pond from above: dark translucent blue over the brown bed, a straight earth wall at its far side."
+	caption="Step 1: a flat blue over everything under it."
+/>
+
+The pond is dark blue, and the bed shows through it a little, the same everywhere. The plane is under the grass, so you see it only through the pond's hole: where it lies under the ground, the depth test hides it. That is why one big plane is enough.
+
+### Step 2: the thickness
+
+Now let the shader find out what is under it, and show the answer as gray. Replace the shader's contents so that:
+
+- after `render_mode unshaded;` it declares `uniform sampler2D depth_texture : hint_depth_texture, filter_nearest, repeat_disable;`, with a comment: the depth of the frame drawn so far, which the water reads to find what lies behind it;
+- `fragment()` starts with `float depth = textureLod(depth_texture, SCREEN_UV, 0.0).r;`, the depth under this pixel, where `SCREEN_UV` is where the pixel is on the screen, from 0 to 1;
+- `vec4 position = INV_PROJECTION_MATRIX * vec4(SCREEN_UV * 2.0 - 1.0, depth, 1.0);` rebuilds the point as the camera sees it, with a comment: the view-space position of the opaque surface behind this pixel, rebuilt from its depth. The screen runs from 0 to 1 and clip space from -1 to 1, so the coordinates are doubled and moved;
+- `vec3 behind = position.xyz / position.w;` finishes it;
+- `float thickness = length(behind - VERTEX);` is the distance from the water's own point, `VERTEX`, which in a fragment is in view space too, to the point behind it, with a comment: how much water the view ray crosses before it meets the bed;
+- `ALBEDO = vec3(thickness);` shows it as a gray, one meter being white.
+
+<Solution>
+	<Code code={piece4} lang="gdshader" title="art/shaders/water.gdshader" />
+</Solution>
+
+Save the shader and run the game.
+
+<Figure
+	src={thickness}
+	alt="The pond from above, filled with a flat light gray, darker toward the far wall where it fades to the bank's dark brown."
+	caption="Step 2: the thickness as a gray. White is a meter or more."
+/>
+
+The pond is a flat light gray, because the bed is flat, so every view ray crosses the same 0.4 meters of water, slanted a little by the camera into about half a meter. It goes darker toward the far wall, where the ray meets the wall's face and the water is thin, and to black where there is none. The answer, from a plane that knows nothing about the pond, is the number the whole look rests on.
+
+<Aside type="note" title="Why one flat bed shows so little">
+A bed that is the same depth everywhere makes the water look one flat color, except at the banks. A lake whose bed slopes down toward the middle would be pale at its edge and dark in its middle, which is how real ponds look. This template keeps the bed flat, so that it is a single tile a reader can paint. To get a deeper middle, make a second tile like this one with its center offset at -1.6, and paint it in the middle.
+</Aside>
+
+### Step 3: the bed under the water
+
+Last, the color. Replace the gray with the bed, faded by the thickness. The final shader is:
+
+- after `render_mode unshaded;`, two uniforms: `screen_texture`, a `sampler2D` with `hint_screen_texture`, `filter_linear`, and `repeat_disable`, and `depth_texture` as before, under a comment: the frame drawn so far, with the lake bed and the bank in it, and its depth;
+- a group named `color`, opened with `group_uniforms color;`, holds three uniforms, each with a comment. `scatter_color` is as before, with `source_color`. `absorption` is a `vec3`, `vec3(3.0, 1.5, 1.0)`: how much of each color the water absorbs per meter the view crosses, with red going first. `min_opacity` is a `float` with `hint_range(0.0, 1.0)` and `0.25`: how much of the scatter color shows even over a bed right under the surface. The group ends with `group_uniforms;`;
+- `fragment()` keeps the lines that find `thickness`;
+- `vec3 bed = textureLod(screen_texture, SCREEN_UV, 0.0).rgb;` reads what the camera has drawn at this pixel, which is the bed or the bank, since the water is drawn after them;
+- `vec3 transmitted = exp(-absorption * thickness) * (1.0 - min_opacity);` is how much of each color of the bed gets through, with a comment that it fades with the thickness, red first, from `1 - min_opacity`. It is 0.75 at no thickness, falling away from there, and never more than that, because of the minimum;
+- `ALBEDO = bed * transmitted + scatter_color * (1.0 - transmitted);` mixes the bed's share with the water's own color, which takes up the rest.
+
+<Solution>
+	<Code code={piece5} lang="gdshader" title="art/shaders/water.gdshader" />
+</Solution>
+
+Save the shader and run the game.
+
+<Figure
+	src={shaderEditor}
+	alt="The Shader Editor showing the final water shader: the screen and depth textures, the color group with scatter color, absorption, and minimum opacity, and the start of fragment."
+	caption="The water shader, step 3."
+/>
+
+<Figure
+	src={color}
+	alt="The pond at noon: a deep slate-blue pool with the earth bank fading into it, its far wall brown at the top and blue at the water."
+	caption="Step 3: the bed under the water, at noon."
+/>
+
+Look at the bank. The wall is brown at the lip and goes blue where it enters the water, because the thin water over the wall's foot lets most of it through and the water further down lets less. That gradient is the depth at work: a mesh that had only a flat color could not do it.
+
+<Figure
+	src={wide}
+	alt="The meadow from above, with the pond a dark square among the grass, rocks, and dirt patches."
+	caption="The pond in the meadow."
+/>
+
+<Figure
+	src={dusk}
+	alt="The pond at dusk: the blue unchanged, the grass around it in warm light."
+	caption="Dusk. The bed warms, but the water's blue does not."
+/>
+
+<Figure
+	src={night}
+	alt="The pond at night: a dark blue square among dark blue-green grass."
+	caption="Night. The water is lighter than the grass, because it is not lit."
+/>
+
+At dusk and night this water has a flaw: the bed is lit, so it follows the day, but the scatter color is not, so the pond stays the same blue in the dark and looks lit from within. The next lesson fixes that with a light function, and also adds waves, a reflection of the sky, and a hairline of foam where the water meets the bank.
+
+## Tune it
+
+Every number that sets the water's color is a uniform in the `color` group, so you can change it in the material.
+
+- **`scatter_color`** is the water's own color. Make it a green for a swamp, or a lighter blue-green for a shallow tropical pond.
+- **`absorption`** sets how fast each color goes: the three numbers are red, green, and blue per meter. Equal numbers make the water gray; a lower blue makes it bluer in the deep.
+- **`min_opacity`** is how much of the scatter color there is over the shallowest bed. At `0` the water over a bed right under it is invisible, and at `1` the bed never shows.
+
+## Try it
+
+- Paint a few more cells of the Water tile around the pond and look at the bank: the ground's overhang covers the lake bed's edge, and nothing holds the water back from the land there. That raw shore is what lesson 47's Update shore cures. Undo it before moving on.
+- Make the bed deeper: change the `Water` tile's **Center Offset** to `0, -1.6, 0`, export the library again, and look at how the water's color changes.
+- Set `absorption` to `vec3(1.0, 1.0, 1.0)` and compare the pond with the red-first version. Which one reads as water?
+
+## If it does not work
+
+- **The pond is gray-brown with no blue.** The water scene is not in the meadow, or it is not at `-0.35`. Select the `Water` node in `meadow.tscn` and check its position.
+- **The whole meadow is blue.** The water's position is at or above `0`. It must be under the ground.
+- **A blue frame shows at the meadow's edge.** The plane is bigger than the painted ground. Set its size to `19.6, 19.6`.
+- **The pond is the same flat color in all three steps.** The shader file was not saved, or the material's **Shader** is not `water.gdshader`.
+- **The thickness is white everywhere.** The numbers are too big to see: the water is 0.4 meters over the bed, so `vec3(thickness)` is 0.4 to 0.5 gray. If it is white, the bed is not under the water, or the bed is not drawn.
+- **The lake bed is at ground level.** The Water tile's height is in its node's position, not in the mesh's **Center Offset**. A library item keeps only the mesh.
+- **The `Water` tile is not in the GridMap's palette.** The library was not exported again, or `GroundTiles` still points at an old library. Export it again, and select **GroundTiles**.
+- **Grass grows in the pond.** Press **Scatter** on the **Grass** node, and check that the Water tile's **Grass Density** is `0`.
+- **The shader says it cannot find the depth texture.** The hint is `hint_depth_texture`, with the hint after a colon.
+
+## Checkpoint
+
+Your project now contains:
+
+<FileTree>
+- art
+  - ground
+    - ground_tile_set.tres, with a fourth tile, Water
+    - ground_tiles.meshlib, with four items
+    - ground_tiles.tscn, with a Water tile
+  - shaders
+    - **lake_bed.gdshader**
+    - **water.gdshader**
+  - water
+    - **water.tres**
+    - **water.tscn**
+- levels
+  - meadow.tscn, with the pond painted with the Water tile and a `Water` node
+- src
+  - Ground
+    - GroundTile.cs, with `IsWater`
+</FileTree>
+
+<Solution label="Show the full water.tres">
+	<Code code={waterMaterial} lang="ini" title="art/water/water.tres" />
+</Solution>
+
+Commit your work: `git add .` and `git commit -m "Add the water shader: depth and color"`. In the next lesson you give the water waves, bend the bed through them, and reflect the sky.
+
+<Checkpoint />

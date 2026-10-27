@@ -31,7 +31,13 @@ PebbleDensity = 0.4
 WalkSpeed = 1.15
 metadata/_custom_type_script = "uid://bav431h16v1bs"
 
+[sub_resource type="Resource" id="Resource_4rgye"]
+script = ExtResource("1_4rgye")
+DisplayName = "Water"
+Item = 3
+IsWater = true
+
 [resource]
 script = ExtResource("2_evcml")
-Tiles = Array[ExtResource("1_4rgye")]([SubResource("Resource_i4481"), SubResource("Resource_5yil8"), SubResource("Resource_po6ru")])
+Tiles = Array[ExtResource("1_4rgye")]([SubResource("Resource_i4481"), SubResource("Resource_5yil8"), SubResource("Resource_po6ru"), SubResource("Resource_4rgye")])
 metadata/_custom_type_script = "uid://c7tvn2tchfefm"
