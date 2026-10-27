@@ -1,0 +1,338 @@
+---
+title: UVs and painting
+description: Lay out the character's UVs on a texture made of flat color cells and a face patch, with Blender's UV editor, then paint that texture in Krita with selections, including the face's eyes, blush, and mouth.
+sidebar:
+  order: 38
+  label: "38. UVs and painting"
+lesson:
+  number: 38
+  minutes: 90
+  learn:
+    - What UVs are and how a model finds its colors on a texture
+    - How to give every part of a model one flat color by collapsing its UVs onto a swatch
+    - How to project a head's UVs from the front to leave room for a painted face
+    - How to paint a small texture in Krita with selections
+  prerequisites: [7, 14, 37]
+---
+
+import { Aside, FileTree, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import textureFile from '../../../assets/lessons/character-uvs-and-painting/texture-file.png';
+import workspace from '../../../assets/lessons/character-uvs-and-painting/workspace.png';
+import allSelected from '../../../assets/lessons/character-uvs-and-painting/all-selected.png';
+import tunic from '../../../assets/lessons/character-uvs-and-painting/tunic.png';
+import bodies from '../../../assets/lessons/character-uvs-and-painting/bodies.png';
+import pieces from '../../../assets/lessons/character-uvs-and-painting/pieces.png';
+import projectSearch from '../../../assets/lessons/character-uvs-and-painting/project-search.png';
+import projected from '../../../assets/lessons/character-uvs-and-painting/projected.png';
+import headUv from '../../../assets/lessons/character-uvs-and-painting/head-uv.png';
+import newDimensions from '../../../assets/lessons/character-uvs-and-painting/new-dimensions.png';
+import grid from '../../../assets/lessons/character-uvs-and-painting/grid.png';
+import cells from '../../../assets/lessons/character-uvs-and-painting/cells.png';
+import patch from '../../../assets/lessons/character-uvs-and-painting/patch.png';
+import features from '../../../assets/lessons/character-uvs-and-painting/features.png';
+import texture from '../../../assets/lessons/character-uvs-and-painting/texture.png';
+import pngOptions from '../../../assets/lessons/character-uvs-and-painting/png-options.png';
+import face from '../../../assets/lessons/character-uvs-and-painting/face.png';
+import back from '../../../assets/lessons/character-uvs-and-painting/back.png';
+import meadow from '../../../assets/lessons/character-uvs-and-painting/meadow.png';
+
+## What you will build
+
+The character's colors. One small picture, 512 by 512 pixels, holds all of them: eight flat color squares and a face. Every part of the model is told where on the picture its colors are, and the model finds its colors there.
+
+<Figure
+	src={textureFile}
+	alt="A 512 pixel picture: the top half is skin color with two dark eyes with white shines, two pink blushes, and a small mouth, and the bottom half has two rows of four flat color squares: dark red-brown, blue, cream, and skin on the upper row, and dark brown, slate, brown, and tan on the lower."
+	caption="The finished texture: a face above, eight colors below."
+/>
+
+This is the single-texture look of many low-poly asset packs. It is also the rock palette of lesson 10 made a little bigger, with a face.
+
+## What a UV is
+
+A flat picture has two directions, **U** across and **V** up, each from 0 to 1. A **UV** is a model's map into the picture: every corner of every face has a U and V that say which spot of the picture that corner shows. A face whose corners sit on a patch of blue is blue. In lesson 10 you did this for the rock by placing its faces on the palette's swatches. You will do the same here, for every part, with one new thing: the head's face is not flat color, so its UVs spread over a patch of the picture where you paint.
+
+The plan for the picture:
+
+| Where | What |
+|---|---|
+| The top half, `V` from 0.5 to 1 | The face patch, where the head is projected |
+| Bottom half, upper row | skin, hair, tunic, shirt |
+| Bottom half, lower row | leather (belt and gloves), trousers, boots, pack |
+
+Each swatch is a 128 pixel square, a quarter of the picture's width. The swatches' centers are at `U` of `0.125`, `0.375`, `0.625`, and `0.875`, and `V` of `0.375` for the upper row and `0.125` for the lower.
+
+## Set up the UV editor
+
+<Steps>
+
+1. Open `character.blend` from lesson 37. Click the **UV Editing** tab at the top of the window. The left half is the **UV Editor**, which shows the UVs of the faces you select, and the right half is the 3D viewport, now in Edit Mode.
+
+	<Figure
+		src={workspace}
+		alt="Blender's UV Editing workspace: the UV editor on the left showing the model's UVs spread over a square, and the 3D viewport on the right showing the character small in perspective in Edit Mode."
+		caption="The UV Editing workspace."
+	/>
+
+2. In the UV editor's header, click the button with two arrows, **UV Sync Selection**, to turn it **off**. With it on, moving a face's UVs also drags the corners of its neighbors, and your flat colors would blend at their edges. With it off, the UV editor shows, and moves, only the faces you selected in the 3D viewport.
+
+3. Hover the 3D viewport and press <Kbd keys="Numpad 1" /> for the front view, <Kbd keys="3" /> for face select mode, and <Kbd keys="A" /> to select everything. Hover the UV editor and press <Kbd keys="N" /> to open its sidebar. On the **Image** tab, **UV Vertex** has an **X** and a **Y** field: the position of the selected UVs in the picture.
+
+	<Figure
+		src={allSelected}
+		alt="The UV editor with the UV Vertex panel showing X 0.500 and Y 0.500, and the 3D viewport with the whole character selected from the front."
+		caption="The UV Vertex fields tell you where the selection is, and let you move it."
+	/>
+
+</Steps>
+
+## Everything starts as tunic
+
+Collapse every UV onto a single point of the tunic's swatch, then give each part its own color on top.
+
+<Steps>
+
+1. With everything selected, hover the UV editor and press <Kbd keys="A" /> to select all UVs, <Kbd keys="S" />, type `0`, and press <Kbd keys="Enter" />. Scaling by `0` squashes all of them into one point.
+
+2. In the sidebar, set **X** to `0.625` and **Y** to `0.375`: the middle of the tunic's swatch.
+
+	<Figure
+		src={tunic}
+		alt="The UV editor with one point near the middle of the picture's lower half, where every corner of the model now sits, and the UV Vertex panel reading X 0.625 and Y 0.375."
+		caption="Every face now shows the tunic's color."
+	/>
+
+</Steps>
+
+Every part is blue now. Next, the parts that need another color.
+
+## The body's colors, by box select
+
+Press <Kbd keys="Alt+Z" /> over the 3D viewport to turn on X-ray, so a box selects faces on both sides. Then, for each part in the table, press <Kbd keys="Alt+A" /> to deselect, press <Kbd keys="B" /> and drag a box over the part in the front view (each drag **adds** to the selection), and place it on its swatch in the UV editor: <Kbd keys="A" />, <Kbd keys="S" />, `0`, <Kbd keys="Enter" />, then **X** and **Y** in the sidebar.
+
+| Part | What to box | `X` | `Y` | Swatch |
+|---|---|---|---|---|
+| Neck | the neck, between the shoulders and the head | `0.125` | `0.375` | skin |
+| Legs | both legs from the hips to the boots' tops | `0.375` | `0.125` | trousers |
+| Boots | both boots | `0.625` | `0.125` | boots |
+| Sleeves | each arm, from the shoulder pad to the glove (two boxes) | `0.875` | `0.375` | shirt |
+| Gloves | each hand (two boxes) | `0.125` | `0.125` | leather |
+
+Check each selection against the sheet's colors: the neck skin, the legs slate, and so on. A face counts as inside a box when its center is, so a box can cut a part short: widen it until the whole part is in. The reference run's boxes selected 7 faces for the neck, 19 for the legs, 26 for the boots, 10 for the sleeves, and 10 for the gloves.
+
+<Figure
+	src={bodies}
+	alt="The front view of the character in X-ray after the body's colors, and the UV editor with a handful of points on different swatches."
+	caption="The body's parts, each on its swatch."
+/>
+
+## The pieces, by Select Linked
+
+The head, hair, nose, pack, and belt are separate pieces that were joined into the body. They are not touching the rest, so **Select Linked** takes a whole piece from one click: click one of its faces and press <Kbd keys="Ctrl+L" mac="Cmd+L" />. It selects every face connected to that one.
+
+| Piece | Click | View | `X` | `Y` | Swatch |
+|---|---|---|---|---|---|
+| `nose` | its front face | front | `0.125` | `0.375` | skin |
+| `fringe_1`, `fringe_2`, `fringe_3` | each block of fringe | front | `0.375` | `0.375` | hair |
+| `belt` | its front | front | `0.125` | `0.125` | leather |
+| `hair` | a side of the cap | right, <Kbd keys="Numpad 3" /> | `0.375` | `0.375` | hair |
+| `hair_back` | its back | back, <Kbd keys="Ctrl+Numpad 1" mac="Cmd+Numpad 1" /> | `0.375` | `0.375` | hair |
+| `pack` | its back | back | `0.875` | `0.125` | pack |
+
+Press <Kbd keys="Alt+A" /> before each click, and place each piece with <Kbd keys="A" />, <Kbd keys="S" />, `0`, <Kbd keys="Enter" />, and the sidebar numbers. The shoulder pads and the skirt keep the tunic color, and the shirt's color is on the sleeves only.
+
+<Figure
+	src={pieces}
+	alt="The UV editor showing all the points placed on their swatches, and the 3D viewport with the head selected in front view."
+	caption="Every piece is on its swatch."
+/>
+
+## The head's face
+
+The head is the one part with a painted face. Instead of collapsing it, you **project** it: the head's front is flattened onto the picture as if a projector looked at it from the front, and the eyes land where you paint them.
+
+<Steps>
+
+1. In the front view, click a face of the head and press <Kbd keys="Ctrl+L" mac="Cmd+L" />. All 80 faces of the head are selected.
+
+2. Hover the 3D viewport, press <Kbd keys="F3" />, type `project from view bounds`, and press <Kbd keys="Enter" />. **Project from View (Bounds)** gives the faces the UVs they have from the front, stretched to fill the whole picture.
+
+	<Figure
+		src={projectSearch}
+		alt="The F3 search box with project from view bounds typed and the matching item listed."
+		caption="The F3 search finds the operator."
+	/>
+
+	<Figure
+		src={projected}
+		alt="The UV editor with the head's UVs filling the whole picture as a round faceted shape, and the 3D viewport with the head selected."
+		caption="The head's UVs fill the whole picture."
+	/>
+
+3. The face patch is the picture's top half and the head must fit it. In the UV editor press <Kbd keys="A" />, <Kbd keys="S" />, `0.5`, and <Kbd keys="Enter" />, and set **X** to `0.5` and **Y** to `0.75`. The head's UVs now cover `U` from 0.25 to 0.75 and `V` from 0.5 to 1.
+
+	<Figure
+		src={headUv}
+		alt="The UV editor with the head's faceted UVs filling the top half of the picture, centered, and the UV Vertex panel reading X 0.500 and Y 0.750."
+		caption="The head in the face patch."
+	/>
+
+</Steps>
+
+Where to paint the eyes: the head's bounds, `X` from -0.1094 to 0.1094 and `Z` from 1.52 to 1.80, map straight onto the face patch (`U` from 0.25 to 0.75 and `V` from 0.5 to 1), so a point on the head has a spot on the picture:
+
+`U = 0.25 + 0.5 × (X + 0.1094) / 0.2188`, `V = 0.5 + 0.5 × (Z - 1.52) / 0.28`.
+
+The eyes go at `X` of ±0.05 and `Z` of 1.69, the mouth at `X` 0 and `Z` 1.605, and the cheeks at `X` of ±0.085 and `Z` of 1.63. In the picture's pixels, which count from the top left, that is:
+
+| Feature | Pixel `x`, `y` |
+|---|---|
+| Left eye (the character's left, `+X`) | `314`, `100` |
+| Right eye | `198`, `100` |
+| Mouth | `256`, `178` |
+| Left cheek | `356`, `156` |
+| Right cheek | `157`, `156` |
+
+Save the file with <Kbd keys="Ctrl+S" mac="Cmd+S" />.
+
+## Paint the texture in Krita
+
+The picture is small and flat, so you paint it with selections and fills, as you built the palette in lesson 7.
+
+<Steps>
+
+1. In Krita, choose **File > New...** and make an image `512` by `512` named `character_texture`.
+
+	<Figure
+		src={newDimensions}
+		alt="Krita's Create new document dialog with Width 512 and Height 512."
+		caption="512 by 512."
+	/>
+
+2. Choose **Settings > Dockers > Grid and Guides**, set **X spacing** to `128`, and check **Show grid**. The grid divides the picture into the swatches.
+
+	<Figure
+		src={grid}
+		alt="Krita with a white square split into sixteen cells by the grid, and the Grid and Guides docker with spacing 128."
+		caption="A grid of 128 pixels."
+	/>
+
+3. For each swatch, choose the **Rectangular Selection Tool**, drag a rectangle over its cell, set the foreground color from the table, and press <Kbd keys="Shift+Backspace" /> to fill. Deselect with <Kbd keys="Ctrl+Shift+A" mac="Cmd+Shift+A" /> before the next rectangle.
+
+	| Swatch | Cell, from the left, from the bottom | Hue | Saturation | Value |
+	|---|---|---|---|---|
+	| skin | 1st, 2nd row | 24 | 36 | 91 |
+	| hair | 2nd, 2nd row | 12 | 66 | 48 |
+	| tunic | 3rd, 2nd row | 206 | 71 | 64 |
+	| shirt | 4th, 2nd row | 39 | 17 | 94 |
+	| leather | 1st, 1st row | 22 | 60 | 36 |
+	| trousers | 2nd, 1st row | 214 | 26 | 37 |
+	| boots | 3rd, 1st row | 26 | 52 | 42 |
+	| pack | 4th, 1st row | 30 | 62 | 66 |
+
+	<Figure
+		src={cells}
+		alt="Krita with the bottom half of the picture filled with eight colored squares and the top half still white."
+		caption="The eight cells."
+	/>
+
+4. Select the top half, from the top left corner to the middle of the right edge, and fill it with the skin color.
+
+	<Figure
+		src={patch}
+		alt="Krita with the top half of the picture filled with skin color above the eight swatches."
+		caption="The face patch, filled."
+	/>
+
+5. Choose the **Elliptical Selection Tool** (<Kbd keys="J" />) and draw each feature, centered on its spot in the table, and fill it:
+
+	| Feature | Size in pixels | Hue | Saturation | Value |
+	|---|---|---|---|---|
+	| Each eye | `36` by `50` | 260 | 30 | 22 |
+	| Each cheek | `40` by `22` | 355 | 38 | 100 |
+	| Mouth | `18` by `7` | 355 | 55 | 55 |
+	| Each eye's shine, up and in from the eye's center by 6 and 12 pixels | `11` by `14` | 0 | 0 | 100 |
+
+	<Figure
+		src={features}
+		alt="Krita with two dark oval eyes, two pink ovals under them, and a small dark mouth on the face patch."
+		caption="Eyes, cheeks, and mouth."
+	/>
+
+6. Check the picture: the eyes sit at the same height, the cheeks are under them, and the mouth is in the middle.
+
+	<Figure
+		src={texture}
+		alt="Krita showing the finished texture: the face above and the eight swatches below."
+		caption="The finished picture."
+	/>
+
+7. Choose **File > Save As...**, and save `character_texture.kra` in `art_source/character`. Choose **File > Export...** and export `character_texture.png` into your Godot project's `art/character` folder.
+
+	<Figure
+		src={pngOptions}
+		alt="Krita's PNG export options dialog with the default settings."
+		caption="The default options are right."
+	/>
+
+</Steps>
+
+## Check it on the model
+
+Lesson 41 gives the character a proper material. To see that the UVs and the picture agree, export `character.glb` again from Blender, as in lesson 37, and in Godot give the character a **StandardMaterial3D** whose **Albedo > Texture** is `character_texture.png`, with **Texture > Filter** set to **Nearest** so the swatches stay crisp. The reference project does this in the running game for a quick look:
+
+<Figure
+	src={face}
+	alt="A Blender viewport render of the character's head and shoulders from the front, textured: a faceted head with brown-red hair and fringe, two dark eyes with white shine, pink cheeks, and a small mouth, above a blue tunic with blue shoulder pads."
+	caption="The head, textured, in a Blender viewport render."
+/>
+
+<Figure
+	src={back}
+	alt="A Blender viewport render of the character from the back: brown-red hair, a tan pack on the blue tunic, cream sleeves, leather gloves, a belt, slate legs and brown boots."
+	caption="The back."
+/>
+
+<Figure
+	src={meadow}
+	alt="The game at noon, zoomed in: the textured character stands in the grass, with a blue tunic, cream sleeves, dark trousers, and brown-red hair."
+	caption="In the meadow, with a plain material."
+/>
+
+## Try it
+
+- Change the tunic's swatch to a deep red in Krita and export again. The whole tunic, the skirt, and the shoulder pads change color without touching the model. This is the reason to use a swatch texture.
+- Paint a scar, freckles, or a different mouth on the face patch. Only the head changes.
+- Add a ninth color: select the pads in Blender, collapse them onto a new swatch, and paint it. Pick a free cell in the bottom row.
+
+## If it does not work
+
+- **The UV editor shows nothing after you select faces.** UV Sync Selection is on, or no faces are selected. Turn sync off and select faces in the 3D viewport.
+- **A part has a stripe of two colors.** Its corners were not all moved: UV Sync Selection was on, or you did not press <Kbd keys="A" /> in the UV editor before scaling. Select the part again and place it.
+- **A box select misses part of a limb.** X-ray is off, or the box does not reach the face centers. Press <Kbd keys="Alt+Z" /> and widen the box.
+- **Ctrl+L selects more than one piece.** The pieces touch, or you clicked on the body. Click a face of the piece itself.
+- **The face is mirrored or upside down on the model.** The head was projected from the back. Project it from the front view.
+- **The face is a blur of colors.** The texture's filter is Linear and the model is small. Set **Texture > Filter** to **Nearest** on the material.
+
+## Checkpoint
+
+Your project now contains:
+
+<FileTree>
+- art
+  - character
+    - character_blockout.glb
+    - character.glb
+    - **character_texture.png**
+- art_source
+  - character
+    - **character.blend**, with the UVs laid out
+    - **character_texture.kra**
+</FileTree>
+
+Commit your work: `git add .` and `git commit -m "Paint the character"`. In the next lesson you build the skeleton that will move it.
+
+<Checkpoint />
