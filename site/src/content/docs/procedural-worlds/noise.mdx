@@ -190,7 +190,7 @@ Write the script so that:
 	<Code code={piece1} lang="csharp" title="src/Generation/GenerationProfile.cs" />
 </Solution>
 
-The one idea in `Sample` is that the seed is not stored in the noise. If the profile set `Terrain.Seed` itself, then picking a new world would change a resource shared by every profile that uses it, and the changed file would show up in version control. Instead the profile **slides the point**: the seed becomes a distance, the noise is asked about a point that far away, and a different seed asks about a different part of the same endless noise. 7919 and 104729 are two different primes, so the slide along x has nothing to do with the slide along z, and the `PosMod` by 10007 keeps the distance small, where a `float` is still precise. The noise itself is never touched, and the same seed on any machine asks about the same point.
+The one idea in `Sample` is that the seed is not stored in the noise. If the profile set `Terrain.Seed` itself, then picking a new world would change a resource shared by every profile that uses it, and the changed file would show up in version control. Instead the profile **slides the point**: the seed becomes a distance, the noise is asked about a point that far away, and a different seed asks about a different part of the same endless noise. 7919 and 104729 are two different primes, so the slide in one direction has nothing to do with the slide in the other, and the `PosMod` by 10007 keeps the distance small, where a `float` is still precise. The noise itself is never touched, and the same seed on any machine asks about the same point.
 
 <Steps>
 

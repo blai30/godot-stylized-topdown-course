@@ -85,8 +85,9 @@ Open `src/Generation/WorldGenerator.cs` and change it so that:
 - the narrow-water loop passes `generated` to `NarrowWater`, which returns only the narrow cells in it: `narrow.Where(generated.Contains).ToList()`, with a comment: the cells among the generated ones that lie in water too narrow for the bank. Water you painted narrower than three cells is not turned to land, and Update shore warns about it, as it did in lesson 47. It is your water;
 - the ground is written from `generated` only, and the list is made as it goes: `Painted.Clear();`, then for each cell `Ground.SetCellItem(new Vector3I(cell.X, 0, cell.Y), cells[cell].Item);` and `Painted.Add(new Vector4I(cell.X, 0, cell.Y, cells[cell].Item));`. `Ground.Clear()` is gone: the cells to take away were taken away at the top;
 - `PlaceProps(half, byHand)` takes the hand-painted cells, and a candidate is skipped if `byHand.Contains(cell)`, with the other tests. That is how trees stay out of a clearing you painted. `IsNearWater` asks the ground, so trees also keep from a lake you painted;
-- the loop at the top of `PlaceProps` that emptied `Props` moves into `ClearProps()`, so that `Clear` can use it too, and `PlaceProps` begins with `ClearProps();` and `var parent = Props!;`, and adds each tree to `parent`;
-- the final `GD.Print` reports `generated.Count` cells, the seed, and the time: `from seed {Profile.Seed}, in {Time.GetTicksMsec() - started} ms`.
+- the loop at the top of `PlaceProps` that emptied `Props` moves into `ClearProps()`, so that `Clear` can use it too, behind a guard that returns at once if `Props` is not set, and `PlaceProps` begins with `ClearProps();` and `var parent = Props!;`, and adds each tree to `parent`;
+- the comment above the narrow-water loop now ends: water you painted is left as it is;
+- the final `GD.Print` reports `generated.Count` cells, the water among all the cells, hand-painted ones included, the props, the seed, and the time: `from seed {Profile.Seed}, in {Time.GetTicksMsec() - started} ms`.
 
 <Solution>
 	<Code code={piece2} lang="csharp" title="src/Generation/WorldGenerator.cs" />
@@ -104,19 +105,19 @@ Open `src/Generation/WorldGenerator.cs` and change it so that:
 		caption="The generator, with a list of what it painted and a Clear button."
 	/>
 
-2. Click **Generate**. The Output panel says `Generated 0 cells, 1672 of them water, and 0 props`. This is the first-time effect that was described above. The ground in the scene is in no list, so it is all yours, nothing is the generator's to paint, and the trees, which the generator does own, were taken away.
+2. Click **Generate**. The Output panel says `Generated 0 cells, 1672 of them water, and 0 props`, with the seed and the time after it. This is the first-time effect that was described above. The ground in the scene is in no list, so it is all yours, nothing is the generator's to paint, and the trees, which the generator does own, were taken away.
 
 3. Click **Clear**. The ground, the shore, the grass, and the trees go, and the list is empty.
 
 4. Click **Generate** again. The Output panel says `Generated 9216 cells, 1672 of them water, and 79 props, from seed 15`. It is the level of the last lesson, and now the generator has a list of all 9,216 cells.
 
-5. Paint over it by hand. Select **GroundTiles**, pick **Water** in the palette, and paint a pond of 8 by 6 cells, with x from 8 to 15 and z from 14 to 19. The cell at the middle of the level is 0, 0, x grows to the east, and z grows toward you. Pick **Dirt**, and paint a square of 12 by 12 cells, x from 8 to 19 and z from -10 to 1. This is a clearing, 6 meters on a side, where the seed grew a grove.
+5. Paint over it by hand. Select **GroundTiles**, pick **Water** in the palette, set the floor to 0, and paint a pond of 8 by 6 cells, with x from 8 to 15 and z from 14 to 19. The cell at the middle of the level is 0, 0, x grows to the east, and z grows toward you. Pick **Dirt**, and paint a square of 12 by 12 cells, x from 8 to 19 and z from -10 to 1. This is a clearing, 6 meters on a side, where the seed grew a grove.
 
 6. Select **WorldGenerator** and click **Generate**. The Output panel says `Generated 9024 cells, 1720 of them water, and 73 props, from seed 15`. The ground has 9,216 cells, and the 192 you painted are not among the 9,024 that are the generator's.
 
 </Steps>
 
-Compare it with the level before you painted. The water cells are 1,672 and the 48 of your pond. The trees are 73, six fewer than 79, because seven had grown in the clearing and one new tree found room. And the bank has 444 pieces against 416: Update shore edged your pond too, as it edges any water in the ground.
+Compare it with the level before you painted. The water cells are 1,672 and the 48 of your pond. The trees are 73, six fewer than 79. Seven had grown in the clearing, and the others come from the spacing and the shore distance reacting to what you painted, so it is not a simple subtraction. And the bank has 444 pieces against 416: Update shore edged your pond too, as it edges any water in the ground.
 
 <Figure
 	src={newHand}
@@ -153,7 +154,7 @@ So far the level was generated in the editor, and saved with the scene: the 9,21
 		caption="The level the game runs, whether it was loaded or generated."
 	/>
 
-2. Check **New Seed Each Run** and run it again, and again. Each run picks a number, makes a level, and the level is different.
+2. Check **New Seed Each Run**, save, and run it again, and again. Each run picks a number, makes a level, and the level is different.
 
 	<Figure
 		src={newA}
@@ -167,13 +168,15 @@ So far the level was generated in the editor, and saved with the scene: the 9,21
 		caption="The second run, seed -1272062196."
 	/>
 
+3. Uncheck both boxes and save the scene, so that the game runs the baked level again.
+
 </Steps>
 
 The two runs had 2,283 and 1,774 water cells, 70 and 82 trees, and 546 and 476 bank pieces. In both, your pond and your dirt were where you painted them, and no tree grew on the dirt: the list is saved in the scene, so the game knows which cells are yours.
 
 The `GD.Randi()` seed can be negative, and that is fine: the profile's `Sample` takes the seed's remainder with `PosMod`, which is never negative, so a seed of any sign slides the noise to a point.
 
-When you like a level, the seed in the game's Output panel brings it back: type it into the profile's **Seed**, uncheck **New Seed Each Run**, and the same level comes every time. A game that lets a player share a world shares that number.
+When you like a level, the seed in the game's Output panel brings it back: type it into the profile's **Seed**, and keep **New Seed Each Run** unchecked, and the same level comes every time. A game that lets a player share a world shares that number.
 
 ## Bake it, or generate it live?
 

@@ -58,7 +58,7 @@ That rule alone draws lakes, but not ones the rest of the template can live with
 - **Water where the player starts.** The player begins at the middle of the level, and must not begin in a lake. Water within six cells of the middle becomes land.
 - **Water too narrow for the bank.** Lesson 47 found that water narrower than three cells shows no water, and warns. A generator that made such water would fill the Output panel with warnings. So narrow water becomes land, and it goes on until there is none, because taking away a narrow arm can leave another narrow arm behind.
 
-The first two are one line each. The third already exists: `BankMap` can already tell which water cells are too narrow, and it is only private. The generator needs it, so that is the first change.
+The first two are one line each. The third already exists: `BankMap` can already tell which water cells are too narrow, but only inside a private method that warns. The generator needs the answer itself, so that is one of the changes.
 
 ## Three small changes
 
@@ -104,11 +104,19 @@ The generator knows two tiles by name: water, which is whichever tile says **Is 
 	<Code code={piece3} lang="csharp" title="src/Generation/GenerationProfile.cs" />
 </Solution>
 
+After you build the project, in the next section, open `world/generation/generation_profile.tres` in the Inspector: the three new properties are there, at their defaults.
+
+<Figure
+	src={profileShot}
+	alt="The Inspector showing the GenerationProfile with Seed 15, Size 96 by 96, Terrain, Water Level -0.2, Land Tile Grass, and Forest."
+	caption="The profile, with a size, a water level, and a land tile."
+/>
+
 ## The generator
 
 Make `src/Generation/WorldGenerator.cs`, a C# script that inherits `Node`. Write it so that:
 
-- the class is `public partial class WorldGenerator : Node`, in the `TopDownTemplate.Generation` namespace, with `[Tool]` above it, and a comment: makes the level from a `GenerationProfile`; Generate paints the ground from the terrain noise, then edges the water with the bank and grows the grass, as the buttons on those nodes do; it paints the whole ground again each time, so the same profile gives the same level;
+- the file starts with `using` lines for `System.Collections.Generic`, `System.Linq`, `Godot`, and `TopDownTemplate.Ground`, and the class is `public partial class WorldGenerator : Node`, in the `TopDownTemplate.Generation` namespace, with `[Tool]` above it, and a comment: makes the level from a `GenerationProfile`; Generate paints the ground from the terrain noise, then edges the water with the bank and grows the grass, as the buttons on those nodes do; it paints the whole ground again each time, so the same profile gives the same level;
 - two constants have comments. `EdgeCells` is `4`: water this close to the edge of the level, in cells, becomes land, so the level ends on grass. `SpawnCells` is `6`: water this close to the middle of the level, in cells, becomes land, so the player starts on dry ground;
 - the exports are `Profile` (`GenerationProfile?`), `Ground` (`GroundMap?`), `Bank` (`BankMap?`), `Grass` (`GrassScatter?`), and `Water` (`MeshInstance3D?`), with a comment on the last: the water's plane, stretched to cover the level. A generator that finds its nodes through exports, as `BankMap` does with `Ground`, does not break when you rename or move a node;
 - `[ExportToolButton("Generate")] public Callable GenerateButton => Callable.From(Generate);` is the button, as in the last two scripts;
@@ -150,9 +158,9 @@ The generator needs a level of its own. The quickest one to make is the meadow: 
 
 3. Rename the root node from **Meadow** to **Generated**.
 
-4. Delete what was placed by hand. Select **Rocks** and **Patches**, hold <Kbd keys="Ctrl" mac="Cmd" /> to select both, and delete them with <Kbd keys="Delete" mac="Cmd+Backspace" />. Then open **Trees**, select **TreeOak**, hold <Kbd keys="Shift" /> and select **TreePine3**, and delete them all. Leave the empty **Trees** node, as lesson 51 grows trees into it.
+4. Delete what was placed by hand. Select **Rocks** and **Patches**, hold <Kbd keys="Ctrl" mac="Cmd" /> to select both, and delete them with <Kbd keys="Delete" mac="Cmd+Backspace" />. Godot asks you to confirm; click **Delete**. Then open **Trees**, select **TreeOak**, hold <Kbd keys="Shift" /> and select **TreePine3**, and delete them all. Confirm again, and leave the empty **Trees** node, as lesson 51 grows trees into it.
 
-5. The placeholder floor from lesson 4, which the player stands on, is 20 meters wide, and the level is 48. Select **Ground > StaticBody3D > CollisionShape3D**. In the Inspector, open the **Shape** menu, choose **New BoxShape3D**, click it, and set its **Size** to `52`, `1`, `52`. Set the node's **Position** to `0`, `-0.5`, `0`, so the top of the box is at ground level. Then select **Ground**, and set its mesh's **Size** to `52` by `52`, for tidiness.
+5. The placeholder floor from lesson 4, which the player stands on, is 20 meters wide, and the level is 48. Select **Ground > StaticBody3D > CollisionShape3D**. (**Ground** here is the floor mesh, not the **GroundTiles** GridMap.) In the Inspector, open the **Shape** menu, choose **New BoxShape3D**, click it, and set its **Size** to `52`, `1`, `52`. Set the node's **Position** to `0`, `-0.5`, `0`, so the top of the box is at ground level. Then select **Ground**, and set its mesh's **Size** to `52` by `52`, for tidiness.
 
 	<Figure
 		src={floorShot}
@@ -164,7 +172,7 @@ The generator needs a level of its own. The quickest one to make is the meadow: 
 		A box suits a floor. The 20 meter floor was a flat mesh turned into a collision shape, a shape of triangles with no inside. A box has an inside, and this one is a meter thick.
 	</Aside>
 
-6. Add a **Node** and name it **WorldGenerator**. In the Inspector, under **Script**, choose **Quick Load...**, type `WorldGenerator`, and press <Kbd keys="Enter" />.
+6. Select the root, **Generated**, add a **Node** to it, and name it **WorldGenerator**. In the Inspector, under **Script**, choose **Quick Load...**, type `WorldGenerator`, and press <Kbd keys="Enter" />.
 
 7. Set **Profile** to `generation_profile.tres` with **Quick Load...**. For **Ground**, **Bank**, **Grass**, and **Water**, click **Assign...** and pick **GroundTiles**, **Bank**, **Grass**, and **Water**.
 
@@ -229,7 +237,7 @@ The lakes are not all the same shape, and they sit among a lot of grass. There a
 These numbers were read from the generated level, with seed 15.
 
 - 9,216 cells: 7,544 grass and 1,672 water, 18 percent of the level.
-- Update shore placed 416 bank pieces and did not warn.
+- Update shore placed 416 bank pieces.
 - No water cell lies within four cells of the edge or within six cells of the middle.
 - No water cell is in water narrower than three cells.
 - The water plane is 19.6 meters scaled by 2.449, which is 48 meters.

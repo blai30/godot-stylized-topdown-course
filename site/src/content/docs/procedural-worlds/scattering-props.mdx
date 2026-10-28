@@ -51,12 +51,12 @@ You planted the grove in lesson 28 by hand, and every tree there was a decision.
 The grass scatter of lesson 32 gave every one-meter square its own plants. The trees do the same. In every square meter of the level there is one **candidate**: a point somewhere in the square, a turn, a size, and a question: should a tree grow here? The answer comes from the rules, asked in this order:
 
 1. **Which kind?** The rules take turns on a roll, each one's share set by its **Weight**. With an oak of 3 and a pine of 2, three candidates in five are oaks.
-2. **Is the forest thick here?** The forest noise from lesson 49, at the candidate's point, is turned into a chance. Below the rule's **Starts At** the chance is 0, above its **Full At** it is 1, and in between it rises evenly. A second roll decides whether it grows. This is what makes groves: where the noise is high, almost every candidate grows, and where it is low, none does.
-3. **Is it clear of the edge and the start?** The same cells that kept water away keep trees away.
+2. **Is it clear of the edge and the start?** The same cells that kept water away keep trees away.
+3. **Is the forest thick here?** The forest noise from lesson 49, at the candidate's point, is turned into a chance. Below the rule's **Starts At** the chance is 0, above its **Full At** it is 1, and in between it rises evenly. A second roll decides whether it grows. This is what makes groves: where the noise is high, almost every candidate grows, and where it is low, none does.
 4. **Is it clear of the water?** Not within the rule's **Shore Distance**.
 5. **Is it clear of other trees?** Not within the rule's **Spacing** of one that already grew.
 
-A candidate that fails any of these is not a tree. The ones that pass are placed.
+A candidate that fails any of these is not a tree, and the ones that pass are placed. The code asks in a slightly different order from this list, with the cheap tests first, but a candidate must pass them all either way.
 
 ## A rule is a resource
 
@@ -101,7 +101,7 @@ Then the new methods:
 
 - `PlaceProps(Vector2I half)` returns how many props grew. It has a comment: grows the props, one candidate in each square meter, in the same order every time; each candidate rolls everything it might need whether or not it is used, so a square comes out the same however its neighbors do. It begins by emptying `Props`: `RemoveChild` and `QueueFree` for each child, so pressing Generate twice does not double the forest;
 - `rules` are the profile's rules that have a scene, `Profile.Rules.Where(rule => rule.Scene is not null).ToList()`, `totalWeight` is their weights added up, and `placed` is a `List<Vector2>` of where trees stand. `extent` is the half of the level in meters, `new Vector2I(Mathf.FloorToInt(half.X * cellSize), Mathf.FloorToInt(half.Y * cellSize))`, and two loops walk every square meter, `x` from `-extent.X` and `z` from `-extent.Y`;
-- for each square, a `RandomNumberGenerator` is seeded from the square with `SquareSeed(square)`, and draws, in a fixed order, the candidate's `point` (the square's corner plus two random numbers from 0 to 1), a `roll`, a `pick` (a random number times `totalWeight`), a `turn` (a random number times `Mathf.Tau`), and a `scale` from 0.85 to 1.2. All five are drawn for every square, even one that will not grow a tree, so the draws never move: what square (4, 7) rolls does not depend on what squares around it did;
+- `cellSize` is `Ground!.CellSize.X`, declared before the loops. For each square, `square` is `new Vector2I(x, z)`, and a `RandomNumberGenerator` named `random` is seeded from it with `SquareSeed(square)`, and draws, in a fixed order, the candidate's `point` (the square's corner plus two random numbers from 0 to 1), a `roll`, a `pick` (a random number times `totalWeight`), a `turn` (a random number times `Mathf.Tau`), and a `scale` from 0.85 to 1.2. All five are drawn for every square, even one that will not grow a tree, so the draws never move: what square (4, 7) rolls does not depend on what squares around it did;
 - `rule` is `PickRule(rules, pick)`, and `cell` is the ground cell the point is in, `Mathf.FloorToInt(point.X / cellSize)` and the same for `Y`. The candidate is skipped, with `continue`, if `rule is null`, if `IsKeptClear(cell, half)`, if `roll >= Density(rule, point)`, if `IsNearWater(cell, rule.ShoreDistance)`, or if any `placed` point is nearer than `rule.Spacing`. Order the checks cheapest first, so the spacing check, which looks at every tree so far, runs on the fewest;
 - a tree is `rule.Scene!.Instantiate<Node3D>()`, named `Prop_{x}_{z}`, so the names are the same every press and a version control diff shows what moved, with `Position` at `point` on the ground, `Rotation` of `turn` about the vertical, and `Scale` of `Vector3.One * scale`. It is added to `Props`, and `prop.Owner = Owner;`, with a comment: owned by the scene's root, so the scene saves it. The point goes into `placed`;
 - `PickRule(List<PropRule> rules, float pick)` has a comment: the rule a roll between 0 and the total weight lands on, when the rules take turns along it in order. It takes each rule's weight off `pick` until `pick` goes below 0, and returns that rule. For weights of 3 and 2, a pick below 3 is the oak and the rest is the pine;
@@ -149,7 +149,7 @@ Two things in this are worth going over.
 
 <Steps>
 
-1. Open `levels/generated.tscn` and select **WorldGenerator**. A new **Props** property is there. Click **Assign...** and pick **Trees**, the empty node you kept in lesson 50.
+1. Open `levels/generated.tscn` and select **WorldGenerator**. A new **Props** property is there. Click **Assign...**, pick **Trees**, the empty node you kept in lesson 50, and click **OK**.
 
 	<Figure
 		src={selectTrees}
@@ -167,8 +167,8 @@ Two things in this are worth going over.
 
 	<Figure
 		src={generated}
-		alt="The Godot editor with the WorldGenerator selected and the 3D view showing grass."
-		caption="Generate, pressed again. The trees are a node away from the player."
+		alt="The Godot editor with the WorldGenerator selected and the 3D view showing the player on grass with oaks and pines behind."
+		caption="Generate, pressed. The trees are in the scene, behind the player."
 	/>
 
 3. Save the scene, and run it with **Run Current Scene**, <Kbd keys="F6" mac="Cmd+R" />.
@@ -207,7 +207,7 @@ These numbers were read from the level, with seed 15.
 - Every tree is owned by the scene, so the scene saves it.
 - The closest two trees are 2.00 meters apart, which is the spacing.
 - No tree stands in water, in the clearing around the middle, or within four cells of the edge.
-- The nearest water cell to any tree is 1.81 meters away, a little under the 2 meters of the rule. The rule measures from the middle of the cell the tree stands in to the middle of a water cell, and a tree can stand up to a third of a meter from the middle of its own cell. The shore is a margin of about two meters, not an exact one.
+- The nearest water cell to any tree is 1.81 meters away, a little under the 2 meters of the rule. The rule measures from the middle of the cell the tree stands in to the middle of a water cell, and a tree can stand up to about 0.35 meters from the middle of its own cell. The shore is a margin of about two meters, not an exact one.
 - The forest noise averages 0.31 at the trees, against -0.01 over the level. The trees are where the noise is high.
 - Pressing Generate again gave the same 79 trees, the same names, positions, turns, and sizes.
 - Seed 16 gave a different forest. Setting 15 again and pressing the button gave the first one back, tree for tree.
