@@ -118,17 +118,17 @@ Godot puts that folder in the player's data folder: `~/Library/Application Suppo
 </Steps>
 
 <Aside type="note" title="Why 1920 by 1080">
-1920 by 1080 is the size most monitors, and most designers, treat as the reference. Menus you build in lesson 55's pause panel and later are laid out against this size, and a smaller screen scales them down. The 3D world does not depend on it.
+1920 by 1080 is the size most monitors, and most designers, treat as the reference. Menus, such as the pause panel from lesson 55, are laid out against this size, and a smaller screen scales them down. The 3D world does not depend on it.
 </Aside>
 
 ### Why a wide screen gains view and not bars
 
 Two settings decide what a window of any shape shows:
 
-- **Aspect `expand`** tells Godot to keep the base size's height and let the width grow with the window, so no black bars appear at the sides or at the top and bottom.
+- **Aspect `expand`** tells Godot to keep the base size's shape and grow whichever side the window has more of, so no black bars appear at the sides or at the top and bottom.
 - Your camera's **Keep Aspect** is **Keep Height**, which is Godot's default and what the camera rig from lesson 5 uses. The camera keeps its vertical size, so a wider window shows more to the left and right. Games call this Hor+ (horizontal plus).
 
-Together they mean an ultra-wide monitor sees more of the world than a 16:9 one, and a taller 16:10 screen sees a little more above and below. Nobody sees bars. If you set **Keep Width** on the camera instead, a wide screen would crop the top and bottom, which is why the template does not.
+Together they mean an ultra-wide monitor sees more of the world than a 16:9 one, and a 16:10 screen, which is closer to square, sees a little less to the sides. Nobody sees bars. If you set **Keep Width** on the camera instead, a wide screen would crop the top and bottom, which is why the template does not.
 
 You test this at the end of the lesson.
 
@@ -138,7 +138,7 @@ Two settings from earlier are part of the template, so check that they are still
 
 <Steps>
 
-1. Click **Physics > 3D**. **Physics Engine** reads **Jolt Physics**. The Project Manager set it when it created the project, and the round arrow shows it differs from the default.
+1. Click **Physics > 3D**. **Physics Engine** reads **Jolt Physics**. The project was made with it, and the round arrow shows it differs from the default.
 
 	<Figure
 		src={physics}
@@ -151,7 +151,7 @@ Two settings from earlier are part of the template, so check that they are still
 </Steps>
 
 <Aside type="note" title="Jolt, in one sentence">
-Jolt is a physics engine, the code that decides how bodies collide and move. Godot offers it beside its older built-in 3D engine, and the Project Manager picked it when it made your project.
+Jolt is a physics engine, the code that decides how bodies collide and move. Godot offers it beside its older built-in 3D engine, and your project was made with it.
 </Aside>
 
 ## Layers
@@ -239,7 +239,7 @@ Renaming layers does not move anything: a body stays on the number it was on. Th
 
 2. In the Inspector, under **Collision**, find **Layer**. Clear box **2** and tick box **5**. Hover over a box and Godot shows its name: `Player`.
 
-3. Under **Mask**, tick boxes **1** and **2**: `World` and `Terrain`. The player now collides with props and with the ground.
+3. Under **Mask**, leave box **1** ticked and tick box **2** as well: `World` and `Terrain`. The player now collides with props and with the ground.
 
 	<Figure
 		src={playerCollision}
@@ -269,7 +269,8 @@ Two project files decide how strictly your code is checked. You write them now s
 
 ### The style file
 
-`.editorconfig` is a plain text file many editors and IDEs read, to agree on how files are laid out and how C# is written. Godot made it in lesson 2 with one setting, the UTF-8 character set. Replace the whole file with this one. 
+`.editorconfig` is a plain text file many editors and IDEs read, to agree on how files are laid out and how C# is written. Godot made it in lesson 2 with one setting, the UTF-8 character set. Replace the whole file with the one below.
+
 <Steps>
 
 1. Open `.editorconfig` in your code editor and replace its contents with the file under **Show the full .editorconfig**, then save.
@@ -294,7 +295,7 @@ The compiler reports a **warning** when code is legal but suspicious, such as us
 
 2. Add one line inside the `<PropertyGroup>`, under `<Nullable>enable</Nullable>`: `<TreatWarningsAsErrors>true</TreatWarningsAsErrors>`.
 
-3. Save, then press the **Build** button, the hammer at the top right, <Kbd keys="Alt+B" mac="Option+B" />. The **MSBuild** panel reports no errors.
+3. Save, then press **Build Project**, the hammer at the top right, <Kbd keys="Alt+B" mac="Option+B" />. The **MSBuild** panel reports no errors.
 
 </Steps>
 
@@ -302,11 +303,11 @@ The compiler reports a **warning** when code is legal but suspicious, such as us
 	<Code code={csproj} lang="xml" title="TopDownTemplate.csproj" />
 </Solution>
 
-`<Nullable>enable</Nullable>` was already there from lesson 2. It makes the compiler warn wherever a value might be `null`, which now fails the build until you handle it.
+`<Nullable>enable</Nullable>` was already there from lesson 2. It makes the compiler warn wherever a value might be `null`, a variable that holds nothing, which now fails the build until you handle it.
 
 ## Try it
 
-Press <Kbd keys="F5" mac="Cmd+B" /> to run the meadow. It starts on a black splash, then the meadow, and the character walks on the ground, so the new layers and masks work. Drag the window's edge to make it much wider, then much taller:
+Press <Kbd keys="F5" mac="Cmd+B" /> to run the meadow. It starts on a black splash, then the meadow, and the character walks on the ground. Drag the window's edge to make it much wider, and watch it fill:
 
 <Figure
 	src={ratio16x9}
@@ -316,7 +317,7 @@ Press <Kbd keys="F5" mac="Cmd+B" /> to run the meadow. It starts on a black spla
 
 <Figure
 	src={ratio16x10}
-	alt="The meadow in a 1680 by 1050 window, a 16:10 shape: the window is filled and a little more sky shows above."
+	alt="The meadow in a 1680 by 1050 window, a 16:10 shape: the window is filled, with a little less sky at the sides than in the 16:9 window."
 	caption="1680 by 1050, 16:10."
 />
 
@@ -334,10 +335,10 @@ The wide views show sky around the meadow because the meadow is a small test lev
 
 ## If it does not work
 
-- **The build fails with a warning shown as an error.** `TreatWarningsAsErrors` is on, so the **MSBuild** panel names the line. Read the message and fix its cause. Do not turn the setting off: a warning you ignore today is a bug you read about later.
-- **The player falls through the ground.** The player's **Mask** does not include `Terrain` (box 2), or `GroundTiles` is not on layer 2 in the level you ran. Check both, and check `meadow.tscn` and `generated.tscn` separately.
+- **The build fails with a warning shown as an error.** `TreatWarningsAsErrors` is on, so the **MSBuild** panel names the line. If it names `BuildDay.cs` and `GetScene()`, that script is from an older version of lesson 21: replace the call with `EditorInterface.Singleton.GetEditedSceneRoot()`. Read the message and fix its cause. Do not turn the setting off: a warning you ignore today is a bug you read about later.
+- **The player walks into the pond.** The pond's bank is on `Terrain`, and the player stops at it only if its **Mask** includes `Terrain` (box 2). Check the mask, and that `Bank` and `GroundTiles` are on layer 2 in both `meadow.tscn` and `generated.tscn`. The hidden `Ground` plane under the meadow stays on `World`, so the player does not fall even when `Terrain` is wrong.
 - **A prop does not stop the player.** The prop's layer is not in the player's mask. Props on layer 1 stop the player because **Mask** box 1 is ticked.
-- **A custom user dir seems unused.** The folder is made the first time the game saves or logs something, and only for a run of the game, not the editor, which has its own folders.
+- **A custom user dir seems unused.** The setting is read when the game runs, not the editor, which has its own folders. A game run from the editor reports the folder in use as `OS.GetUserDataDir()`.
 - **The splash is still gray.** The color is set in the wrong place. It is **BG Color** under **Application > Boot Splash**, not a color in **Rendering**.
 
 ## Checkpoint

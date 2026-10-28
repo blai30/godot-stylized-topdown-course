@@ -72,7 +72,7 @@ The script does four things:
 	<Code code={audit} lang="gdscript" title="tools/audit_project.gd" />
 </Solution>
 
-Your Output panel lists 13 problems:
+Your Output panel lists 13 problems, out of about 145 files; the counts of files on your computer may differ a little, and the 13 problems should match:
 
 <Figure
 	src={auditBefore}
@@ -207,7 +207,7 @@ Every other file follows the `snake_case` rule. The animation pack's file kept t
 
 1. In the FileSystem dock, click `art/animations/UAL1_Standard.glb`, press <Kbd keys="F2" />, type `ual1_standard.glb`, and press <Kbd keys="Enter" />. Godot renames the file and its import settings, and fixes `character.tscn`, which names it.
 
-2. Open `art/animations/README.md` and change the file name in its first sentence to `ual1_standard.glb`, noting it was renamed from the pack's `UAL1_Standard.glb`. The README keeps the author's name and the license, so the credit stays with the file.
+2. Keep the credit with the file. In `art/animations`, create a `README.md` if you do not have one, or edit yours. It should name the pack (Quaternius's Universal Animation Library, Standard, CC0), say where it came from, and say that `ual1_standard.glb` was renamed from the pack's `UAL1_Standard.glb`.
 
 </Steps>
 
@@ -247,7 +247,7 @@ The art README is honest about one thing that is not a file. The shaders read **
 
 </Steps>
 
-The boundary holds: `art` has no scripts and no path out.
+The boundary holds as far as the audit can see: it reads the `res://` paths in scenes, resources, and shaders, so it does not catch a path made another way, and it is a check to run before you commit, not a proof.
 
 ## Make the build enforce the style
 
@@ -267,7 +267,7 @@ In lesson 58 you wrote the style rules in `.editorconfig` and turned warnings in
 
 ## Try it
 
-- Run the meadow with <Kbd keys="F6" mac="Cmd+R" />. It looks as it did before the lesson. The trees still sway at different moments, because each derives its phase from where it stands. The player walks and the character's legs move.
+- Open `levels/meadow.tscn` and run it with <Kbd keys="F6" mac="Cmd+R" />. It looks as it did before the lesson. The trees still sway at different moments, because each derives its phase from where it stands. The player walks and the character's legs move.
 - Prove the build enforces the style. Make `src/Camera/Bad.cs` with a block-scoped namespace, then build:
 
 ```csharp
@@ -322,7 +322,7 @@ Your project now contains:
     - foliage.gdshader
 - src
   - World
-    - DayClock.cs WindPhase.cs is gone
+    - DayClock.cs, and WindPhase.cs is gone from this folder
 - world
   - ground
     - ground_tile_set.tres

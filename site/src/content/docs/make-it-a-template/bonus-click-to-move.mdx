@@ -12,7 +12,7 @@ lesson:
     - How to put the level's solid things in a group and bake from the group
     - How a NavigationAgent3D finds a path and hands it to a body
     - Which baking settings make the mesh match the player
-  prerequisites: [6, 60]
+  prerequisites: [6, 59, 60]
 ---
 
 import { Aside, Code, Steps } from '@astrojs/starlight/components';
@@ -29,7 +29,7 @@ import agentSettings from '../../../assets/lessons/bonus-click-to-move/agent-set
 import path from '../../../assets/lessons/bonus-click-to-move/path.png';
 
 <Aside type="note" title="An optional add-on">
-Lessons 61, 62, and 64 are not part of the template. Each is a small addition for one kind of game, and you add it to a game you copied from the template in lesson 60. This one is for action RPGs, where you click and the hero goes there. It replaces the keyboard walking from lesson 6.
+Lessons 61, 62, 64, and 65 are optional add-ons, not part of the template. Each is a small addition for one kind of game, and you add it to a game you copied from the template in lesson 60. This one is for action RPGs, where you click and the hero goes there. It replaces the keyboard walking from lesson 6.
 </Aside>
 
 ## What you will build
@@ -54,7 +54,7 @@ Godot bakes a mesh from the level's **static colliders**, the shapes of the soli
 
 ## Write the script
 
-`ClickMovement` replaces `PlayerMovement` on the player. It keeps the same walking: it speeds up and slows down by `Acceleration`, falls under gravity, and turns to face where it goes. What changes is where it gets its direction. `PlayerMovement` reads the keys. `ClickMovement` asks the agent.
+`ClickMovement` replaces `PlayerMovement` on the player. It keeps most of the same walking: it speeds up and slows down by `Acceleration`, falls under gravity, and turns to face where it goes. What changes is where it gets its direction. `PlayerMovement` reads the keys. `ClickMovement` asks the agent.
 
 <Steps>
 
@@ -109,11 +109,11 @@ The mesh is baked from the level's solid things, so the baking needs to know whi
 	- Under **Geometry**, **Parsed Geometry Type** to `Static Colliders`: bake from the shapes, not the meshes.
 	- **Source Geometry Mode** to `Groups With Children`, and **Source Group Name** to `navigation_geometry`: bake from the six nodes and everything under them.
 	- Under **Cells**, **Cell Height** to `0.05`. A finer height step puts the mesh a few centimeters above the ground, not a few tens.
-	- Under **Agents**, **Height** `1.8` and **Radius** `0.35`: the player's capsule is 1.8 meters tall and 0.3 wide, with a little room. **Max Climb** `0.1` and **Max Slope** `20`. The rocks and trunks have slopes and edges the player cannot climb, so they must not become floor.
+	- Under **Agents**, **Height** `1.8` and **Radius** `0.35`: the player's capsule is 1.8 meters tall and 0.6 wide, a radius of 0.3, and the radius has a little room. **Max Climb** `0.1` and **Max Slope** `20`. The rocks and trunks have slopes and edges the player cannot climb, so they must not become floor.
 
 	<Figure
 		src={navmeshSettings}
-		alt="The NavigationMesh in the Inspector: Parsed Geometry Type Static Colliders, Source Geometry Mode Group With Children, Source Group Name navigation_geometry, Cell Height 0.05, Agents Height 1.8, Radius 0.35, Max Climb 0.1, Max Slope 20, each with a reset arrow."
+		alt="The NavigationMesh in the Inspector: Parsed Geometry Type Static Colliders, Source Geometry Mode set to its Groups With Children option, Source Group Name navigation_geometry, Cell Height 0.05, Agents Height 1.8, Radius 0.35, Max Climb 0.1, and Max Slope 20."
 		caption="The baking settings."
 	/>
 
@@ -130,7 +130,7 @@ The mesh is baked from the level's solid things, so the baking needs to know whi
 </Steps>
 
 <Aside type="note" title="Why the settings are not the defaults">
-The defaults are for a character a meter wide that can climb a slope of 45 degrees. With them the slopes of the rocks counted as ramps, and the first path found led the player up a rock it could not climb. A mesh matches a character when its agent settings match that character, so set them from the capsule you built in lesson 6.
+The defaults are an agent 1.5 meters tall and 0.5 in radius that can climb 0.25 meters and a slope of 45 degrees. With them the slopes of the rocks counted as ramps, and in one test the path led the player up a rock it could not climb. A mesh matches a character when its agent settings match that character, so set them from the capsule you built in lesson 6.
 </Aside>
 
 ## Put the agent on the player
@@ -147,19 +147,19 @@ The defaults are for a character a meter wide that can climb a slope of 45 degre
 		caption="The agent's two distances."
 	/>
 
-3. Select `Player`. Under **Script** at the bottom, click the arrow and choose **Clear**: the player stops reading the keyboard. Click the empty **Script** field, choose **Quick Load...**, type `ClickMovement`, and press <Kbd keys="Enter" />.
+3. Select `Player`. Under **Script** at the bottom, click the arrow and choose **Clear**: the player stops reading the keyboard. Click **Script**'s empty field, choose **Quick Load...**, type `ClickMovement`, and press <Kbd keys="Enter" />.
 
 4. Save the scene.
 
 </Steps>
 
-The player in `meadow.tscn` had a **Ground** property from `PlayerMovement`. It is gone now, and so is the walking speed that depends on the tile under the player.
+The player in `meadow.tscn` had a **Ground** property from `PlayerMovement`. It is gone now, and so are the walking speed that depends on the tile under the player and the sprint.
 
 ## Try it
 
 - Play the meadow with <Kbd keys="F6" mac="Cmd+R" />. Click on the ground. The character walks there, going round what is in the way, and the walk animation plays while it moves and stops when it arrives.
 - Click on the far side of the grove, past the trees. The character takes the long way round.
-- Click on a rock or inside the pond. The character goes to the closest place it can reach.
+- Click on a rock or inside the pond. The character tries to get as close as it can.
 - Select `Agent`, and under **Debug** switch **Enabled** on. A red line shows the path while the character walks.
 - In `ClickMovement`, make the player follow the mouse while the button is held: handle `InputEventMouseMotion` when the left button is down, and set `TargetPosition` there too.
 

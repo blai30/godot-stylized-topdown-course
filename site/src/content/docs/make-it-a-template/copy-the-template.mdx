@@ -67,7 +67,7 @@ It is a GDScript file, run by Godot itself from the command line rather than fro
 
 The script does these things in order:
 
-- It reads the two names you give it: `"Studio Name"` and `GameName`. The game name must be letters and digits starting with a capital letter, because it becomes a C# namespace, and the studio name may have spaces, because it becomes a folder.
+- It reads the two names you give it: `"Studio Name"` and `GameName`. The game name must be letters and digits starting with a capital letter, because it becomes a C# namespace, and the studio name may have letters, digits, spaces, hyphens, and underscores, because it becomes a folder. It skips the `art` and `art_source` folders, which never carry the name.
 - It reads the project's current name from the project settings, and stops if the `.csproj` and `.sln` files named after it are missing, because then this is not a copy of the template.
 - It builds the bundle identifier from the two names: `com.` plus the studio in lowercase letters and digits, a dot, and the game name in lowercase.
 - It goes through every file that can carry the name: `.cs`, `.csproj`, `.sln`, `.md`, `.cfg`, and `project.godot`, skipping the folders that never do. In each, it replaces the old name as a whole word with the new one. Then it sets the three lines that are not the name alone: the user data folder, the bundle identifier, and, in the README, it removes the **Start a new game** section, whose work is done.
@@ -108,7 +108,7 @@ The script needs Godot's command-line program, and the same executable you open 
 | Windows | The `Godot_v4.8-..._mono_win64.exe` file in the folder you installed it to. Use the `_console.exe` file next to it to see the output. |
 | Linux | The `Godot_v4.8-..._mono_linux.x86_64` file you installed. |
 
-Below, `godot` stands for that path. Open a terminal in the copy's folder, as in lesson 2.
+Below, `godot` stands for that path. Open a terminal in the copy's folder, as in lesson 1. If the path has spaces, put it in quotes; in PowerShell, start the line with `&`.
 
 <Steps>
 
@@ -146,7 +146,7 @@ Below, `godot` stands for that path. Open a terminal in the copy's folder, as in
 	Would rename TopDownTemplate as MoonQuest by Moon Studio. Open the project in Godot and build it.
 	```
 
-	Nothing changed on disk.
+	Nothing changed on disk. If the copy still has build folders, extra lines starting **Would remove** appear too; that is normal.
 
 2. Run it for real: the same command without `--dry-run`. It prints the same lines with **Edited** and **Renamed**.
 
@@ -186,8 +186,10 @@ You can make every change by hand, and the table above is your checklist. The on
 
 - **The command prints "This is not a copy of the template".** You are in a folder that does not have `<ProjectName>.csproj` and `.sln` beside `project.godot`, or `--path .` points elsewhere. Open the terminal in the copy's folder.
 - **It says the game name must start with a capital letter.** The name becomes a namespace. Use `MoonQuest`, not `moonquest` or `Moon Quest`.
+- **It prints the usage line, or says the studio name is not valid.** Put the studio name in quotes, so it is one argument, and use only letters, digits, spaces, hyphens, and underscores in it.
+- **It says the project is already named.** The copy has been renamed already. Give a different game name, or start from a fresh copy.
 - **"Can't load script".** The path after `--script` is wrong, or the script already ran and deleted itself. A new copy has it again.
-- **Godot says it cannot find the .NET assembly.** The name in **Project Settings > Dotnet > Project > Assembly Name** differs from the `.csproj` file's name. Make them the same, then build.
+- **Godot says it cannot find the .NET assembly.** The name in **Project Settings > Dotnet > Project > Assembly Name**, which shows with **Advanced Settings** on, differs from the `.csproj` file's name. Make them the same, then build.
 - **The build fails with "type or namespace name TopDownTemplate".** A script still uses the old name. Search the project for it. Run the script on a fresh copy, or rename the namespace in your IDE.
 - **The export still writes `TopDownTemplate`.** Open **Project > Export...** and check the preset's export path.
 
@@ -202,7 +204,7 @@ Your template now contains:
   - rename_project.gd
 </FileTree>
 
-The copy you made is a separate project, not part of the template. The template is finished: lessons 58 to 60 gave it its settings, its boundaries, and a way to start a game from it. Lessons 61, 62, and 64 are optional: small add-ons for three kinds of game.
+The copy you made is a separate project, not part of the template. The template is finished: lessons 58 to 60 gave it its settings, its boundaries, and a way to start a game from it. Lessons 61, 62, 64, and 65 are optional: small add-ons for three kinds of game, and the autumn leaves.
 
 Commit the template: `git add .` and `git commit -m "Add the rename script"`.
 

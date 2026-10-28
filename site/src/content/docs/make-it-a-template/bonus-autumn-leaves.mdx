@@ -34,7 +34,7 @@ import groveClose from '../../../assets/lessons/bonus-autumn-leaves/grove-close.
 import groveDusk from '../../../assets/lessons/bonus-autumn-leaves/grove-dusk.png';
 
 <Aside type="note" title="An optional add-on">
-Lessons 61, 62, 64, and 65 are not part of the template. This one is for any game with trees that should change with the season, and you add it to a game you copied from the template in lesson 60. The art stays script-free: the script goes on the trees in your level, not on the tree in `art`.
+Lessons 61, 62, 64, and 65 are optional add-ons, not part of the template. This one is for any game with trees that should change with the season, and you add it to a game you copied from the template in lesson 60. The art stays script-free: the script goes on the trees in your level, not on the tree in `art`.
 </Aside>
 
 ## What you will build
@@ -174,7 +174,7 @@ The ramp is a **GradientTexture1D**: a strip of pixels made from a **Gradient**,
 
 </Steps>
 
-Nothing changes in the game yet. Every tree has `autumn` at `0`, the default, so the ramp is blended in by nothing.
+Nothing changes in the game yet. Every tree has `autumn` at `0`, the default, so the ramp has no effect yet.
 
 ## A script that sets each tree's autumn
 
@@ -204,7 +204,7 @@ The trunk, `tree_oak`, is a geometry instance too and gets the value, but the tr
 
 <Steps>
 
-3. Open `levels/meadow.tscn`. Select `TreeOak`, under `Trees`. In the Inspector, click the arrow beside **Script**'s empty field, choose **Quick Load...**, and pick `AutumnTree.cs`. An **Autumn** slider appears at the top of the Inspector. Set it to the value in the table.
+3. Open `levels/meadow.tscn`. Select `TreeOak`, under `Trees`. In the Inspector, click **Script**'s empty field, choose **Quick Load...**, and pick `AutumnTree.cs`. An **Autumn** slider appears at the top of the Inspector. Set it to the value in the table.
 
 4. Do the same for each of the other oaks, with its own value:
 
@@ -258,7 +258,7 @@ With `levels/meadow.tscn` open, click **Play Scene**, <Kbd keys="F6" mac="Cmd+R"
 		caption="The grove at dusk."
 	/>
 - Edit the ramp's colors. Make the last stop pink for a cherry blossom, or the first stop a deep purple. The ramp is the whole look of the autumn, in four colors.
-- The pines are unchanged because their material has no ramp and their `autumn` is `0`. Put `AutumnTree` on a pine and nothing happens, until you give its material an `autumn_ramp` too.
+- The pines are unchanged because they have no `AutumnTree` script, so their `autumn` stays `0`. If you put the script on a pine, give its material an `autumn_ramp` first, or the shader has no colors to turn toward.
 
 <Aside type="tip" title="A whole season">
 A tree with its own `autumn` is a grove of different trees. To have the whole meadow turn together, add a global shader parameter named `season` as you did `wind_strength` in lesson 27, read it in the shader in place of `autumn`, and let a script move it from 0 to 1 over the year. If each tree also has a number of its own from 0 to 1, such as the one `tree_phase_at` makes from where it stands, subtract it first, with something like `clamp(season * 2.0 - number, 0.0, 1.0)`. The trees then turn one after the other, so the meadow changes gradually instead of all at once.

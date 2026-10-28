@@ -12,7 +12,7 @@ lesson:
     - How TestMove asks the physics whether a step is blocked, without moving
     - Why the movement sets Velocity even though it does not use it to move
     - How the grid here lines up with the grid cursor of lesson 61
-  prerequisites: [6, 60]
+  prerequisites: [6, 58, 59, 60]
 ---
 
 import { Aside, Code, Steps } from '@astrojs/starlight/components';
@@ -26,7 +26,7 @@ import walking from '../../../assets/lessons/bonus-tile-movement/walking.png';
 import blocked from '../../../assets/lessons/bonus-tile-movement/blocked.png';
 
 <Aside type="note" title="An optional add-on">
-Lessons 61, 62, and 64 are not part of the template. Each is a small addition for one kind of game, and you add it to a game you copied from the template in lesson 60. This one is for farming and puzzle games, where the world is a grid and the player moves on it a cell at a time. It replaces the free walking from lesson 6.
+Lessons 61, 62, 64, and 65 are optional add-ons, not part of the template. Each is a small addition for one kind of game, and you add it to a game you copied from the template in lesson 60. This one is for farming and puzzle games, where the world is a grid and the player moves on it a cell at a time. It replaces the free walking from lesson 6.
 </Aside>
 
 ## What you will build
@@ -35,7 +35,7 @@ A player that moves from cell to cell. It always stands in the middle of a cell,
 
 <Figure
 	src={blocked}
-	alt="The meadow from above with the character standing on a dirt path just south of a small pond, facing the water, with pines, oaks, and rocks around."
+	alt="The meadow from above with the character standing on a dirt path directly south of a small pond, facing the water, with pines, oaks, and rocks around."
 	caption="The pond stops the step. The player faces it and stays."
 />
 
@@ -82,11 +82,11 @@ The script does these things:
 
 2. In the Inspector, under **Script** at the bottom, click the arrow and choose **Clear**: the player stops reading the keyboard the free way.
 
-3. Click the empty **Script** field, choose **Quick Load...**, type `TileMovement`, and press <Kbd keys="Enter" />. **Cell Size** and **Step Seconds** appear in the Inspector.
+3. Click the empty **Script** field, choose **Quick Load...**, type `TileMovement`, and press <Kbd keys="Enter" />. **Cell Size** and **Step Seconds** appear at the top of the Inspector.
 
 	<Figure
 		src={script}
-		alt="The Godot editor with player.tscn open. The Scene dock lists Player and its children, and the Inspector shows Step Seconds 0.2 above the CharacterBody3D and Collision sections, with Collision Layer 5 and Mask 1 and 2."
+		alt="The Godot editor with player.tscn open. The Scene dock lists Player and its children, and the Inspector, scrolled down, shows Step Seconds 0.2 above the CharacterBody3D and Collision sections, with Collision Layer 5 and Mask 1 and 2."
 		caption="The player with TileMovement. Its exported values are at the top of the Inspector."
 	/>
 
@@ -94,7 +94,7 @@ The script does these things:
 
 </Steps>
 
-The player in `meadow.tscn` had a **Ground** property from `PlayerMovement`. It is gone now, and so is the walking speed that depends on the tile under the player.
+The player in `meadow.tscn` had a **Ground** property from `PlayerMovement`. It is gone now, and so are the walking speed that depends on the tile under the player and the sprint.
 
 ## Try it
 
@@ -102,14 +102,14 @@ The player in `meadow.tscn` had a **Ground** property from `PlayerMovement`. It 
 
 <Figure
 	src={walking}
-	alt="The meadow from above, zoomed in, with the character walking left along the dirt path beside an oak."
+	alt="The meadow from above with the character walking left along the dirt path beside an oak."
 	caption="Held, the steps join into a walk."
 />
 
-- Walk into a tree, a rock, and the pond. The player turns to face them and does not move.
+- Walk into the bank of the pond. The player turns to face it and does not move. Trunks and rocks have collision shapes on the same layers, so they stop a step the same way.
 - Change **Step Seconds** to `0.4` for a slow, careful walk, or `0.1` for a quick one.
 - Change **Cell Size** to `2`. The player steps two meters at a time, between the middles of two-meter cells.
-- Add `GridCursor` from lesson 61 to the same level. Its cells are one meter wide too, so the lit cell is the cell the player stands in when the mouse is over the player.
+- Add `GridCursor` from lesson 61 to the same level. Its cells are one meter wide too, so the cells the cursor lights are the cells the player steps between.
 - Make a turn take a moment, as in many farming games: in `StartStep`, when the direction differs from the way the player faces, turn and return without stepping the first time.
 
 ## If it does not work
@@ -118,7 +118,7 @@ The player in `meadow.tscn` had a **Ground** property from `PlayerMovement`. It 
 - **The player walks through trees.** `TestMove` uses the player's collision mask. Check that **Mask** has the layers of the trees and rocks, `World` and `Terrain`, ticked.
 - **The player stops in the middle of nowhere.** It is blocked by a shape you cannot see, such as a trunk's collision cylinder that is wider than the tree looks. Turn on **Debug > Visible Collision Shapes** to see them.
 - **The player slides off the grid after a step.** Another script moves the body too. Take `PlayerMovement` off, or the grid and the other movement will fight.
-- **The animation shows standing while the player steps.** `PlayerAnimation` is not on the character's `AnimationTree`, which lesson 59 does in the player scene. The script sets the velocity the animation reads.
+- **The animation shows standing while the player steps.** `PlayerAnimation` is no longer on the character's `AnimationTree` in the player scene, where lesson 59 put it. Check that it is still there. The script sets the velocity the animation reads.
 
 ## Checkpoint
 

@@ -12,7 +12,7 @@ lesson:
     - How to turn a world position into a grid cell
     - How a shader can draw grid lines from world positions
     - How to send a cell to the rest of the game with a signal
-  prerequisites: [15, 60]
+  prerequisites: [15, 59, 60]
 ---
 
 import { Aside, Code, Steps } from '@astrojs/starlight/components';
@@ -28,7 +28,7 @@ import cell from '../../../assets/lessons/bonus-grid-cursor/cell.png';
 import moved from '../../../assets/lessons/bonus-grid-cursor/moved.png';
 
 <Aside type="note" title="An optional add-on">
-Lessons 61, 62, and 64 are not part of the template. Each is a small addition for one kind of game, and you add it to a game you copied from the template in lesson 60, not to the template itself. This one is for games where you pick squares on a map: tactics, strategy, and board games.
+Lessons 61, 62, 64, and 65 are optional add-ons, not part of the template. Each is a small addition for one kind of game, and you add it to a game you copied from the template in lesson 60, not to the template itself. This one is for games where you pick squares on a map: tactics, strategy, and board games.
 </Aside>
 
 ## What you will build
@@ -45,7 +45,7 @@ A grid that shows on the ground around the mouse, with the square under the mous
 
 Your mouse is a point on the screen. The ground is a flat surface in the world. To find where the point lands on the ground, you shoot a line from the camera through the point, and see where the line meets the ground. Godot's camera does the first half: `ProjectRayOrigin` and `ProjectRayNormal` give the line's start and direction for any screen point, and they work with the orthographic camera too.
 
-The ground here is the plane at height 0, so the meeting point is a sum, not a physics query: `Plane.IntersectsRay`. Godot's physics could do it with a ray cast and the `Terrain` layer from lesson 58, which you need when the ground is not flat. A plane is enough while it is.
+The ground here is the plane at height 0, so the meeting point is a calculation, not a physics query: `Plane.IntersectsRay`. Godot's physics could do it with a ray cast and the `Terrain` layer from lesson 58, which you need when the ground is not flat. A plane is enough while it is.
 
 A **cell** is one square of the grid. Dividing the point's `X` and `Z` by the cell's width and rounding down gives the cell's two whole numbers, its column and row. `(0, 0)` is the square from the origin out to one meter along `X` and `Z`, and negative positions give negative numbers.
 
@@ -64,7 +64,7 @@ A grid does not need a mesh with a line for every square. One big flat mesh, a *
 The shader works like this:
 
 - `render_mode unshaded, depth_draw_never;` makes the grid ignore lights, so it is the same at noon and at dusk, and keeps it from hiding the things behind it.
-- `cell_size` and `cell` are **instance uniforms**, the kind lesson 28 used for each tree's place in the wind: values a script sets for one mesh. The script says how wide a cell is and which one is under the mouse. `cell` starts far away, at a million, so nothing is lit until the mouse moves.
+- `cell_size` and `cell` are **instance uniforms**, values a script sets for one mesh, so two meshes with the same material can differ. The script says how wide a cell is and which one is under the mouse. `cell` starts far away, at a million, so nothing is lit until the mouse moves.
 - `vertex` stores the vertex's world position in a **varying**, a value Godot hands on to `fragment`, smoothly mixed between the vertices.
 - `fragment` divides the world position by the cell size. `fract` gives the place inside the cell, from 0 to 1 across, and `min(inside, 1.0 - inside)` how far the pixel is from the nearest edge. `smoothstep` turns a small distance into a line of `line_width`.
 - A pixel is `on_cursor` when its cell, `floor(grid)`, equals the `cell` uniform. The line fades out beyond `fade_distance` meters from the middle of that cell, so the grid appears only around the mouse.
@@ -109,7 +109,7 @@ The script does these things:
 
 4. Under **Transform**, set **Position** **y** to `0.05`, so the grid lies a few centimeters above the ground. Under **Geometry**, set **Cast Shadow** to `Off`.
 
-5. Click **Script**'s empty field at the bottom, choose **Quick Load...**, type `GridCursor`, and press <Kbd keys="Enter" />.
+5. Click **Script**'s empty field, choose **Quick Load...**, type `GridCursor`, and press <Kbd keys="Enter" />.
 
 	<Figure
 		src={sceneDock}
@@ -129,13 +129,13 @@ You see nothing in the editor, and that is right: the lines fade out around the 
 
 <Figure
 	src={moved}
-	alt="The meadow from above with the grid around the pond, drawn over the pond, the grass, and the dirt path, but not over the trees or the pine."
+	alt="The meadow from above with the grid around the pond, drawn over the pond, the grass, and the dirt path, but not over the trees or the pine, and a faint yellow cell, the one under the mouse, to the right of the pond."
 	caption="The grid follows the mouse. It lies on the ground, so the trees stand in front of it."
 />
 
-- In the Node dock, open the **Signals** tab for `GridOverlay`, double-click `CellPicked`, and connect it to a script of your own. It is called with the cell each time you click.
+- Select `GridOverlay` and open the **Signals** tab beside the Inspector, double-click `CellPicked`, and connect it to a script of your own. It is called with the cell each time you click.
 - Change **Cell Size** on `GridOverlay` to `2`. The grid and the lit cell double in width, because the script gives the same size to both.
-- Open the shader's `fade_distance` and set it to `30`. The whole plane shows its lines, and the grid is a fixed overlay.
+- Select `GridOverlay`, open its **Material Override**, and under **Shader Parameters** set **Fade Distance** to `30`. The whole plane shows its lines, and the grid is a fixed overlay.
 
 ## If it does not work
 
