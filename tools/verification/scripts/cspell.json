@@ -152,6 +152,13 @@
     "Midlevel",
     "Schlick",
     "convcolonly",
-    "lacunarity"
+    "lacunarity",
+    "Codesign",
+    "codesign",
+    "Gatekeeper",
+    "notarized",
+    "notarization",
+    "ditto",
+    "Notarization"
   ]
 }

@@ -1,0 +1,263 @@
+---
+title: Performance and exporting a build
+description: Measure the meadow with the Debugger's Monitors, take one cost away at a time to see where the frame goes, then export a macOS build, fix the editor scripts that stop it from building, and run it from outside the editor.
+sidebar:
+  order: 56
+  label: 56. Performance and exporting a build
+lesson:
+  number: 56
+  minutes: 90
+  learn:
+    - How to read the Debugger's Monitors while a game runs
+    - How to find which part of a scene costs the most, by taking one part away at a time
+    - How to install export templates and add an export preset
+    - Why editor-only scripts must be wrapped in #if TOOLS before the game can be exported
+  prerequisites: [13, 21, 55]
+---
+
+import { Aside, Code, FileTree, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Solution from '../../../components/Solution.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import presets from '../../../checkpoints/56/files/export_presets.cfg?raw';
+import monitors from '../../../assets/lessons/performance-and-export/monitors.png';
+import templates from '../../../assets/lessons/performance-and-export/templates.png';
+import preset from '../../../assets/lessons/performance-and-export/preset.png';
+import presetSet from '../../../assets/lessons/performance-and-export/preset-set.png';
+import exportFailed from '../../../assets/lessons/performance-and-export/export-failed.png';
+import problems from '../../../assets/lessons/performance-and-export/problems.png';
+import exportDone from '../../../assets/lessons/performance-and-export/export-done.png';
+
+## What you will build
+
+Two things that finish the template: a measured idea of where the game's time goes, and a build of the game that runs without the editor.
+
+The measuring is not tuning. The meadow already runs far faster than the screen can show on a fast computer. The point is to learn which tool answers which question, so that when a game of your own is slow you know where to look first. The build is a macOS `.app` you can run from the shell, made by the editor's own Export dialog.
+
+## Measure the game
+
+The Debugger is the panel at the bottom of the editor. While a game runs from the editor, it listens to the game and fills its tabs: **Stack Trace**, **Errors**, **Evaluator**, **Profiler**, **Visual Profiler**, **Monitors**, **Video RAM**, **Misc**, **Network Profiler**, and **ObjectDB Profiler**.
+
+<Steps>
+
+1. Open `levels/meadow.tscn` and press <Kbd keys="F5" mac="Cmd+B" /> to run it, or **Play Scene**. In the editor, open the **Debugger** panel and its **Monitors** tab.
+
+2. The list on the left holds every monitor the engine keeps, in groups, starting with **Time** and **Memory**, with the render counts further down. Tick the box beside **FPS**, **Process**, and **Total Draw Calls**. A graph for each appears on the right and moves with the game.
+
+	<Figure
+		src={monitors}
+		alt="The Debugger's Monitors tab with FPS, Process, and Total Draw Calls ticked: three graphs on the right, FPS at 276, Process at 17.31 ms, and Total Draw Calls at 196."
+		caption="The meadow, measured."
+	/>
+
+</Steps>
+
+Three numbers are worth knowing:
+
+- **FPS** is how many frames the game draws a second. It is the answer, but not the cause.
+- **Total Draw Calls** is how many times the engine asks the graphics card to draw something in a frame. Every separate mesh and material costs at least one. A game with thousands of them is slow before a single triangle is large.
+- **Total Primitives** (in the **Render** group) is how many triangles were drawn.
+
+<Aside type="note">
+	The Visual Profiler tab times each render step on the processor and the graphics card, and the Profiler tab times script functions. Start either from its own **Start** button while the game runs. This lesson uses the Monitors because their counts do not change from run to run.
+</Aside>
+
+### The frame rate shows the screen, not the game
+
+The game caps itself to the screen's refresh rate while **VSync** is on, which is why the pause panel from lesson 55 has the switch. Press <Kbd keys="Esc" mac="Esc" />, turn **VSync** off, and press Resume. On the test computer the meadow then ran at about 230 to 280 frames a second, and the generated level at about 160 to 170. Those readings moved by 10 percent from one minute to the next, so use them to compare big differences, and use the draw call and triangle counts for small ones.
+
+### Take one thing away at a time
+
+The way to find a cost is to remove a part of the scene and read the counts again. The counts below come from reading the Monitors' numbers in the running game, with the day held at noon.
+
+| Meadow | Draw calls | Objects | Triangles |
+|---|---|---|---|
+| As it is | 196 | 238 | 271,219 |
+| Sun shadows off | 115 | 136 | 236,429 |
+| Grass hidden | 164 | 206 | 76,350 |
+| Trees hidden | 186 | 198 | 239,703 |
+| Water hidden | 195 | 237 | 271,217 |
+| Ambient occlusion off | 196 | 238 | 271,219 |
+
+| Generated level | Draw calls | Objects | Triangles |
+|---|---|---|---|
+| As it is | 518 | 674 | 1,051,852 |
+| Sun shadows off | 240 | 298 | 859,509 |
+| Grass hidden | 462 | 618 | 324,618 |
+| Trees hidden | 491 | 491 | 876,910 |
+| Water hidden | 517 | 673 | 1,051,850 |
+| Ambient occlusion off | 518 | 674 | 1,051,852 |
+
+You turn the shadows off with the pause panel's **Shadows** switch. The rest was done by hiding the node and reading the counts: `Grass`, `Trees`, `Water`, and the environment's **Ambient Occlusion** setting.
+
+What the numbers say:
+
+- **Shadows cost the most draw calls.** The sun draws every tree, rock, and bush a second time into its shadow map. Turning it off took 81 of 196 draw calls out of the meadow and 278 of 518 out of the generated level. A **Shadows** switch in a settings panel is a real feature for slow computers, not a gimmick.
+- **Grass is the triangle cost, not the draw call cost.** It is about 72 percent of the meadow's triangles, 195 thousand of 271 thousand, and 32 of its 196 draw calls. That is what the `MultiMesh` from lesson 32 is for: thousands of blades go to the card in a few calls. A game that has to be lighter lowers the grass density first.
+- **Trees cost objects.** Hiding the generated level's trees took 183 of its 674 objects away. Each tree is a few draw calls, and a level with hundreds of them adds up.
+- **Water and ambient occlusion do not show in the counts.** The water is one or two draw calls; its cost is in the pixels it covers, because it reads the frame behind it. Ambient occlusion is a screen effect with no draw calls of its own. Both show only in the frame time, and the frame rate readings on the test computer did not change by more than their usual spread.
+
+None of this needs a change for the template. It tells you what to reach for when something is slow: shadows, then grass density, then prop count, and only then the effects.
+
+## Export a build
+
+### The templates
+
+An export is a copy of Godot's own game program with your project's files added to it. The editor does not carry that program, so it comes as **export templates**, one for each platform, a separate download.
+
+<Steps>
+
+1. Choose **Project > Export...** and click **Add...**. The menu lists the platforms: **Android**, **iOS**, **Linux**, **macOS**, **visionOS**, **Web**, and **Windows Desktop**. Choose **macOS**.
+
+	<Figure
+		src={preset}
+		alt="The Export dialog with a macOS (Runnable) preset: its Options tab starting with Distribution Type, Architecture, and Export Console Wrapper, and a red message that no export template was found at the expected path, with a Manage Export Templates link."
+		caption="A new macOS preset, and no templates yet."
+	/>
+
+2. The red message says no export template was found, with the folder it looked in. Click **Manage Export Templates**.
+
+3. The **Export Template Manager** lists the templates for this Godot version. If its **Download from** menu is gray, open **Editor > Editor Settings** and set **Network > Connection > Network Mode** to **Online**, and open the manager again. Click **Install All Templates**. The download is about 1.2 GB and takes a few minutes, and the installed templates take about 1.5 GB of disk.
+
+	<Figure
+		src={templates}
+		alt="The Export Template Manager: a Download from menu set to Official Releases mirror, an Install All Templates button, a list of available templates by platform, and an empty Installed Templates list."
+		caption="The Export Template Manager."
+	/>
+
+</Steps>
+
+### The preset
+
+<Steps>
+
+1. Select the macOS preset. Set these on its **Options** tab:
+
+	- **Bundle Identifier** to a name of your own in reverse-domain form, such as `com.example.topdowntemplate`;
+	- under **Codesign**, **Codesign** to `Disabled` (see the note below).
+
+	Leave **Distribution Type** and **Architecture** (`universal`, which carries both Apple Silicon and Intel) as they are.
+
+2. Set **Export Path** to `../builds/TopDownTemplate.zip`: the path is relative to the project's folder, and `..` goes up one, so the build goes in a `builds` folder beside the project and not into it. A build inside the project would be scanned by the editor as part of the project.
+
+	<Figure
+		src={presetSet}
+		alt="The Export dialog with the macOS preset and warnings at the bottom: notarization is disabled, and code signing is disabled so the project will not run on Macs with Gatekeeper and Apple Silicon."
+		caption="The preset, with its two honest warnings."
+	/>
+
+</Steps>
+
+<Aside type="caution" title="Signing">
+	The dialog warns that a build with no code signature is blocked by Gatekeeper when someone else downloads it. A build you make and run on your own Mac, like this one, runs. A build you give to other people must be signed and notarized with an Apple developer account, which is outside this course.
+
+	Godot's **Built-in (ad-hoc only)** option is not a way around it. On the test computer, an app exported with it was killed by macOS the moment it launched, with each combination of **Distribution Type** and entitlements tried, so the lesson uses **Disabled**.
+</Aside>
+
+### The first export fails
+
+<Steps>
+
+1. Click **Export Project...**. A file dialog opens at the project's folder with `TopDownTemplate.zip` as the name, the filter **All Recognized (\*.dmg, \*.zip, \*.app)**, and an **Export With Debug** box, off. Pick the `builds` folder beside the project (make it with the dialog's **Create a new folder** button if it is not there) and click **Save**.
+
+2. The export fails.
+
+	<Figure
+		src={exportFailed}
+		alt="A dialog reading Project export for platform: macOS, Failed, with the message Export .NET Project: Failed to build project. Check MSBuild panel for details."
+		caption="Failed to build."
+	/>
+
+3. Open the **MSBuild** panel at the bottom of the editor. It lists two problems.
+
+	<Figure
+		src={problems}
+		alt="The MSBuild panel's Problems list: BuildDay.cs and GrassDetail.cs under src/Tools, each with the message that the type or namespace name EditorScript could not be found."
+		caption="Two scripts cannot be built into a game."
+	/>
+
+</Steps>
+
+The game's code is built again for the export, as a game and not as an editor plugin. `EditorScript` is a class that exists only inside the editor, so a script that inherits it, like `GrassDetail` from lesson 13 and `BuildDay` from lesson 21, cannot be part of a game. Both are tools you run once from the Script editor. They have no business in a shipped build.
+
+The fix is a **conditional compilation** block. Godot defines the name `TOOLS` only when the code is built for the editor, and `#if TOOLS` makes the compiler skip everything up to `#endif` otherwise.
+
+<Steps>
+
+1. Open `src/Tools/BuildDay.cs`. Put `#if TOOLS` on a line of its own above `using Godot;`, and `#endif` on a line of its own at the very end of the file, after the closing brace of the class.
+
+2. Do the same in `src/Tools/GrassDetail.cs`, above `using System;` and after its class.
+
+3. Click **Build Project**, and choose **Export Project...** again.
+
+</Steps>
+
+This time the export finishes.
+
+<Figure
+	src={exportDone}
+	alt="A dialog reading Project export for platform: macOS, Completed successfully."
+	caption="Completed successfully."
+/>
+
+The zip in `builds` is 126 MB. Most of it is the .NET runtime that C# games carry with them: one copy for Apple Silicon and one for Intel, in `Contents/Resources` beside the game's `.pck` file of resources.
+
+## Run it from the shell
+
+The test that matters is the build running without the editor.
+
+<Steps>
+
+1. In a terminal, go to the `builds` folder and unzip the build: `ditto -x -k TopDownTemplate.zip run`. The folder `run` now holds `TopDownTemplate.app` and a `TopDownTemplate.command` console wrapper.
+
+2. Run the program inside the app for a few seconds: `run/TopDownTemplate.app/Contents/MacOS/TopDownTemplate --quit-after 600`. A game window opens, and the game quits by itself after 600 frames.
+
+</Steps>
+
+On the test computer the build started, printed `12:00` (the day clock's own line from `DayClock`, which is C# code, so the .NET part of the build works), ran for 600 frames, and exited with status 0.
+
+<Aside>
+	You can also double-click `TopDownTemplate.app` in Finder to play it.
+</Aside>
+
+<Solution label="Show the full export_presets.cfg">
+	<Code code={presets} lang="ini" title="export_presets.cfg" />
+</Solution>
+
+## Windows and Linux
+
+The same dialog makes the other platforms. **Add...** has **Windows Desktop** and **Linux** entries, **Install All Templates** already installed their templates, and each has its own preset with its own **Export Path**. Everything else in this lesson, the `#if TOOLS` fix included, applies as it is. This lesson ran the macOS export only, on a Mac, so the other two are described and not run.
+
+## Try it
+
+- Set **Architecture** to `arm64` for a build for Apple Silicon only, and compare the size of the zip. The Intel copy of the .NET runtime is no longer in it.
+- Turn **Export With Debug** on in the file dialog and compare the two builds.
+- Make a **Shadows** or **Grass density** setting in the pause panel and read the counts again. The tables above are what to expect.
+- Run the build with `--quit-after 6000` and watch the day clock print each hour in the terminal.
+
+## If it does not work
+
+- **The red message in the Export dialog says no export template was found.** Open **Manage Export Templates** and install them. The message shows the folder it looked in, named after the exact Godot version, so templates from another version do not count.
+- **The Download from menu is gray.** The editor is in offline mode. Set **Network Mode** to **Online** in **Editor Settings**.
+- **The export fails with "Failed to build project".** Open the **MSBuild** panel. A script that inherits `EditorScript`, or uses another editor-only class, must be wrapped in `#if TOOLS`.
+- **macOS kills the app the moment it starts.** This is the **Built-in (ad-hoc only)** signing option. Set **Codesign** to `Disabled` for a build to run on your own Mac.
+- **The app starts and prints an error about a file in `res://.capture`.** That is not from your project; ignore a message about a driver script that your own project does not have.
+
+## Checkpoint
+
+Your project now contains:
+
+<FileTree>
+- export_presets.cfg
+- src
+  - Tools
+    - BuildDay.cs inside `#if TOOLS`
+    - GrassDetail.cs inside `#if TOOLS`
+</FileTree>
+
+The build itself, `builds/TopDownTemplate.zip`, is beside the project, not in it.
+
+Commit your work: `git add .` and `git commit -m "Export a macOS build"`. Lesson 57 turns the oaks to autumn.
+
+<Checkpoint />

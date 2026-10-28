@@ -1,3 +1,4 @@
+#if TOOLS
 using Godot;
 
 namespace TopDownTemplate.Tools;
@@ -102,3 +103,4 @@ public partial class BuildDay : EditorScript
 		animation.TrackInsertKey(track, time * DayLength, value);
 	}
 }
+#endif

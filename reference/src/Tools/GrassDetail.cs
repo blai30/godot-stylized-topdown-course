@@ -1,3 +1,4 @@
+#if TOOLS
 using System;
 using Godot;
 
@@ -120,3 +121,4 @@ public partial class GrassDetail : EditorScript
 		}
 	}
 }
+#endif
