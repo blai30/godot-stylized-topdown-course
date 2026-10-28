@@ -60,7 +60,7 @@ Lesson 45's water is the right color and nothing else: flat, dark, and the same 
 	caption="The finished water, close: the bank in its reflection and the foam line at its foot."
 />
 
-You build it in five steps, each a version of the shader you can run. The shader grows from about 60 lines to 210, and every look value in it is a uniform in a group in the Inspector, so you can tune the water without touching the code.
+You build it in five steps, each a version of the shader you can run. The shader grows from about 60 lines to 212, and every look value in it is a uniform in a group in the Inspector, so you can tune the water without touching the code.
 
 ## The sky and the light
 
@@ -86,7 +86,7 @@ Edit the shader so that:
 - `varying vec3 scatter_lit;` has a comment: the scatter's color, set in `fragment()` for `light()`;
 - after `transmitted`, `fragment()` has a comment that Godot's reflection of the sky needs a surface that reflects: a metal tinted by how much it should reflect. `float facing = clamp(dot(NORMAL, VIEW), 0.0, 1.0);` and `float reflectance = clamp(WATER_F0 + (1.0 - WATER_F0) * pow(1.0 - facing, 5.0) + reflection_boost, 0.0, 1.0);` follow;
 - `scatter_lit` is what the water's own color is, less the share the bed shows through and the share the sky takes: `max(scatter_color * (1.0 - transmitted) * (1.0 - reflectance), vec3(0.0001))`, and the least is there because a later step raises it to a power;
-- the outputs are `ALBEDO = vec3(reflectance);`, `METALLIC = 1.0;`, `EMISSION = bed * transmitted * (1.0 - reflectance);`, and `ROUGHNESS = 0.08;`. The bed was drawn lit already, so it goes out as emission, and a low roughness gives a sharp reflection;
+- `float sky_share = reflectance;` is the sky's share of the surface, and the outputs are `ALBEDO = vec3(sky_share);`, `METALLIC = 1.0;`, `EMISSION = bed * transmitted * (1.0 - reflectance);`, and `ROUGHNESS = 0.08;`. The bed was drawn lit already, so it goes out as emission, and a low roughness gives a sharp reflection;
 - a `light()` function has a comment: each light adds the scatter, wrapped so the side away from the sun keeps some of the sky's light. It sets `float wrapped = clamp((dot(NORMAL, LIGHT) + 0.6) / 1.6, 0.0, 1.0);` and adds `scatter_lit * wrapped * ATTENUATION * LIGHT_COLOR / PI` to `SPECULAR_LIGHT`.
 
 <Solution label="Show the shader after this step">
@@ -117,7 +117,7 @@ Waves are not a change in the surface's height: the water stays flat, so the lin
 		caption="A resource of its own."
 	/>
 
-2. Set **Width** and **Height** to `256`. Check **Seamless**, so the texture can repeat without a visible seam, and **As Normal Map**, so it stores a direction and not a brightness. Set **Bump Strength** to `6`. Open **Noise**, choose **New FastNoiseLite**, click it, and set **Noise Type** to **Simplex Smooth** and **Frequency** to `0.02`.
+2. Set **Width** and **Height** to `256`. Check **Seamless**, so the texture can repeat without a visible seam, and **As Normal Map**, so it stores a direction and not a brightness. Set **Bump Strength** to `6`. Open **Noise**, choose **New FastNoiseLite**, click it, and check that **Noise Type** is **Simplex Smooth**, the default, and set **Frequency** to `0.02`.
 
 	<Figure
 		src={waveNoise}
@@ -271,7 +271,7 @@ Edit the shader so that:
 	<Code code={piece5} lang="gdshader" title="art/shaders/water.gdshader" />
 </Solution>
 
-The lake bed gets a last touch of its own: **caustics**, the bright net that sunlight draws on a pool's floor. They are two ripple layers drifting across each other, bright where both are near the edge of a crest. Add to `lake_bed.gdshader` a `uniform sampler2D wave_normals : filter_linear_mipmap, repeat_enable;`, a `uniform float caustics : hint_range(0.0, 2.0) = 0.7;` with a comment, how bright the caustics are, and in `fragment()`, after `ALBEDO`, two lines for `first` and `second`, each `1.0 - abs(texture(wave_normals, ...).r * 2.0 - 1.0)` at its own size, `world_xz / 1.7` and `world_xz / 1.1`, drifting at different speeds, and `ALBEDO *= 1.0 + caustics * pow(first * second, 4.0) * 5.0;`.
+The lake bed gets a last touch of its own: **caustics**, the bright net that sunlight draws on a pool's floor. They are two ripple layers drifting across each other, bright where both are near the edge of a crest. Add to `lake_bed.gdshader` a `uniform sampler2D wave_normals : filter_linear_mipmap, repeat_enable;`, a `uniform float caustics : hint_range(0.0, 2.0) = 0.7;` with a comment, how bright the caustics are, and in `fragment()`, after `ALBEDO`, two lines for `first` and `second`: `first` is `1.0 - abs(texture(wave_normals, world_xz / 1.7 + vec2(TIME * 0.03, 0.0)).r * 2.0 - 1.0)` and `second` is the same with `world_xz / 1.1 - vec2(0.0, TIME * 0.045)` and the `.g` channel, so the two layers differ in size, direction, and speed, and `ALBEDO *= 1.0 + caustics * pow(first * second, 4.0) * 5.0;`.
 
 <Solution label="Show the full lake_bed.gdshader">
 	<Code code={piece6} lang="gdshader" title="art/shaders/lake_bed.gdshader" />
@@ -375,7 +375,7 @@ Your project now contains:
     - ground_tiles.meshlib, with the lake bed's new material
   - shaders
     - **lake_bed.gdshader**, with caustics
-    - **water.gdshader**, 210 lines
+    - **water.gdshader**, 212 lines
   - water
     - **wave_normals.tres**
     - water.tres, with its wave texture

@@ -15,7 +15,7 @@
 [ext_resource type="Material" uid="uid://bw54unkb0dppx" path="res://art/nature/grass/flower.tres" id="13_i8bac"]
 [ext_resource type="Material" uid="uid://b0ur7vrqom72d" path="res://art/nature/grass/grass.tres" id="14_37gbd"]
 [ext_resource type="Texture2D" uid="uid://bjnr23q4nmo0r" path="res://art/ground/dirt_patch.tres" id="15_i8bac"]
-[ext_resource type="MeshLibrary" uid="uid://crl6w0ll3yxus" path="res://art/water/bank_kit.glb" id="16_37gbd"]
+[ext_resource type="MeshLibrary" uid="uid://bdx7otspdp18" path="res://art/water/bank_kit.glb" id="16_37gbd"]
 [ext_resource type="PackedScene" uid="uid://dvg43487yr2kl" path="res://art/water/water.tscn" id="17_5i3tf"]
 [ext_resource type="Script" uid="uid://b4gmy676i57ce" path="res://src/Ground/BankMap.cs" id="17_kisu1"]
 
@@ -627,162 +627,162 @@ Ground = NodePath("../GroundTiles")
 Models = ExtResource("11_i52f3")
 Patches = NodePath("../Patches")
 
-[node name="flower_cup_-1_-1" type="MultiMeshInstance3D" parent="Grass" unique_id=923138405]
+[node name="flower_cup_-1_-1" type="MultiMeshInstance3D" parent="Grass" unique_id=361550722]
 material_override = ExtResource("13_i8bac")
 cast_shadow = 0
 multimesh = SubResource("MultiMesh_qqiaq")
 
-[node name="flower_cup_-1_0" type="MultiMeshInstance3D" parent="Grass" unique_id=1916816954]
+[node name="flower_cup_-1_0" type="MultiMeshInstance3D" parent="Grass" unique_id=1989310623]
 material_override = ExtResource("13_i8bac")
 cast_shadow = 0
 multimesh = SubResource("MultiMesh_hhdt0")
 
-[node name="flower_cup_0_-1" type="MultiMeshInstance3D" parent="Grass" unique_id=1722917865]
+[node name="flower_cup_0_-1" type="MultiMeshInstance3D" parent="Grass" unique_id=1328716412]
 material_override = ExtResource("13_i8bac")
 cast_shadow = 0
 multimesh = SubResource("MultiMesh_1crj3")
 
-[node name="flower_cup_0_0" type="MultiMeshInstance3D" parent="Grass" unique_id=692657880]
+[node name="flower_cup_0_0" type="MultiMeshInstance3D" parent="Grass" unique_id=545220867]
 material_override = ExtResource("13_i8bac")
 cast_shadow = 0
 multimesh = SubResource("MultiMesh_2oo5k")
 
-[node name="flower_daisy_-1_-1" type="MultiMeshInstance3D" parent="Grass" unique_id=1527437813]
+[node name="flower_daisy_-1_-1" type="MultiMeshInstance3D" parent="Grass" unique_id=230337875]
 material_override = ExtResource("13_i8bac")
 cast_shadow = 0
 multimesh = SubResource("MultiMesh_1xyse")
 
-[node name="flower_daisy_-1_0" type="MultiMeshInstance3D" parent="Grass" unique_id=1090973198]
+[node name="flower_daisy_-1_0" type="MultiMeshInstance3D" parent="Grass" unique_id=1131467538]
 material_override = ExtResource("13_i8bac")
 cast_shadow = 0
 multimesh = SubResource("MultiMesh_pbhv8")
 
-[node name="flower_daisy_0_-1" type="MultiMeshInstance3D" parent="Grass" unique_id=1750550938]
+[node name="flower_daisy_0_-1" type="MultiMeshInstance3D" parent="Grass" unique_id=1605725080]
 material_override = ExtResource("13_i8bac")
 cast_shadow = 0
 multimesh = SubResource("MultiMesh_65s1h")
 
-[node name="flower_daisy_0_0" type="MultiMeshInstance3D" parent="Grass" unique_id=1012731756]
+[node name="flower_daisy_0_0" type="MultiMeshInstance3D" parent="Grass" unique_id=1266813325]
 material_override = ExtResource("13_i8bac")
 cast_shadow = 0
 multimesh = SubResource("MultiMesh_mbrtc")
 
-[node name="grass_clump_a_-1_-1" type="MultiMeshInstance3D" parent="Grass" unique_id=1504419275]
+[node name="grass_clump_a_-1_-1" type="MultiMeshInstance3D" parent="Grass" unique_id=1537993768]
 material_override = ExtResource("14_37gbd")
 cast_shadow = 0
 multimesh = SubResource("MultiMesh_vvc5s")
 
-[node name="grass_clump_a_-1_0" type="MultiMeshInstance3D" parent="Grass" unique_id=1714809720]
+[node name="grass_clump_a_-1_0" type="MultiMeshInstance3D" parent="Grass" unique_id=1643657119]
 material_override = ExtResource("14_37gbd")
 cast_shadow = 0
 multimesh = SubResource("MultiMesh_plri2")
 
-[node name="grass_clump_a_0_-1" type="MultiMeshInstance3D" parent="Grass" unique_id=792179736]
+[node name="grass_clump_a_0_-1" type="MultiMeshInstance3D" parent="Grass" unique_id=1256186276]
 material_override = ExtResource("14_37gbd")
 cast_shadow = 0
 multimesh = SubResource("MultiMesh_6rvbm")
 
-[node name="grass_clump_a_0_0" type="MultiMeshInstance3D" parent="Grass" unique_id=1834089961]
+[node name="grass_clump_a_0_0" type="MultiMeshInstance3D" parent="Grass" unique_id=354981587]
 material_override = ExtResource("14_37gbd")
 cast_shadow = 0
 multimesh = SubResource("MultiMesh_urjq2")
 
-[node name="grass_clump_b_-1_-1" type="MultiMeshInstance3D" parent="Grass" unique_id=10129144]
+[node name="grass_clump_b_-1_-1" type="MultiMeshInstance3D" parent="Grass" unique_id=916330678]
 material_override = ExtResource("14_37gbd")
 cast_shadow = 0
 multimesh = SubResource("MultiMesh_vvtor")
 
-[node name="grass_clump_b_-1_0" type="MultiMeshInstance3D" parent="Grass" unique_id=1870977235]
+[node name="grass_clump_b_-1_0" type="MultiMeshInstance3D" parent="Grass" unique_id=1935760279]
 material_override = ExtResource("14_37gbd")
 cast_shadow = 0
 multimesh = SubResource("MultiMesh_j74da")
 
-[node name="grass_clump_b_0_-1" type="MultiMeshInstance3D" parent="Grass" unique_id=831253166]
+[node name="grass_clump_b_0_-1" type="MultiMeshInstance3D" parent="Grass" unique_id=534512135]
 material_override = ExtResource("14_37gbd")
 cast_shadow = 0
 multimesh = SubResource("MultiMesh_dw0b2")
 
-[node name="grass_clump_b_0_0" type="MultiMeshInstance3D" parent="Grass" unique_id=763825778]
+[node name="grass_clump_b_0_0" type="MultiMeshInstance3D" parent="Grass" unique_id=1180251573]
 material_override = ExtResource("14_37gbd")
 cast_shadow = 0
 multimesh = SubResource("MultiMesh_ckn8c")
 
-[node name="grass_clump_c_-1_-1" type="MultiMeshInstance3D" parent="Grass" unique_id=628481273]
+[node name="grass_clump_c_-1_-1" type="MultiMeshInstance3D" parent="Grass" unique_id=636266757]
 material_override = ExtResource("14_37gbd")
 cast_shadow = 0
 multimesh = SubResource("MultiMesh_s0d8s")
 
-[node name="grass_clump_c_-1_0" type="MultiMeshInstance3D" parent="Grass" unique_id=277110341]
+[node name="grass_clump_c_-1_0" type="MultiMeshInstance3D" parent="Grass" unique_id=2122770040]
 material_override = ExtResource("14_37gbd")
 cast_shadow = 0
 multimesh = SubResource("MultiMesh_7ybac")
 
-[node name="grass_clump_c_0_-1" type="MultiMeshInstance3D" parent="Grass" unique_id=2027547319]
+[node name="grass_clump_c_0_-1" type="MultiMeshInstance3D" parent="Grass" unique_id=1078089658]
 material_override = ExtResource("14_37gbd")
 cast_shadow = 0
 multimesh = SubResource("MultiMesh_ud2k8")
 
-[node name="grass_clump_c_0_0" type="MultiMeshInstance3D" parent="Grass" unique_id=232122908]
+[node name="grass_clump_c_0_0" type="MultiMeshInstance3D" parent="Grass" unique_id=771942487]
 material_override = ExtResource("14_37gbd")
 cast_shadow = 0
 multimesh = SubResource("MultiMesh_jfern")
 
-[node name="mushroom_a_-1_-1" type="MultiMeshInstance3D" parent="Grass" unique_id=1463286113]
+[node name="mushroom_a_-1_-1" type="MultiMeshInstance3D" parent="Grass" unique_id=2023304324]
 material_override = ExtResource("13_i8bac")
 cast_shadow = 0
 multimesh = SubResource("MultiMesh_74c5g")
 
-[node name="mushroom_a_-1_0" type="MultiMeshInstance3D" parent="Grass" unique_id=819453867]
+[node name="mushroom_a_-1_0" type="MultiMeshInstance3D" parent="Grass" unique_id=161031959]
 material_override = ExtResource("13_i8bac")
 cast_shadow = 0
 multimesh = SubResource("MultiMesh_ds424")
 
-[node name="mushroom_a_0_-1" type="MultiMeshInstance3D" parent="Grass" unique_id=1127862629]
+[node name="mushroom_a_0_-1" type="MultiMeshInstance3D" parent="Grass" unique_id=639759092]
 material_override = ExtResource("13_i8bac")
 cast_shadow = 0
 multimesh = SubResource("MultiMesh_w14ig")
 
-[node name="mushroom_a_0_0" type="MultiMeshInstance3D" parent="Grass" unique_id=572814545]
+[node name="mushroom_a_0_0" type="MultiMeshInstance3D" parent="Grass" unique_id=441711452]
 material_override = ExtResource("13_i8bac")
 cast_shadow = 0
 multimesh = SubResource("MultiMesh_pgw81")
 
-[node name="pebble_a_-1_-1" type="MultiMeshInstance3D" parent="Grass" unique_id=1446984110]
+[node name="pebble_a_-1_-1" type="MultiMeshInstance3D" parent="Grass" unique_id=1729078632]
 material_override = ExtResource("13_i8bac")
 cast_shadow = 0
 multimesh = SubResource("MultiMesh_17de7")
 
-[node name="pebble_a_-1_0" type="MultiMeshInstance3D" parent="Grass" unique_id=1416297236]
+[node name="pebble_a_-1_0" type="MultiMeshInstance3D" parent="Grass" unique_id=262403895]
 material_override = ExtResource("13_i8bac")
 cast_shadow = 0
 multimesh = SubResource("MultiMesh_mpx05")
 
-[node name="pebble_a_0_-1" type="MultiMeshInstance3D" parent="Grass" unique_id=612846921]
+[node name="pebble_a_0_-1" type="MultiMeshInstance3D" parent="Grass" unique_id=496970434]
 material_override = ExtResource("13_i8bac")
 cast_shadow = 0
 multimesh = SubResource("MultiMesh_yh1ux")
 
-[node name="pebble_a_0_0" type="MultiMeshInstance3D" parent="Grass" unique_id=631131385]
+[node name="pebble_a_0_0" type="MultiMeshInstance3D" parent="Grass" unique_id=1677256991]
 material_override = ExtResource("13_i8bac")
 cast_shadow = 0
 multimesh = SubResource("MultiMesh_qokdc")
 
-[node name="pebble_b_-1_-1" type="MultiMeshInstance3D" parent="Grass" unique_id=747107463]
+[node name="pebble_b_-1_-1" type="MultiMeshInstance3D" parent="Grass" unique_id=418228330]
 material_override = ExtResource("13_i8bac")
 cast_shadow = 0
 multimesh = SubResource("MultiMesh_evvke")
 
-[node name="pebble_b_-1_0" type="MultiMeshInstance3D" parent="Grass" unique_id=1184657579]
+[node name="pebble_b_-1_0" type="MultiMeshInstance3D" parent="Grass" unique_id=1943019347]
 material_override = ExtResource("13_i8bac")
 cast_shadow = 0
 multimesh = SubResource("MultiMesh_feueo")
 
-[node name="pebble_b_0_-1" type="MultiMeshInstance3D" parent="Grass" unique_id=1477946477]
+[node name="pebble_b_0_-1" type="MultiMeshInstance3D" parent="Grass" unique_id=1277864072]
 material_override = ExtResource("13_i8bac")
 cast_shadow = 0
 multimesh = SubResource("MultiMesh_c3fk8")
 
-[node name="pebble_b_0_0" type="MultiMeshInstance3D" parent="Grass" unique_id=1269342287]
+[node name="pebble_b_0_0" type="MultiMeshInstance3D" parent="Grass" unique_id=1343591557]
 material_override = ExtResource("13_i8bac")
 cast_shadow = 0
 multimesh = SubResource("MultiMesh_uvbr5")
@@ -804,7 +804,7 @@ transform = Transform3D(-0.76604444, 0, 0.64278764, 0, 1, 0, -0.64278764, 0, -0.
 size = Vector3(3, 0.6, 1.9)
 texture_albedo = ExtResource("15_i8bac")
 
-[node name="Bank" type="GridMap" parent="." unique_id=333089377 node_paths=PackedStringArray("Ground")]
+[node name="Bank" type="GridMap" parent="." unique_id=1513400491 node_paths=PackedStringArray("Ground")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.25, 0, -0.25)
 mesh_library = ExtResource("16_37gbd")
 cell_size = Vector3(0.5, 0.5, 0.5)
@@ -815,5 +815,5 @@ data = {
 script = ExtResource("17_kisu1")
 Ground = NodePath("../GroundTiles")
 
-[node name="Water" parent="." unique_id=1007615377 instance=ExtResource("17_5i3tf")]
+[node name="Water" parent="." unique_id=465269646 instance=ExtResource("17_5i3tf")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.35, 0)

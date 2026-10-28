@@ -12,7 +12,7 @@ lesson:
     - How to model a wall in rows, weight a vertex group, and rough it up with a Displace modifier
     - How to import a glb straight into Godot as a MeshLibrary and swap in your own material
     - How to place the pieces on a second GridMap, half a cell off the ground's
-  prerequisites: [8, 9, 16, 17, 18]
+  prerequisites: [8, 9, 16, 17, 18, 23, 31, 36]
 ---
 
 import { Aside, Code, FileTree, Steps } from '@astrojs/starlight/components';
@@ -91,7 +91,7 @@ The straight, the water corner, and the land corner can each be turned in four w
 
 The pieces share three rules, and the rest of the lesson is how to meet them.
 
-- **The top is flat at 0.012 meters.** The ground tiles sit at 0.008 and reach 0.2 meters past their cells, as lesson 17 made them. The bank's top has to cover that overhang and sit just above it, so the bank takes the ground's own color and the two join without a seam.
+- **The top is flat at 0.012 meters.** The grass tiles sit at 0.008, the others a little lower, and they reach 0.2 meters past their cells, as lesson 17 made them. The bank's top has to cover that overhang and sit just above it, so the bank takes the ground's own color and the two join without a seam.
 - **The wall stands 0.2 meters into the water's cell.** That is as far as the ground's overhang reaches. A wall closer to the land would stand under the overhang. It also means a pond needs at least three cells across to show any water: a one-cell channel is only 0.1 meters wide between its two walls.
 - **Every piece meets its neighbor the same way.** Where a piece ends, on any of its four edges, the wall is exactly 0.2 meters from the middle of the edge, and the wall's vertices are at exactly the same heights. Anything that moves the wall near an edge would open a crack, so the lumps you add die away to nothing before the edge.
 
@@ -185,13 +185,13 @@ The wall is the waterline edge pulled down in rows. The rows give the lumps some
 
 ### A mask for the lumps
 
-You will roughen the wall with a modifier. It must not touch two places: the wall's two ends, so that it meets its neighbors, and the foot. It should move the lip only half as far as the wall, which gives the shore its wandering line. A **vertex group** holds a weight from 0 to 1 for each vertex, and a modifier can take it as a mask: a vertex with weight 0 stays put, one with weight 1 moves all the way.
+You will roughen the wall with a modifier. It must not touch two places: the wall's two ends, so that it meets its neighbors, and the foot. It should move the lip only half as far as the wall, and a second, rougher displacement will jag it. A **vertex group** holds a weight from 0 to 1 for each vertex, and a modifier can take it as a mask: a vertex with weight 0 stays put, one with weight 1 moves all the way.
 
 The mask is built by selecting rings of vertices from the outside in. The wall's border is open mesh, so Blender can find it for you.
 
 <Steps>
 
-1. Press <Kbd keys="Alt+A" mac="Option+A" /> to select nothing. Choose **Select > Select All by Trait > Non Manifold**. In the panel at the bottom left, check that **Boundaries** is on. The border is selected: the wall's two ends, its foot, and the top's other three sides, 43 vertices in all.
+1. Press <Kbd keys="Alt+A" mac="Option+A" /> to select nothing. Choose **Select > Select All by Trait > Non Manifold**. In the panel at the bottom left, check that **Boundaries** is on and turn the other checkboxes off. The border is selected: the wall's two ends, its foot, and the top's other three sides, 43 vertices in all.
 
 2. Choose **Select > Invert** (<Kbd keys="Ctrl+I" mac="Cmd+I" />). Now the lip and the inside of the wall are selected, 180 vertices.
 
@@ -204,6 +204,8 @@ The mask is built by selecting rings of vertices from the outside in. The wall's
 		alt="The front view of the wall with an inner block of vertices selected in orange, leaving two columns on each side, one row at the top, and two rows at the bottom unselected."
 		caption="The inner block is weight 1. The next ring in has weight 0.5, and the border has none."
 	/>
+
+5. The lip needs a group of its own, for a second, rougher displacement that breaks up its line. Click **+** under **Vertex Groups** again and rename the new group `lip`. Press <Kbd keys="Alt+A" mac="Option+A" /> to select nothing, hold <Kbd keys="Alt" mac="Option" /> and click one of the edges along the top of the wall: the whole **loop** of the lip is selected, 17 vertices on the straight piece. Set **Weight** to `1.0` and click **Assign**. The ends of the lip must stay where they are, so choose **Select > Select All by Trait > Non Manifold** again, which selects the border and the lip's two end vertices with it, set **Weight** to `0` and click **Assign**, and set it back to `1.0`.
 
 </Steps>
 
@@ -269,7 +271,7 @@ The water corner and the diagonal have a very short wall. When three cells are l
 
 3. Select the two vertices of the cut and extrude the wall: <Kbd keys="E" />, <Kbd keys="Z" />, `-0.0635`, <Kbd keys="Enter" />, then <Kbd keys="Shift+R" /> eleven times. Slide the piece to X = 4.5.
 
-4. The diagonal is the same twice: another plane named `bank_diagonal_a`, raised, with the front left and back right corners cut by 0.05. Select the four vertices of the two cuts, with <Kbd keys="B" /> once for each pair and <Kbd keys="Shift" /> for the second, extrude the wall as before, and slide the piece to X = 5.2.
+4. The diagonal is the same twice: another plane named `bank_diagonal_a`, raised, with the front left and back right corners cut by 0.05. Select the four vertices of the two cuts, box selecting each pair with <Kbd keys="B" /> and extending the selection with the next, extrude the wall as before, and slide the piece to X = 5.2.
 
 	<Figure
 		src={diagonal}
@@ -299,7 +301,7 @@ A **Displace** modifier moves each vertex along its normal by the value of a tex
 
 1. Click `bank_straight_a` in the Outliner, so it is the only piece selected. Click the **Modifiers** tab, the blue wrench, then **Add Modifier**, **Deform**, and **Displace**. Rename the modifier `Lumps`.
 
-2. Click **New** in the modifier's **Texture** field. Click the **Texture** tab, the checkered square at the bottom of the tabs, and set **Type** to **Clouds**. Set **Noise Basis** to **Improved Perlin**, **Size** to `0.3`, and **Depth** to `3`.
+2. Click **New** in the modifier's **Texture** field and name the texture `Lumps`. Click the **Texture** tab, the checkered square at the bottom of the tabs, and set **Type** to **Clouds**. Set **Noise Basis** to **Improved Perlin**, **Size** to `0.3`, and **Depth** to `3`.
 
 3. Back on the modifier, set **Coordinates** to **Global**, **Direction** to **Normal**, **Strength** to `0.3`, **Midlevel** to `0.4`, and **Vertex Group** to `lumps`.
 
@@ -313,11 +315,21 @@ A **Displace** modifier moves each vertex along its normal by the value of a tex
 
 Here is what each setting does. The Clouds texture makes soft noise with values from 0 to 1, with features about 0.3 meters wide at three levels of detail. The modifier moves a vertex by **Strength** times the texture minus **Midlevel**, so the lumps are mostly outward, up to 0.3 times 0.6 = 18 centimeters, and a few hollows go 12 centimeters inward. **Direction** is **Normal**, so a vertex moves straight out of the wall, whichever way the wall faces: that is what lets the same modifier work on a curved piece. **Coordinates** is **Global**, which reads the texture at the vertex's place in the world and not on the piece. That is why you slid the piece a meter: two pieces at different places get different lumps, from one modifier and one texture.
 
+A second **Displace** modifier gives the lip its jag. The first is smooth, with features 0.3 meters wide, so on its own it makes the lip wavy, not jagged. A jagged line changes at every vertex, and a **Noise** texture does: it is a different random number at every point, with no smoothness in it.
+
+<Steps>
+
+1. Add another **Displace** modifier under the first and rename it `Jag`. Click **New** in its **Texture** field, name the texture `Jag`, click the **Texture** tab and set **Type** to **Noise**.
+
+2. Set **Coordinates** to **Global**, **Direction** to **Normal**, **Strength** to `0.12`, **Midlevel** to `0.5`, and **Vertex Group** to `lip`. Each of the lip's vertices, 3 centimeters apart, moves by up to 6 centimeters in or out, by its own random number, and the weights keep the ends still.
+
+</Steps>
+
 ### Copy and apply
 
 <Steps>
 
-1. In the Outliner, click `bank_land_corner_a`, <Kbd keys="Ctrl" />-click `bank_land_corner_b`, `bank_straight_b`, and `bank_straight_c`, and last <Kbd keys="Ctrl" />-click `bank_straight_a`, which makes it the active object. Choose **Object > Link/Transfer Data > Copy Modifiers**. Each of the five now has a `Lumps` modifier.
+1. In the Outliner, click `bank_land_corner_a`, <Kbd keys="Ctrl" />-click `bank_land_corner_b`, `bank_straight_b`, and `bank_straight_c`, and last <Kbd keys="Ctrl" />-click `bank_straight_a`, which makes it the active object. Choose **Object > Link/Transfer Data > Copy Modifiers**. Each of the five now has both modifiers.
 
 2. Choose **Object > Convert > Mesh**. The modifiers are applied, and the lumps are real geometry.
 
@@ -329,7 +341,7 @@ Here is what each setting does. The Clouds texture makes soft noise with values 
 
 </Steps>
 
-The lip moved with the lumps, half as far, and that is what you want sideways. But it also rose and fell, and it holds the top: a top that rises or falls would show through the ground or float above it. In the front view you will flatten it, so the lip's outline wanders and its height does not.
+The lip moved with the lumps, half as far, and that is what you want sideways. But it also rose and fell, and it holds the top: a top that rises or falls would show through the ground or float above it. In the front view you will flatten it, so the lip's outline is jagged and its height is not.
 
 <Steps>
 
@@ -355,7 +367,7 @@ The lip moved with the lumps, half as far, and that is what you want sideways. B
 
 </Steps>
 
-The lip's outline still wanders in the top view, by up to a few centimeters: a bank that is straight to a ruler looks like a wall, and one that wanders looks dug.
+The lip's outline is jagged in the top view, by up to a few centimeters at every vertex: a bank that is straight to a ruler looks like a wall, and one that is torn looks dug.
 
 ## Smooth shading
 
@@ -424,9 +436,9 @@ Export the kit as you exported the character in lesson 36: the collection's own 
 A kit is only a kit if the pieces fit, and a crack between two of them would show as a line of sky through the bank. The glb can be read back, and these numbers came from this lesson's run:
 
 - the file has seven meshes, named as you named the objects: 401 triangles for each straight piece, 550 for each land corner, 27 for the water corner, and 52 for the diagonal, 2,382 in all;
-- every piece's lowest point is -0.75 and its highest 0.012, and each spans -0.25 to 0.25 in both directions, a half meter square;
-- the wall's vertices on the edges of every piece are all exactly 0.2 meters from the edge's middle, and they all lie on the same 12 heights below 0.012, at the lip and then at 6.35 centimeters apart;
-- the lumps reach at most 4 centimeters past the cell's edge on the water side, and a pond three cells wide leaves room for that.
+- every piece's lowest point is -0.75 and its highest 0.012, and each wall spans -0.25 to 0.25 along its edges, a half meter square;
+- the wall's vertices on the edges of every piece are all exactly 0.2 meters from the edge's middle, and they all lie on the same 12 heights below the lip, from -0.0515 down in steps of 6.35 centimeters;
+- the lumps reach about 4 centimeters past the cell's edge on the water side, and a pond three cells wide leaves room for that.
 
 ## Into Godot
 
@@ -474,7 +486,7 @@ The bank has two surfaces that must look like different things: a top that is ex
 
 Type into it, in this order, so that:
 
-- `shader_type spatial;` is followed by `#include` lines for `stylized_lit.gdshaderinc` and `ground_color.gdshaderinc`, from lessons 17 and 23, so the wall lights like everything else and the top can ask for the ground's color;
+- `shader_type spatial;` is followed by `#include` lines for `stylized_lit.gdshaderinc` and `ground_color.gdshaderinc`, from lessons 31 and 23, so the wall lights like everything else and the top can ask for the ground's color;
 - a comment says that these are the ground's own textures and noise, so the top of a piece is exactly the ground's color and joins the land without a seam, above five uniforms the ground shader has: `albedo_texture` (a `sampler2D` with `source_color`, `filter_linear_mipmap`, and `repeat_enable`), `albedo_tint` (a `vec3` with `source_color`, `vec3(1.0)`), `texture_scale` (`0.5`), `edge_noise` (a `sampler2D` with `filter_linear_mipmap` and `repeat_enable`), and `edge_noise_scale` (`0.4`);
 - a group of uniforms named `earth` follows, opened with `group_uniforms earth;`, and closed with `group_uniforms;`. Each has a comment: `earth_color`, a `vec3` with `source_color`, `vec3(0.44, 0.32, 0.20)`, the wall's dark brown, which is in its own shadow most of the day; `clod_height`, a `sampler2D` with `filter_linear_mipmap` and `repeat_enable`, and `clod_normals`, a `sampler2D` with `hint_normal`, `filter_linear_mipmap`, and `repeat_enable`, one noise shown as a height map and as a normal map, read on the wall's own plane; `clod_scale`, a `float` with `hint_range(0.1, 4.0)`, `1.0`, how many times the clods repeat per meter; `clod_relief`, `hint_range(0.0, 2.0)`, `0.9`, how strongly the clods tilt the light on the wall; `sky_lean`, `hint_range(0.0, 1.0)`, `0.35`, how far the wall's light leans toward the sky, so that it reads as warm earth and not as a black outline; and `depth_darkening`, `hint_range(0.0, 1.0)`, `0.2`, how much darker the wall is at the water than at the lip;
 - a second group, `turf`, holds `turf_length`, a `vec2`, `vec2(0.035, 0.085)`, how far the grass hangs over the top of the wall, in meters, at least and at most, and `turf_blades`, `hint_range(5.0, 60.0)`, `30.0`, how many blades hang per meter of wall;
@@ -625,7 +637,7 @@ The kit is ready, and the only way to see it work is to put it on the ground. Yo
 	| 1, -2 | bank_straight_b | 3 |
 	| 1, -1 | bank_water_corner_a | 2 |
 
-4. A pond with nothing under it shows the sky, so give it a bed until lesson 45: add a **MeshInstance3D** named `PondBed` under **Meadow**, with a **PlaneMesh** 1.6 by 1.6 meters, at position `-0.25, -0.75, -1.25`, with a plain brown material. Press **Scatter** on **Grass**, so that no grass grows in the hole. Save the scene.
+4. A pond with nothing under it shows the sky, so give it a bed until lesson 45: add a **MeshInstance3D** named `PondBed` under **Meadow**, with a **PlaneMesh** 1.6 by 1.6 meters, at position `-0.25, -0.75, -1.25`, with an unshaded brown (`#6B573D`) material. Press **Scatter** on **Grass**, so that no grass grows in the hole. Save the scene.
 
 5. Press <Kbd keys="F5" mac="Cmd+B" /> and walk to the pond.
 
@@ -661,7 +673,7 @@ The kit is ready, and the only way to see it work is to put it on the ground. Yo
 	caption="Night."
 />
 
-Check what you see. The grass runs right up to the lip with no seam, because the top is the ground's own color. The bank's line wanders by a few centimeters, and the corners are rounded and not square. The wall is dark but not black, and it changes with the hour: warm at dusk, and a dim blue at night.
+Check what you see. The grass runs right up to the lip with no seam, because the top is the ground's own color. The bank's line is jagged, by a few centimeters at every step, and the corners are cut off, not square. The wall is dark but not black, and it changes with the hour: warm at dusk, and a dim blue at night.
 
 ## Tune it
 

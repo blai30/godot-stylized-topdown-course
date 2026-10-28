@@ -28,7 +28,7 @@ import shapes from '../../../assets/lessons/water-collision/shapes.png';
 
 ## What you will build
 
-The pond has a bank, and the player walks over it. The player stands on the gray placeholder ground from lesson 4, a flat plane at height 0 that lesson 16 hid and kept solid, and the plane is under the pond too. A capsule can walk off the bank, over the water, and across to the far side, with the water a few centimeters under its feet.
+The pond has a bank, and the player walks over it. The player stands on the gray placeholder ground from lesson 4, a flat plane at height 0 that lesson 16 hid and kept solid, and the plane is under the pond too. A capsule can walk off the bank, over the water, and across to the far side, with the water 35 centimeters under its feet.
 
 <Figure
 	src={before}
@@ -142,11 +142,11 @@ You can see them. In the **Debug** menu, turn on **Visible Collision Shapes**, r
 
 ## Walk into it
 
-A test that the player stops has to try every way in. This lesson's run walked the character into the pond from the four sides of the arm and into three corners, holding a key for as long as it took to reach the middle of the water if nothing was in the way, and read where it stopped. The character's capsule is 0.3 meters in radius, so a body stopped by a wall at 0.2 from a cell's middle has its own middle 0.3 further out. The table shows where it stopped.
+A test that the player stops has to try every way in. This lesson's run walked the character into the pond from the four sides of the arm, into two corners, and into the lobe's end, holding a key for as long as it took to reach the middle of the water if nothing was in the way, and read where it stopped. The character's capsule is 0.3 meters in radius, so a body stopped by a wall at 0.2 from a cell's middle has its own middle 0.3 further out. The table shows where it stopped.
 
 | Test | Without the shapes | With them |
 |---|---|---|
-| north side, walking south | in the water at z -1.13 | stopped at z -2.10, 0.3 from the wall |
+| north side, walking south | in the water at z -1.07 | stopped at z -2.10, 0.3 from the wall |
 | south side, walking north | in the water at z -1.48 | stopped at z -0.40 |
 | west end, walking east | in the water at x -2.17 | stopped at x -4.10 |
 | east end, walking west | in the water at x -1.73 | stopped at x 0.60 |

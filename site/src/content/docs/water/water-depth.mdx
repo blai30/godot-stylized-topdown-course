@@ -12,7 +12,7 @@ lesson:
     - Why water fades by absorption, red first, and what a minimum opacity is for
     - How to add a new kind of ground to the tile set, a mesh library, and the map
     - How to keep a transparent surface out of the way of the ground it lies under
-  prerequisites: [15, 16, 17, 18, 23, 44]
+  prerequisites: [15, 16, 17, 18, 23, 31, 44]
 ---
 
 import { Aside, Code, FileTree, Steps } from '@astrojs/starlight/components';
@@ -60,7 +60,7 @@ The water is not a texture or a mesh you model. It is a flat plane with a shader
 
 A shader draws one pixel of the plane at a time. For that pixel it knows where the plane is, but not what is under it: the bed, the bank, a rock standing in the water. Godot can tell it. When a shader declares a `sampler2D` with the hint `hint_depth_texture`, Godot gives it the **depth texture**, a picture of how far from the camera every opaque pixel in the frame is. Looking up this pixel's place in it gives how far away the bed is. The water's own distance is known too, so the difference is the **thickness**: how much water the view ray crosses before it meets something.
 
-The depth texture stores distance in a form the shader has to undo. It holds a number from 0 to 1 per pixel, the pixel's depth in clip space. Rebuilding the point in view space takes one multiplication by `INV_PROJECTION_MATRIX`, Godot's inverse of the camera's projection, and a division by the fourth component. With the camera's orthographic projection, as in this template, the answer is exact, and the same for every pixel on the screen.
+The depth texture stores distance in a form the shader has to undo. It holds a number from 0 to 1 per pixel, the pixel's depth in clip space. Rebuilding the point in view space takes one multiplication by `INV_PROJECTION_MATRIX`, Godot's inverse of the camera's projection, and a division by the fourth component. With the camera's orthographic projection, as in this template, the division does nothing and the rebuilt position is exact.
 
 Water also takes light away unevenly. Red light is absorbed fastest, then green, then blue, so deep water is blue and the red is gone first. The shader keeps a share of each color that falls off exponentially with the thickness: `exp(-absorption * thickness)`, with a different rate for each of the three colors. The rest of what you see is the water's own color, the **scatter color**, a deep blue-slate. Shallow water, where the thickness is close to nothing, would show the bed at full strength and no water at all. Real water does not do that, and a game's would look like a hole, so the shader never lets less than a quarter of the scatter color go, with a **minimum opacity**.
 
@@ -305,7 +305,7 @@ Save the shader and run the game.
 	caption="Step 3: the bed under the water, at noon."
 />
 
-Look at the bank. The wall is brown at the lip and goes blue where it enters the water, because the thin water over the wall's foot lets most of it through and the water further down lets less. That gradient is the depth at work: a mesh that had only a flat color could not do it.
+Look at the bank. The wall is brown at the lip and goes blue as it enters the water, because the thin water at the waterline lets most of the wall through and the thicker water further down lets less. That gradient is the depth at work: a mesh that had only a flat color could not do it.
 
 <Figure
 	src={wide}

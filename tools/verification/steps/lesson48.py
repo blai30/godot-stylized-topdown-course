@@ -11,7 +11,7 @@ CLOCK = 'Meadow/WorldEnvironment/Day'
 out_dir = os.path.dirname(sys.argv[2])
 
 # The pond's three parts, as the water inside the walls: x min, x max, z min, z max, in meters.
-WATER = [(-3.8, 0.3, -1.8, -0.7), (-2.8, -1.7, -0.7, 0.8), (1.2, 2.8, -0.3, 0.8)]
+WATER = [(-3.8, 0.3, -1.8, -0.7), (-2.8, -1.7, -0.7, 0.8), (0.7, 1.8, -0.3, 0.8)]
 # Each test: its name, where the character starts, the keys held (W north, S south, A west, D east), and for how long: long enough
 # to reach the middle of the water if nothing stops the character.
 CASES = [

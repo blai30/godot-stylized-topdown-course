@@ -224,6 +224,24 @@ def steps(d):
         d.log('CORE {}'.format(len(selected())))
         bpy.context.scene.tool_settings.vertex_group_weight = 1.0
         run(bpy.ops.object.vertex_group_assign)
+        # The lip's own group, for the jag: Alt+click on a lip edge selects its whole loop, Assign at 1, then the border (the wall's
+        # ends and foot) at 0, so the jag leaves the ends alone.
+        run(bpy.ops.object.vertex_group_add)
+        obj.vertex_groups.active.name = 'lip'
+        mesh = bmesh.from_edit_mesh(obj.data)
+        for vertex in mesh.verts:
+            # The lip is the top's vertices that a wall face hangs from.
+            vertex.select_set(abs(vertex.co.z - TOP) < 1e-4 and any(abs(face.normal.z) < 0.5 for face in vertex.link_faces))
+        mesh.select_flush_mode()
+        bmesh.update_edit_mesh(obj.data)
+        d.log('LIP loop {}'.format(len(selected())))
+        bpy.context.scene.tool_settings.vertex_group_weight = 1.0
+        run(bpy.ops.object.vertex_group_assign)
+        run(bpy.ops.mesh.select_all, action='DESELECT')
+        run(bpy.ops.mesh.select_non_manifold, extend=False, use_wire=False, use_boundary=True, use_multi_face=False, use_non_contiguous=False, use_verts=False)
+        bpy.context.scene.tool_settings.vertex_group_weight = 0.0
+        run(bpy.ops.object.vertex_group_assign)
+        bpy.context.scene.tool_settings.vertex_group_weight = 1.0
 
     lump_group()
     yield 0.6
@@ -451,6 +469,17 @@ def steps(d):
     modifier.strength = 0.3
     modifier.mid_level = 0.4
     modifier.vertex_group = 'lumps'
+    # The jag: a second Displace with a Noise texture, which changes from vertex to vertex, on the lip's own group.
+    run(bpy.ops.object.modifier_add, type='DISPLACE')
+    jag_texture = bpy.data.textures.new('Jag', 'NOISE')
+    jag = bpy.data.objects['bank_straight_a'].modifiers['Displace']
+    jag.name = 'Jag'
+    jag.texture = jag_texture
+    jag.texture_coords = 'GLOBAL'
+    jag.direction = 'NORMAL'
+    jag.strength = 0.12
+    jag.mid_level = 0.5
+    jag.vertex_group = 'lip'
     yield 0.8
     d.shot('l44_displace')
     d.log('MODIFIER {} {} {} {} {}'.format(modifier.texture.name, modifier.texture_coords, modifier.direction, modifier.strength, modifier.mid_level))
@@ -487,7 +516,7 @@ def steps(d):
     # X-ray (Alt+Z) lets the box take the vertices at the back too.
     d.key('Z', alt=True)
     yield 0.5
-    yield from select_box(world_screen((0.6, 0, 0.1)), world_screen((4.3, 0, -0.012)))
+    yield from select_box(world_screen((0.6, 0, 0.1)), world_screen((4.3, 0, -0.04)))
     d.shot('l44_lip_selected')
     over_view()
     d.key('S')
