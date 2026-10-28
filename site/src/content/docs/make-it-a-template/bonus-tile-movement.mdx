@@ -1,0 +1,132 @@
+---
+title: "Bonus: tile-snapped movement for farming games"
+description: Replace free walking with steps from cell to cell, so the player always stands in the middle of a cell, faces the way it is going, and is stopped by whatever is solid in the next one.
+sidebar:
+  order: 64
+  label: 64. Bonus, tile movement
+lesson:
+  number: 64
+  minutes: 45
+  learn:
+    - How to move a body one cell at a time and always stop in a cell's middle
+    - How TestMove asks the physics whether a step is blocked, without moving
+    - Why the movement sets Velocity even though it does not use it to move
+    - How the grid here lines up with the grid cursor of lesson 61
+  prerequisites: [6, 60]
+---
+
+import { Aside, Code, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Solution from '../../../components/Solution.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import piece1 from '../../../checkpoints/64/pieces/piece-1.cs?raw';
+import script from '../../../assets/lessons/bonus-tile-movement/script.png';
+import walking from '../../../assets/lessons/bonus-tile-movement/walking.png';
+import blocked from '../../../assets/lessons/bonus-tile-movement/blocked.png';
+
+<Aside type="note" title="An optional add-on">
+Lessons 61, 62, and 64 are not part of the template. Each is a small addition for one kind of game, and you add it to a game you copied from the template in lesson 60. This one is for farming and puzzle games, where the world is a grid and the player moves on it a cell at a time. It replaces the free walking from lesson 6.
+</Aside>
+
+## What you will build
+
+A player that moves from cell to cell. It always stands in the middle of a cell, turns to face the key you press, steps to the next cell, and carries on stepping while you hold the key. Trees, rocks, and the pond stop a step before it starts.
+
+<Figure
+	src={blocked}
+	alt="The meadow from above with the character standing on a dirt path just south of a small pond, facing the water, with pines, oaks, and rocks around."
+	caption="The pond stops the step. The player faces it and stays."
+/>
+
+## How a step works
+
+Free walking moves the player a little every frame, in any direction. Tile movement moves it in whole steps:
+
+1. The player is idle, in the middle of a cell.
+2. A direction key is held. The player turns that way. If the next cell is free, it picks that cell's middle as its **destination**.
+3. Each physics tick it moves toward the destination at a fixed speed. When it gets there it snaps exactly onto the middle and is idle again.
+4. If a key is still held, the next step starts at once, so there is no pause between steps.
+
+Whether the next cell is free is the physics engine's question, not yours. `TestMove` asks "if this body moved by this much, would it hit something?" and answers without moving anything. The player's collision layer and mask from lesson 58 decide what counts: the mask holds `World` and `Terrain`, so trunks, rocks, and the pond's bank all stop it.
+
+## Write the script
+
+<Steps>
+
+1. In your code editor, create `src/Player/TileMovement.cs` and save the code below into it.
+
+2. Click **Build Project**.
+
+</Steps>
+
+The script does these things:
+
+- It extends `CharacterBody3D`, so the camera rig and `PlayerAnimation` work with it unchanged.
+- It has cached names for the four move actions, and two `[Export]` properties: `CellSize`, one meter by default, and `StepSeconds`, how long a step takes, a fifth of a second.
+- `_Ready` moves the player to the middle of the cell it was placed in, so even a player dropped anywhere in the editor starts on the grid.
+- `_PhysicsProcess` starts a step if the player is idle. If it has a destination, it works out how far one tick moves it. When the destination is nearer than that, it snaps onto it and goes idle. Otherwise it moves along the line to it.
+- `StartStep` reads the move actions with `Input.GetVector`, and returns if no key is held. It keeps only the stronger axis, so the player never moves diagonally. It turns to face that way with `LookAt`, then asks `TestMove` about the next cell, and sets the destination only if the answer is no.
+- `CellCenter` turns any position into the middle of its cell, at the same height. The destination always goes through it, so a step ends on the grid whatever the position was.
+- It sets `Velocity` while it walks, though it does not use `Velocity` to move. `PlayerAnimation` reads the body's velocity to blend from standing to walking, so the walk animation plays.
+
+<Solution label="Show the full TileMovement.cs">
+	<Code code={piece1} lang="csharp" title="src/Player/TileMovement.cs" />
+</Solution>
+
+## Put it on the player
+
+<Steps>
+
+1. Open `world/player/player.tscn` and select the root, `Player`.
+
+2. In the Inspector, under **Script** at the bottom, click the arrow and choose **Clear**: the player stops reading the keyboard the free way.
+
+3. Click the empty **Script** field, choose **Quick Load...**, type `TileMovement`, and press <Kbd keys="Enter" />. **Cell Size** and **Step Seconds** appear in the Inspector.
+
+	<Figure
+		src={script}
+		alt="The Godot editor with player.tscn open. The Scene dock lists Player and its children, and the Inspector shows Step Seconds 0.2 above the CharacterBody3D and Collision sections, with Collision Layer 5 and Mask 1 and 2."
+		caption="The player with TileMovement. Its exported values are at the top of the Inspector."
+	/>
+
+4. Save the scene.
+
+</Steps>
+
+The player in `meadow.tscn` had a **Ground** property from `PlayerMovement`. It is gone now, and so is the walking speed that depends on the tile under the player.
+
+## Try it
+
+- Play the meadow with <Kbd keys="F6" mac="Cmd+R" />. Tap <Kbd keys="D" /> and the player takes one step. Hold it and the player walks cell after cell, and when you let go it finishes the step it is on and stops in the middle of a cell.
+
+<Figure
+	src={walking}
+	alt="The meadow from above, zoomed in, with the character walking left along the dirt path beside an oak."
+	caption="Held, the steps join into a walk."
+/>
+
+- Walk into a tree, a rock, and the pond. The player turns to face them and does not move.
+- Change **Step Seconds** to `0.4` for a slow, careful walk, or `0.1` for a quick one.
+- Change **Cell Size** to `2`. The player steps two meters at a time, between the middles of two-meter cells.
+- Add `GridCursor` from lesson 61 to the same level. Its cells are one meter wide too, so the lit cell is the cell the player stands in when the mouse is over the player.
+- Make a turn take a moment, as in many farming games: in `StartStep`, when the direction differs from the way the player faces, turn and return without stepping the first time.
+
+## If it does not work
+
+- **The player does not move.** The script is not on the root of `player.tscn`, the build failed, or the move actions are missing from the input map. Check the **Script** row and the **MSBuild** panel.
+- **The player walks through trees.** `TestMove` uses the player's collision mask. Check that **Mask** has the layers of the trees and rocks, `World` and `Terrain`, ticked.
+- **The player stops in the middle of nowhere.** It is blocked by a shape you cannot see, such as a trunk's collision cylinder that is wider than the tree looks. Turn on **Debug > Visible Collision Shapes** to see them.
+- **The player slides off the grid after a step.** Another script moves the body too. Take `PlayerMovement` off, or the grid and the other movement will fight.
+- **The animation shows standing while the player steps.** `PlayerAnimation` is not on the character's `AnimationTree`, which lesson 59 does in the player scene. The script sets the velocity the animation reads.
+
+## Checkpoint
+
+Your game now contains:
+
+- `src/Player/TileMovement.cs`.
+- In `world/player/player.tscn`: `TileMovement` in place of `PlayerMovement` on the root.
+
+Commit your work: `git add .` and `git commit -m "Add tile movement"`.
+
+<Checkpoint />
