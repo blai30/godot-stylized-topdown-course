@@ -26,6 +26,9 @@ public partial class GenerationProfile : Resource
 	// High values are where the trees grow thickest.
 	[Export] public FastNoiseLite? Forest { get; set; }
 
+	// The props that grow, each with its own rules.
+	[Export] public Godot.Collections.Array<PropRule> Rules { get; set; } = [];
+
 	// The terrain noise at a point on the ground, in meters, from -1 to 1.
 	public float TerrainAt(Vector2 point)
 	{
