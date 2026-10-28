@@ -1,0 +1,37 @@
+[gd_resource type="Resource" script_class="GenerationProfile" format=3 uid="uid://jjipym1tttkk"]
+
+[ext_resource type="FastNoiseLite" uid="uid://bl78e4v4ewydx" path="res://world/generation/forest_noise.tres" id="1_jf18m"]
+[ext_resource type="FastNoiseLite" uid="uid://odrq50ei4xc7" path="res://world/generation/terrain_noise.tres" id="2_adj0s"]
+[ext_resource type="Script" uid="uid://b8oedfnfpf3wf" path="res://src/Generation/PropRule.cs" id="2_f6jrb"]
+[ext_resource type="Script" uid="uid://dtnpd30kngpur" path="res://src/Generation/GenerationProfile.cs" id="3_p631n"]
+[ext_resource type="PackedScene" uid="uid://cq7tmg6gvhpss" path="res://art/nature/tree_oak/tree_oak.tscn" id="3_qxloo"]
+[ext_resource type="PackedScene" uid="uid://bwnqnqcrrhkbc" path="res://art/nature/tree_pine/tree_pine.tscn" id="4_to5tp"]
+[ext_resource type="PackedScene" uid="uid://w2dfup2d3633" path="res://art/nature/bush/bush.tscn" id="5_qxloo"]
+
+[sub_resource type="Resource" id="Resource_wvb8n"]
+script = ExtResource("2_f6jrb")
+Scene = ExtResource("3_qxloo")
+Weight = 3.0
+metadata/_custom_type_script = "uid://b8oedfnfpf3wf"
+
+[sub_resource type="Resource" id="Resource_bqpsy"]
+script = ExtResource("2_f6jrb")
+Scene = ExtResource("4_to5tp")
+Weight = 2.0
+metadata/_custom_type_script = "uid://b8oedfnfpf3wf"
+
+[sub_resource type="Resource" id="Resource_hhdt0"]
+script = ExtResource("2_f6jrb")
+Scene = ExtResource("5_qxloo")
+Weight = 2.0
+Spacing = 1.5
+ShoreDistance = 1.5
+metadata/_custom_type_script = "uid://b8oedfnfpf3wf"
+
+[resource]
+script = ExtResource("3_p631n")
+Seed = 15
+Terrain = ExtResource("2_adj0s")
+Forest = ExtResource("1_jf18m")
+Rules = Array[ExtResource("2_f6jrb")]([SubResource("Resource_wvb8n"), SubResource("Resource_bqpsy"), SubResource("Resource_hhdt0")])
+metadata/_custom_type_script = "uid://dtnpd30kngpur"

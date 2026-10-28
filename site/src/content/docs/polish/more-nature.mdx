@@ -1,0 +1,241 @@
+---
+title: "More nature: bushes"
+description: Make a bush from the oak's own crown, squashed down to the ground with its trunk hidden, give it a small collision body and the wind script, plant three in the meadow, and add a rule so the generated level grows them in its groves.
+sidebar:
+  order: 54
+  label: "54. More nature: bushes"
+lesson:
+  number: 54
+  minutes: 40
+  learn:
+    - How a scene made from an imported model can hide a part of it and move another
+    - How to reuse a material across scenes without copying it
+    - How one more PropRule puts a new prop into the generated level
+  prerequisites: [24, 28, 51]
+---
+
+import { Aside, Code, FileTree, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Solution from '../../../components/Solution.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import bushScene from '../../../checkpoints/54/files/art/nature/bush/bush.tscn?raw';
+import inheritDialog from '../../../assets/lessons/bushes/inherit-dialog.png';
+import crown from '../../../assets/lessons/bushes/crown.png';
+import bushSceneShot from '../../../assets/lessons/bushes/bush-scene.png';
+import saveScene from '../../../assets/lessons/bushes/save-scene.png';
+import selectScene from '../../../assets/lessons/bushes/select-scene.png';
+import meadowEditor from '../../../assets/lessons/bushes/meadow-editor.png';
+import meadow from '../../../assets/lessons/bushes/meadow.png';
+import meadowWide from '../../../assets/lessons/bushes/meadow-wide.png';
+import meadowDusk from '../../../assets/lessons/bushes/meadow-dusk.png';
+import rule from '../../../assets/lessons/bushes/rule.png';
+import generated from '../../../assets/lessons/bushes/generated.png';
+import genGrove from '../../../assets/lessons/bushes/gen-grove.png';
+import genWide from '../../../assets/lessons/bushes/gen-wide.png';
+import genDusk from '../../../assets/lessons/bushes/gen-dusk.png';
+
+## What you will build
+
+Bushes: low, round clumps of leaves that fill the gaps between the trees and give the meadow some middle height. You will not model anything and paint nothing. A bush is the oak's own leafy crown, squashed to a third of its height and set on the ground with no trunk under it.
+
+Three bushes by hand in the meadow, and then a rule so the generated level grows them in its groves.
+
+<Figure
+	src={meadow}
+	alt="Three round green bushes of different sizes stand in the grass beside a pine in the meadow, each with a soft shadow."
+	caption="Three bushes in the meadow."
+/>
+
+## The scene
+
+You made the oak's scene from its `.glb` in lesson 24. The bush starts the same way, from the same model, and changes only what the bush needs.
+
+<Steps>
+
+1. In the FileSystem dock make a folder `res://art/nature/bush`.
+
+2. Choose **Scene > New Inherited Scene...** and pick `art/nature/tree_oak/tree_oak.glb`. The root is named `tree_oak2`, with two children, `leaves` and `tree_oak`, the crown and the trunk. Rename the root `Bush`.
+
+	<Figure
+		src={inheritDialog}
+		alt="The Open Base Scene dialog with art/nature/tree_oak open and tree_oak.glb selected."
+		caption="The same model as the oak."
+	/>
+
+3. Select the `tree_oak` node, the trunk, and turn **Visible** off in the Inspector. A bush has no trunk. The mesh stays in the scene, hidden, because a node an imported scene brings cannot be deleted without making the scene its own copy.
+
+4. Select `leaves`. Set **Material Override** to `art/nature/tree_oak/leaves.tres`, the oak's leaf material, so the bush takes the same colors, the wind, and the cloud shadows without a second material to keep in step. Under **Transform** set **Scale** to `0.5, 0.35, 0.5` and **Position** to `0, -0.51, 0`.
+
+	The oak's crown starts 1.45 meters above its origin, and the crown is squashed to 0.35 of its height, so it must move down by 1.45 times 0.35, about 0.51, for its underside to sit on the ground. The crown is also squashed to half its width, so a bush is a little more than 2 meters across and 1.4 meters tall.
+
+	<Figure
+		src={crown}
+		alt="The crown alone in the 3D viewport, a flat round clump of leaves just above the grid."
+		caption="The squashed crown, with the trunk hidden."
+	/>
+
+</Steps>
+
+## The body and the wind
+
+<Steps>
+
+1. Select the root and add a **StaticBody3D** named `Body`, and under it a **CollisionShape3D** named `Shape`. Give `Shape` a **New CylinderShape3D** with **Radius** `0.7` and **Height** `1.0`, and set its **Position** to `0, 0.5, 0`. The cylinder is smaller than the crown on purpose: the player can brush through the outer leaves, and cannot walk through the middle.
+
+2. Select the root and set its **Script** to `src/World/WindPhase.cs`, with Quick Load, as for the trees in lesson 28. It gives each bush its own phase in the wind, so a row of them does not sway in step. A bush sways much less than a tree, because the foliage shader's sway grows with height above the ground.
+
+	<Figure
+		src={bushSceneShot}
+		alt="The bush scene: a Bush root with leaves, tree_oak, and a Body with a Shape in the Scene dock, and the round crown above a transparent cylinder in the viewport."
+		caption="The bush scene."
+	/>
+
+3. Save the scene with <Kbd keys="Ctrl+S" mac="Cmd+S" /> as `res://art/nature/bush/bush.tscn`.
+
+	<Figure
+		src={saveScene}
+		alt="The Save Scene As dialog at art/nature/bush with the file name bush.tscn."
+		caption="Saving the bush."
+	/>
+
+</Steps>
+
+<Solution label="Show the full bush.tscn">
+	<Code code={bushScene} lang="ini" title="art/nature/bush/bush.tscn" />
+</Solution>
+
+## Plant three
+
+<Steps>
+
+1. Open `levels/meadow.tscn`, select the root `Meadow`, and add a **Node3D** named `Bushes`, beside `Trees` and `Rocks`.
+
+2. With `Bushes` selected, click **Instantiate Child Scene** in the Scene dock and pick `bush.tscn`. Do it three times. Select each and set it in the Inspector:
+
+	| Node | Position | Rotation Y | Scale |
+	|---|---|---|---|
+	| `Bush` | `-3, 0, 6` | `0` | `1` |
+	| `Bush2` | `-1, 0, 7` | `120` | `0.8` |
+	| `Bush3` | `0.5, 0, 6.2` | `250` | `0.9` |
+
+	The turns and the sizes keep three copies of one model from looking like copies.
+
+	<Figure
+		src={selectScene}
+		alt="The Select Scene dialog with bush searched and bush.tscn listed."
+		caption="Instancing a bush."
+	/>
+
+	<Figure
+		src={meadowEditor}
+		alt="The Godot editor with the Scene dock showing Bushes with Bush, Bush2, and Bush3 under it, and Bush3's position, rotation, and scale in the Inspector."
+		caption="Three bushes under Bushes."
+	/>
+
+3. Save the scene and run it.
+
+</Steps>
+
+Walk the player into the middle bush. It stops about 0.9 meters from the bush's center, which is the bush's 0.7 meter body and the player's own width: you cannot walk through it. The bushes cast soft shadows on the grass and take the cloud shadows from lesson 53 like the trees.
+
+<Figure
+	src={meadowWide}
+	alt="The whole meadow from above, with the three bushes near the bottom among the pines and oaks."
+	caption="The meadow, bushes at the bottom."
+/>
+
+<Figure
+	src={meadowDusk}
+	alt="The three bushes at dusk, in warm light, with long shadows."
+	caption="The same bushes at dusk."
+/>
+
+## A rule for the generated level
+
+The generator grows what its profile's rules say, and the bush is one more rule.
+
+<Steps>
+
+1. Open `world/generation/generation_profile.tres`. Open its **Rules** array, set its **Size** to `3`, and in the new element choose **New PropRule**. Open the element and set:
+
+	- **Scene** to `art/nature/bush/bush.tscn`;
+	- **Weight** to `2`, so a bush is chosen two times in seven;
+	- **Spacing** to `1.5` and **Shore Distance** to `1.5`, smaller than a tree's `2`, because a bush is small and may stand closer to its neighbors and to the water.
+
+	Leave **Starts At** and **Full At** as they are: bushes grow in the same groves as the trees.
+
+	<Figure
+		src={rule}
+		alt="The Inspector on the generation profile: Rules has three elements, and the third, a PropRule, has the bush scene, a weight of 2, spacing 1.5, and shore distance 1.5."
+		caption="The third rule."
+	/>
+
+2. Open `levels/generated.tscn`, select `WorldGenerator`, and click **Generate**. The generator clears the props it made before and grows new ones, now with bushes among them.
+
+	<Figure
+		src={generated}
+		alt="The generated level in the editor with oaks, pines, and bushes in its groves."
+		caption="Generate, with the bush rule."
+	/>
+
+3. Save the scene.
+
+</Steps>
+
+With seed 15 the level has 86 props: 28 oaks, 17 pines, and 41 bushes. The closest two are 1.52 meters apart, none is in water, and pressing **Generate** again gives exactly the same props. The rules do what they did for the trees; nothing in the generator changed.
+
+<Figure
+	src={genGrove}
+	alt="A close view of the generated level: a lake, an oak grove, and bushes at its edges and in the open."
+	caption="A grove, with bushes around it."
+/>
+
+<Figure
+	src={genWide}
+	alt="The generated level from above: lakes, groves of oaks, pines, and bushes, and open meadow between."
+	caption="The whole level."
+/>
+
+<Figure
+	src={genDusk}
+	alt="A part of the generated level at dusk, with the bushes in warm light."
+	caption="Dusk."
+/>
+
+## Try it
+
+- Change the bush's **Weight** to `0.5` for a rare bush, or `6` for a meadow thick with them.
+- Change the crown's **Scale** to `0.7, 0.5, 0.7` for a big shrub.
+- Change the leaf color for the bush alone: make the material unique on `leaves` and change **Leaf Color**. It then no longer follows the oak. Lesson 57 shows a better way, a color that is set on each copy.
+- Add a rule for a bush with a **Starts At** of `-0.5`, so some grow out in the open meadow and not only in groves.
+
+## If it does not work
+
+- **The bush has a trunk sticking out.** The `tree_oak` node is still visible. Turn **Visible** off.
+- **The bush floats.** **Position** on `leaves` is not `0, -0.51, 0`.
+- **The bush is as tall as an oak.** **Scale** is on the root and not on `leaves`, or it is `1`.
+- **The leaves are plain, not the oak's.** `leaves` has no **Material Override**. Set it to `leaves.tres`.
+- **The player walks through the bush.** `Body` has no shape, or the shape's radius is `0`.
+- **Generate makes no bushes.** The rule's **Scene** is empty, or **Weight** is `0`.
+
+## Checkpoint
+
+Your project now contains:
+
+<FileTree>
+- art
+  - nature
+    - bush
+      - **bush.tscn**
+- levels
+  - meadow.tscn with a `Bushes` group of three
+  - generated.tscn regenerated with bushes
+- world
+  - generation
+    - generation_profile.tres with a third rule
+</FileTree>
+
+Commit your work: `git add .` and `git commit -m "Add bushes"`. Lesson 55 builds a pause panel with a theme.
+
+<Checkpoint />
