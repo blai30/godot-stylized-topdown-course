@@ -1,0 +1,63 @@
+[gd_scene format=3 uid="uid://docdpobqn82gm"]
+
+[ext_resource type="Theme" uid="uid://6klp8hu1ei4" path="res://ui/theme.tres" id="1_g503d"]
+[ext_resource type="Script" uid="uid://dir6xeqbcpcwd" path="res://src/UI/PausePanel.cs" id="2_y0jpf"]
+
+[node name="PausePanel" type="Control" unique_id=1982617727]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_g503d")
+script = ExtResource("2_y0jpf")
+
+[node name="Center" type="CenterContainer" parent="." unique_id=2055222030]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="PanelContainer" parent="Center" unique_id=1637996256]
+layout_mode = 2
+
+[node name="Box" type="VBoxContainer" parent="Center/Panel" unique_id=1205739818]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="Center/Panel/Box" unique_id=1903259752]
+layout_mode = 2
+text = "Paused"
+horizontal_alignment = 1
+
+[node name="TimeLabel" type="Label" parent="Center/Panel/Box" unique_id=253558287]
+layout_mode = 2
+text = "Time of day"
+
+[node name="TimeSlider" type="HSlider" parent="Center/Panel/Box" unique_id=345312508]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(280, 24)
+layout_mode = 2
+max_value = 1.0
+step = 0.001
+value = 0.5
+
+[node name="VsyncToggle" type="CheckButton" parent="Center/Panel/Box" unique_id=1706681734]
+unique_name_in_owner = true
+layout_mode = 2
+button_pressed = true
+text = "VSync"
+
+[node name="ShadowsToggle" type="CheckButton" parent="Center/Panel/Box" unique_id=480754639]
+unique_name_in_owner = true
+layout_mode = 2
+button_pressed = true
+text = "Shadows"
+
+[node name="ResumeButton" type="Button" parent="Center/Panel/Box" unique_id=1373986838]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Resume"

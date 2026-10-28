@@ -1,0 +1,318 @@
+---
+title: A Theme and a pause panel
+description: Style every control once in a Theme resource, build a pause panel from containers, a slider, and toggles that takes the theme, and wire Escape to pause the game, set the time of day, switch VSync, and switch the sun's shadows.
+sidebar:
+  order: 55
+  label: 55. A Theme and a pause panel
+lesson:
+  number: 55
+  minutes: 75
+  learn:
+    - How a Theme resource styles every control that is under it, from one file
+    - How to edit a theme's style boxes in the Theme editor and the Inspector
+    - How containers lay out a panel without any positions
+    - How a node keeps running while the game is paused
+  prerequisites: [19, 22, 53]
+---
+
+import { Aside, Code, FileTree, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Solution from '../../../components/Solution.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import piece1 from '../../../checkpoints/55/pieces/piece-1.cs?raw';
+import themeFile from '../../../checkpoints/55/files/ui/theme.tres?raw';
+import panelScene from '../../../checkpoints/55/files/ui/pause_panel.tscn?raw';
+import running from '../../../assets/lessons/theme-and-pause-panel/running.png';
+import paused from '../../../assets/lessons/theme-and-pause-panel/paused.png';
+import newTheme from '../../../assets/lessons/theme-and-pause-panel/new-theme.png';
+import saveTheme from '../../../assets/lessons/theme-and-pause-panel/save-theme.png';
+import themeEditor from '../../../assets/lessons/theme-and-pause-panel/theme-editor.png';
+import typeAdded from '../../../assets/lessons/theme-and-pause-panel/type-added.png';
+import panelStyle from '../../../assets/lessons/theme-and-pause-panel/panel-style.png';
+import buttonNormal from '../../../assets/lessons/theme-and-pause-panel/button-normal.png';
+import themeSaved from '../../../assets/lessons/theme-and-pause-panel/theme-saved.png';
+import newScene from '../../../assets/lessons/theme-and-pause-panel/new-scene.png';
+import panelSceneShot from '../../../assets/lessons/theme-and-pause-panel/panel-scene.png';
+import saveScene from '../../../assets/lessons/theme-and-pause-panel/save-scene.png';
+import selectScene from '../../../assets/lessons/theme-and-pause-panel/select-scene.png';
+import exportsShot from '../../../assets/lessons/theme-and-pause-panel/exports.png';
+import dusk from '../../../assets/lessons/theme-and-pause-panel/dusk.png';
+import noShadows from '../../../assets/lessons/theme-and-pause-panel/no-shadows.png';
+
+## What you will build
+
+A pause panel. Press <Kbd keys="Esc" mac="Esc" /> in the game and the day stops, and a small panel opens in the middle of the screen with a time of day slider, a VSync switch, a Shadows switch, and a Resume button. Press it again, or click Resume, and the game goes on.
+
+<Figure
+	src={running}
+	alt="The meadow at noon from above, with no panel."
+	caption="The game, running."
+/>
+
+<Figure
+	src={paused}
+	alt="The same meadow with a dark green rounded panel in the middle: Paused, a Time of day slider, VSync and Shadows switches on soft green bars, and a green Resume button."
+	caption="Paused."
+/>
+
+You will also make the panel's look in a **Theme**. A theme is one resource that says how every control looks: the panel's background, the button's states, the text size. Put it on the root of a panel and everything under it follows, so a game changes its whole interface by changing one file.
+
+## The theme
+
+<Steps>
+
+1. In the FileSystem dock make a folder `res://ui`, and one `res://src/UI`.
+
+2. In the Inspector, open the resource menu and choose **New Resource...**. Search for `Theme` and create it. Open the menu again, choose **Save Resource As...**, and save it as `res://ui/theme.tres`. Set **Default Font Size** to `20`: every control under the theme now draws its text at 20 pixels.
+
+	<Figure
+		src={newTheme}
+		alt="The Create New Resource dialog with Theme searched and the Theme class selected."
+		caption="A new Theme."
+	/>
+
+	<Figure
+		src={saveTheme}
+		alt="The Save Resource As dialog in the res://ui folder with the file name theme.tres."
+		caption="Saved in ui."
+	/>
+
+3. Open the **Theme** panel at the bottom of the editor. This is the Theme editor. The big area on the left shows a preview of every control with the theme applied. On the right are a **Type** list and tabs for each kind of item: colors, constants, fonts, font sizes, icons, style boxes, and sounds.
+
+	<Figure
+		src={themeEditor}
+		alt="The Theme editor at the bottom of Godot's window: a preview of a Label, buttons, line edits, tabs, and a tree, and on the right a Type list and Show Default switch."
+		caption="The Theme editor."
+	/>
+
+</Steps>
+
+A theme holds items by **type**, and a type is a control class: `PanelContainer`, `Button`. The panel needs two types.
+
+<Steps>
+
+1. Click **+** beside **Type** (Add a type from a list of available types), type `PanelContainer`, and click **OK**. The type appears in the list and in the Inspector.
+
+	<Figure
+		src={typeAdded}
+		alt="The Theme editor with PanelContainer chosen as the type and an empty list of items on the right."
+		caption="The PanelContainer type."
+	/>
+
+2. Open the **StyleBoxes** tab (the last icon, with the colorful squares). With **Show Default** on, every item the type has by default is listed in gray, with a **+** (**Override Item**) beside it. Click **+** beside `panel`, and the item becomes yours. It is empty. Open the item's resource menu and choose **StyleBoxFlat**, then click the StyleBoxFlat in the row. It opens in the Inspector.
+
+3. Set the StyleBoxFlat's properties in the Inspector:
+
+	- **BG Color** to `1C2A22EB`, a dark green that is a little see-through;
+	- under **Corner Radius**, all four corners to `14`;
+	- under **Content Margins**, **Left** and **Right** to `28`, **Top** and **Bottom** to `24`.
+
+	<Figure
+		src={panelStyle}
+		alt="The Inspector on a StyleBoxFlat with a dark green background, corner radii of 14, and the Theme editor under it listing the panel item."
+		caption="The panel's style."
+	/>
+
+4. Add the `Button` type the same way. In its **StyleBoxes** tab override `normal`, `hover`, and `pressed`, each with a new **StyleBoxFlat**, and set them:
+
+	| Item | BG Color | Corner Radius |
+	|---|---|---|
+	| `normal` | `3F6B4A` | `8` on all four corners |
+	| `hover` | `528A5D` | `8` on all four corners |
+	| `pressed` | `2F5238` | `8` on all four corners |
+
+	<Figure
+		src={buttonNormal}
+		alt="The Inspector on the normal StyleBoxFlat with a mid green background and corner radii of 8, and the preview's buttons turned green."
+		caption="The button's normal state."
+	/>
+
+5. Click **Save** in the Theme editor.
+
+	<Figure
+		src={themeSaved}
+		alt="The Theme editor after saving, with the preview showing green rounded buttons."
+		caption="The saved theme."
+	/>
+
+</Steps>
+
+Only the items you changed are in the file. A control asks the theme for an item; if the theme does not have it, Godot's default theme answers. So the buttons keep the default font and every state you did not override.
+
+<Solution label="Show the full theme.tres">
+	<Code code={themeFile} lang="ini" title="ui/theme.tres" />
+</Solution>
+
+<Aside type="caution">
+	Do not click **Override All**. It copies every default item of the type into the theme, including the default font, and the file grows to half a megabyte.
+</Aside>
+
+## The script
+
+<Steps>
+
+1. Create `src/UI/PausePanel.cs` and type the script from the solution below the steps. Its pieces:
+
+	- a `Control` in the `TopDownTemplate.UI` namespace;
+	- two exports, `Clock` (a `DayClock`) and `Sun` (a `DirectionalLight3D`): the clock whose time of day the slider sets, and the light whose shadows the switch changes;
+	- `_Ready` sets `ProcessMode` to `Always`, so the panel and its children keep running while the game is paused, hides the panel, finds its controls by unique name (`%TimeSlider` and the others), and connects them: the slider sets `Clock.TimeOfDay`, the VSync switch calls `DisplayServer.WindowSetVsyncMode`, the Shadows switch sets `Sun.ShadowEnabled`, and Resume closes the panel;
+	- `_UnhandledInput` toggles the panel on `ui_cancel`, the action Godot already has on <Kbd keys="Esc" mac="Esc" />, and marks the event handled;
+	- `SetOpen` shows or hides the panel and sets `GetTree().Paused`;
+	- `ShowCurrentSettings` runs before the panel opens and puts the slider and the switches where the game has them, with `SetValueNoSignal` and `SetPressedNoSignal`, so opening the panel changes nothing.
+
+2. Click **Build Project**.
+
+</Steps>
+
+<Solution label="Show the full PausePanel.cs">
+	<Code code={piece1} lang="csharp" title="src/UI/PausePanel.cs" />
+</Solution>
+
+The pause is Godot's own. Setting `GetTree().Paused` stops every node whose **Process Mode** is **Inherit** or **Pausable**: the clock, the player, the wind. A node set to **Always** keeps running, so the panel can still be clicked. Nothing else needs to know about the pause.
+
+## The scene
+
+<Steps>
+
+1. Choose **Scene > New Scene**, and click **User Interface** in the Scene dock. This makes a `Control` root. Rename it `PausePanel`.
+
+	<Figure
+		src={newScene}
+		alt="Godot's Scene dock after choosing New Scene, offering 2D Scene, 3D Scene, User Interface, and Other Node."
+		caption="A User Interface scene."
+	/>
+
+2. Select the root. In the Inspector, under **Layout**, set **Anchors Preset** to **Full Rect**, so it covers the screen. Under **Theme**, set **Theme** to `ui/theme.tres` with Quick Load, and under **Script**, set `src/UI/PausePanel.cs`.
+
+3. Add the children, each under the one before it, and set what the table says. Everything not listed stays as it is.
+
+	| Node | Under | Set |
+	|---|---|---|
+	| `Center` (CenterContainer) | `PausePanel` | **Layout Mode** `Anchors`, **Anchors Preset** `Full Rect` |
+	| `Panel` (PanelContainer) | `Center` | |
+	| `Box` (VBoxContainer) | `Panel` | under **Theme Overrides > Constants**, **Separation** `12` |
+	| `Title` (Label) | `Box` | **Text** `Paused`, **Horizontal Alignment** `Center` |
+	| `TimeLabel` (Label) | `Box` | **Text** `Time of day` |
+	| `TimeSlider` (HSlider) | `Box` | **Max Value** `1`, **Step** `0.001`, **Value** `0.5`, **Custom Minimum Size** `280, 24` |
+	| `VsyncToggle` (CheckButton) | `Box` | **Text** `VSync`, **Button Pressed** on |
+	| `ShadowsToggle` (CheckButton) | `Box` | **Text** `Shadows`, **Button Pressed** on |
+	| `ResumeButton` (Button) | `Box` | **Text** `Resume` |
+
+	There are no positions anywhere. The `CenterContainer` centers the panel, the `PanelContainer` wraps its child in the theme's panel style, and the `VBoxContainer` stacks its children with the gap you gave it.
+
+4. The script finds four controls by name. Right-click each of `TimeSlider`, `VsyncToggle`, `ShadowsToggle`, and `ResumeButton` in the Scene dock and choose **Access as Unique Name**. A `%` appears beside the node. A unique name is found with `%Name` from anywhere in the scene, so the script does not depend on where the control sits.
+
+	<Figure
+		src={panelSceneShot}
+		alt="Godot's 2D editor with the pause panel scene: the Scene dock lists PausePanel with Center, Panel, Box, and six controls, four marked with a percent sign, and the viewport shows the finished panel."
+		caption="The panel scene."
+	/>
+
+5. Save the scene with <Kbd keys="Ctrl+S" mac="Cmd+S" /> as `res://ui/pause_panel.tscn`.
+
+	<Figure
+		src={saveScene}
+		alt="The Save Scene As dialog in res://ui with the file name pause_panel.tscn."
+		caption="Saving the panel."
+	/>
+
+</Steps>
+
+<Solution label="Show the full pause_panel.tscn">
+	<Code code={panelScene} lang="ini" title="ui/pause_panel.tscn" />
+</Solution>
+
+<Aside>
+	The Inspector says "This node doesn't have a control parent" on the root's layout. That is expected: the root has no parent container, so it sizes itself from its anchors.
+</Aside>
+
+## Put it in every level
+
+Both levels instance `world/environment/world_environment.tscn`, and the clock and the sun live in it, so the panel goes there. Then every level has a pause panel and neither level needs to know.
+
+<Steps>
+
+1. Open `world/environment/world_environment.tscn`, select the root, and click **Instantiate Child Scene** in the Scene dock. Pick `pause_panel.tscn`.
+
+	<Figure
+		src={selectScene}
+		alt="The Select Scene dialog with pause_panel searched and pause_panel.tscn listed."
+		caption="Instancing the panel."
+	/>
+
+2. Select `PausePanel`. Its two exports appear at the top of the Inspector. Click **Assign...** beside **Clock** and pick `Day`, and beside **Sun** and pick `Sun`.
+
+	<Figure
+		src={exportsShot}
+		alt="Godot's editor on world_environment.tscn with PausePanel selected: Clock is Day and Sun is Sun in the Inspector."
+		caption="The two exports."
+	/>
+
+3. Save the scene.
+
+</Steps>
+
+## Run it
+
+Run the meadow and press <Kbd keys="Esc" mac="Esc" />. The panel opens over the paused game. Drag **Time of day** and the light changes while the game is paused: the slider sets the clock, and the clock moves the sun, the sky, and the light.
+
+<Figure
+	src={dusk}
+	alt="The paused meadow with the Time of day slider moved to dusk: warm light, long shadows, and the panel on top."
+	caption="The slider at dusk."
+/>
+
+Turn **Shadows** off, and every tree and rock loses its shadow at once.
+
+<Figure
+	src={noShadows}
+	alt="The meadow at dusk with the Shadows switch off and the panel on top: the trees cast no shadows."
+	caption="Shadows off."
+/>
+
+Press **Resume** and the day goes on from the hour you chose. Turn **VSync** off and on to see the frame rate change on a fast computer.
+
+A run of the game confirms it:
+
+- Pausing stops the day: the time of day was `0.50794` when the panel opened and still `0.50794` a second and a half later.
+- The slider set the time to `0.78` exactly, and the clock held it while paused.
+- With **Shadows** off the sun's `shadow_enabled` was `false`; the VSync mode went to `0` (disabled) and back to `1`.
+- After **Resume** the day moved on: `0.78056`, then `0.78307` a second and a half later.
+- Escape opened the panel again and closed it again.
+
+## Try it
+
+- Change **Default Font Size** to `26` in the theme, and every control in the panel grows, with no change to the scene.
+- Change the three button colors to blues and the panel's `BG Color`, and the whole panel is restyled from one file.
+- Add a `Label` type to the theme and give it a **Font Color** item. Every label in the panel follows.
+- Add a fourth control: a **Quit** button that calls `GetTree().Quit()`.
+
+## If it does not work
+
+- **Escape does nothing.** The script is not on the panel root, the build failed, or the scene is not in the level. Check **Script** on `PausePanel`.
+- **The slider does nothing, or the shadows switch does nothing.** **Clock** or **Sun** is empty on the instance. Assign them in `world_environment.tscn`.
+- **An error in `_Ready` about a missing node.** One of the four controls is not marked **Access as Unique Name**, or it was renamed.
+- **The panel is plain gray, not green.** The root's **Theme** is empty, or `theme.tres` is not saved: click **Save** in the Theme editor.
+- **The panel hugs the corner.** `PausePanel` or `Center` is not on **Full Rect**, or `Center`'s **Layout Mode** is not **Anchors**.
+- **The game keeps running under the panel.** `GetTree().Paused` is not set: the pause happens in `SetOpen`.
+
+## Checkpoint
+
+Your project now contains:
+
+<FileTree>
+- src
+  - UI
+    - **PausePanel.cs**
+- ui
+  - **theme.tres**
+  - **pause_panel.tscn**
+- world
+  - environment
+    - world_environment.tscn with a `PausePanel`
+</FileTree>
+
+Commit your work: `git add .` and `git commit -m "Add a theme and a pause panel"`. Lesson 56 measures the game's performance and exports a build.
+
+<Checkpoint />
