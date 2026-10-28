@@ -1,0 +1,277 @@
+---
+title: Generating ground into the GridMap
+description: Turn the terrain noise into ground tiles, lakes and grass, with a WorldGenerator node that paints the same GridMap you paint by hand, fills water too narrow for the bank, and presses Update shore and Scatter for you.
+sidebar:
+  order: 50
+  label: "50. Generating ground into the GridMap"
+lesson:
+  number: 50
+  minutes: 90
+  learn:
+    - How a noise value and one threshold decide which tile a cell gets
+    - How a generator writes into the same GridMap that you paint by hand
+    - How to keep a generator repeatable, so one seed always makes one level
+    - How to make rules that keep generated water from breaking the bank kit
+  prerequisites: [16, 32, 47, 49]
+---
+
+import { Aside, Code, FileTree, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Solution from '../../../components/Solution.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import piece1 from '../../../checkpoints/50/pieces/piece-1.cs?raw';
+import piece2 from '../../../checkpoints/50/pieces/piece-2.cs?raw';
+import piece3 from '../../../checkpoints/50/pieces/piece-3.cs?raw';
+import piece4 from '../../../checkpoints/50/pieces/piece-4.cs?raw';
+import profileShot from '../../../assets/lessons/generating-ground/profile.png';
+import saveAs from '../../../assets/lessons/generating-ground/save-as.png';
+import floorShot from '../../../assets/lessons/generating-ground/floor.png';
+import selectWater from '../../../assets/lessons/generating-ground/select-water.png';
+import generatorShot from '../../../assets/lessons/generating-ground/generator.png';
+import generated from '../../../assets/lessons/generating-ground/generated.png';
+import wide from '../../../assets/lessons/generating-ground/wide.png';
+import lake from '../../../assets/lessons/generating-ground/lake.png';
+import lakeEast from '../../../assets/lessons/generating-ground/lake-east.png';
+import start from '../../../assets/lessons/generating-ground/start.png';
+import dusk from '../../../assets/lessons/generating-ground/dusk.png';
+
+## What you will build
+
+A **Generate** button. Press it and a 48 by 48 meter level appears: a meadow with four lakes, banked and grassed, from one seed. Press it again and nothing changes. Change the seed, press it, and the lakes are somewhere else.
+
+<Figure
+	src={wide}
+	alt="A square meadow seen from high above, with four lakes of different shapes, each with an earth bank, on grass."
+	caption="A whole level from a number, 48 meters on a side."
+/>
+
+It does nothing that you have not done by hand. It paints Grass and Water tiles into the same ground GridMap you painted in lesson 16, then presses **Update shore** (lesson 47) and **Scatter** (lesson 32). The new part is the decision, made for every cell: water or land?
+
+## From a number to a tile
+
+Lesson 49 gave you a profile that can answer, for any point on the ground, a number from -1 to 1. A lake is where that number is low, so the rule is one comparison: **below the water level, a cell is water, and everywhere else it is grass.** The profile gets the level, `-0.2`, which in the pictures of the last lesson is the dark gray, a little below the middle.
+
+That rule alone draws lakes, but not ones the rest of the template can live with. Three more rules fix what it gets wrong:
+
+- **Water on the edge.** A lake that reaches the edge of the level would have a bank with nothing beyond it. Water within four cells of the edge becomes land.
+- **Water where the player starts.** The player begins at the middle of the level, and must not begin in a lake. Water within six cells of the middle becomes land.
+- **Water too narrow for the bank.** Lesson 47 found that water narrower than three cells shows no water, and warns. A generator that made such water would fill the Output panel with warnings. So narrow water becomes land, and it goes on until there is none, because taking away a narrow arm can leave another narrow arm behind.
+
+The first two are one line each. The third already exists: `BankMap` can already tell which water cells are too narrow, and it is only private. The generator needs it, so that is the first change.
+
+## Three small changes
+
+### Find a tile by its name
+
+The generator knows two tiles by name: water, which is whichever tile says **Is Water**, and the land tile, named in the profile. `GroundTileSet` finds a tile by its item number already, and it needs to find one by its name too.
+
+<Steps>
+
+1. Open `src/Ground/GroundTileSet.cs`. After `Find(int item)`, add a second method, `public GroundTile? Find(string displayName)`, with a comment: finds the tile with a display name. It loops over `Tiles` the same way and returns the first tile whose `DisplayName` is `displayName`, or `null`.
+
+</Steps>
+
+<Solution>
+	<Code code={piece1} lang="csharp" title="src/Ground/GroundTileSet.cs" />
+</Solution>
+
+### Share the narrow-water check
+
+<Steps>
+
+1. Open `src/Ground/BankMap.cs`. In `WarnAboutNarrowWater`, the first line finds the narrow cells. Move that into a new method above it: `public static List<Vector2I> NarrowWater(HashSet<Vector2I> water)`, with the existing comment, that returns `water.Where(...).ToList()` with the same condition. `WarnAboutNarrowWater` then starts with `var narrow = NarrowWater(water);` and the rest of it is unchanged.
+
+</Steps>
+
+<Solution>
+	<Code code={piece2} lang="csharp" title="src/Ground/BankMap.cs" />
+</Solution>
+
+### Three more things in the profile
+
+<Steps>
+
+1. Open `src/Generation/GenerationProfile.cs` and add three exports:
+
+	- `[Export] public Vector2I Size { get; set; } = new(96, 96);` has a comment: the level's size in cells, which are half a meter on a side. It goes above `Terrain`. 96 cells are 48 meters;
+	- `[Export(PropertyHint.Range, "-1,1,0.05")] public float WaterLevel { get; set; } = -0.2f;` has a comment: where the terrain is below this value, there is water. It goes below `Terrain`, and the range hint gives it a slider;
+	- `[Export] public string LandTile { get; set; } = "Grass";` has a comment: the display name of the ground tile everywhere else. It goes below `WaterLevel`.
+
+</Steps>
+
+<Solution>
+	<Code code={piece3} lang="csharp" title="src/Generation/GenerationProfile.cs" />
+</Solution>
+
+## The generator
+
+Make `src/Generation/WorldGenerator.cs`, a C# script that inherits `Node`. Write it so that:
+
+- the class is `public partial class WorldGenerator : Node`, in the `TopDownTemplate.Generation` namespace, with `[Tool]` above it, and a comment: makes the level from a `GenerationProfile`; Generate paints the ground from the terrain noise, then edges the water with the bank and grows the grass, as the buttons on those nodes do; it paints the whole ground again each time, so the same profile gives the same level;
+- two constants have comments. `EdgeCells` is `4`: water this close to the edge of the level, in cells, becomes land, so the level ends on grass. `SpawnCells` is `6`: water this close to the middle of the level, in cells, becomes land, so the player starts on dry ground;
+- the exports are `Profile` (`GenerationProfile?`), `Ground` (`GroundMap?`), `Bank` (`BankMap?`), `Grass` (`GrassScatter?`), and `Water` (`MeshInstance3D?`), with a comment on the last: the water's plane, stretched to cover the level. A generator that finds its nodes through exports, as `BankMap` does with `Ground`, does not break when you rename or move a node;
+- `[ExportToolButton("Generate")] public Callable GenerateButton => Callable.From(Generate);` is the button, as in the last two scripts;
+- `Generate()` begins by finding what it needs. `water` is `Ground?.Tiles?.Tiles.FirstOrDefault(tile => tile.IsWater)`, the tile that says it is water, and `land` is `Ground?.Tiles?.Find(Profile?.LandTile ?? "")`, the tile the profile names. If the profile, any node, either tile, or the water's mesh as a `PlaneMesh` is missing, it calls `GD.PushWarning` with what it needs and returns. The check writes the plane out as a pattern, `Water?.Mesh is not PlaneMesh plane`, which both tests and names it for later;
+- `half` is `Profile.Size / 2`. A dictionary `cells` from `Vector2I` to `GroundTile` takes one entry for every cell, `x` from `-half.X` up to but not including `half.X` and `z` likewise, so the level is centered on the origin. Each entry is `IsWater(cell, half) ? water : land`;
+- a comment says water too narrow for the bank to draw becomes land, until none is left. A `for` loop takes `narrow = NarrowWater(cells, water)`, and while `narrow.Count > 0`, sets each of those cells to `land` and takes `NarrowWater` again. The loop condition and the update are the same call, so the loop ends when a pass finds none;
+- only now is the GridMap touched. `Ground.Clear()` empties it, and a loop over `cells` calls `Ground.SetCellItem(new Vector3I(cell.X, 0, cell.Y), tile.Item)`. All the work above was done in a dictionary, so the GridMap is written once, from a finished picture, and never shows a half-made level;
+- `Bank.UpdateShore()` and `Grass.Scatter()` are called, in that order, as you would press the two buttons: the grass reads the water's tiles, and the bank reads them too;
+- `size` is the level's size in meters, `new Vector2(Profile.Size.X, Profile.Size.Y) * Ground.CellSize.X`, and `Water.Scale = new Vector3(size.X / plane.Size.X, 1f, size.Y / plane.Size.Y)` stretches the plane to it. The plane is a mesh shared by every level that uses the water scene, so the generator scales the node and leaves the mesh alone. The water shader works from the world's positions, so stretching the plane does not stretch the ripples;
+- `GD.Print` says how many cells there are and how many are water;
+- `IsWater(Vector2I cell, Vector2I half)` finds the cell's distance to the nearest edge, `edge`, as the smallest of the four distances `cell.X + half.X`, `half.X - 1 - cell.X`, and the same for `Y`. If `edge < EdgeCells || cell.Length() < SpawnCells`, it returns `false`: the two rules above. Otherwise `point` is the middle of the cell in meters, `(new Vector2(cell.X, cell.Y) + Vector2.One / 2f) * Ground!.CellSize.X`, and it returns `Profile!.TerrainAt(point) < Profile.WaterLevel`;
+- `NarrowWater(Dictionary<Vector2I, GroundTile> cells, GroundTile water)` is a private static method that collects the water cells into a `HashSet<Vector2I>` and returns `BankMap.NarrowWater(...)` of them.
+
+<Solution>
+	<Code code={piece4} lang="csharp" title="src/Generation/WorldGenerator.cs" />
+</Solution>
+
+Two choices in it are worth a second look.
+
+**It paints everything, every time.** `Generate` empties the ground and writes all 9,216 cells. That is what makes it repeatable: the level is a function of the profile and nothing else, and no cell can keep something from an earlier press. It also means anything you painted by hand into this ground is gone when you press the button. Lesson 52 is about that, and changes it.
+
+**It asks the noise about the middle of a cell.** The cell at (0, 0) covers meters 0 to 0.5, and its middle is (0.25, 0.25). Asking about a corner instead would work, and would give a level shifted by a quarter of a cell. Pick a convention and keep it, and the same cell always gets the same answer.
+
+## A level to generate into
+
+The generator needs a level of its own. The quickest one to make is the meadow: it has the player, the camera, the light, the grass, the bank, and the water, which are all a generated level needs.
+
+<Steps>
+
+1. Save the scripts and click the hammer, **Build Project**.
+
+2. Open `levels/meadow.tscn`. Choose **Scene > Save Scene As...** and save it as `generated.tscn` in `levels`. The scene on screen is now the new one, and the meadow is as you left it.
+
+	<Figure
+		src={saveAs}
+		alt="The Save Scene As dialog in the levels folder with generated.tscn typed as the file name."
+		caption="A copy of the meadow, under a new name."
+	/>
+
+3. Rename the root node from **Meadow** to **Generated**.
+
+4. Delete what was placed by hand. Select **Rocks** and **Patches**, hold <Kbd keys="Ctrl" mac="Cmd" /> to select both, and delete them with <Kbd keys="Delete" mac="Cmd+Backspace" />. Then open **Trees**, select **TreeOak**, hold <Kbd keys="Shift" /> and select **TreePine3**, and delete them all. Leave the empty **Trees** node, as lesson 51 grows trees into it.
+
+5. The placeholder floor from lesson 4, which the player stands on, is 20 meters wide, and the level is 48. Select **Ground > StaticBody3D > CollisionShape3D**. In the Inspector, open the **Shape** menu, choose **New BoxShape3D**, click it, and set its **Size** to `52`, `1`, `52`. Set the node's **Position** to `0`, `-0.5`, `0`, so the top of the box is at ground level. Then select **Ground**, and set its mesh's **Size** to `52` by `52`, for tidiness.
+
+	<Figure
+		src={floorShot}
+		alt="The Inspector showing a CollisionShape3D with a BoxShape3D of size 52, 1, 52 and a position y of -0.5."
+		caption="A floor as wide as the level, with a little to spare."
+	/>
+
+	<Aside type="note">
+		A box suits a floor. The 20 meter floor was a flat mesh turned into a collision shape, a shape of triangles with no inside. A box has an inside, and this one is a meter thick.
+	</Aside>
+
+6. Add a **Node** and name it **WorldGenerator**. In the Inspector, under **Script**, choose **Quick Load...**, type `WorldGenerator`, and press <Kbd keys="Enter" />.
+
+7. Set **Profile** to `generation_profile.tres` with **Quick Load...**. For **Ground**, **Bank**, **Grass**, and **Water**, click **Assign...** and pick **GroundTiles**, **Bank**, **Grass**, and **Water**.
+
+	<Figure
+		src={selectWater}
+		alt="The Select a Node dialog listing the scene's nodes with Water chosen."
+		caption="The generator is told which nodes it works on."
+	/>
+
+	<Figure
+		src={generatorShot}
+		alt="The Inspector showing the WorldGenerator node with its Profile, Ground, Bank, Grass, and Water properties set, and a Generate button."
+		caption="The generator, and its button."
+	/>
+
+</Steps>
+
+## Generate
+
+<Steps>
+
+1. Click **Generate**. After a second, the Output panel says `Generated 9216 cells, 1672 of them water.` and the 3D view shows the lakes.
+
+	<Figure
+		src={generated}
+		alt="The Godot editor with the WorldGenerator node selected, the 3D view showing the player on grass, and the scene tree listing the scattered grass."
+		caption="Generate, pressed. The scene tree fills with the grass that Scatter made, so collapse the Grass node."
+	/>
+
+2. Save the scene, and run it with **Run Current Scene**, <Kbd keys="F6" mac="Cmd+R" />, because the project's main scene is still the meadow.
+
+</Steps>
+
+<Figure
+	src={lake}
+	alt="A lake from above with an earth bank on its north and south edges, surrounded by grass."
+	caption="The north-west lake, at the game's zoom."
+/>
+
+<Figure
+	src={lakeEast}
+	alt="Two lakes seen from above: one with a notch, one with a diagonal edge, each with an earth bank, on grass."
+	caption="The shapes are whatever the noise made. The bank follows them."
+/>
+
+<Figure
+	src={start}
+	alt="A plain meadow of grass and flowers from above, with the edge of a lake at the top right."
+	caption="Where the player starts: grass, with a lake a few steps away."
+/>
+
+<Figure
+	src={dusk}
+	alt="The generated level at dusk: the lakes violet, the grass golden."
+	caption="The same level at dusk. The day animation does not care how the level was made."
+/>
+
+The lakes are not all the same shape, and they sit among a lot of grass. There are no trees, rocks, or paths yet: this is the ground. The edge rule shows too. A lake the noise wanted to run off the east edge ends in a straight line four cells in, in the figure of the east lakes, because the edge rule cut it. A real game would hide that behind a cliff or a wall, or a larger level.
+
+## Check it
+
+These numbers were read from the generated level, with seed 15.
+
+- 9,216 cells: 7,544 grass and 1,672 water, 18 percent of the level.
+- Update shore placed 416 bank pieces and did not warn.
+- No water cell lies within four cells of the edge or within six cells of the middle.
+- No water cell is in water narrower than three cells.
+- The water plane is 19.6 meters scaled by 2.449, which is 48 meters.
+- Pressing Generate again gave the identical ground, cell for cell.
+- Seed 16 gave a different level: 2,970 cells differed, with 2,064 water. Setting the seed back to 15 and pressing the button gave the first level again, cell for cell.
+
+That last line is the point of the module. The seed is the level. A seed written in a save file brings the level back, and two players with the same seed see the same lakes.
+
+## Try it
+
+- Move **Water Level** on the profile to `-0.1`, and press Generate. The same seed gives 2,352 water cells in seven lakes, against 1,672 at `-0.2`. Put it back to `-0.2`.
+- Change the profile's **Seed**, press Generate, and look at the lakes. Seeds 1, 13, and 15 all give a handful of lakes of a good size, and seed 7 gives mostly ponds.
+- Change **Size** to `64` by `64` and generate: a 32 meter level. Which of the lakes are still there?
+- A sand shore would be a second threshold between water and land, a few hundredths above the water level, with its own tile. Where would it go in `Generate`? What would the narrow rule do with it? Dirt patches would be a third noise in the profile, asked about the same way. This template keeps to grass, water, and trees, and leaves both for a game that wants them.
+
+## When it goes wrong
+
+- **Generate does nothing, and the Output panel warns that the generator needs something.** One of the five exports is empty, or the ground's tile set has no tile named like **Land Tile**. Check the names in `ground_tile_set.tres`.
+- **There is no water.** The terrain never reaches the water level at this seed. Raise **Water Level**, or try another seed. The check in lesson 49 showed that the share of water varies from seed to seed.
+- **The lakes are there but have no bank.** The **Bank** property is empty, or **Bank** has no **Ground**. Select it and check its **Ground** property from lesson 47.
+- **The player is in the water when the game starts.** The player is not at the origin. The clearing is around the middle of the level, so the player should start there.
+- **The player falls through the floor.** The **Ground** placeholder was deleted, or the box's top is below ground. Its **Position** `y` should be `-0.5` and its **Size** `y` `1`.
+- **The level is bigger than the water.** The **Water** property is empty. The plane is the meadow's 19.6 meters until the generator stretches it.
+- **Grass grows in the lakes.** Scatter ran before the ground was painted. In the generator it runs last, so check that you did not reorder the calls.
+
+## Checkpoint
+
+Your project now contains:
+
+<FileTree>
+- src
+  - Generation
+    - GenerationProfile.cs, with `Size`, `WaterLevel`, and `LandTile`
+    - **WorldGenerator.cs**
+  - Ground
+    - GroundTileSet.cs, with `Find(string)`
+    - BankMap.cs, with `NarrowWater`
+- levels
+  - meadow.tscn
+  - **generated.tscn**, with a `WorldGenerator` node and a generated ground
+</FileTree>
+
+Commit your work: `git add .` and `git commit -m "Generate lakes and grass from noise"`. In the next lesson the generator grows trees.
+
+<Checkpoint />

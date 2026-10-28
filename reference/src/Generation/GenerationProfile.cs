@@ -11,8 +11,17 @@ public partial class GenerationProfile : Resource
 	// A different seed makes a different world.
 	[Export] public int Seed { get; set; } = 1;
 
+	// The level's size in cells, which are half a meter on a side.
+	[Export] public Vector2I Size { get; set; } = new(96, 96);
+
 	// Low values are lakes, and high values are land.
 	[Export] public FastNoiseLite? Terrain { get; set; }
+
+	// Where the terrain is below this value, there is water.
+	[Export(PropertyHint.Range, "-1,1,0.05")] public float WaterLevel { get; set; } = -0.2f;
+
+	// The display name of the ground tile everywhere else.
+	[Export] public string LandTile { get; set; } = "Grass";
 
 	// High values are where the trees grow thickest.
 	[Export] public FastNoiseLite? Forest { get; set; }

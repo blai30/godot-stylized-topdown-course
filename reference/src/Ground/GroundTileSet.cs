@@ -23,4 +23,18 @@ public partial class GroundTileSet : Resource
 
 		return null;
 	}
+
+	// Finds the tile with a display name.
+	public GroundTile? Find(string displayName)
+	{
+		foreach (var tile in Tiles)
+		{
+			if (tile.DisplayName == displayName)
+			{
+				return tile;
+			}
+		}
+
+		return null;
+	}
 }

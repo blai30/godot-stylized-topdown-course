@@ -124,9 +124,14 @@ public partial class BankMap : GridMap
 	}
 
 	// Water that is narrower than MinimumWidth in either direction has walls that meet.
+	public static List<Vector2I> NarrowWater(HashSet<Vector2I> water)
+	{
+		return water.Where(cell => Mathf.Min(Run(water, cell, Vector2I.Right), Run(water, cell, Vector2I.Down)) < MinimumWidth).ToList();
+	}
+
 	private static void WarnAboutNarrowWater(HashSet<Vector2I> water)
 	{
-		var narrow = water.Where(cell => Mathf.Min(Run(water, cell, Vector2I.Right), Run(water, cell, Vector2I.Down)) < MinimumWidth).ToList();
+		var narrow = NarrowWater(water);
 		if (narrow.Count > 0)
 		{
 			GD.PushWarning($"{narrow.Count} water cells lie in water narrower than {MinimumWidth} cells, such as the one at {narrow[0]}.");
