@@ -9,8 +9,6 @@ uniform sampler2D leaf_atlas : filter_linear_mipmap_anisotropic;
 uniform vec3 leaf_color : source_color = vec3(0.408, 0.765, 0.263);
 // The colors the leaves turn to in autumn, from the atlas's darkest gray to its lightest.
 uniform sampler2D autumn_ramp : source_color, filter_linear;
-// Set on each tree, so a grove does not sway in step.
-instance uniform float tree_phase = 0.0;
 // How far this tree has turned, from 0 (green) to 1 (autumn).
 instance uniform float autumn : hint_range(0.0, 1.0) = 0.0;
 
@@ -41,6 +39,7 @@ void vertex() {
 	atlas_cell = floor(COLOR.r * 3.999);
 	vec3 world_position = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 	vec3 tree_origin = MODEL_MATRIX[3].xyz;
+	float tree_phase = tree_phase_at(tree_origin);
 	vec3 wind = tree_sway(world_position, tree_origin, tree_phase) + card_flutter(world_position, tree_phase, COLOR.r, COLOR.g);
 	// The shader moves the vertex in model space, so turn the world-space push around.
 	VERTEX += inverse(mat3(MODEL_MATRIX)) * wind;

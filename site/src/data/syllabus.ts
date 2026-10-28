@@ -132,7 +132,6 @@ export const modules: Module[] = [
 			{ number: 54, title: 'More nature: bushes', slug: 'more-nature' },
 			{ number: 55, title: 'A Theme and a pause panel', slug: 'theme-and-pause-panel' },
 			{ number: 56, title: 'Performance and exporting a build', slug: 'performance-and-export' },
-			{ number: 57, title: 'Bonus: autumn leaf color', slug: 'bonus-autumn-leaves' },
 		],
 	},
 	{
@@ -146,6 +145,7 @@ export const modules: Module[] = [
 			{ number: 61, title: 'Bonus: a grid cursor for tactics games', slug: 'bonus-grid-cursor' },
 			{ number: 62, title: 'Bonus: click to move for action RPGs', slug: 'bonus-click-to-move' },
 			{ number: 64, title: 'Bonus: tile-snapped movement for farming games', slug: 'bonus-tile-movement' },
+			{ number: 65, title: 'Bonus: autumn leaf color', slug: 'bonus-autumn-leaves' },
 		],
 	},
 ];

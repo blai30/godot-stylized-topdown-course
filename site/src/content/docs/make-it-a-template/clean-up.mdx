@@ -99,10 +99,6 @@ Audited 145 files: 13 problems.
 
 Three things are wrong: the three nature scenes use `WindPhase`, the character uses `PlayerAnimation`, and the tile set uses two scripts. One file breaks the naming rule. The rest of the lesson fixes each in turn.
 
-<Aside type="note" title="If you did the optional autumn lesson">
-This lesson assumes the core path. If you also did lesson 57, the oaks carry the `AutumnTree` script and the audit lists it too. The end of lesson 57 says how to keep that bonus outside the art folder.
-</Aside>
-
 ## Let the shader place the tree in the wind
 
 `WindPhase` gave each tree its own place in the wind: it computed a number from the tree's position and handed it to the tree's meshes as the `tree_phase` instance uniform. But the shaders already know where each tree stands: `tree_origin` is the position of the object that is being drawn. A shader can compute the same number itself, with no script and no uniform to set.

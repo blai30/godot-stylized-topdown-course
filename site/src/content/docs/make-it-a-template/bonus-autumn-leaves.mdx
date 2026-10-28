@@ -2,17 +2,17 @@
 title: "Bonus: autumn leaf color"
 description: Turn the oaks to autumn one tree at a time. Try a flat color multiply first and see its limit, then use the leaf atlas's gray as an index into a gradient, a gradient map, and give each tree its own amount of autumn with an instance shader parameter.
 sidebar:
-  order: 57
-  label: "57. Bonus: autumn leaf color"
+  order: 65
+  label: "65. Bonus, autumn leaf color"
 lesson:
-  number: 57
+  number: 65
   minutes: 45
   learn:
     - Why a flat color multiply cannot turn green leaves to autumn
     - How a gradient map turns a grayscale texture into a range of colors
     - How to make and edit a GradientTexture1D in the Inspector
     - How an exported property sets a different instance shader parameter on each copy of a tree
-  prerequisites: [25, 27, 28, 53]
+  prerequisites: [25, 27, 53, 59]
 ---
 
 import { Aside, Code, FileTree, Steps } from '@astrojs/starlight/components';
@@ -20,19 +20,22 @@ import Figure from '../../../components/Figure.astro';
 import Solution from '../../../components/Solution.astro';
 import Checkpoint from '../../../components/Checkpoint.astro';
 import Kbd from '../../../components/Kbd.astro';
-import piece1 from '../../../checkpoints/57/pieces/piece-1.gdshader?raw';
-import piece2 from '../../../checkpoints/57/pieces/piece-2.cs?raw';
-import leavesMaterial from '../../../checkpoints/57/files/art/nature/tree_oak/leaves.tres?raw';
+import piece1 from '../../../checkpoints/65/pieces/piece-1.gdshader?raw';
+import piece2 from '../../../checkpoints/65/pieces/piece-2.cs?raw';
+import leavesMaterial from '../../../checkpoints/65/files/art/nature/tree_oak/leaves.tres?raw';
 import multiply from '../../../assets/lessons/bonus-autumn-leaves/multiply.png';
 import turned from '../../../assets/lessons/bonus-autumn-leaves/turned.png';
 import shaderEditor from '../../../assets/lessons/bonus-autumn-leaves/shader-editor.png';
 import rampDefault from '../../../assets/lessons/bonus-autumn-leaves/ramp-default.png';
 import ramp from '../../../assets/lessons/bonus-autumn-leaves/ramp.png';
-import treeScene from '../../../assets/lessons/bonus-autumn-leaves/tree-scene.png';
 import inspector from '../../../assets/lessons/bonus-autumn-leaves/inspector.png';
 import grove from '../../../assets/lessons/bonus-autumn-leaves/grove.png';
 import groveClose from '../../../assets/lessons/bonus-autumn-leaves/grove-close.png';
 import groveDusk from '../../../assets/lessons/bonus-autumn-leaves/grove-dusk.png';
+
+<Aside type="note" title="An optional add-on">
+Lessons 61, 62, 64, and 65 are not part of the template. This one is for any game with trees that should change with the season, and you add it to a game you copied from the template in lesson 60. The art stays script-free: the script goes on the trees in your level, not on the tree in `art`.
+</Aside>
 
 ## What you will build
 
@@ -88,18 +91,16 @@ The new shader keeps the green path exactly as it was, so the pine, which has it
 
 1. In the FileSystem dock, double-click `art/shaders/foliage.gdshader`. The Shader Editor opens.
 
-2. Above the comment for `tree_phase`, add the ramp. Below the `tree_phase` line, add `autumn`:
+2. Under the line for `leaf_color`, add the ramp and `autumn`:
 
 	```glsl
 	// The colors the leaves turn to in autumn, from the atlas's darkest gray to its lightest.
 	uniform sampler2D autumn_ramp : source_color, filter_linear;
-	// Set on each tree, so a grove does not sway in step.
-	instance uniform float tree_phase = 0.0;
 	// How far this tree has turned, from 0 (green) to 1 (autumn).
 	instance uniform float autumn : hint_range(0.0, 1.0) = 0.0;
 	```
 
-	`instance uniform` is what `tree_phase` already is: a value each copy of the tree carries for itself. `source_color` tells Godot the ramp is made of colors, so it converts them correctly for lighting.
+	`instance uniform` is a value each copy of the tree carries for itself. Lesson 59 took the tree's phase out of this shader and let the shader work it out from where the tree stands, so `autumn` is the only value a tree has to be given. `source_color` tells Godot the ramp is made of colors, so it converts them correctly for lighting.
 
 3. Above the comment for `CANOPY_TOP`, add the range of grays the atlas actually uses:
 
@@ -177,7 +178,7 @@ Nothing changes in the game yet. Every tree has `autumn` at `0`, the default, so
 
 ## A script that sets each tree's autumn
 
-Setting an instance shader parameter by hand on a copy of a scene is awkward, because the meshes are inside the instanced scene. Lesson 28's `WindPhase` already sets one parameter from a script on the tree's root. A script can also publish a setting in the Inspector, with `[Export]`, so each copy of the tree gets its own value there.
+Setting an instance shader parameter by hand on a copy of a scene is awkward, because the meshes are inside the instanced scene. A script on the copy can set it, and publish a setting in the Inspector with `[Export]`, so each copy of the tree gets its own value there. The script belongs to the level, not to the art: it goes on the oaks in `meadow.tscn`, and `tree_oak.tscn` stays as it is.
 
 <Steps>
 
@@ -190,10 +191,10 @@ Setting an instance shader parameter by hand on a copy of a scene is awkward, be
 Write the script so that:
 
 - it has `using System.Linq;` and `using Godot;`, and is in the namespace `TopDownTemplate.World;`;
-- a comment says it is a tree that also has its own place in the season, set in the Inspector, where 0 is green and 1 is autumn. `AutumnTree` is a `partial class` that inherits **`WindPhase`**, not `Node3D`: it is the same tree with one more setting, and it keeps lesson 28's phase for free;
+- a comment says it is a tree that has its own place in the season, set in the Inspector, where 0 is green and 1 is autumn. `AutumnTree` is a `partial class` that inherits `Node3D`;
 - a `private static readonly StringName` named `AutumnParameter` holds `"autumn"`;
 - a public `float` property `Autumn` with `{ get; set; }`, marked `[Export(PropertyHint.Range, "0,1,0.01")]`, which gives the Inspector a slider from 0 to 1;
-- `_Ready()` is an `override` that first calls `base._Ready()`, so the wind phase is set as before. Then it loops over `GetChildren().OfType<GeometryInstance3D>()` and calls `SetInstanceShaderParameter(AutumnParameter, Autumn)` on each.
+- `_Ready()` is an `override` that loops over `GetChildren().OfType<GeometryInstance3D>()` and calls `SetInstanceShaderParameter(AutumnParameter, Autumn)` on each.
 
 <Solution>
 	<Code code={piece2} lang="csharp" title="src/World/AutumnTree.cs" />
@@ -203,17 +204,9 @@ The trunk, `tree_oak`, is a geometry instance too and gets the value, but the tr
 
 <Steps>
 
-3. Open `tree_oak.tscn` and select the root, **TreeOak**. In the Inspector, click the arrow beside **Script**'s field, choose **Quick Load...**, and pick `AutumnTree.cs`. It replaces `WindPhase.cs`. An **Autumn** slider appears at the top of the Inspector.
+3. Open `levels/meadow.tscn`. Select `TreeOak`, under `Trees`. In the Inspector, click the arrow beside **Script**'s empty field, choose **Quick Load...**, and pick `AutumnTree.cs`. An **Autumn** slider appears at the top of the Inspector. Set it to the value in the table.
 
-	<Figure
-		src={treeScene}
-		alt="The Godot editor with the tree scene: the root TreeOak has the AutumnTree script, and the Inspector shows the Autumn slider at zero."
-		caption="The tree scene's root with the new script."
-	/>
-
-4. Save the scene.
-
-5. Open `levels/meadow.tscn`. Select each oak under `Trees` and set **Autumn**:
+4. Do the same for each of the other oaks, with its own value:
 
 	| Tree | Autumn |
 	|---|---|
@@ -227,13 +220,15 @@ The trunk, `tree_oak`, is a geometry instance too and gets the value, but the tr
 
 	<Figure
 		src={inspector}
-		alt="The Godot editor showing the meadow with TreeOak4 selected, and the Inspector with its Autumn slider at 1.0."
+		alt="The Godot editor showing the meadow with TreeOak4 selected, and the Inspector with the AutumnTree script and its Autumn slider at 1.0."
 		caption="Each copy of the tree has its own Autumn, because the value lives on the instance."
 	/>
 
-6. Save the scene.
+5. Save the scene.
 
 </Steps>
+
+The oaks in `levels/generated.tscn` are made by the generator and have no script, so they stay green. To turn those too, give the generator's oak rule a scene of your own that has `AutumnTree` on its root.
 
 ## Try it
 
@@ -266,17 +261,16 @@ With `levels/meadow.tscn` open, click **Play Scene**, <Kbd keys="F6" mac="Cmd+R"
 - The pines are unchanged because their material has no ramp and their `autumn` is `0`. Put `AutumnTree` on a pine and nothing happens, until you give its material an `autumn_ramp` too.
 
 <Aside type="tip" title="A whole season">
-A tree with its own `autumn` is a grove of different trees. To have the whole meadow turn together, add a global shader parameter named `season` as you did `wind_strength` in lesson 27, read it in the shader with something like `clamp(season * 2.0 - tree_phase, 0.0, 1.0)` in place of `autumn`, and let a script move it from 0 to 1 over the year. The trees would turn one after the other, in the order of their wind phases, so the meadow changes gradually instead of all at once.
+A tree with its own `autumn` is a grove of different trees. To have the whole meadow turn together, add a global shader parameter named `season` as you did `wind_strength` in lesson 27, read it in the shader in place of `autumn`, and let a script move it from 0 to 1 over the year. If each tree also has a number of its own from 0 to 1, such as the one `tree_phase_at` makes from where it stands, subtract it first, with something like `clamp(season * 2.0 - number, 0.0, 1.0)`. The trees then turn one after the other, so the meadow changes gradually instead of all at once.
 </Aside>
 
 ## If it does not work
 
 - **The Autumn Ramp row is not in the material.** The shader was not saved, or it has an error. Check the Shader Editor's bottom panel, and that the line reads `uniform sampler2D autumn_ramp : source_color, filter_linear;`.
-- **The oaks stay green at `1`.** The script is not on `TreeOak`, or the project was not built after you saved it. Click **Build Project**, and check that the Inspector shows **Autumn** at the top. Also check that the meadow's trees were saved after you set the values.
+- **The oaks stay green at `1`.** The script is not on that oak in the meadow, or the project was not built after you saved it. Click **Build Project**, and check that the Inspector shows **Autumn** at the top. Also check that the meadow was saved after you set the values.
 - **The oaks turn solid black or white.** The ramp is empty or not set: check **Autumn Ramp** in the material, and that its gradient has four stops.
 - **The autumn colors look much too dark or too light.** `GRAY_RANGE` does not match your atlas. If you painted a lighter or darker atlas than the reference, change the two numbers to its darkest and lightest grays.
 - **Godot says `AutumnTree` cannot be loaded.** The class name and the file name must match, and the namespace must be `TopDownTemplate.World`. Build again.
-- **The oak stopped swaying.** `_Ready()` does not call `base._Ready()`, so the wind phase is never set.
 
 ## Checkpoint
 
@@ -289,12 +283,11 @@ Your project now contains:
   - nature
     - tree_oak
       - leaves.tres, with the autumn ramp
-      - tree_oak.tscn, with the `AutumnTree` script
 - src
   - World
     - **AutumnTree.cs**
 - levels
-  - meadow.tscn with each oak's **Autumn** set
+  - meadow.tscn with the `AutumnTree` script and **Autumn** on each oak
 </FileTree>
 
 <Solution label="Show the full leaves.tres">

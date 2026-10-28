@@ -1,11 +1,11 @@
-# Lesson 57 (bonus): autumn leaf color. A flat multiply tried first, then a gradient map in the foliage shader, a ramp
-# resource, an instance uniform set per tree by a small script, and the grove with each oak at its own point in autumn.
+# Lesson 65 (bonus): autumn leaf color. A flat multiply tried first, then a gradient map in the foliage shader, a ramp
+# resource, an instance uniform set per tree by a small script on each oak in the level, and the grove with each oak at its own point in autumn.
 import os
 import sys
 sys.path.insert(0, sys.argv[1])
 from steps import (write, eval_, inspector_set, unfold_inspector, save_code, build, game_steps, play, quick_load,
                    new_resource, open_resource, show_row, type_shader, open_bottom_panel, close_bottom_panel)
-from lesson57_pieces import SHADER, AUTUMN_TREE, GROVE_AUTUMN, RAMP
+from lesson65_pieces import SHADER, AUTUMN_TREE, GROVE_AUTUMN, RAMP
 
 SCRIPT = 'res://src/World/AutumnTree.cs'
 SHADER_FILE = 'res://art/shaders/foliage.gdshader'
@@ -38,29 +38,29 @@ def leaves_material():
 
 def noon(name, wheel=4):
     return [{'op': 'eval', 'code': f'var clock := tree.root.get_node("{CLOCK}")\nclock.set("Running", false)\nclock.set("TimeOfDay", 0.5)'},
-            {'op': 'wheel', 'steps': wheel}, {'op': 'wait', 'frames': 40}, {'op': 'capture', 'name': f'l57_{name}', 'frames': 10}]
+            {'op': 'wheel', 'steps': wheel}, {'op': 'wait', 'frames': 40}, {'op': 'capture', 'name': f'l65_{name}', 'frames': 10}]
 
 
 out_dir = os.path.dirname(sys.argv[2])
-multiply_game = game_steps(os.path.join(out_dir, 'game-l57a.jsonl'), [
+multiply_game = game_steps(os.path.join(out_dir, 'game-l65a.jsonl'), [
     {'op': 'wait', 'frames': 60}, {'op': 'sleep', 'seconds': 4}, *noon('multiply', 6), {'op': 'quit'}])
-final_game = game_steps(os.path.join(out_dir, 'game-l57b.jsonl'), [
+final_game = game_steps(os.path.join(out_dir, 'game-l65b.jsonl'), [
     {'op': 'wait', 'frames': 60}, {'op': 'sleep', 'seconds': 4},
     {'op': 'eval', 'code': '''
 var report := []
 for node in tree.root.get_node("Meadow/Trees").get_children():
 	if node.name.begins_with("TreeOak"):
 		var leaves := node.get_node("leaves") as GeometryInstance3D
-		report.append("%s autumn %s phase %s" % [node.name, snappedf(leaves.get_instance_shader_parameter("autumn"), 0.001), snappedf(leaves.get_instance_shader_parameter("tree_phase"), 0.001)])
+		report.append("%s autumn %s" % [node.name, snappedf(leaves.get_instance_shader_parameter("autumn"), 0.001)])
 print("[game] AUTUMN ", "\\n".join(report))
 '''},
     *noon('grove', 0),
-    {'op': 'wheel', 'steps': 6}, {'op': 'wait', 'frames': 40}, {'op': 'capture', 'name': 'l57_grove_close', 'frames': 10},
+    {'op': 'wheel', 'steps': 6}, {'op': 'wait', 'frames': 40}, {'op': 'capture', 'name': 'l65_grove_close', 'frames': 10},
     {'op': 'eval', 'code': f'var clock := tree.root.get_node("{CLOCK}")\nclock.set("TimeOfDay", 0.8)'},
-    {'op': 'wait', 'frames': 40}, {'op': 'capture', 'name': 'l57_grove_dusk', 'frames': 10},
+    {'op': 'wait', 'frames': 40}, {'op': 'capture', 'name': 'l65_grove_dusk', 'frames': 10},
     {'op': 'eval', 'code': f'var clock := tree.root.get_node("{CLOCK}")\nclock.set("TimeOfDay", 0.5)'},
     {'op': 'eval', 'code': 'for node in tree.root.get_node("Meadow/Trees").get_children():\n\tif node.name.begins_with("TreeOak"):\n\t\tnode.get_node("leaves").set_instance_shader_parameter("autumn", 1.0)'},
-    {'op': 'wait', 'frames': 40}, {'op': 'capture', 'name': 'l57_turned', 'frames': 10},
+    {'op': 'wait', 'frames': 40}, {'op': 'capture', 'name': 'l65_turned', 'frames': 10},
     {'op': 'quit'}])
 
 steps = [
@@ -76,7 +76,7 @@ steps = [
     {'op': 'wait', 'frames': 40},
     {'op': 'open', 'path': 'res://levels/meadow.tscn'},
     {'op': 'wait', 'frames': 40},
-    *play(multiply_game, 40),
+    *play(multiply_game, 60),
     {'op': 'open', 'path': TREE},
     {'op': 'wait', 'frames': 40},
     *leaves_material(),
@@ -86,7 +86,7 @@ steps = [
     # The shader.
     *open_shader(SHADER_FILE, 'foliage.gdshader'),
     *type_shader(SHADER, SHADER_FILE),
-    {'op': 'capture', 'name': 'l57_shader_editor', 'frames': 20},
+    {'op': 'capture', 'name': 'l65_shader_editor', 'frames': 20},
     close_bottom_panel(),
     # The ramp, on the leaves material.
     {'op': 'open', 'path': TREE},
@@ -105,7 +105,7 @@ for attempt in 20:
     unfold_inspector(),
     {'op': 'wait', 'frames': 20},
     show_row('gradient'),
-    {'op': 'capture', 'name': 'l57_ramp_default', 'frames': 20},
+    {'op': 'capture', 'name': 'l65_ramp_default', 'frames': 20},
     # A click on the gradient bar adds a stop there: one at 45% and one at 75% of the way across.
     *[eval_(f'''
 var dock = plugin._find_class(plugin.get_tree().root, "InspectorDock")
@@ -134,19 +134,12 @@ print("[probe] ramp ", gradient.offsets, " ", gradient.colors)
 '''),
     {'op': 'wait', 'frames': 30},
     show_row('shader_parameter/autumn_ramp'),
-    {'op': 'capture', 'name': 'l57_ramp', 'frames': 20},
-    # The script, on the tree's root.
+    {'op': 'capture', 'name': 'l65_ramp', 'frames': 20},
+    # The script.
     save_code(SCRIPT, AUTUMN_TREE),
-    *build('l57_built'),
-    {'op': 'select', 'path': '.'},
-    unfold_inspector(),
-    {'op': 'wait', 'frames': 20},
-    eval_('editor.get_edited_scene_root().set_script(load("res://src/World/AutumnTree.cs"))'),
-    {'op': 'wait', 'frames': 40},
-    show_row('Autumn'),
-    {'op': 'capture', 'name': 'l57_tree_scene', 'frames': 20},
-    SAVE_SCENE,
-    {'op': 'wait', 'frames': 40},
+    eval_('editor.get_resource_filesystem().scan()'),
+    {'op': 'sleep', 'seconds': 4},
+    *build('l65_built'),
     # Each oak of the grove.
     {'op': 'open', 'path': 'res://levels/meadow.tscn'},
     {'op': 'main_screen', 'name': '3D'},
@@ -155,9 +148,10 @@ print("[probe] ramp ", gradient.offsets, " ", gradient.colors)
 names = ['TreeOak'] + [f'TreeOak{index}' for index in range(2, 8)]
 for index, (name, value) in enumerate(zip(names, GROVE_AUTUMN)):
     steps += [{'op': 'select', 'path': f'Trees/{name}'}, unfold_inspector(), {'op': 'wait', 'frames': 10},
+              *quick_load('script', 'AutumnTree'), {'op': 'wait', 'frames': 10}, unfold_inspector(), {'op': 'wait', 'frames': 10},
               inspector_set('Autumn', str(value)), {'op': 'wait', 'frames': 10}]
     if index == 3:
-        steps += [show_row('Autumn'), {'op': 'capture', 'name': 'l57_inspector', 'frames': 20}]
+        steps += [show_row('Autumn'), {'op': 'capture', 'name': 'l65_inspector', 'frames': 20}]
 steps += [
     eval_('''
 var trees := editor.get_edited_scene_root().get_node("Trees")
@@ -165,6 +159,6 @@ print("[probe] autumn ", trees.get_children().filter(func(n): return n.name.begi
 '''),
     SAVE_SCENE,
     {'op': 'wait', 'frames': 30},
-    *play(final_game, 60),
+    *play(final_game, 90),
 ]
 write(sys.argv[2], steps)

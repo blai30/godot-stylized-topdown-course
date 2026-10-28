@@ -3,8 +3,8 @@ using Godot;
 
 namespace TopDownTemplate.World;
 
-// A tree that also has its own place in the season, set in the Inspector: 0 is green, 1 is autumn.
-public partial class AutumnTree : WindPhase
+// A tree that has its own place in the season, set in the Inspector: 0 is green, 1 is autumn.
+public partial class AutumnTree : Node3D
 {
 	private static readonly StringName AutumnParameter = "autumn";
 
@@ -13,7 +13,6 @@ public partial class AutumnTree : WindPhase
 
 	public override void _Ready()
 	{
-		base._Ready();
 		foreach (var mesh in GetChildren().OfType<GeometryInstance3D>())
 		{
 			mesh.SetInstanceShaderParameter(AutumnParameter, Autumn);
