@@ -6,8 +6,8 @@ using TopDownTemplate.Ground;
 namespace TopDownTemplate.Generation;
 
 // Makes the level from a GenerationProfile. Generate paints the ground from the terrain noise, then edges the water with the bank
-// and grows the grass, as the buttons on those nodes do. It paints the whole ground again each time, so the same profile gives
-// the same level.
+// and grows the grass and the trees. It remembers the cells it painted, so the next Generate takes those away and paints them
+// again, and leaves any cell you painted over by hand as it is. The same profile gives the same level around your work.
 [Tool]
 public partial class WorldGenerator : Node
 {
@@ -28,8 +28,45 @@ public partial class WorldGenerator : Node
 	// The node the props are added under.
 	[Export] public Node3D? Props { get; set; }
 
+	// Whether the game generates the level when it starts, and whether it picks a new seed each time it does.
+	[Export] public bool GenerateOnReady { get; set; }
+	[Export] public bool NewSeedEachRun { get; set; }
+
+	// The cells the last Generate painted, each as x, y, z and the item painted there. A cell that holds a different item now was
+	// painted over by hand, and is left alone.
+	[Export] public Godot.Collections.Array<Vector4I> Painted { get; set; } = [];
+
 	[ExportToolButton("Generate")]
 	public Callable GenerateButton => Callable.From(Generate);
+
+	[ExportToolButton("Clear")]
+	public Callable ClearButton => Callable.From(Clear);
+
+	public override void _Ready()
+	{
+		if (Engine.IsEditorHint() || !GenerateOnReady)
+		{
+			return;
+		}
+
+		// The new seed is only in memory: the profile's file on disk is not changed.
+		if (Profile is not null && NewSeedEachRun)
+		{
+			Profile.Seed = (int)GD.Randi();
+		}
+
+		Generate();
+	}
+
+	// Empties the level: the ground, its shore, the grass, the props, and the list of what was painted.
+	public void Clear()
+	{
+		Ground?.Clear();
+		Bank?.Clear();
+		Grass?.Clear();
+		ClearProps();
+		Painted.Clear();
+	}
 
 	public void Generate()
 	{
@@ -41,19 +78,39 @@ public partial class WorldGenerator : Node
 			return;
 		}
 
+		var started = Time.GetTicksMsec();
+		foreach (var painted in Painted)
+		{
+			var cell = new Vector3I(painted.X, painted.Y, painted.Z);
+			if (Ground.GetCellItem(cell) == painted.W)
+			{
+				Ground.SetCellItem(cell, (int)GridMap.InvalidCellItem);
+			}
+		}
+
+		// What is left on the ground was painted by hand.
+		var byHand = Ground.GetUsedCells().Select(cell => new Vector2I(cell.X, cell.Z)).ToHashSet();
 		var half = Profile.Size / 2;
 		var cells = new Dictionary<Vector2I, GroundTile>();
+		var generated = new HashSet<Vector2I>();
 		for (var x = -half.X; x < half.X; x++)
 		{
 			for (var z = -half.Y; z < half.Y; z++)
 			{
 				var cell = new Vector2I(x, z);
+				if (byHand.Contains(cell))
+				{
+					cells[cell] = Ground.Tiles!.Find(Ground.GetCellItem(new Vector3I(x, 0, z))) ?? land;
+					continue;
+				}
+
 				cells[cell] = IsWater(cell, half) ? water : land;
+				generated.Add(cell);
 			}
 		}
 
-		// Water too narrow for the bank to draw becomes land, until none is left.
-		for (var narrow = NarrowWater(cells, water); narrow.Count > 0; narrow = NarrowWater(cells, water))
+		// Water too narrow for the bank to draw becomes land, until none is left. Water you painted is left as it is.
+		for (var narrow = NarrowWater(cells, water, generated); narrow.Count > 0; narrow = NarrowWater(cells, water, generated))
 		{
 			foreach (var cell in narrow)
 			{
@@ -61,18 +118,19 @@ public partial class WorldGenerator : Node
 			}
 		}
 
-		Ground.Clear();
-		foreach (var (cell, tile) in cells)
+		Painted.Clear();
+		foreach (var cell in generated)
 		{
-			Ground.SetCellItem(new Vector3I(cell.X, 0, cell.Y), tile.Item);
+			Ground.SetCellItem(new Vector3I(cell.X, 0, cell.Y), cells[cell].Item);
+			Painted.Add(new Vector4I(cell.X, 0, cell.Y, cells[cell].Item));
 		}
 
 		Bank.UpdateShore();
 		Grass.Scatter();
-		var props = PlaceProps(half);
+		var props = PlaceProps(half, byHand);
 		var size = new Vector2(Profile.Size.X, Profile.Size.Y) * Ground.CellSize.X;
 		Water.Scale = new Vector3(size.X / plane.Size.X, 1f, size.Y / plane.Size.Y);
-		GD.Print($"Generated {cells.Count} cells, {cells.Values.Count(tile => tile == water)} of them water, and {props} props.");
+		GD.Print($"Generated {generated.Count} cells, {cells.Values.Count(tile => tile == water)} of them water, and {props} props, from seed {Profile.Seed}, in {Time.GetTicksMsec() - started} ms.");
 	}
 
 	// Whether the terrain at the middle of a cell is below the water level, away from the edge and the middle of the level.
@@ -96,14 +154,10 @@ public partial class WorldGenerator : Node
 
 	// Grows the props, one candidate in each square meter, in the same order every time. Each candidate rolls everything it
 	// might need whether or not it is used, so a square comes out the same however its neighbors do. Returns how many grew.
-	private int PlaceProps(Vector2I half)
+	private int PlaceProps(Vector2I half, HashSet<Vector2I> byHand)
 	{
-		foreach (var child in Props!.GetChildren())
-		{
-			Props.RemoveChild(child);
-			child.QueueFree();
-		}
-
+		ClearProps();
+		var parent = Props!;
 		var rules = Profile!.Rules.Where(rule => rule.Scene is not null).ToList();
 		var totalWeight = rules.Sum(rule => rule.Weight);
 		var placed = new List<Vector2>();
@@ -122,7 +176,7 @@ public partial class WorldGenerator : Node
 				var scale = random.RandfRange(0.85f, 1.2f);
 				var rule = PickRule(rules, pick);
 				var cell = new Vector2I(Mathf.FloorToInt(point.X / cellSize), Mathf.FloorToInt(point.Y / cellSize));
-				if (rule is null || IsKeptClear(cell, half) || roll >= Density(rule, point) || IsNearWater(cell, rule.ShoreDistance)
+				if (rule is null || IsKeptClear(cell, half) || byHand.Contains(cell) || roll >= Density(rule, point) || IsNearWater(cell, rule.ShoreDistance)
 					|| placed.Any(other => other.DistanceTo(point) < rule.Spacing))
 				{
 					continue;
@@ -133,7 +187,7 @@ public partial class WorldGenerator : Node
 				prop.Position = new Vector3(point.X, 0f, point.Y);
 				prop.Rotation = new Vector3(0f, turn, 0f);
 				prop.Scale = Vector3.One * scale;
-				Props.AddChild(prop);
+				parent.AddChild(prop);
 				// Owned by the scene's root, so the scene saves it.
 				prop.Owner = Owner;
 				placed.Add(point);
@@ -141,6 +195,20 @@ public partial class WorldGenerator : Node
 		}
 
 		return placed.Count;
+	}
+
+	private void ClearProps()
+	{
+		if (Props is null)
+		{
+			return;
+		}
+
+		foreach (var child in Props.GetChildren())
+		{
+			Props.RemoveChild(child);
+			child.QueueFree();
+		}
 	}
 
 	// The rule a roll between 0 and the total weight lands on, when the rules take turns along it in order.
@@ -188,8 +256,10 @@ public partial class WorldGenerator : Node
 		return unchecked((ulong)((square.X * 73856093) ^ (square.Y * 19349663) ^ (Profile!.Seed * 83492791)));
 	}
 
-	private static List<Vector2I> NarrowWater(Dictionary<Vector2I, GroundTile> cells, GroundTile water)
+	// The cells among the generated ones that lie in water too narrow for the bank.
+	private static List<Vector2I> NarrowWater(Dictionary<Vector2I, GroundTile> cells, GroundTile water, HashSet<Vector2I> generated)
 	{
-		return BankMap.NarrowWater(cells.Where(pair => pair.Value == water).Select(pair => pair.Key).ToHashSet());
+		var narrow = BankMap.NarrowWater(cells.Where(pair => pair.Value == water).Select(pair => pair.Key).ToHashSet());
+		return narrow.Where(generated.Contains).ToList();
 	}
 }

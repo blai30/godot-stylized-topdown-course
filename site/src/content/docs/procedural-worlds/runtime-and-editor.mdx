@@ -1,0 +1,235 @@
+---
+title: Runtime, editor, and hand-painted areas together
+description: Make the generator remember what it painted so it leaves your own work alone, add a Clear button, generate the level when the game starts with a seed you choose or a new one each run, and decide when to bake a level and when to generate it live.
+sidebar:
+  order: 52
+  label: "52. Runtime, editor, and hand-painted areas together"
+lesson:
+  number: 52
+  minutes: 90
+  learn:
+    - How a generator can tell its own work from yours with a list of what it painted
+    - How to generate in the editor and keep the result in the scene
+    - How to generate the same level when the game starts, or a new one each run
+    - When to bake a generated level and when to generate it live
+  prerequisites: [32, 50, 51]
+---
+
+import { Aside, Code, FileTree, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Solution from '../../../components/Solution.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import piece1 from '../../../checkpoints/52/pieces/piece-1.cs?raw';
+import piece2 from '../../../checkpoints/52/pieces/piece-2.cs?raw';
+import generatorShot from '../../../assets/lessons/runtime-and-editor/generator.png';
+import onReady from '../../../assets/lessons/runtime-and-editor/on-ready.png';
+import hand from '../../../assets/lessons/runtime-and-editor/hand.png';
+import wide from '../../../assets/lessons/runtime-and-editor/wide.png';
+import newA from '../../../assets/lessons/runtime-and-editor/new-a.png';
+import newB from '../../../assets/lessons/runtime-and-editor/new-b.png';
+import newHand from '../../../assets/lessons/runtime-and-editor/new-hand.png';
+
+## What you will build
+
+Two changes that make the generator something you can live with.
+
+The first is that **it leaves your work alone**. At the moment Generate wipes the ground and paints all of it. Paint a lake by hand, press the button, and the lake is gone. The generator will learn which cells it painted, and take away and paint again only those.
+
+The second is that **the game can generate the level itself**, when it starts, from the saved seed or from a new one each run.
+
+<Figure
+	src={hand}
+	alt="A generated meadow from above with a small rectangular pond painted by hand in the middle of the grass, and a square of bare dirt to the north-east, among groves of oaks and pines, with no tree on it."
+	caption="A pond and a dirt clearing painted by hand, with the level generated around them."
+/>
+
+## Whose cells are these?
+
+Open the ground GridMap and it is a grid of numbers: this cell is grass, that one is water. Nothing in a cell says who painted it. So for the generator to leave your work alone it has to remember its own, and the simplest way is a list. When it paints, it writes down every cell it painted, and the item it painted there. The next time, it goes through the list. A cell that still holds what the generator painted is its own, and is taken away to be painted again. **A cell that holds something else was painted over by you**, and it is not touched. Trees are not grown on it either.
+
+That makes three kinds of cell:
+
+| Cell | In the list, holding what was painted? | The next Generate |
+|---|---|---|
+| Painted by the generator | Yes | Taken away and painted again, perhaps as something else |
+| Painted over by you | In the list, but holds something else | Left as it is, and not on the new list |
+| Empty, or painted before the list | No | Painted if empty and inside the level, left alone if painted |
+
+It works because you paint something the generator did not. Water over grass, or dirt over grass, shows. Grass over grass does not: the cell holds what the generator painted, and the next Generate takes it away like any other.
+
+It also tells you what to expect the first time. The generated level you made in lesson 50 was painted by a generator that kept no list, and its cells are in no list. To the new generator, all of that ground is yours, and Generate would paint nothing. A **Clear** button starts again: it empties the ground, the shore, the grass, the trees, and the list.
+
+## Changes to the code
+
+Two scripts change. The first is one word.
+
+<Steps>
+
+1. Open `src/Ground/GrassScatter.cs` and change `private void Clear()` to `public void Clear()`. The generator needs it, to take the grass away when it clears the level.
+
+</Steps>
+
+<Solution>
+	<Code code={piece1} lang="csharp" title="src/Ground/GrassScatter.cs" />
+</Solution>
+
+Open `src/Generation/WorldGenerator.cs` and change it so that:
+
+- the comment on the class now says: makes the level from a `GenerationProfile`; Generate paints the ground from the terrain noise, then edges the water with the bank and grows the grass and the trees; it remembers the cells it painted, so the next Generate takes those away and paints them again, and leaves any cell you painted by hand as it is; the same profile gives the same level around your work;
+- there are three new exports, below `Props`. `[Export] public bool GenerateOnReady { get; set; }` and `[Export] public bool NewSeedEachRun { get; set; }` share a comment: whether the game generates the level when it starts, and whether it picks a new seed each time it does. `[Export] public Godot.Collections.Array<Vector4I> Painted { get; set; } = [];` has a comment: the cells the last Generate painted, each as x, y, z and the item painted there, and a cell that holds a different item now was painted over by hand, and is left alone. A `Vector4I` is four integers: the cell, and in its `W` the item;
+- a second button, `[ExportToolButton("Clear")] public Callable ClearButton => Callable.From(Clear);`, sits below the first. `public void Clear()` has a comment: empties the level, the ground, its shore, the grass, the props, and the list of what was painted. It calls `Ground?.Clear()`, `Bank?.Clear()`, `Grass?.Clear()`, `ClearProps()`, and `Painted.Clear()`;
+- `_Ready` returns at once `if (Engine.IsEditorHint() || !GenerateOnReady)`: the editor has a button for this, and a game that did not ask for it generates nothing. Otherwise, `if (Profile is not null && NewSeedEachRun)` it sets `Profile.Seed = (int)GD.Randi();`, with a comment: the new seed is only in memory, the profile's file on disk is not changed. Then it calls `Generate()`. A script named `_Ready` runs when the node enters the scene, after its siblings above it in the tree have, which is why `WorldGenerator` is the last node and the ground is ready by then;
+- `Generate` is where the idea lives. After the checks, `var started = Time.GetTicksMsec();`. Then, for each `painted` in `Painted`, `cell` is `new Vector3I(painted.X, painted.Y, painted.Z)`, and `if (Ground.GetCellItem(cell) == painted.W)` the cell still holds what was painted there, and it is taken away: `Ground.SetCellItem(cell, (int)GridMap.InvalidCellItem);`. `byHand` is what is left, `Ground.GetUsedCells().Select(cell => new Vector2I(cell.X, cell.Z)).ToHashSet()`, with a comment: what is left on the ground was painted by hand;
+- the loop over the level's cells has two outcomes. A cell in `byHand` goes into `cells` as the tile that is already there, `Ground.Tiles!.Find(Ground.GetCellItem(new Vector3I(x, 0, z))) ?? land`, and the loop `continue`s. Any other cell goes into `cells` as water or land as before, and into a new `HashSet<Vector2I> generated`. `cells` holds every cell, so the narrow-water rule sees your water too, and `generated` holds only the ones that are the generator's to change;
+- the narrow-water loop passes `generated` to `NarrowWater`, which returns only the narrow cells in it: `narrow.Where(generated.Contains).ToList()`, with a comment: the cells among the generated ones that lie in water too narrow for the bank. Water you painted narrower than three cells is not turned to land, and Update shore warns about it, as it did in lesson 47. It is your water;
+- the ground is written from `generated` only, and the list is made as it goes: `Painted.Clear();`, then for each cell `Ground.SetCellItem(new Vector3I(cell.X, 0, cell.Y), cells[cell].Item);` and `Painted.Add(new Vector4I(cell.X, 0, cell.Y, cells[cell].Item));`. `Ground.Clear()` is gone: the cells to take away were taken away at the top;
+- `PlaceProps(half, byHand)` takes the hand-painted cells, and a candidate is skipped if `byHand.Contains(cell)`, with the other tests. That is how trees stay out of a clearing you painted. `IsNearWater` asks the ground, so trees also keep from a lake you painted;
+- the loop at the top of `PlaceProps` that emptied `Props` moves into `ClearProps()`, so that `Clear` can use it too, and `PlaceProps` begins with `ClearProps();` and `var parent = Props!;`, and adds each tree to `parent`;
+- the final `GD.Print` reports `generated.Count` cells, the seed, and the time: `from seed {Profile.Seed}, in {Time.GetTicksMsec() - started} ms`.
+
+<Solution>
+	<Code code={piece2} lang="csharp" title="src/Generation/WorldGenerator.cs" />
+</Solution>
+
+## Clear, paint, generate
+
+<Steps>
+
+1. Build the project with the hammer, **Build Project**. Open `levels/generated.tscn` and select **WorldGenerator**. There are two new properties, **Generate On Ready** and **New Seed Each Run**, a **Painted** array, and a **Clear** button beside **Generate**.
+
+	<Figure
+		src={generatorShot}
+		alt="The Inspector showing the WorldGenerator with Profile, Ground, Bank, Grass, Water, and Props, then Generate On Ready and New Seed Each Run unchecked, a Painted array, and the Generate and Clear buttons."
+		caption="The generator, with a list of what it painted and a Clear button."
+	/>
+
+2. Click **Generate**. The Output panel says `Generated 0 cells, 1672 of them water, and 0 props`. This is the first-time effect that was described above. The ground in the scene is in no list, so it is all yours, nothing is the generator's to paint, and the trees, which the generator does own, were taken away.
+
+3. Click **Clear**. The ground, the shore, the grass, and the trees go, and the list is empty.
+
+4. Click **Generate** again. The Output panel says `Generated 9216 cells, 1672 of them water, and 79 props, from seed 15`. It is the level of the last lesson, and now the generator has a list of all 9,216 cells.
+
+5. Paint over it by hand. Select **GroundTiles**, pick **Water** in the palette, and paint a pond of 8 by 6 cells, with x from 8 to 15 and z from 14 to 19. The cell at the middle of the level is 0, 0, x grows to the east, and z grows toward you. Pick **Dirt**, and paint a square of 12 by 12 cells, x from 8 to 19 and z from -10 to 1. This is a clearing, 6 meters on a side, where the seed grew a grove.
+
+6. Select **WorldGenerator** and click **Generate**. The Output panel says `Generated 9024 cells, 1720 of them water, and 73 props, from seed 15`. The ground has 9,216 cells, and the 192 you painted are not among the 9,024 that are the generator's.
+
+</Steps>
+
+Compare it with the level before you painted. The water cells are 1,672 and the 48 of your pond. The trees are 73, six fewer than 79, because seven had grown in the clearing and one new tree found room. And the bank has 444 pieces against 416: Update shore edged your pond too, as it edges any water in the ground.
+
+<Figure
+	src={newHand}
+	alt="A close view of the generated level: a small rectangular pond with an earth bank on grass, and a square of bare dirt beside groves, with no tree on it."
+	caption="Your pond and your clearing, with generated ground around them."
+/>
+
+## Check it
+
+- Pressing Generate again gave the identical level, cell for cell and tree for tree.
+- Setting the profile's seed to 16 and pressing Generate gave a different level, with 1,969 water cells and 76 trees. The pond and the dirt were as you painted them. Setting the seed back to 15 and pressing again gave the first level, cell for cell.
+- The generator's list has 9,024 cells, and none of your 192 is in it.
+- No tree grew in the clearing, and the 144 dirt cells and 48 water cells are where you painted them.
+
+That is the whole contract. **The seed decides what the generator paints, and what you paint is not its to change.** You can paint a village, a river, a landmark, and regenerate the forest around it.
+
+## Generate when the game starts
+
+So far the level was generated in the editor, and saved with the scene: the 9,216 ground cells, the shore, the grass, and the 73 trees are in `generated.tscn`, which is about a megabyte. A game that runs the scene loads them. Often that is what you want. But the same code can run when the game starts.
+
+<Steps>
+
+1. Select **WorldGenerator**, check **Generate On Ready**, save the scene, and run it with **Run Current Scene**, <Kbd keys="F6" mac="Cmd+R" />. The game generates the level as it starts, from the profile's seed, 15. It is the same level: the cells and the trees are identical to the saved ones.
+
+	<Figure
+		src={onReady}
+		alt="The Inspector showing the WorldGenerator with Generate On Ready checked."
+		caption="Generate On Ready, checked."
+	/>
+
+	<Figure
+		src={wide}
+		alt="The whole generated level from above, with four lakes, a small pond, and groves."
+		caption="The level the game runs, whether it was loaded or generated."
+	/>
+
+2. Check **New Seed Each Run** and run it again, and again. Each run picks a number, makes a level, and the level is different.
+
+	<Figure
+		src={newA}
+		alt="A generated level from above with large lakes, a square of dirt in the middle of one of them, and groves along the north and the south."
+		caption="The first run, seed -1396148506. The dirt clearing is an island in a lake, because your cells win over the generator's."
+	/>
+
+	<Figure
+		src={newB}
+		alt="A different generated level from above with a lake in the west, another in the south east, a square of dirt between them, and groves around."
+		caption="The second run, seed -1272062196."
+	/>
+
+</Steps>
+
+The two runs had 2,283 and 1,774 water cells, 70 and 82 trees, and 546 and 476 bank pieces. In both, your pond and your dirt were where you painted them, and no tree grew on the dirt: the list is saved in the scene, so the game knows which cells are yours.
+
+The `GD.Randi()` seed can be negative, and that is fine: the profile's `Sample` takes the seed's remainder with `PosMod`, which is never negative, so a seed of any sign slides the noise to a point.
+
+When you like a level, the seed in the game's Output panel brings it back: type it into the profile's **Seed**, uncheck **New Seed Each Run**, and the same level comes every time. A game that lets a player share a world shares that number.
+
+## Bake it, or generate it live?
+
+You now have both, and the choice is a real one. Neither is better in general.
+
+**Bake the level** (generate in the editor, keep it in the scene) when:
+
+- you want to look at it, fix it, and keep your changes. A baked level is a level like any other: you can move a tree, paint a path, and nothing changes it. With the list, you can even regenerate and keep the touches;
+- the game should start fast. Loading a scene is cheaper than making it. On this machine the generator took 70 to 120 milliseconds in the editor to paint the ground, edge the shore, scatter the grass, and grow the trees for a level of 48 meters. That is a short pause, and a bigger level has a longer one;
+- every player should see the same level, and you should be able to check it.
+
+**Generate it live** (when the game starts) when:
+
+- a new level for every run is the game, or a seed is something a player can type or share;
+- you do not want the level in version control. The generated scene is a megabyte of text that changes whenever you press Generate. The profile is about a kilobyte, and describes the same level;
+- a player's own world must be made on the spot.
+
+The generator is the same code in both cases, and there is nothing to choose between them in what it can do: the **Generate On Ready** box is the only switch.
+
+<Aside type="note">
+	A bigger world, 500 meters or a whole map, would want more than this: generating a piece at a time as the player nears it, and doing the work off the main thread so the game does not stutter. Neither is built here. The same ideas hold. A chunk is a part of the level with its own cells, its own list, and its own seed made from the world's seed and its place, as each square meter of trees already is.
+</Aside>
+
+## Try it
+
+- With **Generate On Ready** and **New Seed Each Run** both on, run the game a few times and watch the Output panel. Which seeds give the most lakes? Write one down, set it in the profile, and turn **New Seed Each Run** off.
+- Paint a one-cell channel of water by hand over grass and press Generate. What does Update shore say? The generator leaves your water alone, narrow or not.
+- Paint a path of **Sand** across the level, over the generated grass, and press Generate with another seed. The path stays, and the lakes and trees move around it. What happens where a path crosses a lake the new seed makes?
+- Paint **Grass** over a generated lake and press Generate. Then think about why it is gone: the cell is yours, but it holds grass, and the generator cannot tell it from its own.
+
+## When it goes wrong
+
+- **Generate paints nothing, and the Output panel says 0 cells.** The ground holds cells that are in no list, usually from a level generated before the generator kept one. Press **Clear** and then **Generate**.
+- **My painted cells were wiped.** You pressed **Clear**, which wipes everything. Or you painted the item the generator had painted, grass over grass, which the list cannot tell from the generator's own. Paint something it did not, such as water, dirt, or sand.
+- **A cell I painted keeps coming back as the generator's tile.** It holds the same item as the generator painted there. Pick another tile.
+- **The game starts with an empty level.** **Generate On Ready** is checked, but one of the generator's exports is empty, and `Generate` returned with a warning. Look at the Output panel.
+- **The game shows the same level every run.** **New Seed Each Run** is not checked.
+- **The editor level changes after running the game.** It should not: the new seed lives in the game, in memory. If the profile's **Seed** in the Inspector has changed, `Generate` was run in the editor.
+- **The player starts in a lake.** The player is not in the clearing at the middle of the level, or you painted water over the middle by hand.
+
+## Checkpoint
+
+Your project now contains:
+
+<FileTree>
+- src
+  - Generation
+    - WorldGenerator.cs, with `Clear`, `Painted`, `GenerateOnReady`, and `NewSeedEachRun`
+  - Ground
+    - GrassScatter.cs, with a public `Clear`
+- levels
+  - generated.tscn, with a lake and a dirt clearing painted by hand, a generated level around them, and the generator's list of what it painted
+</FileTree>
+
+Both boxes, **Generate On Ready** and **New Seed Each Run**, are unchecked, so the game runs the baked level. That finishes the generator.
+
+Commit your work: `git add .` and `git commit -m "Generate at runtime and around hand-painted ground"`. The next module is about polish.
+
+<Checkpoint />

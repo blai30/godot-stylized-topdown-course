@@ -70,7 +70,7 @@ public partial class GrassScatter : Node3D
 		GD.Print($"Scattered {fields.Sum(field => field.Value.Count)} in {fields.Count} meshes.");
 	}
 
-	private void Clear()
+	public void Clear()
 	{
 		foreach (var child in GetChildren().OfType<MultiMeshInstance3D>())
 		{
