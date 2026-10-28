@@ -2,6 +2,7 @@ shader_type spatial;
 render_mode cull_disabled;
 
 #include "res://art/shaders/wind.gdshaderinc"
+#include "res://art/shaders/clouds.gdshaderinc"
 
 // The leaf atlas from lesson 25, and the color its middle gray becomes.
 uniform sampler2D leaf_atlas : filter_linear_mipmap_anisotropic;
@@ -49,6 +50,7 @@ void fragment() {
 	float top = smoothstep(CANOPY_GRADE.x, CANOPY_GRADE.y, world_normal.y);
 	float inner = mix(CANOPY_INNER, 1.0, smoothstep(CANOPY_DEPTH.x, CANOPY_DEPTH.y, canopy_depth));
 	ALBEDO = leaf_color * leaf.rgb * LEAF_GAIN * mix(CANOPY_UNDER, CANOPY_TOP, top) * inner;
+	ALBEDO *= cloud_shadow((INV_VIEW_MATRIX * vec4(VERTEX, 1.0)).xyz, TIME);
 	ROUGHNESS = 1.0;
 }
 

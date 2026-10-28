@@ -1,6 +1,7 @@
 shader_type spatial;
 
 #include "res://art/shaders/wind.gdshaderinc"
+#include "res://art/shaders/clouds.gdshaderinc"
 
 // The frame drawn so far (the lake bed, the bank, the trees) and its depth.
 uniform sampler2D screen_texture : hint_screen_texture, filter_linear, repeat_disable;
@@ -45,10 +46,8 @@ uniform float reflect_thickness : hint_range(0.1, 4.0) = 1.0;
 uniform vec2 reflect_fade = vec2(0.06, 0.08);
 
 group_uniforms clouds;
-// The reflected clouds lie on a plane this many meters over the water, are this many meters across, and drift this fast.
+// The reflected clouds lie on a plane this many meters over the water. Their noise and drift are the shadows'.
 uniform float cloud_height : hint_range(1.0, 60.0) = 12.0;
-uniform float cloud_meters : hint_range(10.0, 200.0) = 70.0;
-uniform float cloud_speed : hint_range(0.0, 3.0) = 0.5;
 uniform float cloud_opacity : hint_range(0.0, 1.0) = 0.3;
 
 group_uniforms edge;
@@ -190,9 +189,8 @@ void fragment() {
 	// The waves bend the clouds only a little, or they scatter into speckle.
 	vec3 cloud_normal = normalize(mix((VIEW_MATRIX * vec4(0.0, 1.0, 0.0, 0.0)).xyz, NORMAL, 0.3));
 	vec3 reflected_world = mat3(INV_VIEW_MATRIX) * reflect(-toward_eye, cloud_normal);
-	vec2 cloud_at = world_xz + reflected_world.xz * (cloud_height / max(reflected_world.y, 0.1)) - normalize(wind_direction) * TIME * cloud_speed;
-	float cloud_noise = texture(wave_normals, cloud_at / cloud_meters).r;
-	float cover = smoothstep(0.45, 0.7, cloud_noise) * cloud_opacity * (1.0 - found);
+	vec2 cloud_at = world_xz + reflected_world.xz * (cloud_height / max(reflected_world.y, 0.1));
+	float cover = cloud_cover(cloud_at, TIME) * cloud_opacity * (1.0 - found);
 	vec3 cloud_color = rim_color.rgb * rim_strength * 2.0;
 	// The sky reflects through the metallic channel; the scatter is lit like a surface in light() below, so dusk and
 	// night tint it. The bed and the found reflections arrive already lit.

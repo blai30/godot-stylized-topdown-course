@@ -252,3 +252,15 @@ push_point={
 "type": "vec4",
 "value": Vector4(0, 0, 0, 0)
 }
+cloud_texture={
+"type": "sampler2D",
+"value": "res://art/clouds/cloud_noise.tres"
+}
+cloud_scale={
+"type": "float",
+"value": 45.0
+}
+cloud_strength={
+"type": "float",
+"value": 0.5
+}

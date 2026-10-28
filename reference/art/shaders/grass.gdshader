@@ -4,6 +4,7 @@ render_mode cull_disabled, world_vertex_coords, specular_disabled;
 #include "res://art/shaders/wind.gdshaderinc"
 #include "res://art/shaders/ground_color.gdshaderinc"
 #include "res://art/shaders/ground_cover.gdshaderinc"
+#include "res://art/shaders/clouds.gdshaderinc"
 
 // The ground this grass grows from, as the ground shader draws it: its texture, tint, and noise.
 uniform sampler2D ground_texture : source_color, filter_linear_mipmap, repeat_enable;
@@ -78,8 +79,9 @@ void vertex() {
 
 void fragment() {
 	ALBEDO = blade_color;
+	ALBEDO *= cloud_shadow((INV_VIEW_MATRIX * vec4(VERTEX, 1.0)).xyz, TIME);
 	ROUGHNESS = 1.0;
-	EMISSION = blade_color * BOUNCE;
+	EMISSION = ALBEDO * BOUNCE;
 	// Every blade takes the ground's up, so the field lights as one matte surface.
 	vec3 up = (VIEW_MATRIX * vec4(0.0, 1.0, 0.0, 0.0)).xyz;
 	NORMAL = normalize(mix(NORMAL, up, FLATTEN));

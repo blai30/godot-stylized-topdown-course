@@ -5,7 +5,7 @@ import sys
 sys.path.insert(0, sys.argv[1])
 from steps import (write, eval_, unfold_inspector, game_steps, play, quick_load, resource_menu, open_resource,
                    new_resource, open_in_file_dialog, open_bottom_panel, type_shader, close_bottom_panel)
-from shader_ui import SETTINGS, FIND_SETTINGS, select_tab, add_global, new_shader_file
+from shader_ui import SETTINGS, FIND_SETTINGS, select_tab, add_global, set_global, new_shader_file
 from lesson27_pieces import WIND, FOLIAGE, BARK
 
 INCLUDE = 'res://art/shaders/wind.gdshaderinc'
@@ -16,26 +16,6 @@ SCENE_TREE = {'class': 'SceneTreeDock', 'type': 'Tree'}
 SAVE_SCENE = {'op': 'key', 'find': SCENE_TREE, 'key': 'S', 'ctrl': True}
 CLOCK = 'Meadow/WorldEnvironment/Day'
 PIECES = [WIND, FOLIAGE, BARK]
-
-
-def set_global(name, values):
-    # Types into the value fields of a shader global's row: one field for a float, two for a vec2.
-    return [
-        eval_(FIND_SETTINGS + f"""
-var values: Array = {values!r}
-for row in plugin._collect(window, "EditorProperty", ""):
-	if row.label == "{name}":
-		var sliders := plugin._collect(row, "EditorSpinSlider", "")
-		if sliders.size() != values.size():
-			return "{name} has %d fields, wanted %d" % [sliders.size(), values.size()]
-		for i in values.size():
-			sliders[i].value = values[i]
-			sliders[i].value_changed.emit(values[i])
-		return ""
-return "no row {name}"
-"""),
-        {'op': 'wait', 'frames': 20},
-    ]
 
 
 def material_on(node, shader_file, parameters, save_as, captures, clear=False):

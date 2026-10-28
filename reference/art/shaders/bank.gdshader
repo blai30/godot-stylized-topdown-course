@@ -2,6 +2,7 @@ shader_type spatial;
 
 #include "res://art/shaders/stylized_lit.gdshaderinc"
 #include "res://art/shaders/ground_color.gdshaderinc"
+#include "res://art/shaders/clouds.gdshaderinc"
 
 // The ground's own textures and noise, so the top of a bank piece is exactly the ground's color and joins the land without a seam.
 uniform sampler2D albedo_texture : source_color, filter_linear_mipmap, repeat_enable;
@@ -67,6 +68,7 @@ void fragment() {
 	float hang = mix(turf_length.x, turf_length.y, length_noise) * (1.0 - 0.6 * blade);
 	earth = mix(earth, ground * 0.85, step(TOP - height, hang));
 	ALBEDO = mix(ground, earth, wall);
+	ALBEDO *= cloud_shadow((INV_VIEW_MATRIX * vec4(VERTEX, 1.0)).xyz, TIME);
 	ROUGHNESS = 0.95;
 
 	// The clods tilt the wall's normal on its plane, and the whole normal leans toward the sky.

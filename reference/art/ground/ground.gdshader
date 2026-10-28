@@ -2,6 +2,7 @@ shader_type spatial;
 
 #include "res://art/shaders/stylized_lit.gdshaderinc"
 #include "res://art/shaders/ground_color.gdshaderinc"
+#include "res://art/shaders/clouds.gdshaderinc"
 
 // The ground textures from lessons 13 and 14.
 uniform sampler2D albedo_texture : source_color, filter_linear_mipmap, repeat_enable;
@@ -29,6 +30,7 @@ void vertex() {
 
 void fragment() {
 	ALBEDO = ground_color(albedo_texture, albedo_tint, texture_scale, edge_noise, edge_noise_scale, world_position.xz);
+	ALBEDO *= cloud_shadow((INV_VIEW_MATRIX * vec4(VERTEX, 1.0)).xyz, TIME);
 	ROUGHNESS = roughness;
 	// 0 inside the cell, rising to 1 at the tile's outer edge.
 	float outside = length(max(abs(tile_position) - cell_size * 0.5, 0.0)) / overhang;

@@ -1,3 +1,6 @@
+#ifndef WIND_INCLUDED
+#define WIND_INCLUDED
+
 // Wind for anything that sways: one gust front that crosses the meadow, and the sway and flutter it drives.
 
 // Which way the wind blows along the ground (x east, y south), and how hard, from 0 to 1.
@@ -69,3 +72,5 @@ vec3 petal_flutter(vec3 world_position, float flower_phase, float mask) {
 	vec2 push = across * PETAL_FLUTTER * mask * gust_strength(world_position) * sin(2.0 * beat + world_position.x * 5.0);
 	return vec3(push.x, 0.0, push.y);
 }
+
+#endif

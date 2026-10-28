@@ -51,6 +51,44 @@ add.pressed.emit()
     ]
 
 
+def set_global(name, values):
+    # Types into the value fields of a shader global's row: one field for a float, two for a vec2.
+    return [
+        eval_(FIND_SETTINGS + f"""
+var values: Array = {values!r}
+for row in plugin._collect(window, "EditorProperty", ""):
+	if row.label == "{name}":
+		var sliders := plugin._collect(row, "EditorSpinSlider", "")
+		if sliders.size() != values.size():
+			return "{name} has %d fields, wanted %d" % [sliders.size(), values.size()]
+		for i in values.size():
+			sliders[i].value = values[i]
+			sliders[i].value_changed.emit(values[i])
+		return ""
+return "no row {name}"
+"""),
+        {'op': 'wait', 'frames': 20},
+    ]
+
+
+def set_texture_global(name, path):
+    # Picks a texture into a sampler2D global's row, as dragging a file onto its picker does.
+    return [
+        eval_(FIND_SETTINGS + f"""
+for row in plugin._collect(window, "EditorProperty", ""):
+	if row.label == "{name}":
+		var pickers := plugin._collect(row, "EditorResourcePicker", "")
+		if pickers.is_empty():
+			return "{name} has no picker"
+		pickers[0].edited_resource = load("{path}")
+		pickers[0].resource_changed.emit(load("{path}"))
+		return ""
+return "no row {name}"
+"""),
+        {'op': 'wait', 'frames': 20},
+    ]
+
+
 def new_shader_file(menu_item, path, mode_capture=None):
     return [
         open_bottom_panel('Shader Editor'),

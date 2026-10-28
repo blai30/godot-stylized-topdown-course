@@ -4,6 +4,7 @@ render_mode cull_disabled, world_vertex_coords, specular_disabled;
 #include "res://art/shaders/wind.gdshaderinc"
 #include "res://art/shaders/stylized_lit.gdshaderinc"
 #include "res://art/shaders/ground_cover.gdshaderinc"
+#include "res://art/shaders/clouds.gdshaderinc"
 
 varying vec3 flower_color;
 
@@ -21,6 +22,7 @@ void vertex() {
 
 void fragment() {
 	ALBEDO = flower_color;
+	ALBEDO *= cloud_shadow((INV_VIEW_MATRIX * vec4(VERTEX, 1.0)).xyz, TIME);
 	ROUGHNESS = 1.0;
 	EMISSION += soft_rim(NORMAL, INV_VIEW_MATRIX, ALBEDO);
 }

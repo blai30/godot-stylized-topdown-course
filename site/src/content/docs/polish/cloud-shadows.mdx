@@ -1,0 +1,307 @@
+---
+title: Cloud shadows
+description: Drift soft cloud shadows across the meadow with one seamless noise texture, three shader globals, and a shared include that the ground, grass, flowers, trees, and bank darken by, and that the water reflects as the same clouds.
+sidebar:
+  order: 53
+  label: 53. Cloud shadows
+lesson:
+  number: 53
+  minutes: 50
+  learn:
+    - How a seamless noise texture becomes a drifting pattern in a shader
+    - How a texture can be a shader global that every shader reads
+    - How an include guard lets two includes share a third
+    - How to put one shared function into six shaders with a single line each
+  prerequisites: [23, 27, 33, 46]
+---
+
+import { Aside, Code, FileTree, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Solution from '../../../components/Solution.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import piece1 from '../../../checkpoints/53/pieces/piece-1.gdshaderinc?raw';
+import piece2 from '../../../checkpoints/53/pieces/piece-2.gdshaderinc?raw';
+import piece3 from '../../../checkpoints/53/pieces/piece-3.gdshader?raw';
+import piece4 from '../../../checkpoints/53/pieces/piece-4.gdshader?raw';
+import piece5 from '../../../checkpoints/53/pieces/piece-5.gdshader?raw';
+import piece6 from '../../../checkpoints/53/pieces/piece-6.gdshader?raw';
+import piece7 from '../../../checkpoints/53/pieces/piece-7.gdshader?raw';
+import piece8 from '../../../checkpoints/53/pieces/piece-8.gdshader?raw';
+import piece9 from '../../../checkpoints/53/pieces/piece-9.gdshader?raw';
+import wideOff from '../../../assets/lessons/cloud-shadows/wide-off.png';
+import wideOn from '../../../assets/lessons/cloud-shadows/wide-on.png';
+import noise from '../../../assets/lessons/cloud-shadows/noise.png';
+import globals from '../../../assets/lessons/cloud-shadows/globals.png';
+import includeEditor from '../../../assets/lessons/cloud-shadows/include-editor.png';
+import windEditor from '../../../assets/lessons/cloud-shadows/wind-editor.png';
+import groundEditor from '../../../assets/lessons/cloud-shadows/ground-editor.png';
+import waterEditor from '../../../assets/lessons/cloud-shadows/water-editor.png';
+import grove from '../../../assets/lessons/cloud-shadows/grove.png';
+import pondOff from '../../../assets/lessons/cloud-shadows/pond-off.png';
+import pond from '../../../assets/lessons/cloud-shadows/pond.png';
+import dusk from '../../../assets/lessons/cloud-shadows/dusk.png';
+import night from '../../../assets/lessons/cloud-shadows/night.png';
+
+## What you will build
+
+Soft cloud shadows that drift across the meadow with the wind. They fall on the ground, the grass, the flowers, the leaves, the bark, and the bank, all by the same pattern, so a patch of shade crosses a tree and the grass under it as one. The water reflects the same clouds.
+
+The meadow without clouds, and with them:
+
+<Figure
+	src={wideOff}
+	alt="The whole meadow at noon with no cloud shadows: even light on the grass between the trees' own shadows."
+	caption="Before: the light is the same everywhere."
+/>
+
+<Figure
+	src={wideOn}
+	alt="The same meadow with cloud shadows: soft darker patches lie across the grass and over the treetops."
+	caption="After: soft patches of shade."
+/>
+
+It is a small change for how much it adds. One noise texture, three shader globals, one include of about twenty lines, and one added line in each of six shaders.
+
+## How it works
+
+A cloud shadow is a number from 0 to 1 for every point on the ground: 0 in the open, 1 under the middle of a cloud. The shader finds it by reading a noise texture at the point's own position on the ground, shifted a little downwind as time passes. Every shader that finds the number at the same point gets the same answer, so a leaf and the grass under it darken together.
+
+Three things set the look, and each is a shader global so you can change it without touching a shader:
+
+- the noise texture, whose patches are the clouds;
+- `cloud_scale`, how many meters the texture repeats across;
+- `cloud_strength`, how much light a full shadow takes away.
+
+## The noise
+
+The clouds are a seamless noise, like the ripples in lesson 46 but softer and bigger.
+
+<Steps>
+
+1. In the FileSystem dock make a folder `res://art/clouds`.
+
+2. In the Inspector, open the resource menu and choose **New Resource...**. Search for `NoiseTexture2D` and create it. Set **Width** and **Height** to `512` and turn **Seamless** on, so the texture repeats without a seam.
+
+3. In the **Noise** row choose **New FastNoiseLite**, and open it. Set **Frequency** to `0.012`, and under **Fractal** set **Octaves** to `3`. A low frequency makes big patches and three octaves add a little ragged detail to their edges.
+
+	<Figure
+		src={noise}
+		alt="The Inspector on a NoiseTexture2D of 512 by 512 pixels, with a FastNoiseLite of frequency 0.012 and three fractal octaves, and a preview of soft blotchy gray patches."
+		caption="The cloud noise."
+	/>
+
+4. Open the resource menu again, choose **Save Resource As...**, and save it as `res://art/clouds/cloud_noise.tres`.
+
+</Steps>
+
+## The three globals
+
+<Steps>
+
+1. Choose **Project > Project Settings...** and open the **Globals** tab and **Shader Globals**. Add three globals, one at a time, by typing the name, choosing the type, and clicking **Add**:
+
+	- `cloud_texture`, type `sampler2D`. Click its row's picker and choose `cloud_noise.tres`.
+	- `cloud_scale`, type `float`, value `45`. The texture repeats every 45 meters, which makes patches about 7 meters across.
+	- `cloud_strength`, type `float`, value `0.5`. A full shadow takes half the light.
+
+	<Figure
+		src={globals}
+		alt="Project Settings on Globals, Shader Globals, listing cloud_scale 45, cloud_strength 0.5, cloud_texture with the noise as its picture, and the earlier push_point, rim, and wind globals."
+		caption="Three more globals."
+	/>
+
+	Click **Close**.
+
+</Steps>
+
+## The include
+
+The shared code goes in its own include, as the wind did.
+
+<Steps>
+
+1. The clouds drift with the wind, so the new include uses `wind_direction` from `wind.gdshaderinc`. A shader that includes both would declare `wind_direction` twice and fail. So first teach the wind include to be included more than once. Open `wind.gdshaderinc` and wrap the whole file in an **include guard**: a `#ifndef WIND_INCLUDED` line and `#define WIND_INCLUDED` at the top, and `#endif` at the bottom. The first time the file is included the name is not yet defined, so the code is used; every later time the name is defined and the preprocessor skips it.
+
+	<Figure
+		src={windEditor}
+		alt="The Shader Editor showing the top of wind.gdshaderinc with an #ifndef WIND_INCLUDED and #define WIND_INCLUDED above the first comment."
+		caption="The wind include, guarded."
+	/>
+
+	Save it with <Kbd keys="Ctrl+Alt+S" mac="Cmd+Option+S" />.
+
+2. Choose **File > New Shader Include...**, set **Path** to `res://art/shaders/clouds.gdshaderinc`, and click **Create**. Type the include from the solution below the steps. Its pieces:
+
+	- `#include` of the wind include;
+	- the three globals, `cloud_texture`, `cloud_scale`, and `cloud_strength`, each with a comment saying what it is;
+	- two constants: `CLOUD_SPEED` `0.5`, the meters a second the clouds drift, and `CLOUD_EDGE` `(0.35, 0.65)`, the noise values where a cloud starts and where it is solid;
+	- `float cloud_cover(vec2 world_xz, float time)`, how much of a point is under cloud;
+	- `float cloud_shadow(vec3 world_position, float time)`, the light a point keeps.
+
+	<Figure
+		src={includeEditor}
+		alt="The Shader Editor showing the top of clouds.gdshaderinc: the include of wind, the three global uniforms, and the start of the constants."
+		caption="The clouds include."
+	/>
+
+</Steps>
+
+<Solution label="Show the full wind.gdshaderinc">
+	<Code code={piece2} lang="gdshader" title="art/shaders/wind.gdshaderinc" />
+</Solution>
+
+<Solution label="Show the full clouds.gdshaderinc">
+	<Code code={piece1} lang="gdshader" title="art/shaders/clouds.gdshaderinc" />
+</Solution>
+
+How the include works:
+
+- **Drift.** `cloud_cover` moves the point against the wind by `time * CLOUD_SPEED` meters, so the pattern slides downwind. `normalize(wind_direction)` keeps the speed the same however the wind's numbers are set.
+- **Reading the noise.** The shifted position, divided by `cloud_scale`, is the texture coordinate. The texture repeats, so it never runs out.
+- **Soft edges.** The noise value goes through `smoothstep` between the two numbers of `CLOUD_EDGE`. Below 0.35 there is no cloud, above 0.65 it is solid, and between them the shadow fades in. A narrower gap gives hard-edged clouds, a wider one gives mist.
+- **The shadow.** `cloud_shadow` is `1 - cover * cloud_strength`: 1 in the open, 0.5 under the middle of a cloud at a strength of 0.5.
+
+## Call it from the shaders
+
+Each shader that draws something under the sky gets one new line, placed after the line that sets its color, so the rim light and anything else that reads the color is darkened with it.
+
+<Steps>
+
+1. Open `ground.gdshader`. Under its includes add `#include "res://art/shaders/clouds.gdshaderinc"`. In `fragment()`, after the line that sets `ALBEDO`, add a comment and `ALBEDO *= cloud_shadow((INV_VIEW_MATRIX * vec4(VERTEX, 1.0)).xyz, TIME);`
+
+	In a fragment shader `VERTEX` is the point in view space, and `INV_VIEW_MATRIX` takes it back to the world. `TIME` is the shader's clock; the include cannot read it itself, so each shader passes it in.
+
+	<Figure
+		src={groundEditor}
+		alt="The Shader Editor showing ground.gdshader's fragment function: the ground color, then a comment and the ALBEDO multiplied by cloud_shadow."
+		caption="The ground shader."
+	/>
+
+2. Do the same in `bank.gdshader` (after `ALBEDO = mix(ground, earth, wall);`), `flower.gdshader`, `foliage.gdshader`, and `bark.gdshader`: the include under the other includes, and the line after `ALBEDO` is set.
+
+3. In `grass.gdshader` add the include and the line after `ALBEDO = blade_color;`, and change the next line to `EMISSION = ALBEDO * BOUNCE;`. The blade's own bounce light then takes the shadow too, or the grass would glow in the shade.
+
+</Steps>
+
+<Solution label="Show the full ground.gdshader">
+	<Code code={piece3} lang="gdshader" title="art/ground/ground.gdshader" />
+</Solution>
+
+<Solution label="Show the full bank.gdshader">
+	<Code code={piece4} lang="gdshader" title="art/shaders/bank.gdshader" />
+</Solution>
+
+<Solution label="Show the full grass.gdshader">
+	<Code code={piece5} lang="gdshader" title="art/shaders/grass.gdshader" />
+</Solution>
+
+<Solution label="Show the full flower.gdshader">
+	<Code code={piece6} lang="gdshader" title="art/shaders/flower.gdshader" />
+</Solution>
+
+<Solution label="Show the full foliage.gdshader">
+	<Code code={piece7} lang="gdshader" title="art/shaders/foliage.gdshader" />
+</Solution>
+
+<Solution label="Show the full bark.gdshader">
+	<Code code={piece8} lang="gdshader" title="art/shaders/bark.gdshader" />
+</Solution>
+
+## The water
+
+The water already reflects clouds, from its own noise (lesson 46). Now it reflects the same ones.
+
+<Steps>
+
+1. Open `water.gdshader`. Under the wind include add the clouds include. In the **clouds** uniform group, delete `cloud_meters` and `cloud_speed`: the include owns them now. Keep `cloud_height` and `cloud_opacity`.
+
+2. In `fragment()`, replace the three lines that found `cloud_at`, `cloud_noise`, and `cover` with two: `cloud_at` is the point on the cloud plane as before, without the drift, and `cover` is `cloud_cover(cloud_at, TIME) * cloud_opacity * (1.0 - found)`.
+
+	<Figure
+		src={waterEditor}
+		alt="The Shader Editor showing water.gdshader with the clouds include added under the wind include and the clouds uniform group down to cloud_height and cloud_opacity."
+		caption="The water shader."
+	/>
+
+</Steps>
+
+<Solution label="Show the full water.gdshader">
+	<Code code={piece9} lang="gdshader" title="art/shaders/water.gdshader" />
+</Solution>
+
+Now the pond shows the same cloud the grass beside it is in. The reflection is faint on purpose, as in lesson 46.
+
+<Figure
+	src={pondOff}
+	alt="A close view of the pond with the cloud strength at 0."
+	caption="The pond, strength 0."
+/>
+
+<Figure
+	src={pond}
+	alt="The same view at strength 0.5, with the grass around the pond a little darker."
+	caption="The pond, strength 0.5."
+/>
+
+## Run it
+
+Run the meadow. Wait a minute and the patches slide across it. At noon the shadows are soft and readable; at dusk the sun's own long shadows join them.
+
+<Figure
+	src={grove}
+	alt="A close view of the oak grove with a soft cloud patch crossing the grass and the lower leaves."
+	caption="A patch crossing the grove."
+/>
+
+<Figure
+	src={dusk}
+	alt="The meadow at dusk with warm light, long tree shadows, and soft cloud patches."
+	caption="Dusk."
+/>
+
+<Figure
+	src={night}
+	alt="The meadow at night, dark blue, with no visible cloud pattern."
+	caption="Night: the shadows have nothing left to darken."
+/>
+
+The shadows need no special night handling. A shadow takes a share of the light, and at night there is almost none.
+
+## Try it
+
+- Set `cloud_strength` to `0.8` in Project Settings for heavy, stormy shade, or `0.25` for a faint one.
+- Set `cloud_scale` to `20` for small, busy clouds, or `120` for slow, wide ones. The texture does not change; it is just stretched.
+- Change `CLOUD_EDGE` to `(0.45, 0.5)` for hard-edged shadows, like an overcast sky with gaps.
+- Change `wind_direction` in the shader globals and the clouds change direction with the grass.
+- Add a script that sets `cloud_strength` with `RenderingServer.GlobalShaderParameterSet` to fade the clouds in and out through the day.
+
+## If it does not work
+
+- **A shader error says "Unknown identifier cloud_shadow".** The shader does not include `clouds.gdshaderinc`, or the file was not saved.
+- **A shader error about `wind_direction` being declared twice.** `wind.gdshaderinc` has no include guard, so a shader that includes both it and the clouds include declares the global twice. Add the `#ifndef`, `#define`, and `#endif` lines.
+- **No shadows at all.** `cloud_strength` is `0`, or `cloud_texture` is empty: open **Project Settings > Globals > Shader Globals** and check the picker shows the noise.
+- **Shadows are a single big dark blotch.** `cloud_scale` is too large for the level. Try a smaller number.
+- **The grass glows in the shade.** `grass.gdshader` still has `EMISSION = blade_color * BOUNCE;`. Change it to `ALBEDO`.
+- **The water has no clouds.** `cloud_opacity` is `0`, or `cover` in `water.gdshader` still reads the old noise.
+
+## Checkpoint
+
+Your project now contains:
+
+<FileTree>
+- art
+  - clouds
+    - **cloud_noise.tres**
+  - ground
+    - ground.gdshader now darkened by the clouds
+  - shaders
+    - **clouds.gdshaderinc**
+    - wind.gdshaderinc with an include guard
+    - bank.gdshader, bark.gdshader, flower.gdshader, foliage.gdshader, grass.gdshader, and water.gdshader now use the clouds
+- project.godot with three new shader globals
+</FileTree>
+
+Commit your work: `git add .` and `git commit -m "Add cloud shadows"`. Lesson 54 adds bushes to the meadow.
+
+<Checkpoint />
