@@ -1,0 +1,9 @@
+[gd_resource type="NoiseTexture2D" format=3 uid="uid://dvebt7ple03i8"]
+
+[ext_resource type="FastNoiseLite" uid="uid://bl78e4v4ewydx" path="res://world/generation/forest_noise.tres" id="1_y3brt"]
+
+[resource]
+width = 48
+height = 48
+noise = ExtResource("1_y3brt")
+normalize = false

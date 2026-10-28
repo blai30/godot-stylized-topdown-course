@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="GenerationProfile" format=3 uid="uid://jjipym1tttkk"]
+
+[ext_resource type="FastNoiseLite" uid="uid://bl78e4v4ewydx" path="res://world/generation/forest_noise.tres" id="1_jf18m"]
+[ext_resource type="FastNoiseLite" uid="uid://odrq50ei4xc7" path="res://world/generation/terrain_noise.tres" id="2_adj0s"]
+[ext_resource type="Script" uid="uid://dtnpd30kngpur" path="res://src/Generation/GenerationProfile.cs" id="3_p631n"]
+
+[resource]
+script = ExtResource("3_p631n")
+Seed = 7
+Terrain = ExtResource("2_adj0s")
+Forest = ExtResource("1_jf18m")
+metadata/_custom_type_script = "uid://dtnpd30kngpur"

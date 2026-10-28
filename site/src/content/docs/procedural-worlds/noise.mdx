@@ -1,0 +1,260 @@
+---
+title: Noise as a resource
+description: See noise as a number for every point of the ground, tune a FastNoiseLite in the Inspector through a texture, save the terrain and forest noises as resources, and write a GenerationProfile that answers for any point from one seed.
+sidebar:
+  order: 49
+  label: "49. Noise as a resource"
+lesson:
+  number: 49
+  minutes: 60
+  learn:
+    - How noise gives every point of the ground a number from -1 to 1
+    - How frequency, octaves, and seed change what the noise looks like
+    - How a NoiseTexture2D shows a noise in the Inspector, one pixel for one meter
+    - How a Resource holds the noises and a seed, so one number makes one world
+  prerequisites: [34, 46]
+---
+
+import { Aside, Code, FileTree, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Solution from '../../../components/Solution.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import piece1 from '../../../checkpoints/49/pieces/piece-1.cs?raw';
+import newTexture from '../../../assets/lessons/noise/new-texture.png';
+import defaultNoise from '../../../assets/lessons/noise/default.png';
+import frequency from '../../../assets/lessons/noise/frequency.png';
+import octaves from '../../../assets/lessons/noise/octaves.png';
+import seed from '../../../assets/lessons/noise/seed.png';
+import saveTerrain from '../../../assets/lessons/noise/save-terrain.png';
+import forest from '../../../assets/lessons/noise/forest.png';
+import newProfile from '../../../assets/lessons/noise/new-profile.png';
+import profile from '../../../assets/lessons/noise/profile.png';
+
+## What you will build
+
+So far every tile, pond, and tree in the meadow was put there by you. The next four lessons let a number do it: a seed makes a whole level, with lakes, grass, and groves of trees, and the same seed makes the same level every time. It starts here, with the one idea underneath it all.
+
+This lesson builds no world yet. It builds the two noises that will shape the next one, and a small resource, a **GenerationProfile**, that holds them with a seed and answers a question: how high is the terrain at this point, and how thick is the forest?
+
+## Noise is a number for every point
+
+Random numbers are no use for a landscape. Ask for a random number at every point of a meadow and you get static, with a lake next to a hill next to a lake. A landscape is **smooth**: the ground near a point is a lot like the ground at the point.
+
+**Noise** is that. A noise is a function: give it a point and it gives back a number from -1 to 1, the same number every time you ask, and a number close to its neighbors'. Plot it as a picture, black for -1 and white for 1, and you get soft clouds. Where the clouds are dark the number is low, and where they are light it is high. Next lesson turns that into ground. The low parts become water, and the rest becomes grass.
+
+Godot's `FastNoiseLite` is a noise, and it is a **Resource**, like the materials and tile sets you have already made. It has no node and no scene. It is settings, and it can be saved, shared, and tuned in the Inspector.
+
+## A texture to look through
+
+A list of numbers is hard to judge, so look at them as a picture. A `NoiseTexture2D` draws a noise: each pixel asks the noise one question and shows the answer. You used one for the water's ripples in lesson 46. Here you use it to look, and to tune.
+
+One pixel will be one meter of the level, and the level will be 48 by 48 meters, so a texture 48 pixels across is the whole level.
+
+<Steps>
+
+1. Open `levels/meadow.tscn`, so the Inspector is showing. In the Inspector, open the resource options, the menu with the small arrow, and choose **New Resource**. Search for `NoiseTexture2D`, and create it.
+
+	<Figure
+		src={newTexture}
+		alt="The Create New Resource dialog with NoiseTexture2D typed in the search field."
+		caption="A texture to look through."
+	/>
+
+2. Set **Width** and **Height** to `48`. Turn **Normalize** off. With it on, Godot stretches the picture so that its darkest pixel is black and its lightest white, which hides the numbers: a noise that only reaches 0.4 would look as bold as one that reaches 1. With it off, black is -1, white is 1, and mid gray is 0, which is what the generator will read.
+
+3. Open **Noise**, choose **New FastNoiseLite**, and click it to open its properties.
+
+	<Figure
+		src={defaultNoise}
+		alt="The Inspector showing a NoiseTexture2D 48 by 48 pixels with Normalize off, a gray cloud preview, and a FastNoiseLite with Noise Type Simplex Smooth, Seed 0, Frequency 0.01, and Fractal with Type FBM and Octaves 5."
+		caption="A noise with its defaults, seen through the texture."
+	/>
+
+</Steps>
+
+Everything you need is in this one noise. Three settings change what it looks like.
+
+## Frequency: how big the features are
+
+**Frequency** is how fast the noise changes as you move. The default, `0.01`, changes slowly: one dark blotch and one light blotch across the whole level. That is too big to build on.
+
+<Steps>
+
+1. Set **Frequency** to `0.15`. The blotches shrink to specks, much too small for a lake, and a level of them would look like static.
+
+2. Set it to `0.04`.
+
+	<Figure
+		src={frequency}
+		alt="Three 48 by 48 pixel noise pictures side by side. The first, at frequency 0.01, has two big soft blotches. The second, at 0.15, is fine speckle. The third, at 0.04, has blotches a few pixels across."
+		caption="Frequency 0.01, 0.15, and 0.04, left to right. The last is about the size of a lake."
+	/>
+
+</Steps>
+
+With one pixel for one meter, `0.04` means a feature is roughly 25 meters across, from one dark blotch to the next: a few lakes in a 48 meter level.
+
+## Octaves: how rough the edges are
+
+Look at `0.04` again. The blotches are lumpy, with small bumps on the large ones. That is the **Fractal** group's work. A fractal noise is several noises added together: the first at the frequency you set, a second at twice that frequency and half the strength, a third at twice again, and so on. Each is an **octave**. (Twice and a half are the **Lacunarity** and **Gain** settings. Leave them.) The default is five octaves. Fewer give smoother shapes, and more give rougher.
+
+<Steps>
+
+1. Set **Octaves** to `1`. The blotches are smooth, round, and a little dull.
+
+2. Set it to `3`.
+
+	<Figure
+		src={octaves}
+		alt="Two 48 by 48 pixel noise pictures. The first, with one octave, has smooth round blotches. The second, with three, has the same blotches with rougher, more natural edges."
+		caption="One octave, then three. The shape is the same and the edge is not."
+	/>
+
+</Steps>
+
+Three octaves are enough to make a shoreline that wanders, without making a lake edge as ragged as a coastline on a map.
+
+## Seed: a different arrangement, the same character
+
+The **Seed** picks which noise you get. Every seed has the same frequency and the same roughness, and puts the blotches in different places.
+
+<Steps>
+
+1. Set **Seed** to `5`. The picture changes, and it still looks as it did: the same kind of blotch, in other places.
+
+	<Figure
+		src={seed}
+		alt="Two 48 by 48 pixel noise pictures at the same settings: seed 0, then seed 5. The blotches are the same size and roughness, in different places."
+		caption="Seed 0, then 5."
+	/>
+
+2. Set it back to `0`.
+
+</Steps>
+
+Keep that in mind: you will want a seed for the world, one number you can change to get another level, and it should not touch the noise. Hold on to that for the profile below.
+
+## Save the terrain noise
+
+<Steps>
+
+1. Open the menu beside **Noise**, the small arrow on the **FastNoiseLite** field, and choose **Save As...**. Save it as `terrain_noise.tres` in `world/generation`. Make the folder if it is not there.
+
+	<Figure
+		src={saveTerrain}
+		alt="The Save Resource As dialog in the world/generation folder with terrain_noise.tres typed as the file name."
+		caption="The terrain noise, saved as a file of its own."
+	/>
+
+</Steps>
+
+The texture now shows the saved file. Changing the file, in the Inspector, changes the picture, and everything else that uses the file.
+
+## The forest noise
+
+Trees need their own noise. They cluster in groves, and the groves should not follow the lakes, so the trees get a noise of their own, a little finer, with a different seed.
+
+<Steps>
+
+1. Open the menu beside **Noise** again and choose **Clear**, then open it and choose **New FastNoiseLite**. Click it to open the properties.
+
+2. Set **Frequency** to `0.07`, so the groves are smaller than the lakes. Set **Octaves** to `2`, and **Seed** to `2`, so the groves are in different places from the lakes. Leave the rest.
+
+	<Figure
+		src={forest}
+		alt="The Inspector showing the same texture with a finer noise: frequency 0.07, seed 2, and Fractal Octaves 2."
+		caption="The forest noise: finer, and from another seed."
+	/>
+
+3. Save it from the same menu, as `forest_noise.tres` in `world/generation`.
+
+4. In the Inspector's resource options, choose **Save Resource As...** and save the texture itself as `noise_preview.tres` in `world/generation`. Point its **Noise** at either noise at any time to see it. It is a tuning tool, and the template keeps it for you.
+
+</Steps>
+
+## A profile for the world
+
+You now have two noises, and the world also needs a seed. These belong together, in one resource, so a world is one file you can hand to the generator and open in the Inspector. That is the **GenerationProfile**.
+
+Make a folder `src/Generation`, and in it a script `GenerationProfile.cs` with **Inherits** set to `Resource`.
+
+Write the script so that:
+
+- the class is `public partial class GenerationProfile : Resource`, in the `TopDownTemplate.Generation` namespace, with `[Tool]` and `[GlobalClass]` above it. `[GlobalClass]` puts it in the Inspector's list of resource types, as with `GroundTile`, and `[Tool]` lets it run in the editor, which the generator will do in lesson 50. A comment says: what makes one generated world, a seed and the noises that shape it, and the same profile and seed give the same world on every machine;
+- `[Export] public int Seed { get; set; } = 1;` is the seed, with a comment: a different seed makes a different world;
+- `[Export] public FastNoiseLite? Terrain { get; set; }` has a comment: low values are lakes, and high values are land. `[Export] public FastNoiseLite? Forest { get; set; }` has one too: high values are where the trees grow thickest;
+- two public methods, `TerrainAt(Vector2 point)` and `ForestAt(Vector2 point)`, answer for a point on the ground, in meters, with a number from -1 to 1. Each calls a private `Sample` with its own noise;
+- `Sample(FastNoiseLite? noise, Vector2 point)` has a comment: the seed slides the world across the noise, so the noise resources stay as they were saved. It makes `offset` from the seed, `new Vector2(Mathf.PosMod(Seed * 7919, 10007), Mathf.PosMod(Seed * 104729, 10007))`, and returns `noise?.GetNoise2Dv(point + offset) ?? 0f`.
+
+<Solution>
+	<Code code={piece1} lang="csharp" title="src/Generation/GenerationProfile.cs" />
+</Solution>
+
+The one idea in `Sample` is that the seed is not stored in the noise. If the profile set `Terrain.Seed` itself, then picking a new world would change a resource shared by every profile that uses it, and the changed file would show up in version control. Instead the profile **slides the point**: the seed becomes a distance, the noise is asked about a point that far away, and a different seed asks about a different part of the same endless noise. 7919 and 104729 are two different primes, so the slide along x has nothing to do with the slide along z, and the `PosMod` by 10007 keeps the distance small, where a `float` is still precise. The noise itself is never touched, and the same seed on any machine asks about the same point.
+
+<Steps>
+
+1. Save the file and click the hammer, **Build Project**.
+
+2. In the Inspector's resource options, choose **New Resource**, search for `GenerationProfile`, and create it. It has a **Seed**, a **Terrain**, and a **Forest**.
+
+	<Figure
+		src={newProfile}
+		alt="The Inspector showing a GenerationProfile with a Seed of 1 and empty Terrain and Forest fields."
+		caption="A new profile, with nothing to read yet."
+	/>
+
+3. Set **Seed** to `7`. Click the **Terrain** field's arrow, choose **Quick Load...**, type `terrain_noise`, and press Enter. Do the same for **Forest** with `forest_noise`.
+
+	<Figure
+		src={profile}
+		alt="The Inspector showing a GenerationProfile with Seed 7, Terrain set to terrain_noise and Forest set to forest_noise."
+		caption="A world, in one resource."
+	/>
+
+4. In the resource options, choose **Save Resource As...** and save it as `generation_profile.tres` in `world/generation`.
+
+</Steps>
+
+## Check it
+
+Nothing visible changed in the meadow, so the check is in the numbers. These were read back from the saved profile after the steps above.
+
+- The same seed gives the same answer every time. Asking the profile for the terrain at four points, twice over, gave identical numbers both times.
+- A different seed gives a different answer. At the point (3.5, -7.25), seed 7 gave 0.36 and seed 8 gave -0.30.
+- The profile adds nothing else. The terrain noise asked directly at that point plus the seed's offset gave the same 0.36.
+- The numbers stay between -1 and 1. Over every cell of a 96 by 96 cell level, the terrain values for seed 7 ran from -0.60 to 0.71.
+
+One more number matters for the next lesson. If everything below -0.2 is water, then how much of the level is a lake depends on the seed. Over seven seeds it was between 13 and 34 percent. Seed 7, the one you set, gives 13: a few lakes with plenty of meadow around them.
+
+## When it goes wrong
+
+- **GenerationProfile is not in the list of resources.** The script has not built. Click the hammer, and look in the MSBuild panel for an error.
+- **The texture is all gray.** **Normalize** is on, or the frequency is so low that a 48 pixel square sees a tiny part of one blotch. Turn it off, and check the frequency.
+- **The picture looks different after changing a seed on the noise.** It should. The seed on the noise and the seed on the profile are separate: the noise's seed picks the noise, and the profile's seed slides the point.
+- **The profile's fields are empty after you quick load.** The noise files were not saved first. Look in `world/generation` for `terrain_noise.tres` and `forest_noise.tres`.
+
+## Try it
+
+- Point the preview's **Noise** at `forest_noise.tres` and then `terrain_noise.tres` again, and compare. Where one is dark, is the other?
+- Change **Noise Type** to **Cellular** in the preview. It is a different kind of noise, built from cells, and it makes patterns more like stone or leather than meadow. Put it back to **Simplex Smooth**.
+
+## Checkpoint
+
+Your project now contains:
+
+<FileTree>
+- src
+  - Generation
+    - **GenerationProfile.cs**
+- world
+  - generation
+    - **terrain_noise.tres**
+    - **forest_noise.tres**
+    - **noise_preview.tres**
+    - **generation_profile.tres**
+</FileTree>
+
+Commit your work: `git add .` and `git commit -m "Add the generation profile and its noises"`. In the next lesson a generator turns the profile into ground.
+
+<Checkpoint />
