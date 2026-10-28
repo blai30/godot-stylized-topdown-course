@@ -224,6 +224,9 @@ def steps(d):
         d.log('CORE {}'.format(len(selected())))
         bpy.context.scene.tool_settings.vertex_group_weight = 1.0
         run(bpy.ops.object.vertex_group_assign)
+
+    def lip_group():
+        obj = bpy.context.active_object
         # The lip's own group, for the jag: Alt+click on a lip edge selects its whole loop, Assign at 1, then the border (the wall's
         # ends and foot) at 0, so the jag leaves the ends alone.
         run(bpy.ops.object.vertex_group_add)
@@ -246,6 +249,7 @@ def steps(d):
     lump_group()
     yield 0.6
     d.shot('l44_group')
+    lip_group()
     mesh = bmesh.from_edit_mesh(bpy.context.active_object.data)
     layer = mesh.verts.layers.deform.active
     index = bpy.context.active_object.vertex_groups['lumps'].index

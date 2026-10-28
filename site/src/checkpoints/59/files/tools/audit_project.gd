@@ -14,6 +14,8 @@ const SKIPPED := ["res://.godot", "res://builds", "res://art_source", "res://.gi
 # Files in the project root that keep the name their tool gives them: the project's own name, and dotfiles.
 const ROOT_EXTENSIONS := ["csproj", "sln"]
 const TEXT_EXTENSIONS := ["tscn", "tres", "gdshader", "gdshaderinc"]
+# Files from other authors keep the names they came with.
+const VENDOR_FILES := ["res://art/animations/UAL1_Standard.glb"]
 const SNAKE_CASE := "^[a-z0-9]+(_[a-z0-9]+)*$"
 const PASCAL_CASE := "^[A-Z][A-Za-z0-9]*$"
 
@@ -65,6 +67,8 @@ func _check_name(path: String) -> void:
 	var relative := path.trim_prefix("res://")
 	var parts := relative.split("/")
 	var in_source := path.begins_with(SOURCE + "/")
+	if VENDOR_FILES.has(path.trim_suffix(".import")):
+		return
 	# A README is named for what it is, wherever it sits.
 	if parts[-1] == "README.md":
 		return

@@ -277,14 +277,12 @@ root.set_editable_instance(root.get_node("character"), true)
     {'op': 'capture', 'name': 'l59_player_animation'},
     SAVE_SCENE,
     {'op': 'wait', 'frames': 20},
-    # The tile set is data about the art, so it belongs to the world; the vendor file takes the naming rule.
+    # The tile set is data about the art, so it belongs to the world; the vendor file keeps its author's name.
     *make_folder('world', 'ground'),
     {'op': 'open', 'path': 'res://levels/meadow.tscn'},
     {'op': 'main_screen', 'name': '3D'},
     *move_file('res://art/ground/ground_tile_set.tres', 'res://world/ground/ground_tile_set.tres'),
-    *move_file('res://art/animations/UAL1_Standard.glb', 'res://art/animations/ual1_standard.glb'),
     {'op': 'sleep', 'seconds': 8},
-    edit_text('res://art/animations/README.md', "`UAL1_Standard.glb` is Quaternius's Universal Animation Library (Standard)", "`ual1_standard.glb` is Quaternius's Universal Animation Library (Standard), renamed from the pack's `UAL1_Standard.glb` to follow the project's file naming"),
     {'op': 'fs', 'path': 'res://world/ground/ground_tile_set.tres'},
     {'op': 'wait', 'frames': 30},
     {'op': 'capture', 'name': 'l59_moved'},

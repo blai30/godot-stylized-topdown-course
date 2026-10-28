@@ -92,7 +92,7 @@ The grass has to start from exactly the color the ground has at that spot. If th
 
 	<Figure
 		src={groundEditor}
-		alt="The Shader Editor showing ground.gdshader with two includes at the top and a fragment function whose first line calls ground_color."
+		alt="The Shader Editor showing the top of ground.gdshader: the shader type, the two includes, and the first uniforms."
 		caption="The ground shader, calling the shared function."
 	/>
 
@@ -118,7 +118,7 @@ The trees' sway lives in `wind.gdshaderinc`, so the grass's does too, and the gr
 
 	<Figure
 		src={windEditor}
-		alt="The Shader Editor showing the end of wind.gdshaderinc: the new constants and the grass_sway function."
+		alt="The Shader Editor showing the top of wind.gdshaderinc: the header comment, the global uniforms, and the gust length constant."
 		caption="The grass's sway, next to the tree's."
 	/>
 
@@ -143,7 +143,7 @@ How the two functions work:
 
 	<Figure
 		src={grassEditor}
-		alt="The Shader Editor showing grass.gdshader: render modes, includes, uniforms for the ground, and the constants for the colors, the light, and the satin."
+		alt="The Shader Editor showing the top of grass.gdshader: render modes, includes, and the uniforms for the ground, ending at ground_tint."
 		caption="The top of the grass shader."
 	/>
 
@@ -174,7 +174,7 @@ The ground, the rocks, and the flowers wear the soft rim of lesson 23, a faint g
 
 	<Figure
 		src={flowerEditor}
-		alt="The Shader Editor showing flower.gdshader: two includes, a vertex function that moves the petals and picks a color, and a fragment function that sets the albedo."
+		alt="The Shader Editor showing the top of flower.gdshader: two includes, its uniforms, and the start of the vertex function."
 		caption="The flower shader."
 	/>
 

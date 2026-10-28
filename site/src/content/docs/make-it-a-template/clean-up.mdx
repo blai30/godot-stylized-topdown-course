@@ -65,24 +65,22 @@ The script does four things:
 
 - It collects every file under `res://`, skipping Godot's cache (`.godot`), build output, and `art_source`, which holds files other programs made.
 - For each file under `art/`, it reports any `.cs` or `.gd` file, and, in scenes, resources, and shaders, any `res://` path that does not start with `res://art/` and any use of a script.
-- For every file, it checks its name: outside `src`, `snake_case`; inside `src`, `PascalCase` for folders and files. A `.uid` or `.import` file is named after its source, and a `README.md` is named for what it is.
+- For every file, it checks its name: outside `src`, `snake_case`; inside `src`, `PascalCase` for folders and files. A `.uid` or `.import` file is named after its source, a `README.md` is named for what it is, and the animation pack's file, listed in `VENDOR_FILES`, keeps the name its author gave it.
 - It prints each problem on a line of its own and a count, and says `0 problems` when the project is clean.
 
 <Solution label="Show the full audit_project.gd">
 	<Code code={audit} lang="gdscript" title="tools/audit_project.gd" />
 </Solution>
 
-Your Output panel lists 13 problems, out of about 145 files; the counts of files on your computer may differ a little, and the 13 problems should match:
+Your Output panel lists 11 problems, out of about 145 files; the counts of files on your computer may differ a little, and the 11 problems should match:
 
 <Figure
 	src={auditBefore}
-	alt="The Output panel after running the audit: lines for character.tscn, ground_tile_set.tres, bush.tscn, tree_oak.tscn, and tree_pine.tscn pointing outside the art folder or using a script, ending with Audited 145 files: 13 problems."
-	caption="The audit's first run. The panel scrolls; the list begins with the vendor animation file."
+	alt="The Output panel after running the audit: lines for character.tscn, ground_tile_set.tres, bush.tscn, tree_oak.tscn, and tree_pine.tscn pointing outside the art folder or using a script, ending with Audited 145 files: 11 problems."
+	caption="The audit's first run. The panel scrolls; the list begins with the character scene."
 />
 
 ```txt
-res://art/animations/UAL1_Standard.glb: the file UAL1_Standard should be snake_case.
-res://art/animations/UAL1_Standard.glb.import: the file UAL1_Standard should be snake_case.
 res://art/character/character.tscn: points outside the art folder, to res://src/Player/PlayerAnimation.cs.
 res://art/character/character.tscn: uses a script.
 res://art/ground/ground_tile_set.tres: points outside the art folder, to res://src/Ground/GroundTile.cs.
@@ -94,10 +92,10 @@ res://art/nature/tree_oak/tree_oak.tscn: points outside the art folder, to res:/
 res://art/nature/tree_oak/tree_oak.tscn: uses a script.
 res://art/nature/tree_pine/tree_pine.tscn: points outside the art folder, to res://src/World/WindPhase.cs.
 res://art/nature/tree_pine/tree_pine.tscn: uses a script.
-Audited 145 files: 13 problems.
+Audited 145 files: 11 problems.
 ```
 
-Three things are wrong: the three nature scenes use `WindPhase`, the character uses `PlayerAnimation`, and the tile set uses two scripts. One file breaks the naming rule. The rest of the lesson fixes each in turn.
+Three things are wrong: the three nature scenes use `WindPhase`, the character uses `PlayerAnimation`, and the tile set uses two scripts. The rest of the lesson fixes each in turn.
 
 ## Let the shader place the tree in the wind
 
@@ -196,18 +194,6 @@ The tile set is a resource made from the `GroundTileSet` and `GroundTile` classe
 		alt="The FileSystem dock with world, ground, and ground_tile_set.tres selected."
 		caption="The tile set in its new folder."
 	/>
-
-</Steps>
-
-## Rename the vendor file
-
-Every other file follows the `snake_case` rule. The animation pack's file kept the name its author gave it, `UAL1_Standard.glb`.
-
-<Steps>
-
-1. In the FileSystem dock, click `art/animations/UAL1_Standard.glb`, press <Kbd keys="F2" />, type `ual1_standard.glb`, and press <Kbd keys="Enter" />. Godot renames the file and its import settings, and fixes `character.tscn`, which names it.
-
-2. Keep the credit with the file. In `art/animations`, create a `README.md` if you do not have one, or edit yours. It should name the pack (Quaternius's Universal Animation Library, Standard, CC0), say where it came from, and say that `ual1_standard.glb` was renamed from the pack's `UAL1_Standard.glb`.
 
 </Steps>
 
@@ -310,7 +296,7 @@ Your project now contains:
 - art
   - README.md
   - animations
-    - ual1_standard.glb renamed
+    - UAL1_Standard.glb, with its README
   - character
     - character.tscn no script
   - ground no ground_tile_set.tres

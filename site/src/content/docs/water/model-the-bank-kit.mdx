@@ -305,12 +305,6 @@ A **Displace** modifier moves each vertex along its normal by the value of a tex
 
 3. Back on the modifier, set **Coordinates** to **Global**, **Direction** to **Normal**, **Strength** to `0.3`, **Midlevel** to `0.4`, and **Vertex Group** to `lumps`.
 
-	<Figure
-		src={displace}
-		alt="The modifier's panel in the Properties editor: a modifier named Lumps with texture Lumps, Coordinates Global, Direction Normal, Strength 0.300, Midlevel 0.400, and the vertex group lumps."
-		caption="The Displace modifier."
-	/>
-
 </Steps>
 
 Here is what each setting does. The Clouds texture makes soft noise with values from 0 to 1, with features about 0.3 meters wide at three levels of detail. The modifier moves a vertex by **Strength** times the texture minus **Midlevel**, so the lumps are mostly outward, up to 0.3 times 0.6 = 18 centimeters, and a few hollows go 12 centimeters inward. **Direction** is **Normal**, so a vertex moves straight out of the wall, whichever way the wall faces: that is what lets the same modifier work on a curved piece. **Coordinates** is **Global**, which reads the texture at the vertex's place in the world and not on the piece. That is why you slid the piece a meter: two pieces at different places get different lumps, from one modifier and one texture.
@@ -322,6 +316,12 @@ A second **Displace** modifier gives the lip its jag. The first is smooth, with 
 1. Add another **Displace** modifier under the first and rename it `Jag`. Click **New** in its **Texture** field, name the texture `Jag`, click the **Texture** tab and set **Type** to **Noise**.
 
 2. Set **Coordinates** to **Global**, **Direction** to **Normal**, **Strength** to `0.12`, **Midlevel** to `0.5`, and **Vertex Group** to `lip`. Each of the lip's vertices, 3 centimeters apart, moves by up to 6 centimeters in or out, by its own random number, and the weights keep the ends still.
+
+	<Figure
+		src={displace}
+		alt="The modifiers in the Properties editor: Lumps, and under it Jag with Strength 0.120, Midlevel 0.500, and the vertex group lip."
+		caption="The Lumps and Jag modifiers."
+	/>
 
 </Steps>
 
