@@ -118,13 +118,13 @@ Interpolation draws movement smoothly as long as your code moves things in Godot
 
 ## Name the physics layers
 
-Every physics object sits on one or more of 32 [physics layers](/reference/glossary/#physics-layer), and chooses which layers it collides with. Naming the layers you use means the Inspector shows `world` and `player` instead of bare numbers.
+Every physics object sits on one or more of 32 [physics layers](/reference/glossary/#physics-layer), and chooses which layers it collides with. Naming the layers you use means the Inspector shows `World` and `Player` instead of bare numbers.
 
 <Steps>
 
 1. Click **Layer Names > 3D Physics**.
 
-2. Click the field right of **Layer 1**, type `world`, and press <Kbd keys="Enter" />. Set **Layer 2** to `player` the same way.
+2. Click the field right of **Layer 1**, type `World`, and press <Kbd keys="Enter" />. Set **Layer 2** to `Player` the same way.
 
 	<Figure
 		src={layerNames}
@@ -134,7 +134,7 @@ Every physics object sits on one or more of 32 [physics layers](/reference/gloss
 
 </Steps>
 
-`world` is for the ground and everything solid standing on it. `player` is for the player, so that later things can tell the player apart from the world, such as water the player cannot walk into in lesson 47.
+`World` is for the ground and everything solid standing on it. `Player` is for the player, so that later things can tell the player apart from the world, such as water the player cannot walk into in lesson 47.
 
 ## The input map
 
@@ -243,7 +243,7 @@ Your project's files are the same as in lesson 2; only `project.godot` has chang
 
 - `[display]`: the 1280 by 720 window.
 - `[input]`: seven actions with their events.
-- `[layer_names]`: `world` and `player`.
+- `[layer_names]`: `World` and `Player`.
 - `[physics]`: physics interpolation on.
 
 <Solution label="Show the full project.godot">

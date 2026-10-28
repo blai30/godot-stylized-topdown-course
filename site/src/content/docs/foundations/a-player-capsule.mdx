@@ -62,7 +62,7 @@ Godot's physics moves **bodies**, and each body has one or more **collision shap
 - A `CharacterBody3D` moves only when your code tells it to, and slides along whatever it bumps into. It is made for players and characters.
 - A `RigidBody3D` is moved by forces and gravity, like a ball. The template does not need one.
 
-Each body sits on [physics layers](/reference/glossary/#physics-layer) and has a **mask**: the layers it collides with. In lesson 3 you named layer 1 `world` and layer 2 `player`. The player sits on `player` and collides with `world`.
+Each body sits on [physics layers](/reference/glossary/#physics-layer) and has a **mask**: the layers it collides with. In lesson 3 you named layer 1 `World` and layer 2 `Player`. The player sits on `Player` and collides with `World`.
 
 ## Build the player scene
 
@@ -110,7 +110,7 @@ Each body sits on [physics layers](/reference/glossary/#physics-layer) and has a
 
 7. Select `Player` and add one more `MeshInstance3D`, named `Nose`. It starts with a box: click the **BoxMesh** in its **Mesh** row to open it, and set its **Size** to `0.15`, `0.15`, `0.3`. Set the Nose's **Position** to `0`, `1.5`, `0.3`, so it sticks out of the capsule's face toward **+Z**.
 
-8. Select `Player`. In the Inspector, scroll down to **CollisionObject3D > Collision**. **Layer** shows a grid of numbered squares, with 1 lit. Click **2** and then **1**, so only 2 is lit: the player sits on the `player` layer. Hover a square to see its name. Leave **Mask** on 1, `world`.
+8. Select `Player`. In the Inspector, scroll down to **CollisionObject3D > Collision**. **Layer** shows a grid of numbered squares, with 1 lit. Click **2** and then **1**, so only 2 is lit: the player sits on the `Player` layer. Hover a square to see its name. Leave **Mask** on 1, `World`.
 
 	<Figure
 		src={layers}
@@ -204,7 +204,7 @@ The player needs something to stand on. The `Ground` in the meadow is only a mes
 
 </Steps>
 
-`Ground` now has a `StaticBody3D` child with a `CollisionShape3D` under it, on layer 1, `world`. **Static Body Child** makes the body for you: a collision shape only works under a body, and the ground's body must be static, never moving. **Sibling** would only add a shape beside the mesh, with no body to collide. **Trimesh** copies the mesh's triangles exactly, which suits flat ground that never moves.
+`Ground` now has a `StaticBody3D` child with a `CollisionShape3D` under it, on layer 1, `World`. **Static Body Child** makes the body for you: a collision shape only works under a body, and the ground's body must be static, never moving. **Sibling** would only add a shape beside the mesh, with no body to collide. **Trimesh** copies the mesh's triangles exactly, which suits flat ground that never moves.
 
 ### Put the player in the meadow
 

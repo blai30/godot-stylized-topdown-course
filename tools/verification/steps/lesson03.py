@@ -198,8 +198,8 @@ plugin._collect(window, "CheckButton", "Advanced Settings")[0].button_pressed = 
     # Layer names.
     section('Layer Names', '3D Physics'),
     {'op': 'wait', 'frames': 20},
-    setting('layer_1', '"world"'),
-    setting('layer_2', '"player"'),
+    setting('layer_1', '"World"'),
+    setting('layer_2', '"Player"'),
     {'op': 'wait', 'frames': 20},
     {'op': 'capture', 'name': 'l03_layers', 'window': WINDOW},
     # The input map.
