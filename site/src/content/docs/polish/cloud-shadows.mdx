@@ -102,7 +102,7 @@ The clouds are a seamless noise, like the ripples in lesson 46 but softer and bi
 1. Choose **Project > Project Settings...** and open the **Globals** tab and **Shader Globals**. Add three globals, one at a time, by typing the name, choosing the type, and clicking **Add**:
 
 	- `cloud_texture`, type `sampler2D`. Click its row's picker and choose `cloud_noise.tres`.
-	- `cloud_scale`, type `float`, value `45`. The texture repeats every 45 meters, which makes patches about 7 meters across.
+	- `cloud_scale`, type `float`, value `45`. The texture repeats every 45 meters, which makes patches roughly 7 meters across.
 	- `cloud_strength`, type `float`, value `0.5`. A full shadow takes half the light.
 
 	<Figure
@@ -121,7 +121,7 @@ The shared code goes in its own include, as the wind did.
 
 <Steps>
 
-1. The clouds drift with the wind, so the new include uses `wind_direction` from `wind.gdshaderinc`. A shader that includes both would declare `wind_direction` twice and fail. So first teach the wind include to be included more than once. Open `wind.gdshaderinc` and wrap the whole file in an **include guard**: a `#ifndef WIND_INCLUDED` line and `#define WIND_INCLUDED` at the top, and `#endif` at the bottom. The first time the file is included the name is not yet defined, so the code is used; every later time the name is defined and the preprocessor skips it.
+1. The clouds drift with the wind, so the new include uses `wind_direction` from `wind.gdshaderinc`. The foliage, bark, flower, grass, and water shaders already include `wind.gdshaderinc`, and they will include the clouds include too, so a shader that includes both would declare `wind_direction` twice and fail. So first teach the wind include to be included more than once. Open `wind.gdshaderinc` and wrap the whole file in an **include guard**: a `#ifndef WIND_INCLUDED` line and `#define WIND_INCLUDED` at the top, and `#endif` at the bottom. The first time the file is included the name is not yet defined, so the code is used; every later time the name is defined and the preprocessor skips it.
 
 	<Figure
 		src={windEditor}
@@ -134,8 +134,8 @@ The shared code goes in its own include, as the wind did.
 2. Choose **File > New Shader Include...**, set **Path** to `res://art/shaders/clouds.gdshaderinc`, and click **Create**. Type the include from the solution below the steps. Its pieces:
 
 	- `#include` of the wind include;
-	- the three globals, `cloud_texture`, `cloud_scale`, and `cloud_strength`, each with a comment saying what it is;
-	- two constants: `CLOUD_SPEED` `0.5`, the meters a second the clouds drift, and `CLOUD_EDGE` `(0.35, 0.65)`, the noise values where a cloud starts and where it is solid;
+	- the three globals, `cloud_texture`, `cloud_scale`, and `cloud_strength`, under one comment saying what they are;
+	- two constants: `const float CLOUD_SPEED = 0.5;`, the meters a second the clouds drift, and `const vec2 CLOUD_EDGE = vec2(0.35, 0.65);`, the noise values where a cloud starts and where it is solid;
 	- `float cloud_cover(vec2 world_xz, float time)`, how much of a point is under cloud;
 	- `float cloud_shadow(vec3 world_position, float time)`, the light a point keeps.
 
@@ -147,12 +147,12 @@ The shared code goes in its own include, as the wind did.
 
 </Steps>
 
-<Solution label="Show the full wind.gdshaderinc">
-	<Code code={piece2} lang="gdshader" title="art/shaders/wind.gdshaderinc" />
-</Solution>
-
 <Solution label="Show the full clouds.gdshaderinc">
 	<Code code={piece1} lang="gdshader" title="art/shaders/clouds.gdshaderinc" />
+</Solution>
+
+<Solution label="Show the full wind.gdshaderinc (only the guard lines are new)">
+	<Code code={piece2} lang="gdshader" title="art/shaders/wind.gdshaderinc" />
 </Solution>
 
 How the include works:
@@ -216,7 +216,7 @@ The water already reflects clouds, from its own noise (lesson 46). Now it reflec
 
 1. Open `water.gdshader`. Under the wind include add the clouds include. In the **clouds** uniform group, delete `cloud_meters` and `cloud_speed`: the include owns them now. Keep `cloud_height` and `cloud_opacity`.
 
-2. In `fragment()`, replace the three lines that found `cloud_at`, `cloud_noise`, and `cover` with two: `cloud_at` is the point on the cloud plane as before, without the drift, and `cover` is `cloud_cover(cloud_at, TIME) * cloud_opacity * (1.0 - found)`.
+2. In `fragment()`, find the three lines that start `vec2 cloud_at = `, `float cloud_noise = `, and `float cover = `, and replace them with two: `vec2 cloud_at = world_xz + reflected_world.xz * (cloud_height / max(reflected_world.y, 0.1));`, which is the point on the cloud plane as before without the drift, and `float cover = cloud_cover(cloud_at, TIME) * cloud_opacity * (1.0 - found);`. The `cloud_noise` line goes entirely. Lesson 46 described the `cloud_meters` and `cloud_speed` uniforms; the clouds include replaces them.
 
 	<Figure
 		src={waterEditor}
@@ -230,7 +230,7 @@ The water already reflects clouds, from its own noise (lesson 46). Now it reflec
 	<Code code={piece9} lang="gdshader" title="art/shaders/water.gdshader" />
 </Solution>
 
-Now the pond shows the same cloud the grass beside it is in. The reflection is faint on purpose, as in lesson 46.
+Now the pond shows the same cloud the grass beside it is in. The reflection is faint on purpose, as in lesson 46. To see it for yourself, set `cloud_strength` to `0` in Project Settings and run again, then put it back to `0.5`.
 
 <Figure
 	src={pondOff}
@@ -263,14 +263,14 @@ Run the meadow. Wait a minute and the patches slide across it. At noon the shado
 <Figure
 	src={night}
 	alt="The meadow at night, dark blue, with no visible cloud pattern."
-	caption="Night: the shadows have nothing left to darken."
+	caption="Night: no cloud pattern shows."
 />
 
-The shadows need no special night handling. A shadow takes a share of the light, and at night there is almost none.
+The shadows have no special night handling, and the night capture shows no cloud pattern: a shadow takes a share of the light, and at night the scene has little light to take it from.
 
 ## Try it
 
-- Set `cloud_strength` to `0.8` in Project Settings for heavy, stormy shade, or `0.25` for a faint one.
+- Try `cloud_strength` at `0.8` in Project Settings for heavy shade, or `0.25` for a faint one.
 - Set `cloud_scale` to `20` for small, busy clouds, or `120` for slow, wide ones. The texture does not change; it is just stretched.
 - Change `CLOUD_EDGE` to `(0.45, 0.5)` for hard-edged shadows, like an overcast sky with gaps.
 - Change `wind_direction` in the shader globals and the clouds change direction with the grass.
@@ -299,7 +299,7 @@ Your project now contains:
     - **clouds.gdshaderinc**
     - wind.gdshaderinc with an include guard
     - bank.gdshader, bark.gdshader, flower.gdshader, foliage.gdshader, grass.gdshader, and water.gdshader now use the clouds
-- project.godot with three new shader globals
+- project.godot with three more shader globals
 </FileTree>
 
 Commit your work: `git add .` and `git commit -m "Add cloud shadows"`. Lesson 54 adds bushes to the meadow.

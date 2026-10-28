@@ -12,7 +12,7 @@ lesson:
     - How a gradient map turns a grayscale texture into a range of colors
     - How to make and edit a GradientTexture1D in the Inspector
     - How an exported property sets a different instance shader parameter on each copy of a tree
-  prerequisites: [25, 27, 28]
+  prerequisites: [25, 27, 28, 53]
 ---
 
 import { Aside, Code, FileTree, Steps } from '@astrojs/starlight/components';
@@ -62,7 +62,7 @@ The difference matters for autumn. Try the flat way first.
 
 2. In the Inspector, under **Geometry**, click the picture of **Material Override**. The Inspector now shows `leaves.tres`. Set **Leaf Color** to `#E6731F`, an orange, and save the scene with <Kbd keys="Ctrl+S" mac="Cmd+S" />.
 
-3. Press <Kbd keys="F5" mac="Cmd+B" /> to run and zoom in on the oaks.
+3. Open `levels/meadow.tscn`, click **Play Scene**, <Kbd keys="F6" mac="Cmd+R" />, and zoom in on the oaks.
 
 </Steps>
 
@@ -108,9 +108,9 @@ The new shader keeps the green path exactly as it was, so the pine, which has it
 	const vec2 GRAY_RANGE = vec2(0.33, 0.72);
 	```
 
-	The atlas you painted keeps its grays between about 0.33 and 0.72, measured in the reference project. If the ramp were indexed by the raw gray, a third of it would never be used. This stretches the used grays across the whole ramp.
+	The atlas you painted keeps its grays between about 0.33 and 0.72; these are the values that fit the reference project's atlas. If the ramp were indexed by the raw gray, a third of it would never be used. This stretches the used grays across the whole ramp.
 
-4. In `fragment()`, replace the line that sets `ALBEDO` with:
+4. In `fragment()`, replace the line that starts `ALBEDO = leaf_color * leaf.rgb` with the lines below. Keep the `ALBEDO *= cloud_shadow` line from lesson 53 under it:
 
 	```glsl
 	vec3 green = leaf_color * leaf.rgb * LEAF_GAIN;
@@ -181,7 +181,7 @@ Setting an instance shader parameter by hand on a copy of a scene is awkward, be
 
 <Steps>
 
-1. In your editor, create `src/World/AutumnTree.cs`. Save the code below into it.
+1. In your editor, create `src/World/AutumnTree.cs` and write it from the list below. The finished script is in the solution under the list.
 
 2. Click **Build Project** in Godot's toolbar.
 
@@ -199,7 +199,7 @@ Write the script so that:
 	<Code code={piece2} lang="csharp" title="src/World/AutumnTree.cs" />
 </Solution>
 
-The trunk, `tree_oak`, is a geometry instance too and gets the value, but its bark shader has no `autumn`, so Godot ignores it there.
+The trunk, `tree_oak`, is a geometry instance too and gets the value, but the trunk's material does not use it, so it has no effect there.
 
 <Steps>
 
@@ -237,7 +237,7 @@ The trunk, `tree_oak`, is a geometry instance too and gets the value, but its ba
 
 ## Try it
 
-Press <Kbd keys="F5" mac="Cmd+B" /> to run.
+With `levels/meadow.tscn` open, click **Play Scene**, <Kbd keys="F6" mac="Cmd+R" />.
 
 <Figure
 	src={grove}
@@ -255,7 +255,7 @@ Press <Kbd keys="F5" mac="Cmd+B" /> to run.
 	/>
 
 	Look at the same crowns as before. The shaded leaves are deep red-brown, the lit ones are yellow, and the crown has more colors than the flat orange had.
-- Set the day to dusk. The autumn colors are lit and warmed by the same code as the green ones.
+- Open the pause panel from lesson 55 and drag **Time of day** to dusk, about `0.8`. The autumn colors are lit and warmed by the same code as the green ones.
 
 	<Figure
 		src={groveDusk}

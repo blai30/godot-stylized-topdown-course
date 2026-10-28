@@ -41,13 +41,13 @@ The Debugger is the panel at the bottom of the editor. While a game runs from th
 
 <Steps>
 
-1. Open `levels/meadow.tscn` and press <Kbd keys="F5" mac="Cmd+B" /> to run it, or **Play Scene**. In the editor, open the **Debugger** panel and its **Monitors** tab.
+1. Open `levels/meadow.tscn` and click **Play Scene**, <Kbd keys="F6" mac="Cmd+R" />, to run it. In the editor, open the **Debugger** panel and its **Monitors** tab.
 
 2. The list on the left holds every monitor the engine keeps, in groups, starting with **Time** and **Memory**, with the render counts further down. Tick the box beside **FPS**, **Process**, and **Total Draw Calls**. A graph for each appears on the right and moves with the game.
 
 	<Figure
 		src={monitors}
-		alt="The Debugger's Monitors tab with FPS, Process, and Total Draw Calls ticked: three graphs on the right, FPS at 276, Process at 17.31 ms, and Total Draw Calls at 196."
+		alt="The Debugger's Monitors tab with FPS, Process, and Total Draw Calls ticked: three graphs on the right, FPS at 276 and Total Draw Calls at 196."
 		caption="The meadow, measured."
 	/>
 
@@ -65,11 +65,11 @@ Three numbers are worth knowing:
 
 ### The frame rate shows the screen, not the game
 
-The game caps itself to the screen's refresh rate while **VSync** is on, which is why the pause panel from lesson 55 has the switch. Press <Kbd keys="Esc" mac="Esc" />, turn **VSync** off, and press Resume. On the test computer the meadow then ran at about 230 to 280 frames a second, and the generated level at about 160 to 170. Those readings moved by 10 percent from one minute to the next, so use them to compare big differences, and use the draw call and triangle counts for small ones.
+The game caps itself to the screen's refresh rate while **VSync** is on, which is why the pause panel from lesson 55 has the switch. Press <Kbd keys="Esc" mac="Esc" />, turn **VSync** off, and press Resume. On the test computer the meadow then ran at about 270 to 305 frames a second, and the generated level at about 160 to 175. Those readings moved by 10 percent or more from one minute to the next, so use them to compare big differences, and use the draw call and triangle counts for small ones.
 
 ### Take one thing away at a time
 
-The way to find a cost is to remove a part of the scene and read the counts again. The counts below come from reading the Monitors' numbers in the running game, with the day held at noon.
+The way to find a cost is to remove a part of the scene and read the counts again. The counts below come from the Monitors' numbers in the running game, with the day held at noon (the clock's **Running** off, or the pause panel's slider at the middle).
 
 | Meadow | Draw calls | Objects | Triangles |
 |---|---|---|---|
@@ -89,16 +89,16 @@ The way to find a cost is to remove a part of the scene and read the counts agai
 | Water hidden | 517 | 673 | 1,051,850 |
 | Ambient occlusion off | 518 | 674 | 1,051,852 |
 
-You turn the shadows off with the pause panel's **Shadows** switch. The rest was done by hiding the node and reading the counts: `Grass`, `Trees`, `Water`, and the environment's **Ambient Occlusion** setting.
+You turn the shadows off with the pause panel's **Shadows** switch. The rest was done while the game ran: in the Scene dock's **Remote** tree, which shows the running game's nodes, turn **Visible** off on `Grass`, `Trees`, and `Water` one at a time, and read the counts; for ambient occlusion, turn off the **Ambient Occlusion** setting of the `WorldEnvironment`'s environment in the Inspector.
 
 What the numbers say:
 
 - **Shadows cost the most draw calls.** The sun draws every tree, rock, and bush a second time into its shadow map. Turning it off took 81 of 196 draw calls out of the meadow and 278 of 518 out of the generated level. A **Shadows** switch in a settings panel is a real feature for slow computers, not a gimmick.
 - **Grass is the triangle cost, not the draw call cost.** It is about 72 percent of the meadow's triangles, 195 thousand of 271 thousand, and 32 of its 196 draw calls. That is what the `MultiMesh` from lesson 32 is for: thousands of blades go to the card in a few calls. A game that has to be lighter lowers the grass density first.
-- **Trees cost objects.** Hiding the generated level's trees took 183 of its 674 objects away. Each tree is a few draw calls, and a level with hundreds of them adds up.
-- **Water and ambient occlusion do not show in the counts.** The water is one or two draw calls; its cost is in the pixels it covers, because it reads the frame behind it. Ambient occlusion is a screen effect with no draw calls of its own. Both show only in the frame time, and the frame rate readings on the test computer did not change by more than their usual spread.
+- **Trees cost objects.** Hiding the generated level's trees took 183 of its 674 objects away. A tree adds objects and little else: 183 trees' worth of objects cost 27 draw calls here. A level with hundreds of them still adds up.
+- **Water and ambient occlusion do not show in the counts.** The water is one or two draw calls; what it costs would be in the pixels it covers, which these counts cannot show. Ambient occlusion is a screen effect with no draw calls of its own. Both could only show in the frame time, and the frame rate readings on the test computer moved about as much as they do from run to run.
 
-None of this needs a change for the template. It tells you what to reach for when something is slow: shadows, then grass density, then prop count, and only then the effects.
+None of this needs a change for the template. By draw calls the order is shadows, then grass and trees. By frame rate, which is noisier, hiding the grass gained the most (to about 390 in the meadow and 260 in the generated level), shadows came next (about 330 and 205), and the rest moved less than the noise. So when something is slow, reach for the grass density and the shadows first, then the prop count, and only then the effects.
 
 ## Export a build
 
@@ -152,14 +152,14 @@ An export is a copy of Godot's own game program with your project's files added 
 <Aside type="caution" title="Signing">
 	The dialog warns that a build with no code signature is blocked by Gatekeeper when someone else downloads it. A build you make and run on your own Mac, like this one, runs. A build you give to other people must be signed and notarized with an Apple developer account, which is outside this course.
 
-	Godot's **Built-in (ad-hoc only)** option is not a way around it. On the test computer, an app exported with it was killed by macOS the moment it launched, with each combination of **Distribution Type** and entitlements tried, so the lesson uses **Disabled**.
+	Godot's **Built-in (ad-hoc only)** option is not a way around it. On the test computer, by hand, an app exported with it was killed by macOS the moment it launched, with **Distribution** and **Testing** and with **Disable Library Validation** and **Allow JIT Code Execution** on, so the lesson uses **Disabled**.
 </Aside>
 
 ### The first export fails
 
 <Steps>
 
-1. Click **Export Project...**. A file dialog opens at the project's folder with `TopDownTemplate.zip` as the name, the filter **All Recognized (\*.dmg, \*.zip, \*.app)**, and an **Export With Debug** box, off. Pick the `builds` folder beside the project (make it with the dialog's **Create a new folder** button if it is not there) and click **Save**.
+1. Click **Export Project...**. A file dialog opens with `TopDownTemplate.zip` as the name, the filter **All Recognized (\*.dmg, \*.zip, \*.app)**, and an **Export With Debug** box, off. Make sure it is in the `builds` folder beside the project (make the folder with the dialog's **Create a new folder** button if it is not there) and click **Save**.
 
 2. The export fails.
 
@@ -242,7 +242,6 @@ The same dialog makes the other platforms. **Add...** has **Windows Desktop** an
 - **The Download from menu is gray.** The editor is in offline mode. Set **Network Mode** to **Online** in **Editor Settings**.
 - **The export fails with "Failed to build project".** Open the **MSBuild** panel. A script that inherits `EditorScript`, or uses another editor-only class, must be wrapped in `#if TOOLS`.
 - **macOS kills the app the moment it starts.** This is the **Built-in (ad-hoc only)** signing option. Set **Codesign** to `Disabled` for a build to run on your own Mac.
-- **The app starts and prints an error about a file in `res://.capture`.** That is not from your project; ignore a message about a driver script that your own project does not have.
 
 ## Checkpoint
 

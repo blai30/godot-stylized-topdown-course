@@ -78,7 +78,7 @@ You will also make the panel's look in a **Theme**. A theme is one resource that
 		caption="Saved in ui."
 	/>
 
-3. Open the **Theme** panel at the bottom of the editor. This is the Theme editor. The big area on the left shows a preview of every control with the theme applied. On the right are a **Type** list and tabs for each kind of item: colors, constants, fonts, font sizes, icons, style boxes, and sounds.
+3. Open the **Theme** panel at the bottom of the editor. This is the Theme editor. The big area on the left shows a preview of every control with the theme applied. On the right are a **Type** list and tabs for each kind of item, with hover texts such as **Colors**, **Constants**, **Fonts**, **Font Sizes**, **Icons**, **StyleBoxes**, and **Sounds**.
 
 	<Figure
 		src={themeEditor}
@@ -100,7 +100,7 @@ A theme holds items by **type**, and a type is a control class: `PanelContainer`
 		caption="The PanelContainer type."
 	/>
 
-2. Open the **StyleBoxes** tab (the last icon, with the colorful squares). With **Show Default** on, every item the type has by default is listed in gray, with a **+** (**Override Item**) beside it. Click **+** beside `panel`, and the item becomes yours. It is empty. Open the item's resource menu and choose **StyleBoxFlat**, then click the StyleBoxFlat in the row. It opens in the Inspector.
+2. Open the **StyleBoxes** tab (its hover text; the icon of colorful squares). With **Show Default** on, every item the type has by default is listed in gray, with a **+** (**Override Item**) beside it. Click **+** beside `panel`, and the item becomes yours. It is empty. Open the item's resource menu and choose **StyleBoxFlat**, then click the StyleBoxFlat in the row. It opens in the Inspector.
 
 3. Set the StyleBoxFlat's properties in the Inspector:
 
@@ -169,7 +169,7 @@ Only the items you changed are in the file. A control asks the theme for an item
 	<Code code={piece1} lang="csharp" title="src/UI/PausePanel.cs" />
 </Solution>
 
-The pause is Godot's own. Setting `GetTree().Paused` stops every node whose **Process Mode** is **Inherit** or **Pausable**: the clock, the player, the wind. A node set to **Always** keeps running, so the panel can still be clicked. Nothing else needs to know about the pause.
+The pause is Godot's own. Setting `GetTree().Paused` stops every node whose **Process Mode** is **Inherit** or **Pausable**: the clock and the player. (The wind of the shaders runs on the shader's own clock, so it keeps moving.) A node set to **Always** keeps running, so the panel can still be clicked. Nothing else needs to know about the pause.
 
 ## The scene
 
@@ -185,7 +185,7 @@ The pause is Godot's own. Setting `GetTree().Paused` stops every node whose **Pr
 
 2. Select the root. In the Inspector, under **Layout**, set **Anchors Preset** to **Full Rect**, so it covers the screen. Under **Theme**, set **Theme** to `ui/theme.tres` with Quick Load, and under **Script**, set `src/UI/PausePanel.cs`.
 
-3. Add the children, each under the one before it, and set what the table says. Everything not listed stays as it is.
+3. Add the children, each under the node the **Under** column names, and set what the table says. Everything not listed stays as it is.
 
 	| Node | Under | Set |
 	|---|---|---|
@@ -271,9 +271,9 @@ Turn **Shadows** off, and every tree and rock loses its shadow at once.
 	caption="Shadows off."
 />
 
-Press **Resume** and the day goes on from the hour you chose. Turn **VSync** off and on to see the frame rate change on a fast computer.
+Press **Resume** and the day goes on from the hour you chose. Turn **VSync** off and on, and the game's frame rate stops following the screen's.
 
-A run of the game confirms it:
+A scripted run of the game, with Escape sent as the real `ui_cancel` input and the controls set by calls, confirms it:
 
 - Pausing stops the day: the time of day was `0.50794` when the panel opened and still `0.50794` a second and a half later.
 - The slider set the time to `0.78` exactly, and the clock held it while paused.

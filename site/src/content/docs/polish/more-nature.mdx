@@ -55,7 +55,7 @@ You made the oak's scene from its `.glb` in lesson 24. The bush starts the same 
 
 1. In the FileSystem dock make a folder `res://art/nature/bush`.
 
-2. Choose **Scene > New Inherited Scene...** and pick `art/nature/tree_oak/tree_oak.glb`. The root is named `tree_oak2`, with two children, `leaves` and `tree_oak`, the crown and the trunk. Rename the root `Bush`.
+2. Choose **Scene > New Inherited Scene...** and pick `art/nature/tree_oak/tree_oak.glb`. Godot names the root `tree_oak2`, because the model already has a child called `tree_oak`. It has two children, `leaves` and `tree_oak`, the crown and the trunk. Rename the root `Bush`.
 
 	<Figure
 		src={inheritDialog}
@@ -63,11 +63,11 @@ You made the oak's scene from its `.glb` in lesson 24. The bush starts the same 
 		caption="The same model as the oak."
 	/>
 
-3. Select the `tree_oak` node, the trunk, and turn **Visible** off in the Inspector. A bush has no trunk. The mesh stays in the scene, hidden, because a node an imported scene brings cannot be deleted without making the scene its own copy.
+3. Select the `tree_oak` node, the trunk, and turn **Visible** off in the Inspector. A bush has no trunk. The mesh stays in the scene, hidden, because a node that comes from the imported model cannot be deleted in an inherited scene.
 
 4. Select `leaves`. Set **Material Override** to `art/nature/tree_oak/leaves.tres`, the oak's leaf material, so the bush takes the same colors, the wind, and the cloud shadows without a second material to keep in step. Under **Transform** set **Scale** to `0.5, 0.35, 0.5` and **Position** to `0, -0.51, 0`.
 
-	The oak's crown starts 1.45 meters above its origin, and the crown is squashed to 0.35 of its height, so it must move down by 1.45 times 0.35, about 0.51, for its underside to sit on the ground. The crown is also squashed to half its width, so a bush is a little more than 2 meters across and 1.4 meters tall.
+	The oak's crown starts 1.45 meters above its origin, and the crown is squashed to 0.35 of its height, so it must move down by 1.45 times 0.35, about 0.51, for its underside to sit on the ground. The crown is also squashed to half its width, so a bush is about 2.4 meters across and 1.4 meters tall. The oak's crown measures about 4.7 meters across and 4.1 meters tall in the model, and the scale takes it from there.
 
 	<Figure
 		src={crown}
@@ -83,7 +83,7 @@ You made the oak's scene from its `.glb` in lesson 24. The bush starts the same 
 
 1. Select the root and add a **StaticBody3D** named `Body`, and under it a **CollisionShape3D** named `Shape`. Give `Shape` a **New CylinderShape3D** with **Radius** `0.7` and **Height** `1.0`, and set its **Position** to `0, 0.5, 0`. The cylinder is smaller than the crown on purpose: the player can brush through the outer leaves, and cannot walk through the middle.
 
-2. Select the root and set its **Script** to `src/World/WindPhase.cs`, with Quick Load, as for the trees in lesson 28. It gives each bush its own phase in the wind, so a row of them does not sway in step. A bush sways much less than a tree, because the foliage shader's sway grows with height above the ground.
+2. Select the root and set its **Script** to `src/World/WindPhase.cs`, with Quick Load, as for the trees in lesson 28. It gives each bush its own phase in the wind, so a row of them does not sway in step. A bush leans much less than a tree, because the foliage shader's lean grows with height above the ground; the leaves flutter as much as the oak's.
 
 	<Figure
 		src={bushSceneShot}
@@ -119,7 +119,7 @@ You made the oak's scene from its `.glb` in lesson 24. The bush starts the same 
 	| `Bush2` | `-1, 0, 7` | `120` | `0.8` |
 	| `Bush3` | `0.5, 0, 6.2` | `250` | `0.9` |
 
-	The turns and the sizes keep three copies of one model from looking like copies.
+	`Bush2` and `Bush3` are turned and resized, which keeps three copies of one model from looking like copies.
 
 	<Figure
 		src={selectScene}
@@ -133,11 +133,11 @@ You made the oak's scene from its `.glb` in lesson 24. The bush starts the same 
 		caption="Three bushes under Bushes."
 	/>
 
-3. Save the scene and run it.
+3. Save the scene and run it with **Play Scene**, <Kbd keys="F6" mac="Cmd+R" />.
 
 </Steps>
 
-Walk the player into the middle bush. It stops about 0.9 meters from the bush's center, which is the bush's 0.7 meter body and the player's own width: you cannot walk through it. The bushes cast soft shadows on the grass and take the cloud shadows from lesson 53 like the trees.
+Walk the player into the middle bush. In the verified run it stopped 0.86 meters from the bush's center: the body's radius is 0.56 meters (0.7 at the bush's scale of 0.8) and the player's own radius is 0.3. You cannot walk through it. The bushes cast soft shadows on the grass and take the cloud shadows from lesson 53 like the trees.
 
 <Figure
 	src={meadowWide}
@@ -157,7 +157,7 @@ The generator grows what its profile's rules say, and the bush is one more rule.
 
 <Steps>
 
-1. Open `world/generation/generation_profile.tres`. Open its **Rules** array, set its **Size** to `3`, and in the new element choose **New PropRule**. Open the element and set:
+1. Open `world/generation/generation_profile.tres`. Open its **Rules** array. It holds the oak and the pine rules from lesson 51. Set its **Size** to `3`, and in the new, empty third element choose **New PropRule**. Open the element and set:
 
 	- **Scene** to `art/nature/bush/bush.tscn`;
 	- **Weight** to `2`, so a bush is chosen two times in seven;
@@ -183,7 +183,7 @@ The generator grows what its profile's rules say, and the bush is one more rule.
 
 </Steps>
 
-With seed 15 the level has 86 props: 28 oaks, 17 pines, and 41 bushes. The closest two are 1.52 meters apart, none is in water, and pressing **Generate** again gives exactly the same props. The rules do what they did for the trees; nothing in the generator changed.
+In the verified run, with seed 15 the level had 86 props: 28 oaks, 17 pines, and 41 bushes. Bushes are more than their share of the weight because their spacing and shore distance are smaller, so more of them fit. The closest two props were 1.52 meters apart, none was in water, and pressing **Generate** again gave exactly the same props. The rules do what they did for the trees; nothing in the generator changed.
 
 <Figure
 	src={genGrove}
@@ -207,8 +207,8 @@ With seed 15 the level has 86 props: 28 oaks, 17 pines, and 41 bushes. The close
 
 - Change the bush's **Weight** to `0.5` for a rare bush, or `6` for a meadow thick with them.
 - Change the crown's **Scale** to `0.7, 0.5, 0.7` for a big shrub.
-- Change the leaf color for the bush alone: make the material unique on `leaves` and change **Leaf Color**. It then no longer follows the oak. Lesson 57 shows a better way, a color that is set on each copy.
-- Add a rule for a bush with a **Starts At** of `-0.5`, so some grow out in the open meadow and not only in groves.
+- Change the leaf color for the bush alone: make the material unique on `leaves` and change **Leaf Color**. It then no longer follows the oak. The optional bonus lesson 57 shows a better way, a color that is set on each copy.
+- Set the rules' **Size** to `4` and add a second bush rule with a **Starts At** of `-0.5`, so some bushes grow out in the open meadow and not only in groves.
 
 ## If it does not work
 
