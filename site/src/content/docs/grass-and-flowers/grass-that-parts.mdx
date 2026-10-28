@@ -194,11 +194,11 @@ The template has one push point, because it has one character. A game with enemi
 ## If it does not work
 
 - **The grass does not move at all.** The global is not named `push_point`, or it is not a `vec4`. Check **Project Settings > Globals > Shader Globals**. The name is also in `PushPoint.cs`.
-- **The grass moves where the player was, not where it is.** `_Process` is not running: the script did not build, or the node's script is empty.
+- **The grass leans away from the wrong place.** A second `PushPoint` is writing the same global. Keep only one.
 - **The whole clump jumps away.** The push uses the clump's root and not the vertex's own spot. The call in `grass.gdshader` must pass `VERTEX.x` and `VERTEX.z`.
 - **The blades are pushed into the ground and the flowers float.** `ground.y` is wrong: the grass uses `clump_origin.y` and the flower `MODEL_MATRIX[3].y`.
 - **The grass parts around the origin when the player is gone.** The global is `0, 0, 0, 0` and the shader treats a radius of 0 as a push. `push_aside` must give a `push` of 0 when `push_point.w` is 0.
-- **A shader error says "Unknown identifier push_aside".** The include is not in the shader: add the `#include` line.
+- **A shader error complains about `push_aside`.** The function is unknown because the include is not in the shader: add the `#include` line.
 
 ## Checkpoint
 

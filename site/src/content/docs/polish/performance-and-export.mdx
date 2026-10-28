@@ -69,7 +69,7 @@ The game caps itself to the screen's refresh rate while **VSync** is on, which i
 
 ### Take one thing away at a time
 
-The way to find a cost is to remove a part of the scene and read the counts again. The counts below come from the Monitors' numbers in the running game, with the day held at noon (the clock's **Running** off, or the pause panel's slider at the middle).
+The way to find a cost is to remove a part of the scene and read the counts again. The counts below come from the Monitors' numbers in the running game, with the day held at noon (the clock's **Running** off). The same steps were run on `levels/generated.tscn`, the level lesson 52 builds. **Objects** is **Total Objects** in the **Render** group, and **Triangles** is **Total Primitives**.
 
 | Meadow | Draw calls | Objects | Triangles |
 |---|---|---|---|
@@ -89,13 +89,13 @@ The way to find a cost is to remove a part of the scene and read the counts agai
 | Water hidden | 517 | 673 | 1,051,850 |
 | Ambient occlusion off | 518 | 674 | 1,051,852 |
 
-You turn the shadows off with the pause panel's **Shadows** switch. The rest was done while the game ran: in the Scene dock's **Remote** tree, which shows the running game's nodes, turn **Visible** off on `Grass`, `Trees`, and `Water` one at a time, and read the counts; for ambient occlusion, turn off the **Ambient Occlusion** setting of the `WorldEnvironment`'s environment in the Inspector.
+You turn the shadows off with the pause panel's **Shadows** switch. The rest was done while the game ran: in the Scene dock's **Remote** tree, which shows the running game's nodes, turn **Visible** off on `Grass`, `Trees`, and `Water` one at a time (press Resume first, since the pause panel pauses the game), and read the counts; for ambient occlusion, turn off the **Ambient Occlusion** setting of the `WorldEnvironment`'s environment in the Inspector.
 
 What the numbers say:
 
 - **Shadows cost the most draw calls.** The sun draws every tree, rock, and bush a second time into its shadow map. Turning it off took 81 of 196 draw calls out of the meadow and 278 of 518 out of the generated level. A **Shadows** switch in a settings panel is a real feature for slow computers, not a gimmick.
 - **Grass is the triangle cost, not the draw call cost.** It is about 72 percent of the meadow's triangles, 195 thousand of 271 thousand, and 32 of its 196 draw calls. That is what the `MultiMesh` from lesson 32 is for: thousands of blades go to the card in a few calls. A game that has to be lighter lowers the grass density first.
-- **Trees cost objects.** Hiding the generated level's trees took 183 of its 674 objects away. A tree adds objects and little else: 183 trees' worth of objects cost 27 draw calls here. A level with hundreds of them still adds up.
+- **Trees cost objects.** Hiding the generated level's trees took 183 of its 674 objects away. A tree adds objects and little else: those 183 objects cost 27 draw calls here. A level with hundreds of them still adds up.
 - **Water and ambient occlusion do not show in the counts.** The water is one or two draw calls; what it costs would be in the pixels it covers, which these counts cannot show. Ambient occlusion is a screen effect with no draw calls of its own. Both could only show in the frame time, and the frame rate readings on the test computer moved about as much as they do from run to run.
 
 None of this needs a change for the template. By draw calls the order is shadows, then grass and trees. By frame rate, which is noisier, hiding the grass gained the most (to about 390 in the meadow and 260 in the generated level), shadows came next (about 330 and 205), and the rest moved less than the noise. So when something is slow, reach for the grass density and the shadows first, then the prop count, and only then the effects.

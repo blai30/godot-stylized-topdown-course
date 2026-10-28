@@ -373,9 +373,9 @@ Finish as in lesson 26, in the same order:
 		caption="The foliage shader with the pine's atlas and a darker green."
 	/>
 
-3. Select the `tree_pine` node, the trunk, and set its **Material Override** to `art/nature/tree_oak/bark.tres`: the same bark material, because the shader is the same and the trunk's UV points at the darker swatch.
+3. Select the `tree_pine` node, the trunk, and set its **Material Override**: click the empty field, choose **Quick Load...**, and pick `art/nature/tree_oak/bark.tres`: the same bark material, because the shader is the same and the trunk's UV points at the darker swatch.
 
-4. Add a `StaticBody3D` named `Trunk` to the root, with a `CollisionShape3D` named `TrunkShape` under it, as in lesson 28. Give the shape a **CylinderShape3D** with **Radius** `0.3`, and set its **Position** to `0, 1, 0`. Select the root and set its **Script** to `WindPhase.cs`, the script from lesson 28.
+4. Add a `StaticBody3D` named `Trunk` to the root, with a `CollisionShape3D` named `TrunkShape` under it, as in lesson 28. Give the shape a **CylinderShape3D** with **Radius** `0.3` (leave **Height** at `2`), and set its **Position** to `0, 1, 0`. Select the root and set its **Script** to `WindPhase.cs`, the script from lesson 28.
 
 5. Save the scene as `tree_pine.tscn`.
 
@@ -419,7 +419,7 @@ Nothing in the shader changed. The cards carry the same data, so the same shader
 
 <Figure
 	src={dusk}
-	alt="The game at dusk: two pines among the oaks, deep green with an olive light on their upper tiers, and long shadows."
+	alt="The game at dusk: three pines among the oaks, one cut off by the top edge, deep green, and long shadows."
 	caption="Dusk."
 />
 

@@ -220,7 +220,7 @@ The scatter finds the models by name, as it did the clumps. It now handles each 
 
 	<Figure
 		src={tile2}
-		alt="The Inspector on the Dirt tile: Grass Density 0.1, Flower Density 0, Pebble Density 0.4, Mushroom Density 0, and Walk Speed 1.15."
+		alt="The Inspector on the Dirt tile: Grass Density 0.1, Flower Density 0, Pebble Density 0.4, and Mushroom Density 0, with the Sand tile above it."
 		caption="The dirt tile: pebbles on almost half its squares, no mushrooms."
 	/>
 
@@ -244,7 +244,7 @@ The scatter finds the models by name, as it did the clumps. It now handles each 
 
 ## Dirt patches
 
-A patch is a decal. A **`Decal`** node is a box, and inside the box it paints its **Texture Albedo** onto every surface it touches, as a sticker projected from above. No mesh and no tile has to change, and a decal can be moved, turned, and stretched like any node.
+A patch is a decal. A **`Decal`** node is a box, and inside the box it paints its **Albedo** texture onto every surface it touches, as a sticker projected from above. No mesh and no tile has to change, and a decal can be moved, turned, and stretched like any node.
 
 For the texture, the patch needs a shape whose edge fades out to nothing, so it blends into the ground. A **`GradientTexture2D`** does that: a gradient filled outward from the middle, brown in the middle and transparent at the rim.
 
@@ -254,15 +254,15 @@ For the texture, the patch needs a shape whose edge fades out to nothing, so it 
 
 2. In the Inspector set the decal's **Position** to `1.9, 0, -0.7`, its **Rotation** to `0, 20, 0`, and its **Size** to `2.4, 0.6, 1.6`. The decal is a box 2.4 meters wide, 0.6 high, and 1.6 deep, with its middle on the ground: it reaches 30 centimeters above and below.
 
-3. Set **Texture Albedo** to a **New GradientTexture2D**, and click it to open it. Set **Fill** to **Radial**, **Width** and **Height** to `256`, **Fill From** to `0.5, 0.5` and **Fill To** to `1, 0.5`: the gradient runs from the middle of the texture to the middle of its right edge, so the rim is where the gradient ends. Set **Gradient** to a **New Gradient**, and give it three colors: `7A5638` at offset `0`, `8A6342` at `0.55`, and `8A6342` with an alpha of `0` at `1`. In the gradient's editor, click a color marker, set its offset, and click the color to change it.
+3. Under **Textures**, set **Albedo** to a **New GradientTexture2D**, and click it to open it. Set **Fill** to **Radial**, **Width** and **Height** to `256`, **Fill From** to `0.5, 0.5` and **Fill To** to `1, 0.5`: the gradient runs from the middle of the texture to the middle of its right edge, so the rim is where the gradient ends. Set **Gradient** to a **New Gradient**, and give it three colors: `7A5638` at offset `0`, `8A6342` at `0.55`, and `8A6342` with an alpha of `0` at `1`. In the gradient's editor, click a color marker, set its offset, and click the color to change it.
 
 	<Figure
 		src={decalInspector}
-		alt="The Inspector on a Decal: Size 2.4, 0.6, 1.6, and a Texture Albedo that is a GradientTexture2D with a radial fill and a brown-to-transparent gradient."
+		alt="The Inspector on a Decal: an Albedo under Textures that is a GradientTexture2D with a radial fill and a brown-to-transparent gradient."
 		caption="The first patch."
 	/>
 
-4. Choose **Save As...** from the **Texture Albedo** row's menu and save it as `dirt_patch.tres` in `art/ground`, so the other patches can share it.
+4. Choose **Save As...** from the **Albedo** row's menu and save it as `dirt_patch.tres` in `art/ground`, so the other patches can share it.
 
 	<Figure
 		src={saveTexture}
@@ -270,7 +270,7 @@ For the texture, the patch needs a shape whose edge fades out to nothing, so it 
 		caption="The patch texture, saved."
 	/>
 
-5. Add two more decals under `Patches`, `Patch2` and `Patch3`, with **Texture Albedo** set to `dirt_patch.tres` by **Quick Load...** and these numbers:
+5. Add two more decals under `Patches`, `Patch2` and `Patch3`, with **Albedo** set to `dirt_patch.tres` by **Quick Load...** and these numbers:
 
 	| Decal | Position | Rotation Y | Size |
 	|---|---|---|---|
@@ -354,10 +354,10 @@ The patches are lit with the ground under them, because a decal only changes its
 - **No pebbles or mushrooms grow.** `grass_preview.tscn` has no node starting with `pebble` or `mushroom`, or the densities are all `0`. Open the scene and check the names.
 - **The props are white or gray in the game.** `flower.tres` is not on them. Set **Material Override** on all three.
 - **A mushroom stands in the ground up to its cap.** The part was moved up in Object Mode, so its origin is above the ground. Lift the mesh in Edit Mode, as in step 3 of Rounded boxes, and set the object's location back to 0.
-- **The patches are not visible.** The decal's box does not reach the ground. Its **Position** `y` is `0` and its **Size** `y` is `0.6`, so the box spans the ground. Also check that **Texture Albedo** is set.
+- **The patches are not visible.** The decal's box does not reach the ground. Its **Position** `y` is `0` and its **Size** `y` is `0.6`, so the box spans the ground. Also check that **Albedo** is set.
 - **A patch is a hard-edged brown square.** The gradient's last color is not transparent, or **Fill To** is `1, 1`.
 - **Grass still grows in the patches.** `Patches` is empty on the `Grass` node, or the decals are not children of that node.
-- **A patch paints the grass blades brown.** Their roots are inside the decal's box. That is the dark ground color showing through at the base, and a patch with no grass in it has none.
+- **A patch paints the grass blades brown.** Blades inside a decal's box are tinted by it. Check that **Patches** is assigned on the scatter node and scatter again, so the grass leaves the box.
 
 ## Checkpoint
 

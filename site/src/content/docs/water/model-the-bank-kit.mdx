@@ -142,15 +142,15 @@ A piece is a top and a wall. You build the top as a flat plane, then pull the wa
 3. The wall will stand 0.2 meters from the middle, so the top must end there and not at the edge, which is at 0.25. The water is toward -Y, the bottom of the screen. Press <Kbd keys="B" /> and drag a box around the two vertices at the bottom, so only they are selected. Press <Kbd keys="G" />, <Kbd keys="Y" />, type `0.05`, and press <Kbd keys="Enter" />. The bottom edge moves up by 5 centimeters.
 
 	<Figure
-		src={frontSelected}
-		alt="The square in top view with its two bottom vertices selected in orange before they are moved."
+		src={top}
+		alt="The square in top view with its bottom edge selected in orange before it is moved."
 		caption="The waterline edge, selected."
 	/>
 
 4. Press <Kbd keys="A" />, then <Kbd keys="G" />, <Kbd keys="Z" />, type `0.012`, and press <Kbd keys="Enter" />. The top is now at its height.
 
 	<Figure
-		src={top}
+		src={frontSelected}
 		alt="The plane in top view, now shorter at the bottom, with its four vertices."
 		caption="The top: 0.5 meters wide, 0.45 meters deep, at height 0.012."
 	/>
@@ -247,7 +247,7 @@ When the land is one cell, the wall curves around it, and the water side is a qu
 
 5. Select the back left vertex, the only one that is not on the waterline, and press <Kbd keys="Ctrl+I" mac="Cmd+I" /> to invert. The 23 vertices of the waterline are selected. Extrude the wall as before: <Kbd keys="E" />, <Kbd keys="Z" />, `-0.0635`, <Kbd keys="Enter" />, then <Kbd keys="Shift+R" /> eleven times.
 
-6. Make the vertex group as before: **Select > Select None**, **Select All by Trait > Non Manifold**, **Select > Invert**, a new group `lumps`, **Weight** `0.5`, **Assign**, **Select > Select More/Less > Less**, **Weight** `1.0`, **Assign**. The border has 48 vertices, the inside 252, and the inner block 190.
+6. Make the vertex group as before: **Select > Select None**, **Select All by Trait > Non Manifold**, **Select > Invert**, a new group `lumps`, **Weight** `0.5`, **Assign**, **Select > Select More/Less > Less**, **Weight** `1.0`, **Assign**. The border has 48 vertices, the inside 252, and the inner block 190. Then make the `lip` group as on the straight pieces: Alt-click the loop along the arc's top edge, set **Weight** `1.0`, **Assign**, select the **Non Manifold** border, set **Weight** `0`, **Assign**, and set **Weight** back to `1.0`. All five lumpy pieces carry both `lumps` and `lip`.
 
 7. Press <Kbd keys="Tab" />, slide the piece to X = 3.1, and make a copy for `bank_land_corner_b` at 3.8, as you did the straight pieces.
 
@@ -421,7 +421,7 @@ Export the kit as you exported the character in lesson 36: the collection's own 
 		caption="The exporter's file, in art/water."
 	/>
 
-3. Click the export button at the right end of the exporter's **glTF 2.0** title, and then save the file.
+3. Click **Export All** at the right end of the exporter's **glTF 2.0** title, and then save the file.
 
 	<Figure
 		src={exporterPanel}

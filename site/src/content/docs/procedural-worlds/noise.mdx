@@ -86,7 +86,7 @@ Everything you need is in this one noise. Three settings change what it looks li
 
 	<Figure
 		src={frequency}
-		alt="Three 48 by 48 pixel noise pictures side by side. The first, at frequency 0.01, has two big soft blotches. The second, at 0.15, is fine speckle. The third, at 0.04, has blotches a few pixels across."
+		alt="Three 48 by 48 pixel noise pictures side by side. The first, at frequency 0.01, has two big soft blotches. The second, at 0.15, is fine speckle. The third, at 0.04, has medium blotches, several times the size of the speckle in the second."
 		caption="Frequency 0.01, 0.15, and 0.04, left to right. The last is about the size of a lake."
 	/>
 
@@ -230,7 +230,7 @@ One more number matters for the next lesson. If everything below -0.2 is water, 
 ## When it goes wrong
 
 - **GenerationProfile is not in the list of resources.** The script has not built. Click the hammer, and look in the MSBuild panel for an error.
-- **The texture is all gray.** **Normalize** is on, or the frequency is so low that a 48 pixel square sees a tiny part of one blotch. Turn it off, and check the frequency.
+- **The texture is all gray.** The frequency is so low that a 48 pixel square sees a tiny part of one blotch. Raise **Frequency**, and check that **Noise** is set.
 - **The picture looks different after changing a seed on the noise.** It should. The seed on the noise and the seed on the profile are separate: the noise's seed picks the noise, and the profile's seed slides the point.
 - **The profile's fields are empty after you quick load.** The noise files were not saved first. Look in `world/generation` for `terrain_noise.tres` and `forest_noise.tres`.
 

@@ -66,7 +66,7 @@ A few minutes before importing saves an afternoon after. Open the file in Blende
 
 <Steps>
 
-1. Copy the files into your project's `art/character/superhero` folder, as above. Click it in the FileSystem dock, open the **Import** tab, and click **Advanced...**. The scene tree lists the model's nodes: its armature, its skeleton, and its meshes (the body, the eyes, and the eyebrows). The preview shows how it looks.
+1. Copy the files into your project's `art/character/superhero` folder, as above. Click `Superhero_Male_FullBody.gltf` in the FileSystem dock, open the **Import** tab, and click **Advanced...**. The scene tree lists the model's nodes: its armature, its skeleton, and its meshes (the body, the eyes, and the eyebrows). The preview shows how it looks.
 
 	<Figure
 		src={advanced}
@@ -125,7 +125,7 @@ Check yours the same way. On the figure in the map, click each dot and read the 
 
 1. Click **Reimport**. Godot renames the skeleton's bones to the profile's names, and makes the skeleton unique with the name `GeneralSkeleton`.
 
-2. Choose **Scene > New Inherited Scene...** and pick the model. The scene tree shows the skeleton as `GeneralSkeleton`. The reference run reads its 65 bones: the profile's names for the ones it maps (`Hips`, `Spine`, `Chest`, the arms, the legs, the fingers), and the model's own for the four fingertip bones the profile has no name for.
+2. Choose **Scene > New Inherited Scene...** and pick the model. The scene tree shows the skeleton as `GeneralSkeleton`. The reference run reads its 65 bones: the profile's names for the ones it maps (`Hips`, `Spine`, `Chest`, the arms, the legs, the fingers), and the model's own for the twelve leaf bones the profile has no name for (ten fingertips and two toe tips).
 
 3. Add an **AnimationPlayer** to the root, and load the library into it, as in lesson 42 (**Animation > Manage Animations... > Load Library**). Pick `Walk` and press play.
 

@@ -13,7 +13,7 @@ lesson:
     - How refraction bends the bed seen through the water, and how to keep the bank from bleeding in
     - How a short march through the screen finds the reflections of trees and banks
     - How thin water gives a ragged foam line at every edge
-  prerequisites: [23, 27, 45]
+  prerequisites: [23, 27, 28, 45]
 ---
 
 import { Aside, Code, FileTree, Steps } from '@astrojs/starlight/components';
@@ -86,7 +86,7 @@ Edit the shader so that:
 - `varying vec3 scatter_lit;` has a comment: the scatter's color, set in `fragment()` for `light()`;
 - after `transmitted`, `fragment()` has a comment that Godot's reflection of the sky needs a surface that reflects: a metal tinted by how much it should reflect. `float facing = clamp(dot(NORMAL, VIEW), 0.0, 1.0);` and `float reflectance = clamp(WATER_F0 + (1.0 - WATER_F0) * pow(1.0 - facing, 5.0) + reflection_boost, 0.0, 1.0);` follow;
 - `scatter_lit` is what the water's own color is, less the share the bed shows through and the share the sky takes: `max(scatter_color * (1.0 - transmitted) * (1.0 - reflectance), vec3(0.0001))`, and the least is there because a later step raises it to a power;
-- `float sky_share = reflectance;` is the sky's share of the surface, and the outputs are `ALBEDO = vec3(sky_share);`, `METALLIC = 1.0;`, `EMISSION = bed * transmitted * (1.0 - reflectance);`, and `ROUGHNESS = 0.08;`. The bed was drawn lit already, so it goes out as emission, and a low roughness gives a sharp reflection;
+- `float sky_share = reflectance;` is the sky's share of the surface, and the outputs replace lesson 45's `ALBEDO = bed * transmitted + ...` line with `ALBEDO = vec3(sky_share);`, `METALLIC = 1.0;`, `EMISSION = bed * transmitted * (1.0 - reflectance);`, and `ROUGHNESS = 0.08;`. The bed was drawn lit already, so it goes out as emission, and a low roughness gives a sharp reflection;
 - a `light()` function has a comment: each light adds the scatter, wrapped so the side away from the sun keeps some of the sky's light. It sets `float wrapped = clamp((dot(NORMAL, LIGHT) + 0.6) / 1.6, 0.0, 1.0);` and adds `scatter_lit * wrapped * ATTENUATION * LIGHT_COLOR / PI` to `SPECULAR_LIGHT`.
 
 <Solution label="Show the shader after this step">
@@ -350,9 +350,9 @@ The water is a template's water, and some things were left out on purpose. A sim
 
 ## Try it
 
-- Paint a wider pond, ten cells across, and look at the middle: it is the same color as the edge, because the bed is flat. The only gradient is at the walls.
-- Set `wave_strength` to `2` and `refraction_strength` to `0.2`, a stormy pond. Then set `wind_strength` in Project Settings to `0` and watch the waves calm.
-- Move a rock into the pond at its shallow edge. Where the rock meets the water there is a foam line around it, from the same shader.
+- Look at the middle of the pond: it is the same color as the edge, because the bed is flat. The only gradient is at the walls.
+- Set `wave_strength` to `2` and `refraction_strength` to `0.2`, a stormy pond. Then set `wind_strength` under **Globals > Shader Globals** in Project Settings to `0` and watch the waves calm.
+- Move a rock into the pond next to the bank wall. Where the rock meets the water there is a foam line around it, from the same shader.
 
 ## If it does not work
 

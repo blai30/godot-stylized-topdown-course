@@ -62,7 +62,7 @@ Three decisions make the pile read as a tree and not as a heap of paper.
 - **Cards face out and up.** Each card turns to face away from the crown, tipped toward the sky and wobbled a little, so the cards catch light the way leaves on top of a tree do.
 - **One shared normal.** A flat card has one **[normal](/reference/glossary/#normal)**, the direction it faces, and lighting a pile of cards by their own normals gives a speckled mess of light and dark. The shader lights each card with a normal you store on it that points the way the *crown* faces at that spot, a little changed by the clump it is in. The whole crown then shades as one soft form, lighter on top and darker beneath, while the cards' leafy edges stay sharp. Blender calls such a stored normal a **custom normal**.
 
-The group also stores two pieces of data on every card, as vertex colors:
+The group also stores three pieces of data on every card, as vertex colors:
 
 | Channel | Holds | Used for |
 |---|---|---|
@@ -475,7 +475,7 @@ The odd colors are the proof that the data arrived: red is each card's phase, gr
 - **The cards all face one way.** **Roll to the clump** has the wrong axis or its **Vector** is not linked to **Card points**' **Normal**. Its **axis** is **Y**, and its pivot **Z**.
 - **The crown is a hollow shell.** **Push inward** is not scaling by **Push depth**, so the clump centers lie on the surface. Check that **Push depth**'s **Value** goes to **Push inward**'s **Scale**.
 - **The cards are lit as a speckle.** **Set normals** is muted, or **Unit normal** is not linked to its **Custom Normal**.
-- **In Godot the cards are white.** The exporter's **Use Vertex Color** is **Material**, or the mesh has no `Col` color attribute. Do the two steps of the last sections and export again.
+- **In Godot the cards are white.** The exporter's **Use Vertex Color** is **Material**, or the mesh has no `Col` color attribute. Redo **A place for the colors** and the **Export** step, and check that **Apply Modifiers** is on.
 - **Blender says there is no active color attribute.** In the Color Attributes panel, click the `Col` entry to make it active.
 
 ## Checkpoint

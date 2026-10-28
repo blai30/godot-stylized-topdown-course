@@ -12,7 +12,7 @@ lesson:
     - How to write a tool script with a button that rebuilds a GridMap from another
     - How to make a rebuild repeatable, so that pressing a button twice changes nothing
     - How a script can warn about a shape its pieces cannot draw
-  prerequisites: [16, 18, 34, 44, 45]
+  prerequisites: [16, 18, 32, 34, 44, 45]
 ---
 
 import { Aside, Code, FileTree, Steps } from '@astrojs/starlight/components';
@@ -55,7 +55,7 @@ Give each of the four cells a number, so that an answer is a set of numbers:
 | higher x, lower z | 2 |
 | higher x, higher z | 3 |
 
-An answer is those cells' bits added up: `1 << number` for each. All four cells land or all four water is nothing to draw. The rest are the pieces' shapes, each in four turns.
+An answer is those cells' bits added up: `1 << number` for each. If all four cells are land, or all four are water, there is nothing to draw. The rest are the pieces' shapes, each in four turns.
 
 The script does not list the fourteen cases by hand. It lists the **four** shapes, as the cells that are water when a piece is not turned, as it comes out of Blender, and builds the table from them by turning each shape, one quarter turn at a time, four times. A quarter turn about the vertical axis moves each cell around the corner to the next, and the table keeps what the answer is after each. That is why turning is all the table has to know: a straight piece with water at its back is the same piece as one with water at its right, turned.
 
@@ -77,7 +77,7 @@ The script needs to ask the ground whether a cell is water. `GroundTile` has had
 
 <Steps>
 
-1. In the FileSystem dock, make `src/Ground/BankMap.cs`, a C# script that inherits `GridMap`. Select the `Ground` folder, use **Script > Create Script...** in the Script editor, and set **Inherits** to `GridMap`, **Language** to **C#**, and **Path** to `res://src/Ground/BankMap.cs`.
+1. In the FileSystem dock, make `src/Ground/BankMap.cs`, a C# script that inherits `GridMap`. Click **Script** at the top to open the Script editor, choose **File > New Script...**, and set **Inherits** to `GridMap`, **Language** to **C#**, and **Path** to `res://src/Ground/BankMap.cs`.
 
 </Steps>
 

@@ -89,7 +89,7 @@ The grass is not shaded from a texture. The shader of lesson 31 reads the ground
 
 <Steps>
 
-1. Start Blender from the file you set up in lesson 8, and press <Kbd keys="A" /> and <Kbd keys="X" /> over the 3D view, then <Kbd keys="Enter" />, to delete the camera, the light, and the cube. This scene starts empty.
+1. Start Blender from the file you set up in lesson 8, and press <Kbd keys="A" /> and <Kbd keys="X" /> over the 3D view, then <Kbd keys="Enter" />, to delete the startup file's cube. This scene starts empty.
 
 2. Choose **File > Save As** (<Kbd keys="Shift+Ctrl+S" mac="Shift+Cmd+S" />), go to your project's `art_source` folder, make a `nature\grass` folder inside it with the **Create New Directory** button, and save the file there as `grass.blend`.
 
@@ -543,7 +543,7 @@ The daisy has eight petals 45 degrees apart. Copy the petal and turn each copy a
 
 	<Figure
 		src={flowersBuilt}
-		alt="Blender's front view: a tall stem with a flat ring of petals at its top, and a petal selected, with the outliner listing petal_copy objects."
+		alt="Blender's front view: a tall stem with a flat ring of petals at its top, and a petal selected, with one petal selected."
 		caption="The daisy's eight petals around the top of its stem."
 	/>
 
@@ -553,7 +553,7 @@ The daisy has eight petals 45 degrees apart. Copy the petal and turn each copy a
 
 <Steps>
 
-1. Select the daisy's parts: click `center`, then <Kbd keys="Ctrl" /> and click each `petal`, `petal_copy`, and finally `stem`, so the stem is active. In the header choose **Object > Convert > Mesh**. That applies the **Paint Part** modifiers, and the colors become part of each mesh.
+1. Select the daisy's parts: click `center`, then <Kbd keys="Ctrl" /> and click each of the daisy's eight `petal` objects (`petal`, `petal.001`, and so on, not the cup's five petals), and finally `stem`, so the stem is active. In the header choose **Object > Convert > Mesh**. That applies the **Paint Part** modifiers, and the colors become part of each mesh.
 
 	<Figure
 		src={convertMenu}
@@ -563,9 +563,9 @@ The daisy has eight petals 45 degrees apart. Copy the petal and turn each copy a
 
 2. Press <Kbd keys="Ctrl+J" mac="Cmd+J" /> to join them into the active object, the stem. Press <Kbd keys="F2" /> and name it `flower_daisy`. It is 28 triangles.
 
-3. Do the same for the cup: its five petals, then its stem last. Name it `flower_cup`. It is 16 triangles. Because the stem was scaled, the joined object has a scale of 0.867: press <Kbd keys="Ctrl+A" mac="Cmd+A" /> over the 3D view, and choose **Scale**.
+3. Do the same for the cup: its five petals, then its stem last. Name it `flower_cup`. It is 16 triangles. Because the stem was scaled, the joined object has a Z scale of 0.867: press <Kbd keys="Ctrl+A" mac="Cmd+A" /> over the 3D view, and choose **Scale**.
 
-4. Move the daisy `2` meters along X and the cup `3`, so the flowers stand apart from the clumps, and press <Kbd keys="Alt+H" /> to bring the clumps back. Name each mesh after its object, since Godot shows the mesh's name: click the object, open the **Data** tab, and rename the mesh in the field at its top, as you did in lesson 24. Do it for all five.
+4. Set the daisy's X location to `2` and the cup's to `3` (in the N panel's **Item** tab), so the flowers stand apart from the clumps, and press <Kbd keys="Alt+H" /> to bring the clumps back. Name each mesh after its object, since Godot shows the mesh's name: click the object, open the **Data** tab, and rename the mesh in the field at its top, as you did in lesson 24. Do it for all five.
 
 </Steps>
 
@@ -599,7 +599,7 @@ In the 3D view's header, open **Viewport Shading**, and set **Color** to **Attri
 
 </Steps>
 
-The file holds five meshes: `grass_clump_a`, `grass_clump_b`, `grass_clump_c`, `flower_daisy`, and `flower_cup`, about 70 kilobytes in all.
+The file holds five meshes: `grass_clump_a`, `grass_clump_b`, `grass_clump_c`, `flower_daisy`, and `flower_cup`, about 85 kilobytes in all.
 
 ## Import into Godot
 
@@ -625,7 +625,7 @@ The file holds five meshes: `grass_clump_a`, `grass_clump_b`, `grass_clump_c`, `
 
 </Steps>
 
-Click **Close**. The meshes read back as the lesson promised: each clump has about 285 triangles, the daisy 28, and the cup 16, all with vertex colors. (Godot reports more vertices than Blender does, because it gives every flat face its own.)
+Click **Close**. The meshes read back as the lesson promised: each clump has about 285 triangles, the daisy 28, and the cup 16, all with vertex colors. (Godot reports more vertices than Blender does, because it splits vertices along hard edges such as each blade's joint.)
 
 ## Try it
 

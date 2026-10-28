@@ -10,7 +10,7 @@ lesson:
   learn:
     - What an animation library is, and why a clip made for one skeleton plays on another
     - How to import a file as an Animation Library with a BoneMap
-    - How to set a clip to loop in Advanced Import Settings
+    - How to check that a clip loops in Advanced Import Settings
     - How to load a library into an AnimationPlayer and play a clip
   prerequisites: [41]
 ---
@@ -81,7 +81,7 @@ After the import you will see the names without their `_Loop` ending: `Idle_Loop
 
 	<Figure
 		src={advanced}
-		alt="The Advanced Import Settings window for the library: the scene tree with the skeleton, an AnimationPlayer, and the clips build, craft, drive, hurt, idle, and others, and a preview of a figure."
+		alt="The Advanced Import Settings window for the library: the scene tree with the skeleton, an AnimationPlayer, and the clips A_TPose, Crouch_Fwd, Crouch_Idle, Dance, and others, and a preview of a figure."
 		caption="Each clip is listed."
 	/>
 
@@ -89,7 +89,7 @@ After the import you will see the names without their `_Loop` ending: `Idle_Loop
 
 ## The library's own BoneMap
 
-The library's skeleton is a different skeleton from yours: it has fingers, eyes, and a jaw you do not. It needs a **BoneMap** of its own, made the same way as yours.
+The library's skeleton is a different skeleton from yours: it has fingers you do not. It needs a **BoneMap** of its own, made the same way as yours.
 
 <Steps>
 

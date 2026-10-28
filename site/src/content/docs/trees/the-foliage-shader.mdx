@@ -48,7 +48,7 @@ Two shaders and a shared include that turn the oak's colored cards into a tree: 
 <Figure
 	src={noon}
 	alt="The game at noon from above: the player capsule beside a round green oak with a lighter, warmer top and a darker underside, casting a leafy shadow on the grass."
-	caption="The oak at noon in the game."
+	caption="The oak at noon in the game, moved beside the player for this picture."
 />
 
 The wind is not a script. A shader can compute where each vertex should be from the time and its own position, so the wind is a few lines in the shader, and it works for any number of trees with no per-frame code. The only things set outside the shader are two numbers, the wind's direction and strength, which are **shader globals**, as the rim's color and strength were in lesson 23.
@@ -250,7 +250,7 @@ Press <Kbd keys="F5" mac="Cmd+B" /> to run. The oak stands by the dirt patch, wi
 <Figure
 	src={wind}
 	alt="Three frames of the oak's crown, half a second apart: the leaf masses shift slightly between frames, and the crown's outline changes."
-	caption="The crown at three moments, half a second apart. Every card moves a little, and the whole crown leans."
+	caption="The crown at three moments, half a second apart, at wind strength 1. Every card moves a little, and the whole crown leans."
 />
 
 The day animation changes the oak with the rest of the scene, since the cards and the bark take the same sun.

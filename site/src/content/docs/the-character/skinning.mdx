@@ -92,7 +92,7 @@ Automatic weights are a good first guess, and a first guess to check.
 
 <Steps>
 
-1. With the mesh selected, change the **mode** in the viewport header from **Object Mode** to **Weight Paint**. The mesh colors by the weights of the active vertex group: red is a weight of 1, blue is 0, and blue means none (Blender may show black where a vertex has no group at all).
+1. With the mesh selected, change the **mode** in the viewport header from **Object Mode** to **Weight Paint**. The mesh colors by the weights of the active vertex group: red is a weight of 1, blue is a low weight, and black is no weight (a vertex with no group at all).
 
 2. In the Vertex Groups list, click `LeftUpperArm`. The upper arm is red, and the weight fades toward the shoulder and the chest.
 
@@ -122,7 +122,7 @@ Automatic weights are a good first guess, and a first guess to check.
 
 ## Test it by posing
 
-The real test of weights is a pose. Select the armature, change the mode to **Pose Mode**, select a bone, and open the **Bone** tab of the Properties editor. Under **Transform**, **Rotation** has three fields, `X`, `Y`, and `Z`, in the bone's own axes. Type the numbers below into them. (You can also rotate with <Kbd keys="R" />, but its axes are the viewport's, so the numbers would differ.) This pose bends three bones:
+The real test of weights is a pose. Select the armature, change the mode to **Pose Mode**, select a bone, and open the **Bone** tab of the Properties editor. Under **Transform**, set **Rotation** **Mode** to **XYZ Euler** first. **Rotation** then has three fields, `X`, `Y`, and `Z`, in the bone's own axes. Type the numbers below into them. (You can also rotate with <Kbd keys="R" />, but its axes are the viewport's, so the numbers would differ.) This pose bends three bones:
 
 | Bone | Rotation `X`, `Y`, `Z` | Effect |
 |---|---|---|
@@ -208,9 +208,9 @@ This lesson fixes weights by assigning, because the character's parts are blocks
 
 ## If it does not work
 
-- **With Automatic Weights is greyed out.** The armature is not the active object. Select the mesh first and the armature last.
+- **With Automatic Weights is grayed out.** The armature is not the active object. Select the mesh first and the armature last.
 - **The mesh does not move with the bones.** It has no Armature modifier, or the modifier points at no armature. Parent it again.
-- **Some vertices do not move.** They have no weights: Weight Paint mode shows them blue in every group. Select them in Edit Mode and assign them to a group.
+- **Some vertices do not move.** They have no weights: Weight Paint mode shows them black in every group. Select them in Edit Mode and assign them to a group.
 - **Limit Total is not in the Weights menu.** You are not in Weight Paint mode. Change the mode and open the menu again.
 - **Assign has no effect.** No vertices are selected, or the active group is not the one you meant. Check the list's highlighted row.
 - **A rigid part still stretches.** The vertices were not removed from the other groups first: they keep their old weights, and Assign only adds one. Remove them from all groups, then assign.

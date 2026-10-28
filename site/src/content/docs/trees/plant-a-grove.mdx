@@ -52,7 +52,7 @@ The player still walks through the oak. Rocks got their collision from the impor
 
 2. With `Trunk` selected, click **+** again, search for `CollisionShape3D`, click **Create**, and rename it `TrunkShape`. It is the shape the body uses.
 
-3. Select `TrunkShape`. In the Inspector, click the **Shape** field's empty value, choose **CylinderShape3D** from the **New** list, and click the new shape to open it. Set **Radius** to `0.35`. Leave **Height** at `2`. Under **Transform**, set **Position** to `0, 1, 0`: the cylinder is centered on its position, so this puts its base on the ground and its top 2 meters up, where the trunk forks.
+3. Select `TrunkShape`. In the Inspector, click the **Shape** field's empty value, choose **CylinderShape3D** from the **New** list, and click the new shape to open it. Set **Radius** to `0.35`. Leave **Height** at `2`. Under **Transform**, set **Position** to `0, 1, 0`: the cylinder is centered on its position, so this puts its base on the ground and its top 2 meters up, just under where the trunk forks.
 
 	<Figure
 		src={trunkShape}
@@ -62,7 +62,7 @@ The player still walks through the oak. Rocks got their collision from the impor
 
 </Steps>
 
-The player is a capsule of the **player** physics layer, and `StaticBody3D` is on the **world** layer by default, so they collide with no more setup, as the rocks do.
+The player is a capsule of the **Player** physics layer, and `StaticBody3D` is on the **World** layer by default, so they collide with no more setup, as the rocks do.
 
 ## Each tree in its own phase
 

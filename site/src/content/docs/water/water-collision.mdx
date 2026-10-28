@@ -12,7 +12,7 @@ lesson:
     - How the importer turns an object named -convcolonly into a collision shape
     - Why a thin wall of faces lets a body through and a closed box does not
     - How to test collision by walking the character into every side and corner
-  prerequisites: [6, 28, 44, 47]
+  prerequisites: [6, 16, 18, 44, 47]
 ---
 
 import { Aside, FileTree, Steps } from '@astrojs/starlight/components';
@@ -32,7 +32,7 @@ The pond has a bank, and the player walks over it. The player stands on the gray
 
 <Figure
 	src={before}
-	alt="The game from above: the character stands in the middle of the pond, in the water, among ripples and with the bank's far wall behind it."
+	alt="The game from above: the character stands at the bank's north edge with its feet in the water."
 	caption="Before: the character walks into the pond as if it were grass."
 />
 
@@ -88,17 +88,17 @@ There is one catch, and the lesson is written around it: the importer keeps the 
 	<Figure
 		src={firstBox}
 		alt="Blender's viewport with seven pieces in a row, the last two drawn thin, and a tall thin box beside the last piece selected in orange."
-		caption="A box, selected, beside the diagonal piece's notch."
+		caption="The same steps on the diagonal piece: a box, selected, beside its notch."
 	/>
 
 </Steps>
 
-Do the same for the other pieces. Each box has its own place and size, relative to the piece's origin, and each is named for its piece, with `-convcolonly` at the end. A second box for a piece is given the same name: Blender adds `.001`, and the importer reads it too.
+Do the same for the other pieces. Each box has its own place and size, relative to the piece's origin, and each is named for its piece, `<piece name>-convcolonly`, so the `b` and `c` pieces get their own names. A second box for a piece is given the same name: Blender adds `.001`, and the importer reads it too.
 
 | Piece | Name | Size X, Y, Z | Move by X, Y, Z |
 |---|---|---|---|
-| `bank_straight_a`, `b`, `c` | `bank_straight_a-convcolonly` | 0.5, 0.05, 1.75 | 0, -0.225, 0.125 |
-| `bank_land_corner_a`, `b` | `bank_land_corner_a-convcolonly` | 0.5, 0.05, 1.75 | 0, -0.225, 0.125 |
+| `bank_straight_a`, `b`, `c` | `<piece name>-convcolonly` | 0.5, 0.05, 1.75 | 0, -0.225, 0.125 |
+| `bank_land_corner_a`, `b` | `<piece name>-convcolonly` | 0.5, 0.05, 1.75 | 0, -0.225, 0.125 |
 | the same | the same name again | 0.05, 0.45, 1.75 | 0.225, 0.025, 0.125 |
 | `bank_water_corner_a` | `bank_water_corner_a-convcolonly` | 0.05, 0.05, 1.75 | 0.225, -0.225, 0.125 |
 | `bank_diagonal_a` | `bank_diagonal_a-convcolonly` | 0.05, 0.05, 1.75 | -0.225, -0.225, 0.125 |
@@ -171,7 +171,7 @@ Some games want the player in the water: swimming slowly, or wading, with a spla
 ## Try it
 
 - Walk the character along the bank, pressing into the water as you go. Does it slide along the wall, or catch? Where the straight pieces meet, two boxes meet at their ends, with no gap between them.
-- Change a box's thickness to 0.2 and see that nothing changes at the water's edge: the character stops at the same place, because it only meets the box's near face. A thicker box would only matter to something that was inside it.
+- Grow a box's thickness to 0.2 outward, keeping its land-side face where it was, and see that nothing changes at the water's edge: the character stops at the same place, because it only meets the box's near face. A thicker box would only matter to something that was inside it.
 - Paint a wide pond with a one-cell island of grass in the middle, press **Update shore**, and walk the character into the pond toward the island. The island's four land corners have their L-shaped boxes, and the bank stops the character before it can reach the island.
 
 ## If it does not work

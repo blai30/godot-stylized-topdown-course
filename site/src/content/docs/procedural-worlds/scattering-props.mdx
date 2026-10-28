@@ -56,7 +56,7 @@ The grass scatter of lesson 32 gave every one-meter square its own plants. The t
 4. **Is it clear of the water?** Not within the rule's **Shore Distance**.
 5. **Is it clear of other trees?** Not within the rule's **Spacing** of one that already grew.
 
-A candidate that fails any of these is not a tree, and the ones that pass are placed. The code asks in a slightly different order from this list, with the cheap tests first, but a candidate must pass them all either way.
+A candidate that fails any of these is not a tree, and the ones that pass are placed. The code asks them in this order, cheapest first, so the spacing check, which looks at every tree so far, runs on the fewest.
 
 ## A rule is a resource
 
@@ -183,13 +183,13 @@ Two things in this are worth going over.
 
 <Figure
 	src={shore}
-	alt="A lake's edge at the bottom right, a big oak at the left, and open grass between them."
+	alt="A lake's edge at the bottom right, oaks at the left and bottom, and open grass between them."
 	caption="The trees keep back from the water."
 />
 
 <Figure
 	src={start}
-	alt="The player's starting place from above: open grass, with oaks around it but none within a few steps."
+	alt="The player's starting place from above: open grass, with oaks and pines around it but none within a few steps."
 	caption="Where the player starts: open ground."
 />
 
@@ -217,7 +217,7 @@ These numbers were read from the level, with seed 15.
 - Raise the pine's **Starts At** to `0.2`. The pines now keep to the middle of the groves, and the oaks make the edges. Look at a grove, and then put it back.
 - Raise both **Spacing** values to `3`, or lower them to `1.2`. How does a grove change? Look at the count in the Output panel.
 - Set a rule's **Shore Distance** to `0.5`. The trees come to the water's edge. Why does the bank, with its lip, still look right?
-- A rock, a bush, or a mushroom is one more rule: a `PropRule` with its scene and a weight. This template keeps to trees, and leaves the rest for a game that wants them. A rule that should grow in the open as well as in the forest would take a **Starts At** of `-1`.
+- A rock, a bush, or a mushroom is one more rule: a `PropRule` with its scene and a weight. Lesson 54 adds a bush this way. A rule that should grow in the open as well as in the forest would take a **Starts At** of `-1`.
 
 ## When it goes wrong
 

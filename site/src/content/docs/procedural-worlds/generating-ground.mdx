@@ -38,11 +38,11 @@ import dusk from '../../../assets/lessons/generating-ground/dusk.png';
 
 ## What you will build
 
-A **Generate** button. Press it and a 48 by 48 meter level appears: a meadow with four lakes, banked and grassed, from one seed. Press it again and nothing changes. Change the seed, press it, and the lakes are somewhere else.
+A **Generate** button. Press it and a 48 by 48 meter level appears: a meadow with four lakes and a small pond, banked and grassed, from one seed. Press it again and nothing changes. Change the seed, press it, and the lakes are somewhere else.
 
 <Figure
 	src={wide}
-	alt="A square meadow seen from high above, with four lakes of different shapes, each with an earth bank, on grass."
+	alt="A meadow seen from high above, with four lakes of different shapes and a small pond, each with an earth bank, on grass."
 	caption="A whole level from a number, 48 meters on a side."
 />
 
@@ -104,7 +104,7 @@ The generator knows two tiles by name: water, which is whichever tile says **Is 
 	<Code code={piece3} lang="csharp" title="src/Generation/GenerationProfile.cs" />
 </Solution>
 
-After you build the project, in the next section, open `world/generation/generation_profile.tres` in the Inspector: the three new properties are there, at their defaults.
+After you build the project in "A level to generate into", open `world/generation/generation_profile.tres` in the Inspector: the three new properties are there, at their defaults.
 
 <Figure
 	src={profileShot}
@@ -208,13 +208,13 @@ The generator needs a level of its own. The quickest one to make is the meadow: 
 
 <Figure
 	src={lake}
-	alt="A lake from above with an earth bank on its north and south edges, surrounded by grass."
+	alt="A lake from above with an earth bank along its north and north-east edges, surrounded by grass."
 	caption="The north-west lake, at the game's zoom."
 />
 
 <Figure
 	src={lakeEast}
-	alt="Two lakes seen from above: one with a notch, one with a diagonal edge, each with an earth bank, on grass."
+	alt="Two lakes seen from above: one with a notch, one with a diagonal edge, the right one cut off in a straight line at the edge rule, each with an earth bank, on grass."
 	caption="The shapes are whatever the noise made. The bank follows them."
 />
 
@@ -230,7 +230,7 @@ The generator needs a level of its own. The quickest one to make is the meadow: 
 	caption="The same level at dusk. The day animation does not care how the level was made."
 />
 
-The lakes are not all the same shape, and they sit among a lot of grass. There are no trees, rocks, or paths yet: this is the ground. The edge rule shows too. A lake the noise wanted to run off the east edge ends in a straight line four cells in, in the figure of the east lakes, because the edge rule cut it. A real game would hide that behind a cliff or a wall, or a larger level.
+The lakes are not all the same shape, and they sit among a lot of grass. There are no trees, rocks, or paths yet: this is the ground. The edge rule shows too. A lake the noise wanted to run off the east edge ends in a straight line four cells in, like the right-hand lake in the figure above, because the edge rule cut it. A real game would hide that behind a cliff or a wall, or a larger level.
 
 ## Check it
 

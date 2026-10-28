@@ -141,7 +141,7 @@ The shared code goes in its own include, as the wind did.
 
 	<Figure
 		src={includeEditor}
-		alt="The Shader Editor showing the top of clouds.gdshaderinc: the include of wind, the three global uniforms, and the start of the constants."
+		alt="The Shader Editor showing the top of clouds.gdshaderinc: the include of wind, the three global uniforms, and the comment for the first constant."
 		caption="The clouds include."
 	/>
 
@@ -168,19 +168,19 @@ Each shader that draws something under the sky gets one new line, placed after t
 
 <Steps>
 
-1. Open `ground.gdshader`. Under its includes add `#include "res://art/shaders/clouds.gdshaderinc"`. In `fragment()`, after the line that sets `ALBEDO`, add a comment and `ALBEDO *= cloud_shadow((INV_VIEW_MATRIX * vec4(VERTEX, 1.0)).xyz, TIME);`
+1. Open `ground.gdshader`. Under its includes add `#include "res://art/shaders/clouds.gdshaderinc"`. In `fragment()`, after the line that sets `ALBEDO`, add `ALBEDO *= cloud_shadow((INV_VIEW_MATRIX * vec4(VERTEX, 1.0)).xyz, TIME);`
 
 	In a fragment shader `VERTEX` is the point in view space, and `INV_VIEW_MATRIX` takes it back to the world. `TIME` is the shader's clock; the include cannot read it itself, so each shader passes it in.
 
 	<Figure
 		src={groundEditor}
-		alt="The Shader Editor showing ground.gdshader's fragment function: the ground color, then a comment and the ALBEDO multiplied by cloud_shadow."
+		alt="The top of ground.gdshader in the Shader Editor, with the clouds include added under the other two includes."
 		caption="The ground shader."
 	/>
 
 2. Do the same in `bank.gdshader` (after `ALBEDO = mix(ground, earth, wall);`), `flower.gdshader`, `foliage.gdshader`, and `bark.gdshader`: the include under the other includes, and the line after `ALBEDO` is set.
 
-3. In `grass.gdshader` add the include and the line after `ALBEDO = blade_color;`, and change the next line to `EMISSION = ALBEDO * BOUNCE;`. The blade's own bounce light then takes the shadow too, or the grass would glow in the shade.
+3. In `grass.gdshader` add the include and the line after `ALBEDO = blade_color;`, and change the `EMISSION = blade_color * BOUNCE;` line below it to `EMISSION = ALBEDO * BOUNCE;`. The blade's own bounce light then takes the shadow too, or the grass would glow in the shade.
 
 </Steps>
 
@@ -220,7 +220,7 @@ The water already reflects clouds, from its own noise (lesson 46). Now it reflec
 
 	<Figure
 		src={waterEditor}
-		alt="The Shader Editor showing water.gdshader with the clouds include added under the wind include and the clouds uniform group down to cloud_height and cloud_opacity."
+		alt="The Shader Editor showing water.gdshader with the clouds include added under the wind include."
 		caption="The water shader."
 	/>
 
