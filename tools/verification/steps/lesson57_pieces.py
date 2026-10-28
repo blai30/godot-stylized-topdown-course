@@ -1,5 +1,5 @@
 # The code lesson 57 types, shared by its step script and the exporter.
-from lesson27_pieces import FOLIAGE
+from lesson53_pieces import FOLIAGE
 
 
 def edit(text, old, new):
