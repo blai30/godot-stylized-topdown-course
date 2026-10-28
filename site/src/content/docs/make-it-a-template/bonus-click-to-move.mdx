@@ -1,0 +1,185 @@
+---
+title: "Bonus: click to move for action RPGs"
+description: Bake a navigation mesh from the level's colliders, give the player a NavigationAgent3D, and walk it to wherever the mouse clicks, round the trees, rocks, and pond.
+sidebar:
+  order: 62
+  label: 62. Bonus, click to move
+lesson:
+  number: 62
+  minutes: 75
+  learn:
+    - What a navigation mesh is and how Godot bakes one from a level's colliders
+    - How to put the level's solid things in a group and bake from the group
+    - How a NavigationAgent3D finds a path and hands it to a body
+    - Which baking settings make the mesh match the player
+  prerequisites: [6, 60]
+---
+
+import { Aside, Code, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Solution from '../../../components/Solution.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import piece1 from '../../../checkpoints/62/pieces/piece-1.cs?raw';
+import newGroup from '../../../assets/lessons/bonus-click-to-move/new-group.png';
+import groups from '../../../assets/lessons/bonus-click-to-move/groups.png';
+import navmeshSettings from '../../../assets/lessons/bonus-click-to-move/navmesh-settings.png';
+import baked from '../../../assets/lessons/bonus-click-to-move/baked.png';
+import agentSettings from '../../../assets/lessons/bonus-click-to-move/agent-settings.png';
+import path from '../../../assets/lessons/bonus-click-to-move/path.png';
+
+<Aside type="note" title="An optional add-on">
+Lessons 61, 62, and 64 are not part of the template. Each is a small addition for one kind of game, and you add it to a game you copied from the template in lesson 60. This one is for action RPGs, where you click and the hero goes there. It replaces the keyboard walking from lesson 6.
+</Aside>
+
+## What you will build
+
+The player walks to the point you click, going round trees, rocks, and the pond on the way. You change one script on the player, add a node to it, and bake a navigation mesh for the meadow.
+
+<Figure
+	src={path}
+	alt="The meadow from above with a thin red line looping from the lower right, round the east side of a grove of oaks, and back west across the top of it."
+	caption="The route to a click on the far side of the grove. The straight line is blocked."
+/>
+
+## How the player finds a way
+
+Walking in a straight line toward a click works on an empty field and fails anywhere else: the player walks into the first tree and stops. To go round things, the game needs to know where the player can walk, and a way to search it.
+
+- A **navigation mesh** is a set of flat polygons laid over the ground wherever a character of a given size can walk. A polygon touching another is a way to go from one to the next. **Baking** is the work of making the mesh from the level's geometry.
+- A **`NavigationRegion3D`** holds the mesh in the level.
+- A **`NavigationAgent3D`** is a helper node on a character. You give it a target; it searches the mesh for a path and, each physics frame, tells the character the next point to walk to.
+
+Godot bakes a mesh from the level's **static colliders**, the shapes of the solid things, which is what the player already collides with. Anything solid a character cannot step over is left out of the mesh, so it is an obstacle with no work from you.
+
+## Write the script
+
+`ClickMovement` replaces `PlayerMovement` on the player. It keeps the same walking: it speeds up and slows down by `Acceleration`, falls under gravity, and turns to face where it goes. What changes is where it gets its direction. `PlayerMovement` reads the keys. `ClickMovement` asks the agent.
+
+<Steps>
+
+1. In your code editor, create `src/Player/ClickMovement.cs` and save the code below into it.
+
+2. Click **Build Project**.
+
+</Steps>
+
+The script does these things:
+
+- It extends `CharacterBody3D`, like `PlayerMovement`, so the camera rig and the animation script from lesson 59 work with it unchanged.
+- `_Ready` finds the agent, a child named `Agent`.
+- `_UnhandledInput` waits for a left click, finds the ground point under the mouse the way lesson 61 does, with `Plane.IntersectsRay`, and gives it to the agent as `TargetPosition`. The agent starts its search.
+- `_PhysicsProcess` asks `IsNavigationFinished`. If the player has not arrived, it asks for `GetNextPathPosition`, the next corner of the path, and walks toward it at `Speed`. Only the flat direction counts, because the mesh lies a few centimeters above the ground.
+- The rest is `PlayerMovement`'s: move toward the wanted speed by `Acceleration`, gravity, `MoveAndSlide`, and `LookAt`.
+
+<Solution label="Show the full ClickMovement.cs">
+	<Code code={piece1} lang="csharp" title="src/Player/ClickMovement.cs" />
+</Solution>
+
+## Bake the navigation mesh
+
+The mesh is baked from the level's solid things, so the baking needs to know which nodes they are. You put them in a **group**, a name that any number of nodes can share.
+
+<Steps>
+
+1. Open `levels/meadow.tscn`. In the Scene dock, click `Ground`, then hold <Kbd keys="Ctrl" mac="Cmd" /> and click `GroundTiles`, `Bank`, `Rocks`, `Trees`, and `Bushes`. All six are selected: the flat floor, the two tile grids, and every rock, tree, and bush.
+
+2. The tabs above the Inspector are cut off. Click the arrow at their right until **Groups** shows, and click it.
+
+3. Click **+**, at the top left of the Groups tab. The **Create New Group** dialog opens. Type `navigation_geometry` in **Name**, leave **Global** off, and click **Create**.
+
+	<Figure
+		src={newGroup}
+		alt="The Create New Group dialog: Name navigation_geometry, Global off, an empty Description, the message Group name is valid, and Cancel and Create buttons."
+		caption="The new group's name."
+	/>
+
+	The group appears under **Scene Groups** with its box ticked, and each selected node shows a group icon in the Scene dock.
+
+	<Figure
+		src={groups}
+		alt="The Groups tab with Scene Groups open: navigation_geometry with its box ticked, and Global Groups below it."
+		caption="The six nodes are in the group."
+	/>
+
+4. Click the **Inspector** tab again. Select `Meadow`, the root. Click **+** in the Scene dock, search for `NavigationRegion3D`, create it, and rename it `Navigation`.
+
+5. In the Inspector, click **Navigation Mesh**'s arrow, choose **New NavigationMesh**, and click the new mesh to open it. Set these:
+
+	- Under **Geometry**, **Parsed Geometry Type** to `Static Colliders`: bake from the shapes, not the meshes.
+	- **Source Geometry Mode** to `Groups With Children`, and **Source Group Name** to `navigation_geometry`: bake from the six nodes and everything under them.
+	- Under **Cells**, **Cell Height** to `0.05`. A finer height step puts the mesh a few centimeters above the ground, not a few tens.
+	- Under **Agents**, **Height** `1.8` and **Radius** `0.35`: the player's capsule is 1.8 meters tall and 0.3 wide, with a little room. **Max Climb** `0.1` and **Max Slope** `20`. The rocks and trunks have slopes and edges the player cannot climb, so they must not become floor.
+
+	<Figure
+		src={navmeshSettings}
+		alt="The NavigationMesh in the Inspector: Parsed Geometry Type Static Colliders, Source Geometry Mode Group With Children, Source Group Name navigation_geometry, Cell Height 0.05, Agents Height 1.8, Radius 0.35, Max Climb 0.1, Max Slope 20, each with a reset arrow."
+		caption="The baking settings."
+	/>
+
+6. Select `Navigation` again. In the toolbar above the 3D view, click **Bake NavigationMesh**. After a few seconds, a pale teal mesh covers the meadow, with holes where the trees, the rocks, and the pond are.
+
+	<Figure
+		src={baked}
+		alt="The 3D view of the meadow with a pale teal polygon mesh over the ground and gaps around the pond and the tree trunks."
+		caption="The baked mesh."
+	/>
+
+7. Save the scene.
+
+</Steps>
+
+<Aside type="note" title="Why the settings are not the defaults">
+The defaults are for a character a meter wide that can climb a slope of 45 degrees. With them the slopes of the rocks counted as ramps, and the first path found led the player up a rock it could not climb. A mesh matches a character when its agent settings match that character, so set them from the capsule you built in lesson 6.
+</Aside>
+
+## Put the agent on the player
+
+<Steps>
+
+1. Open `world/player/player.tscn`. Select the root, `Player`, click **+**, search for `NavigationAgent3D`, create it, and rename it `Agent`.
+
+2. In the Inspector, under **Pathfinding**, set **Path Desired Distance** to `0.4` and **Target Desired Distance** to `0.3`. They are how close the player must get to each corner of the path and to the end before the agent counts it reached.
+
+	<Figure
+		src={agentSettings}
+		alt="The NavigationAgent3D in the Inspector: Pathfinding with Path Desired Distance 0.4 and Target Desired Distance 0.3, each with a reset arrow, Path Height Offset 0, Path Max Distance 5, Navigation Layers 1, and the Pathfinding Algorithm AStar."
+		caption="The agent's two distances."
+	/>
+
+3. Select `Player`. Under **Script** at the bottom, click the arrow and choose **Clear**: the player stops reading the keyboard. Click the empty **Script** field, choose **Quick Load...**, type `ClickMovement`, and press <Kbd keys="Enter" />.
+
+4. Save the scene.
+
+</Steps>
+
+The player in `meadow.tscn` had a **Ground** property from `PlayerMovement`. It is gone now, and so is the walking speed that depends on the tile under the player.
+
+## Try it
+
+- Play the meadow with <Kbd keys="F6" mac="Cmd+R" />. Click on the ground. The character walks there, going round what is in the way, and the walk animation plays while it moves and stops when it arrives.
+- Click on the far side of the grove, past the trees. The character takes the long way round.
+- Click on a rock or inside the pond. The character goes to the closest place it can reach.
+- Select `Agent`, and under **Debug** switch **Enabled** on. A red line shows the path while the character walks.
+- In `ClickMovement`, make the player follow the mouse while the button is held: handle `InputEventMouseMotion` when the left button is down, and set `TargetPosition` there too.
+
+## If it does not work
+
+- **The character does not move.** Check that `Agent` is a child of the root and named exactly `Agent`, that the script on the root is `ClickMovement`, and that `Navigation` has a baked mesh. Without a baked mesh the agent has nothing to search.
+- **Baking makes an empty mesh.** The group name in **Source Group Name** does not match the group, or no node is in the group. Check the Groups tab with each node selected.
+- **The character walks into a tree and stops.** The mesh was baked with a radius smaller than the player, or before you moved the tree. Bake again. A player wider than the **Radius** can still catch on a corner.
+- **The character walks up a rock.** **Max Slope** is too high or **Max Climb** too large. Lower them and bake again.
+- **The character stops a little short of the click.** **Target Desired Distance** is the reason: it is the distance from the end that counts as arrived. Make it smaller.
+- **The character never counts a corner as reached.** The agent measures its distances in three dimensions, and the mesh lies above the ground by about twice **Cell Height**. If that height is larger than **Path Desired Distance**, no corner is close enough. Keep **Cell Height** small.
+
+## Checkpoint
+
+Your game now contains:
+
+- `src/Player/ClickMovement.cs`.
+- In `levels/meadow.tscn`: a `navigation_geometry` group on `Ground`, `GroundTiles`, `Bank`, `Rocks`, `Trees`, and `Bushes`, and a `Navigation` region with a baked mesh.
+- In `world/player/player.tscn`: an `Agent` child, and `ClickMovement` in place of `PlayerMovement`.
+
+Commit your work: `git add .` and `git commit -m "Add click to move"`.
+
+<Checkpoint />

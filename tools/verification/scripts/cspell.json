@@ -164,6 +164,8 @@
     "Interactable",
     "Hurtbox",
     "letterboxed",
-    "Npc"
+    "Npc",
+    "navmesh",
+    "pathfinding"
   ]
 }
