@@ -2,6 +2,17 @@
 
 A stylized top-down 3D game template for Godot 4.8 (.NET): a hand-painted meadow with grass, trees, and water, a day and night cycle, a character, a camera rig, and a pause panel. Copy it, rename it, and start a game.
 
+## Start a new game
+
+1. Close Godot, copy the whole project folder, and delete `.godot`, `builds`, and `.git` from the copy.
+2. In the copy, run the rename script once with the Godot .NET executable. Add `--dry-run` first to see what it would change:
+
+   ```
+   godot --headless --path . --script res://tools/rename_project.gd -- "Studio Name" GameName
+   ```
+
+3. Open the project in Godot and click Build Project.
+
 ## Requirements
 
 - Godot 4.8 (.NET build)

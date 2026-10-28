@@ -1,0 +1,209 @@
+---
+title: Copy the template into a new game
+description: Copy the project, run a one-time script that gives the copy its own name in Godot, in C#, and in the export settings, and check that the new game builds and runs.
+sidebar:
+  order: 60
+  label: 60. Copy the template
+lesson:
+  number: 60
+  minutes: 60
+  learn:
+    - Which places carry a Godot C# project's name, and why a copy must change all of them
+    - How to run a Godot script from the command line, with arguments
+    - Why a rename script offers a dry run
+    - How to start a new game from the template
+  prerequisites: [2, 58, 59]
+---
+
+import { Aside, Code, FileTree, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Solution from '../../../components/Solution.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import rename from '../../../checkpoints/60/files/tools/rename_project.gd?raw';
+import readme from '../../../checkpoints/60/files/README.md?raw';
+import settings from '../../../assets/lessons/copy-the-template/settings.png';
+import running from '../../../assets/lessons/copy-the-template/running.png';
+import audit from '../../../assets/lessons/copy-the-template/audit.png';
+
+## What you will build
+
+A script that turns a copy of this project into a new game. You copy the folder, run the script once with a studio name and a game name, and the copy is called what you chose everywhere: in Godot, in the C# code, in the export settings. Then you open it and it builds and runs.
+
+<Figure
+	src={running}
+	alt="The meadow running in a game window from above: the pond, the oaks and pines, the dirt paths, and the player."
+	caption="A copy renamed MoonQuest, running."
+/>
+
+## Why a copy needs renaming
+
+A new Godot project asks for its name once, and the project manager puts it in the right places. A copy of an existing project does not ask. A C# project carries its name in more places than a GDScript project does:
+
+| Where | What it holds |
+|---|---|
+| `project.godot` | The project name Godot shows, the **assembly name**, and the user data folder from lesson 58. |
+| `TopDownTemplate.csproj` and `.sln` | The C# project and solution files, named after the project. The `.sln` also names the project inside itself. |
+| Every `.cs` file | The **root namespace**: `namespace TopDownTemplate.Camera;` and every `using TopDownTemplate.World;`. |
+| `export_presets.cfg` | The export path, `../builds/TopDownTemplate.zip`, and the bundle identifier, such as `com.example.topdowntemplate`. |
+| `README.md` | The title. |
+| `.godot/mono` | Build files that carry the old assembly name. Godot makes them again. |
+
+If you leave any of them, the new game builds as the old one, and two games from the template would write to the same user data folder. A script that changes them all, once, is better than a checklist you read each time.
+
+The assembly name is the name of the compiled C# program. Godot loads that program by name, so the setting in `project.godot` and the project file's name must agree, or Godot cannot find your code.
+
+## Write the script
+
+It is a GDScript file, run by Godot itself from the command line rather than from the editor, because it renames the C# project the editor has open.
+
+<Steps>
+
+1. In your code editor, create `tools/rename_project.gd` and save the code below into it.
+
+2. In `README.md`, add the section **Start a new game** above **Requirements**. It tells the next person how to run the script. The text is under **Show the full README.md**.
+
+</Steps>
+
+The script does these things in order:
+
+- It reads the two names you give it: `"Studio Name"` and `GameName`. The game name must be letters and digits starting with a capital letter, because it becomes a C# namespace, and the studio name may have spaces, because it becomes a folder.
+- It reads the project's current name from the project settings, and stops if the `.csproj` and `.sln` files named after it are missing, because then this is not a copy of the template.
+- It builds the bundle identifier from the two names: `com.` plus the studio in lowercase letters and digits, a dot, and the game name in lowercase.
+- It goes through every file that can carry the name: `.cs`, `.csproj`, `.sln`, `.md`, `.cfg`, and `project.godot`, skipping the folders that never do. In each, it replaces the old name as a whole word with the new one. Then it sets the three lines that are not the name alone: the user data folder, the bundle identifier, and, in the README, it removes the **Start a new game** section, whose work is done.
+- It renames the `.csproj` and `.sln` files, removes the build folders that carry the old name, and deletes itself.
+- With `--dry-run` it does the same but only prints what it would do.
+
+<Solution label="Show the full rename_project.gd">
+	<Code code={rename} lang="gdscript" title="tools/rename_project.gd" />
+</Solution>
+
+<Solution label="Show the full README.md">
+	<Code code={readme} lang="md" title="README.md" />
+</Solution>
+
+<Aside type="note" title="Why a dry run">
+A script that rewrites a project should be able to say what it will do first. A mistyped name, or a folder that is not a copy of the template, shows up in the dry run's list, where it costs nothing, and not in the project.
+</Aside>
+
+## Copy the template
+
+<Steps>
+
+1. Close Godot.
+
+2. In your file manager, copy the whole project folder and give the copy the game's name, such as `MoonQuest`. Put it beside the original, not inside it.
+
+3. In the copy, delete the folders `.godot`, `builds`, and `.git` if they exist. `.godot` is Godot's cache and is made again; `builds` holds exported games; `.git` is the template's history, and the new game starts its own.
+
+</Steps>
+
+## Run the script
+
+The script needs Godot's command-line program, and the same executable you open the editor with is it. Where it is depends on your system:
+
+| System | Path to type |
+|---|---|
+| macOS | `/Applications/Godot_mono.app/Contents/MacOS/Godot` |
+| Windows | The `Godot_v4.8-..._mono_win64.exe` file in the folder you installed it to. Use the `_console.exe` file next to it to see the output. |
+| Linux | The `Godot_v4.8-..._mono_linux.x86_64` file you installed. |
+
+Below, `godot` stands for that path. Open a terminal in the copy's folder, as in lesson 2.
+
+<Steps>
+
+1. Run the dry run. The `--` separates Godot's own options from the script's.
+
+	```sh
+	godot --headless --path . --script res://tools/rename_project.gd -- "Moon Studio" MoonQuest --dry-run
+	```
+
+	`--headless` runs Godot with no window, `--path .` makes the current folder the project, and `--script` runs a script instead of the editor. It prints:
+
+	```txt
+	Would edit res://README.md
+	Would edit res://TopDownTemplate.sln
+	Would edit res://export_presets.cfg
+	Would edit res://project.godot
+	Would edit res://src/Camera/CameraRig.cs
+	Would edit res://src/Generation/GenerationProfile.cs
+	Would edit res://src/Generation/PropRule.cs
+	Would edit res://src/Generation/WorldGenerator.cs
+	Would edit res://src/Ground/BankMap.cs
+	Would edit res://src/Ground/GrassScatter.cs
+	Would edit res://src/Ground/GroundMap.cs
+	Would edit res://src/Ground/GroundTile.cs
+	Would edit res://src/Ground/GroundTileSet.cs
+	Would edit res://src/Player/PlayerAnimation.cs
+	Would edit res://src/Player/PlayerMovement.cs
+	Would edit res://src/Player/PushPoint.cs
+	Would edit res://src/Tools/BuildDay.cs
+	Would edit res://src/Tools/GrassDetail.cs
+	Would edit res://src/UI/PausePanel.cs
+	Would edit res://src/World/DayClock.cs
+	Would rename res://TopDownTemplate.csproj to res://MoonQuest.csproj
+	Would rename res://TopDownTemplate.sln to res://MoonQuest.sln
+	Would rename TopDownTemplate as MoonQuest by Moon Studio. Open the project in Godot and build it.
+	```
+
+	Nothing changed on disk.
+
+2. Run it for real: the same command without `--dry-run`. It prints the same lines with **Edited** and **Renamed**.
+
+3. Open the copy in Godot, in the project manager's **Import** button, choosing the copy's `project.godot`. Godot imports the assets again, which takes a minute.
+
+4. Click **Build Project**, the hammer. The build succeeds: the new assembly is `MoonQuest`.
+
+5. Open **Project > Project Settings...**, switch **Advanced Settings** on, and click **Application > Config**. **Name** is `MoonQuest`, and **Custom User Dir Name** is `Moon Studio/MoonQuest`.
+
+	<Figure
+		src={settings}
+		alt="The Application Config settings with Advanced Settings on: Name MoonQuest, Use Custom User Dir on, Custom User Dir Name Moon Studio/MoonQuest."
+		caption="The renamed project's settings."
+	/>
+
+</Steps>
+
+<Aside type="note" title="What if you cannot run the script">
+You can make every change by hand, and the table above is your checklist. The one that takes care is the namespace. In your IDE, rename the namespace `TopDownTemplate`: in Rider, put the cursor on it and use **Refactor > Rename**; in Visual Studio, **Rename** from the right-click menu; in VS Code with the C# Dev Kit, <Kbd keys="F2" />. The IDE changes it in every file at once. Then rename the `.csproj` and `.sln` files and the name inside the `.sln`, and set the assembly name in Project Settings to match.
+</Aside>
+
+## Try it
+
+- Play `levels/meadow.tscn` with <Kbd keys="F6" mac="Cmd+R" />. It runs as before, and the character walks: the C# code loaded from the new assembly.
+- Open `tools/audit_project.gd` and choose **File > Run**. The audit finds no problems in the new project.
+
+	<Figure
+		src={audit}
+		alt="The Output panel reading Audited 145 files: 0 problems."
+		caption="The renamed project passes the audit."
+	/>
+
+- Search the new project's folder for `TopDownTemplate`, with your editor's find in files. There is no match outside the `.godot` cache.
+- Start a Git history for the new game: `git init`, `git add .`, and `git commit -m "Start MoonQuest from the template"`.
+
+## If it does not work
+
+- **The command prints "This is not a copy of the template".** You are in a folder that does not have `<ProjectName>.csproj` and `.sln` beside `project.godot`, or `--path .` points elsewhere. Open the terminal in the copy's folder.
+- **It says the game name must start with a capital letter.** The name becomes a namespace. Use `MoonQuest`, not `moonquest` or `Moon Quest`.
+- **"Can't load script".** The path after `--script` is wrong, or the script already ran and deleted itself. A new copy has it again.
+- **Godot says it cannot find the .NET assembly.** The name in **Project Settings > Dotnet > Project > Assembly Name** differs from the `.csproj` file's name. Make them the same, then build.
+- **The build fails with "type or namespace name TopDownTemplate".** A script still uses the old name. Search the project for it. Run the script on a fresh copy, or rename the namespace in your IDE.
+- **The export still writes `TopDownTemplate`.** Open **Project > Export...** and check the preset's export path.
+
+## Checkpoint
+
+Your template now contains:
+
+<FileTree>
+- README.md with Start a new game
+- tools
+  - audit_project.gd
+  - rename_project.gd
+</FileTree>
+
+The copy you made is a separate project, not part of the template. The template is finished: lessons 58 to 60 gave it its settings, its boundaries, and a way to start a game from it. Lessons 61, 62, and 64 are optional: small add-ons for three kinds of game.
+
+Commit the template: `git add .` and `git commit -m "Add the rename script"`.
+
+<Checkpoint />
