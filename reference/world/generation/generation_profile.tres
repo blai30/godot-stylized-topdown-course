@@ -6,7 +6,7 @@
 
 [resource]
 script = ExtResource("3_p631n")
-Seed = 7
+Seed = 15
 Terrain = ExtResource("2_adj0s")
 Forest = ExtResource("1_jf18m")
 metadata/_custom_type_script = "uid://dtnpd30kngpur"

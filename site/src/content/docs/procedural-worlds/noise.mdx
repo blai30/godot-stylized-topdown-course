@@ -204,11 +204,11 @@ The one idea in `Sample` is that the seed is not stored in the noise. If the pro
 		caption="A new profile, with nothing to read yet."
 	/>
 
-3. Set **Seed** to `7`. Click the **Terrain** field's arrow, choose **Quick Load...**, type `terrain_noise`, and press Enter. Do the same for **Forest** with `forest_noise`.
+3. Set **Seed** to `15`. Click the **Terrain** field's arrow, choose **Quick Load...**, type `terrain_noise`, and press Enter. Do the same for **Forest** with `forest_noise`.
 
 	<Figure
 		src={profile}
-		alt="The Inspector showing a GenerationProfile with Seed 7, Terrain set to terrain_noise and Forest set to forest_noise."
+		alt="The Inspector showing a GenerationProfile with Seed 15, Terrain set to terrain_noise and Forest set to forest_noise."
 		caption="A world, in one resource."
 	/>
 
@@ -221,11 +221,11 @@ The one idea in `Sample` is that the seed is not stored in the noise. If the pro
 Nothing visible changed in the meadow, so the check is in the numbers. These were read back from the saved profile after the steps above.
 
 - The same seed gives the same answer every time. Asking the profile for the terrain at four points, twice over, gave identical numbers both times.
-- A different seed gives a different answer. At the point (3.5, -7.25), seed 7 gave 0.36 and seed 8 gave -0.30.
-- The profile adds nothing else. The terrain noise asked directly at that point plus the seed's offset gave the same 0.36.
-- The numbers stay between -1 and 1. Over every cell of a 96 by 96 cell level, the terrain values for seed 7 ran from -0.60 to 0.71.
+- A different seed gives a different answer. At the point (3.5, -7.25), seed 15 gave -0.04 and seed 16 gave -0.28.
+- The profile adds nothing else. The terrain noise asked directly at that point plus the seed's offset gave the same -0.04.
+- The numbers stay between -1 and 1. Over every cell of a 96 by 96 cell level, the terrain values for seed 15 ran from -0.67 to 0.67.
 
-One more number matters for the next lesson. If everything below -0.2 is water, then how much of the level is a lake depends on the seed. Over seven seeds it was between 13 and 34 percent. Seed 7, the one you set, gives 13: a few lakes with plenty of meadow around them.
+One more number matters for the next lesson. If everything below -0.2 is water, then how much of the level is a lake depends on the seed. Over seven seeds it was between 19 and 41 percent. Seed 15, the one you set, gives 23, and the next lesson trims that a little: a few lakes with plenty of meadow around them.
 
 ## When it goes wrong
 

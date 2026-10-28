@@ -63,15 +63,15 @@ for point in points:
 	again.append([profile.call("TerrainAt", point), profile.call("ForestAt", point)])
 print("[probe] same seed same values ", first == again, " ", first)
 var terrain: FastNoiseLite = profile.get("Terrain")
-profile.set("Seed", 8)
+profile.set("Seed", 16)
 var other: float = profile.call("TerrainAt", points[1])
-profile.set("Seed", 7)
-print("[probe] seed 7 ", first[1][0], " seed 8 ", other, " differ ", not is_equal_approx(first[1][0], other))
+profile.set("Seed", 15)
+print("[probe] seed 15 ", first[1][0], " seed 16 ", other, " differ ", not is_equal_approx(first[1][0], other))
 # Slid by the seed's offset, the raw noise gives the same number: the profile adds nothing else.
-var offset := Vector2(posmod(7 * 7919, 10007), posmod(7 * 104729, 10007))
+var offset := Vector2(posmod(15 * 7919, 10007), posmod(15 * 104729, 10007))
 print("[probe] raw noise at the offset point ", terrain.get_noise_2dv(points[1] + offset), " profile ", first[1][0])
 # Values stay in range, and the share of the 96 by 96 cell level that would be water at a level of -0.2.
-for seed_value in [1, 7, 8, 9, 10, 11, 12]:
+for seed_value in [1, 15, 16, 17, 18, 19, 20]:
 	profile.set("Seed", seed_value)
 	var low := 1.0
 	var high := -1.0
@@ -88,7 +88,7 @@ for seed_value in [1, 7, 8, 9, 10, 11, 12]:
 			if float(profile.call("ForestAt", point)) > 0.2:
 				forest_share += 1
 	print("[probe] seed %d range %.2f to %.2f water %.1f%% forest %.1f%%" % [seed_value, low, high, 100.0 * water / 9216.0, 100.0 * forest_share / 9216.0])
-profile.set("Seed", 7)
+profile.set("Seed", 15)
 '''
 
 steps = [
@@ -151,7 +151,7 @@ print("[probe] global classes ", names)
 '''),
     *new_standalone_resource('GenerationProfile', 'l49_new_profile'),
     unfold_inspector(),
-    inspector_set('Seed', '7'),
+    inspector_set('Seed', '15'),
     *quick_load('Terrain', 'terrain_noise.tres'),
     {'op': 'wait', 'frames': 20},
     *quick_load('Forest', 'forest_noise.tres'),
