@@ -1,0 +1,157 @@
+---
+title: "Bonus: a grid cursor for tactics games"
+description: Draw a grid on the ground that lights the cell under the mouse, with a shader and a short script that finds the cell and says when it is hovered or picked.
+sidebar:
+  order: 61
+  label: 61. Bonus, grid cursor
+lesson:
+  number: 61
+  minutes: 60
+  learn:
+    - How to find the point on the ground under the mouse
+    - How to turn a world position into a grid cell
+    - How a shader can draw grid lines from world positions
+    - How to send a cell to the rest of the game with a signal
+  prerequisites: [15, 60]
+---
+
+import { Aside, Code, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Solution from '../../../components/Solution.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import piece1 from '../../../checkpoints/61/pieces/piece-1.gdshader?raw';
+import piece2 from '../../../checkpoints/61/pieces/piece-2.cs?raw';
+import sceneDock from '../../../assets/lessons/bonus-grid-cursor/scene-dock.png';
+import noCursor from '../../../assets/lessons/bonus-grid-cursor/no-cursor.png';
+import cell from '../../../assets/lessons/bonus-grid-cursor/cell.png';
+import moved from '../../../assets/lessons/bonus-grid-cursor/moved.png';
+
+<Aside type="note" title="An optional add-on">
+Lessons 61, 62, and 64 are not part of the template. Each is a small addition for one kind of game, and you add it to a game you copied from the template in lesson 60, not to the template itself. This one is for games where you pick squares on a map: tactics, strategy, and board games.
+</Aside>
+
+## What you will build
+
+A grid that shows on the ground around the mouse, with the square under the mouse lit. A script reports which square it is, and tells the rest of the game when the mouse moves to a new one or clicks one.
+
+<Figure
+	src={cell}
+	alt="The meadow from above with a faint white grid of one-meter squares around the middle of the screen, fading toward its edges, and one square next to the player lit yellow."
+	caption="The lit square is the one under the mouse."
+/>
+
+## Find the square under the mouse
+
+Your mouse is a point on the screen. The ground is a flat surface in the world. To find where the point lands on the ground, you shoot a line from the camera through the point, and see where the line meets the ground. Godot's camera does the first half: `ProjectRayOrigin` and `ProjectRayNormal` give the line's start and direction for any screen point, and they work with the orthographic camera too.
+
+The ground here is the plane at height 0, so the meeting point is a sum, not a physics query: `Plane.IntersectsRay`. Godot's physics could do it with a ray cast and the `Terrain` layer from lesson 58, which you need when the ground is not flat. A plane is enough while it is.
+
+A **cell** is one square of the grid. Dividing the point's `X` and `Z` by the cell's width and rounding down gives the cell's two whole numbers, its column and row. `(0, 0)` is the square from the origin out to one meter along `X` and `Z`, and negative positions give negative numbers.
+
+## Draw the grid
+
+A grid does not need a mesh with a line for every square. One big flat mesh, a **plane**, lies on the ground, and its shader decides, for each pixel, whether it is on a line, in the lit cell, or neither. The shader needs the pixel's place in the world, which it takes from the vertex.
+
+<Steps>
+
+1. In the project, create the folders `world/grid` and `src/Grid`.
+
+2. In your code editor, create `world/grid/grid_overlay.gdshader` and save the shader below into it.
+
+</Steps>
+
+The shader works like this:
+
+- `render_mode unshaded, depth_draw_never;` makes the grid ignore lights, so it is the same at noon and at dusk, and keeps it from hiding the things behind it.
+- `cell_size` and `cell` are **instance uniforms**, the kind lesson 28 used for each tree's place in the wind: values a script sets for one mesh. The script says how wide a cell is and which one is under the mouse. `cell` starts far away, at a million, so nothing is lit until the mouse moves.
+- `vertex` stores the vertex's world position in a **varying**, a value Godot hands on to `fragment`, smoothly mixed between the vertices.
+- `fragment` divides the world position by the cell size. `fract` gives the place inside the cell, from 0 to 1 across, and `min(inside, 1.0 - inside)` how far the pixel is from the nearest edge. `smoothstep` turns a small distance into a line of `line_width`.
+- A pixel is `on_cursor` when its cell, `floor(grid)`, equals the `cell` uniform. The line fades out beyond `fade_distance` meters from the middle of that cell, so the grid appears only around the mouse.
+- The color is the line color, or the cursor color on the lit cell, and the alpha is the stronger of the two.
+
+<Solution label="Show the full grid_overlay.gdshader">
+	<Code code={piece1} lang="gdshader" title="world/grid/grid_overlay.gdshader" />
+</Solution>
+
+## Write the script
+
+<Steps>
+
+1. In your code editor, create `src/Grid/GridCursor.cs` and save the code below into it.
+
+2. Click **Build Project**.
+
+</Steps>
+
+The script does these things:
+
+- It has `using Godot;` and the namespace `TopDownTemplate.Grid;`, and `GridCursor` extends `MeshInstance3D`, so it can sit on the plane and set that plane's shader values.
+- It has two signals, `CellHovered` and `CellPicked`, each carrying a `Vector2I`, a pair of whole numbers. A signal lets your game react without the cursor knowing about your game.
+- `CellSize` is an `[Export]` property: how wide a cell is, one meter by default. `_Ready` hands it to the shader.
+- `_UnhandledInput` gets the mouse events that menus and other UI did not use. A mouse move calls `Hover`. A left-button press sends `CellPicked` with the cell last hovered.
+- `Hover` projects the screen position to the ground, finds the cell, and stops if it is the cell it already had, so a signal is sent only when the cell changes. Otherwise it tells the shader the new cell, and sends `CellHovered`.
+- `_cell` is a `Vector2I?`, which can be empty, because before the first mouse move there is no cell, and a click then has nothing to pick.
+
+<Solution label="Show the full GridCursor.cs">
+	<Code code={piece2} lang="csharp" title="src/Grid/GridCursor.cs" />
+</Solution>
+
+## Put it in the level
+
+<Steps>
+
+1. Open `levels/meadow.tscn`. With `Meadow`, the root, selected, click **+** in the Scene dock, search for `MeshInstance3D`, and create it. Rename it `GridOverlay`.
+
+2. In the Inspector, click **Mesh**'s arrow, choose **New PlaneMesh**, click the mesh to open it, and set **Size** to `40` by `40`. The plane covers the meadow.
+
+3. Select `GridOverlay` again. Under **Geometry**, click **Material Override**'s arrow and choose **New ShaderMaterial**. Click the material to open it, click the **Shader** field's arrow, choose **Quick Load...**, type `grid_overlay`, and press <Kbd keys="Enter" />.
+
+4. Under **Transform**, set **Position** **y** to `0.05`, so the grid lies a few centimeters above the ground. Under **Geometry**, set **Cast Shadow** to `Off`.
+
+5. Click **Script**'s empty field at the bottom, choose **Quick Load...**, type `GridCursor`, and press <Kbd keys="Enter" />.
+
+	<Figure
+		src={sceneDock}
+		alt="The Scene dock with GridOverlay, the last child of Meadow, selected, with a script icon beside it."
+		caption="GridOverlay, with its script."
+	/>
+
+6. Save the scene.
+
+</Steps>
+
+You see nothing in the editor, and that is right: the lines fade out around the lit cell, and with no mouse there is no lit cell.
+
+## Try it
+
+- Play the meadow with <Kbd keys="F6" mac="Cmd+R" />. Nothing shows until you move the mouse. Then the grid appears around it, with the square under the mouse lit. Move the mouse and the lit square jumps from cell to cell.
+
+<Figure
+	src={moved}
+	alt="The meadow from above with the grid around the pond, drawn over the pond, the grass, and the dirt path, but not over the trees or the pine."
+	caption="The grid follows the mouse. It lies on the ground, so the trees stand in front of it."
+/>
+
+- In the Node dock, open the **Signals** tab for `GridOverlay`, double-click `CellPicked`, and connect it to a script of your own. It is called with the cell each time you click.
+- Change **Cell Size** on `GridOverlay` to `2`. The grid and the lit cell double in width, because the script gives the same size to both.
+- Open the shader's `fade_distance` and set it to `30`. The whole plane shows its lines, and the grid is a fixed overlay.
+
+## If it does not work
+
+- **Nothing shows when the mouse moves.** Check that the plane is at **Position** **y** `0.05` and covers where the mouse is, that **Material Override** holds a **ShaderMaterial** with the shader, and that the script is on `GridOverlay`. The Output panel reports a shader error if the shader does not compile.
+- **The whole plane is white.** The material has no shader. Set its **Shader** field.
+- **The lit cell is not under the mouse.** The mouse position is relative to the window. If the game draws its world in a `SubViewport`, use the position relative to that viewport and its camera.
+- **The grid hides behind the grass.** Grass blades taller than the grid's height cover it. Raise **Position** **y**, or keep the grass off this ground.
+- **Clicks do nothing.** A control that takes the mouse, such as a panel, uses the click first. `_UnhandledInput` only sees what the interface leaves. Set **Mouse Filter** on the control to `Ignore` if it should not take clicks.
+
+## Checkpoint
+
+Your game now contains:
+
+- `world/grid/grid_overlay.gdshader` and `src/Grid/GridCursor.cs`.
+- A `GridOverlay` node in `levels/meadow.tscn`: a 40 by 40 plane with the grid material and the `GridCursor` script.
+
+Commit your work: `git add .` and `git commit -m "Add a grid cursor"`.
+
+<Checkpoint />
