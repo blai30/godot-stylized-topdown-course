@@ -1,0 +1,339 @@
+---
+title: Clean up and draw the art library boundary
+description: Write an audit that checks the project's rules, make the art folder a library that holds no scripts and refers to nothing outside itself, write the READMEs, and let the build enforce the code style.
+sidebar:
+  order: 59
+  label: 59. Clean up
+lesson:
+  number: 59
+  minutes: 90
+  learn:
+    - Why the art folder is a library, and the two rules that keep it one
+    - How a shader can derive a value from where an object stands, instead of a script setting it
+    - How to give a node inside an instanced scene its own script
+    - How to move and rename files in the FileSystem dock without breaking scenes
+    - How to make the build enforce the code style
+  prerequisites: [28, 43, 58]
+---
+
+import { Aside, Code, FileTree, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Solution from '../../../components/Solution.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import audit from '../../../checkpoints/59/files/tools/audit_project.gd?raw';
+import readme from '../../../checkpoints/59/files/README.md?raw';
+import artReadme from '../../../checkpoints/59/files/art/README.md?raw';
+import csproj from '../../../checkpoints/59/files/TopDownTemplate.csproj?raw';
+import windInclude from '../../../checkpoints/59/files/art/shaders/wind.gdshaderinc?raw';
+import barkShader from '../../../checkpoints/59/files/art/shaders/bark.gdshader?raw';
+import foliageShader from '../../../checkpoints/59/files/art/shaders/foliage.gdshader?raw';
+import playerScene from '../../../checkpoints/59/files/world/player/player.tscn?raw';
+import auditBefore from '../../../assets/lessons/clean-up/audit-before.png';
+import auditAfter from '../../../assets/lessons/clean-up/audit-after.png';
+import scriptCleared from '../../../assets/lessons/clean-up/script-cleared.png';
+import deleteDialog from '../../../assets/lessons/clean-up/delete-dialog.png';
+import playerAnimation from '../../../assets/lessons/clean-up/player-animation.png';
+import moved from '../../../assets/lessons/clean-up/moved.png';
+import styleError from '../../../assets/lessons/clean-up/style-error.png';
+
+## What you will build
+
+A project that is tidy enough to copy. The `art` folder becomes a library: models, materials, shaders, and textures, with no scripts in it and no path that leads outside it. You write a small audit that proves it, fix what the audit finds, write the two READMEs a newcomer reads first, and make the build refuse code that breaks the style.
+
+Nothing changes on screen. The meadow looks exactly as it did, and you check that.
+
+<Aside type="note" title="Why the art folder is a library">
+A game's art outlives the game. If `art` refers only to itself, you can copy it into the next game, share it between games, or keep it in a repository of its own. The two rules are short: **no scripts** and **no reference to anything outside the folder**. Scripts and scenes that use the art live beside it, in `src`, `world`, and `levels`.
+</Aside>
+
+## Write the audit
+
+You find what breaks the rules by asking a script, not by looking. The audit is an editor script, like the one that keyframed the day in lesson 21: you run it from the Script editor, and it prints to the Output panel. It reads every file in the project once.
+
+<Steps>
+
+1. In your code editor, create the folder `tools` at the project's root, beside `art`, and in it a file named `audit_project.gd`. Save the code below into it. It is GDScript, the language Godot's editor scripts are usually written in; you do not need to learn it, only to read what it checks.
+
+2. In Godot, double-click `tools/audit_project.gd` in the FileSystem dock to open it in the Script editor.
+
+3. Choose **File > Run** in the Script editor. The Output panel lists the problems.
+
+</Steps>
+
+The script does four things:
+
+- It collects every file under `res://`, skipping Godot's cache (`.godot`), build output, and `art_source`, which holds files other programs made.
+- For each file under `art/`, it reports any `.cs` or `.gd` file, and, in scenes, resources, and shaders, any `res://` path that does not start with `res://art/` and any use of a script.
+- For every file, it checks its name: outside `src`, `snake_case`; inside `src`, `PascalCase` for folders and files. A `.uid` or `.import` file is named after its source, and a `README.md` is named for what it is.
+- It prints each problem on a line of its own and a count, and says `0 problems` when the project is clean.
+
+<Solution label="Show the full audit_project.gd">
+	<Code code={audit} lang="gdscript" title="tools/audit_project.gd" />
+</Solution>
+
+Your Output panel lists 13 problems:
+
+<Figure
+	src={auditBefore}
+	alt="The Output panel after running the audit: lines for character.tscn, ground_tile_set.tres, bush.tscn, tree_oak.tscn, and tree_pine.tscn pointing outside the art folder or using a script, ending with Audited 145 files: 13 problems."
+	caption="The audit's first run. The panel scrolls; the list begins with the vendor animation file."
+/>
+
+```txt
+res://art/animations/UAL1_Standard.glb: the file UAL1_Standard should be snake_case.
+res://art/animations/UAL1_Standard.glb.import: the file UAL1_Standard should be snake_case.
+res://art/character/character.tscn: points outside the art folder, to res://src/Player/PlayerAnimation.cs.
+res://art/character/character.tscn: uses a script.
+res://art/ground/ground_tile_set.tres: points outside the art folder, to res://src/Ground/GroundTile.cs.
+res://art/ground/ground_tile_set.tres: points outside the art folder, to res://src/Ground/GroundTileSet.cs.
+res://art/ground/ground_tile_set.tres: uses a script.
+res://art/nature/bush/bush.tscn: points outside the art folder, to res://src/World/WindPhase.cs.
+res://art/nature/bush/bush.tscn: uses a script.
+res://art/nature/tree_oak/tree_oak.tscn: points outside the art folder, to res://src/World/WindPhase.cs.
+res://art/nature/tree_oak/tree_oak.tscn: uses a script.
+res://art/nature/tree_pine/tree_pine.tscn: points outside the art folder, to res://src/World/WindPhase.cs.
+res://art/nature/tree_pine/tree_pine.tscn: uses a script.
+Audited 145 files: 13 problems.
+```
+
+Three things are wrong: the three nature scenes use `WindPhase`, the character uses `PlayerAnimation`, and the tile set uses two scripts. One file breaks the naming rule. The rest of the lesson fixes each in turn.
+
+<Aside type="note" title="If you did the optional autumn lesson">
+This lesson assumes the core path. If you also did lesson 57, the oaks carry the `AutumnTree` script and the audit lists it too. The end of lesson 57 says how to keep that bonus outside the art folder.
+</Aside>
+
+## Let the shader place the tree in the wind
+
+`WindPhase` gave each tree its own place in the wind: it computed a number from the tree's position and handed it to the tree's meshes as the `tree_phase` instance uniform. But the shaders already know where each tree stands: `tree_origin` is the position of the object that is being drawn. A shader can compute the same number itself, with no script and no uniform to set.
+
+<Steps>
+
+1. In `art/shaders/wind.gdshaderinc`, add a function above `tree_sway`: `tree_phase_at(vec3 tree_origin)`, which returns `fract(tree_origin.x * 0.37 + tree_origin.z * 0.61)`. These are the numbers `WindPhase` used. `fract` keeps the part after the decimal point, so the result is always from 0 up to 1, like `PosMod(..., 1)` did.
+
+2. In `art/shaders/bark.gdshader`, delete the `tree_phase` instance uniform and its comment. In `vertex`, pass `tree_phase_at(tree_origin)` where `tree_phase` was passed to `tree_sway`.
+
+3. In `art/shaders/foliage.gdshader`, delete the `tree_phase` instance uniform and its comment. In `vertex`, add `float tree_phase = tree_phase_at(tree_origin);` under the line that sets `tree_origin`. The two lines that use `tree_phase` stay as they are.
+
+4. Save all three files.
+
+</Steps>
+
+<Solution label="Show the full wind.gdshaderinc">
+	<Code code={windInclude} lang="gdshader" title="art/shaders/wind.gdshaderinc" />
+</Solution>
+
+<Solution label="Show the full bark.gdshader">
+	<Code code={barkShader} lang="gdshader" title="art/shaders/bark.gdshader" />
+</Solution>
+
+<Solution label="Show the full foliage.gdshader">
+	<Code code={foliageShader} lang="gdshader" title="art/shaders/foliage.gdshader" />
+</Solution>
+
+Now nothing needs the script. Take it off the three scenes, then delete it.
+
+<Steps>
+
+1. Open `art/nature/tree_oak/tree_oak.tscn` and select the root, **TreeOak**. In the Inspector, find **Script** at the bottom. Click the small arrow at its right, and choose **Clear**. The field reads `<empty>`.
+
+	<Figure
+		src={scriptCleared}
+		alt="The Inspector for TreeOak with the Script row at the bottom reading empty."
+		caption="TreeOak has no script."
+	/>
+
+2. Save with <Kbd keys="Ctrl+S" mac="Cmd+S" />. Do the same for `tree_pine.tscn` and `bush.tscn`.
+
+3. In the FileSystem dock, open `src/World`, click `WindPhase.cs`, and press <Kbd keys="Delete" mac="Cmd+Backspace" />. Godot asks you to confirm. Click **Remove**.
+
+	<Figure
+		src={deleteDialog}
+		alt="The Remove dialog: Remove the selected files from the project? Cannot be undone. Files to be deleted: src/World/WindPhase.cs, with Cancel and Remove buttons."
+		caption="Godot names every file it will delete before it does."
+	/>
+
+</Steps>
+
+Godot also lists any scene that still uses a file you are deleting. This dialog lists none.
+
+## Give the player the animation script
+
+`PlayerAnimation` blends the character's walk and run clips by how fast the body is moving. It sits on the `AnimationTree` inside `character.tscn`, which is art. The script is not art, it is the game's behavior, so it moves to the scene that owns the body: the player.
+
+<Steps>
+
+1. Open `art/character/character.tscn` and select the `AnimationTree` node. Under **Script**, click the arrow and choose **Clear**. Save.
+
+2. Open `world/player/player.tscn`. A scene you instanced shows only its root. To change a node inside it, right-click `character` in the Scene dock and choose **Editable Children**. The instance opens, and its nodes appear below it.
+
+3. Select `character/AnimationTree`. Click **Script**'s empty field, choose **Quick Load...**, type `PlayerAnimation`, and press <Kbd keys="Enter" />.
+
+	<Figure
+		src={playerAnimation}
+		alt="The Godot editor showing player.tscn with Editable Children on: the Scene dock lists Player, CollisionShape3D, PushPoint, and character with its Armature, AnimationPlayer, and AnimationTree, and the Inspector shows AnimationTree with Script PlayerAnimation."
+		caption="The player's animation tree, with the script attached in the player scene."
+	/>
+
+4. Save the scene.
+
+</Steps>
+
+The code is unchanged. It finds the body the same way as before: the `AnimationTree`'s owner is the `character` instance, and that instance's parent is the player's body.
+
+<Solution label="Show the full player.tscn">
+	<Code code={playerScene} lang="ini" title="world/player/player.tscn" />
+</Solution>
+
+## Move the tile set to the world
+
+The tile set is a resource made from the `GroundTileSet` and `GroundTile` classes: it lists which tiles exist and how fast the player walks on each. It belongs to the game, and it only points at art, the meshes in `ground_tiles.meshlib`. So it belongs outside `art`.
+
+<Steps>
+
+1. In the FileSystem dock, right-click the `world` folder and choose **Create New > Folder...**. Name it `ground` and click **OK**.
+
+2. Drag `art/ground/ground_tile_set.tres` onto `world/ground`. Godot moves the file and rewrites the scenes that use it, `meadow.tscn` and `generated.tscn`, so nothing breaks.
+
+	<Figure
+		src={moved}
+		alt="The FileSystem dock with world, ground, and ground_tile_set.tres selected."
+		caption="The tile set in its new folder."
+	/>
+
+</Steps>
+
+## Rename the vendor file
+
+Every other file follows the `snake_case` rule. The animation pack's file kept the name its author gave it, `UAL1_Standard.glb`.
+
+<Steps>
+
+1. In the FileSystem dock, click `art/animations/UAL1_Standard.glb`, press <Kbd keys="F2" />, type `ual1_standard.glb`, and press <Kbd keys="Enter" />. Godot renames the file and its import settings, and fixes `character.tscn`, which names it.
+
+2. Open `art/animations/README.md` and change the file name in its first sentence to `ual1_standard.glb`, noting it was renamed from the pack's `UAL1_Standard.glb`. The README keeps the author's name and the license, so the credit stays with the file.
+
+</Steps>
+
+## Write the READMEs
+
+A newcomer opens the project's folder and looks for a README. You write two: one for the project, and one for the art library, which says what it needs from the project it sits in.
+
+<Steps>
+
+1. In your code editor, create `README.md` at the project's root. It says what the project is, what it needs, what each folder holds, the naming conventions, the layers from lesson 58, and the window. Save the text under **Show the full README.md**.
+
+2. Create `art/README.md`. It says what the library is, its rules, which shader globals it reads, and what it expects from the character scene. Save the text under **Show the full art/README.md**.
+
+</Steps>
+
+<Solution label="Show the full README.md">
+	<Code code={readme} lang="md" title="README.md" />
+</Solution>
+
+<Solution label="Show the full art/README.md">
+	<Code code={artReadme} lang="md" title="art/README.md" />
+</Solution>
+
+The art README is honest about one thing that is not a file. The shaders read **shader globals**, which live in Project Settings, not in `art`. A project that adopts the library must declare the same ones, so the README lists them.
+
+## Run the audit again
+
+<Steps>
+
+1. With `tools/audit_project.gd` open in the Script editor, choose **File > Run** again.
+
+	<Figure
+		src={auditAfter}
+		alt="The Output panel reading Audited 145 files: 0 problems."
+		caption="Zero problems."
+	/>
+
+</Steps>
+
+The boundary holds: `art` has no scripts and no path out.
+
+## Make the build enforce the style
+
+In lesson 58 you wrote the style rules in `.editorconfig` and turned warnings into errors. By default those rules reach only your code editor. One more line makes the build itself check them, so a script that breaks the style does not compile.
+
+<Steps>
+
+1. In `TopDownTemplate.csproj`, add `<EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>` inside the `<PropertyGroup>`, above `<TreatWarningsAsErrors>`.
+
+2. Save, then click **Build Project**. The build succeeds: every script already follows the rules.
+
+</Steps>
+
+<Solution label="Show the full TopDownTemplate.csproj">
+	<Code code={csproj} lang="xml" title="TopDownTemplate.csproj" />
+</Solution>
+
+## Try it
+
+- Run the meadow with <Kbd keys="F6" mac="Cmd+R" />. It looks as it did before the lesson. The trees still sway at different moments, because each derives its phase from where it stands. The player walks and the character's legs move.
+- Prove the build enforces the style. Make `src/Camera/Bad.cs` with a block-scoped namespace, then build:
+
+```csharp
+using Godot;
+
+namespace TopDownTemplate.Camera
+{
+	public partial class Bad : Node
+	{
+	}
+}
+```
+
+The **MSBuild** panel reports an error: "Convert to file-scoped namespace". Delete the file and build again.
+
+<Figure
+	src={styleError}
+	alt="The MSBuild Problems panel: src/Camera/Bad.cs, 1 issue, Convert to file-scoped namespace (ide0161) at 3,11."
+	caption="The style rule fails the build."
+/>
+
+## If it does not work
+
+- **The audit does nothing.** The script is not open in the Script editor, or it is a different file. **File > Run** runs the script that is open and is gray for a script that does not extend `EditorScript`.
+- **The audit still lists a `res://src` path in a scene.** The scene was not saved after you cleared its script, or a second scene, such as a copy of the oak, still has it.
+- **The trees all sway in step.** The foliage shader still reads the removed `tree_phase` uniform, or `tree_phase_at` is not called in `vertex`. The Output panel shows a shader error if so.
+- **The character stands still while the player walks.** `PlayerAnimation` is not on `character/AnimationTree` in `player.tscn`, or **Editable Children** was turned off. Check the **Script** row of that node.
+- **The tile set is missing from `GroundTiles` after the move.** The file was moved outside Godot, so the scenes were not rewritten. Set **Tiles** on `GroundTiles` to the file in `world/ground` by hand.
+- **The build fails after you add the line.** A script breaks a rule in `.editorconfig`. The **MSBuild** panel names the rule and the line.
+
+## Checkpoint
+
+Your project now contains:
+
+<FileTree>
+- README.md
+- TopDownTemplate.csproj with `EnforceCodeStyleInBuild`
+- tools
+  - audit_project.gd
+- art
+  - README.md
+  - animations
+    - ual1_standard.glb renamed
+  - character
+    - character.tscn no script
+  - ground no ground_tile_set.tres
+  - nature
+    - tree_oak, tree_pine, bush: no script
+  - shaders
+    - wind.gdshaderinc with `tree_phase_at`
+    - bark.gdshader
+    - foliage.gdshader
+- src
+  - World
+    - DayClock.cs WindPhase.cs is gone
+- world
+  - ground
+    - ground_tile_set.tres
+  - player
+    - player.tscn AnimationTree with PlayerAnimation
+</FileTree>
+
+Commit your work: `git add .` and `git commit -m "Clean up and draw the art library boundary"`. Lesson 60 copies the template into a new game.
+
+<Checkpoint />

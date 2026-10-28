@@ -26,6 +26,11 @@ float gust_strength(vec3 world_position) {
 	return wind_strength * mix(GUST_FLOOR, 1.0, wave);
 }
 
+// Where a tree stands decides its place in the wind, so a grove does not sway in step.
+float tree_phase_at(vec3 tree_origin) {
+	return fract(tree_origin.x * 0.37 + tree_origin.z * 0.61);
+}
+
 // How far the whole tree leans at a point on it, in world space. The tree's own phase keeps a grove from swaying in step.
 vec3 tree_sway(vec3 world_position, vec3 tree_origin, float tree_phase) {
 	vec2 heading = normalize(wind_direction);

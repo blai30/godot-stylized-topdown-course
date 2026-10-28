@@ -6,14 +6,12 @@ shader_type spatial;
 
 // The palette, as for the rocks.
 uniform sampler2D palette : source_color, filter_nearest;
-// Set on each tree, so a grove does not sway in step.
-instance uniform float tree_phase = 0.0;
 
 void vertex() {
 	vec3 world_position = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 	vec3 tree_origin = MODEL_MATRIX[3].xyz;
 	// The bark leans with the cards, so the limbs stay under their leaves.
-	VERTEX += inverse(mat3(MODEL_MATRIX)) * tree_sway(world_position, tree_origin, tree_phase);
+	VERTEX += inverse(mat3(MODEL_MATRIX)) * tree_sway(world_position, tree_origin, tree_phase_at(tree_origin));
 }
 
 void fragment() {

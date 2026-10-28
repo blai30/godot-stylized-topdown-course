@@ -7,8 +7,6 @@ render_mode cull_disabled;
 // The leaf atlas from lesson 25, and the color its middle gray becomes.
 uniform sampler2D leaf_atlas : filter_linear_mipmap_anisotropic;
 uniform vec3 leaf_color : source_color = vec3(0.408, 0.765, 0.263);
-// Set on each tree, so a grove does not sway in step.
-instance uniform float tree_phase = 0.0;
 
 // The atlas is a multiplier around 0.5, stored as data: 128 means 1.0, so this gain keeps the leaf color on average.
 const float LEAF_GAIN = 255.0 / 128.0;
@@ -35,6 +33,7 @@ void vertex() {
 	atlas_cell = floor(COLOR.r * 3.999);
 	vec3 world_position = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 	vec3 tree_origin = MODEL_MATRIX[3].xyz;
+	float tree_phase = tree_phase_at(tree_origin);
 	vec3 wind = tree_sway(world_position, tree_origin, tree_phase) + card_flutter(world_position, tree_phase, COLOR.r, COLOR.g);
 	// The shader moves the vertex in model space, so turn the world-space push around.
 	VERTEX += inverse(mat3(MODEL_MATRIX)) * wind;
