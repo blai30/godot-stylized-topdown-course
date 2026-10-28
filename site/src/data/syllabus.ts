@@ -129,7 +129,7 @@ export const modules: Module[] = [
 		directory: 'polish',
 		lessons: [
 			{ number: 53, title: 'Cloud shadows', slug: 'cloud-shadows' },
-			{ number: 54, title: 'More nature: bushes and a glowing mineral rock', slug: 'more-nature' },
+			{ number: 54, title: 'More nature: bushes', slug: 'more-nature' },
 			{ number: 55, title: 'A Theme and a pause panel', slug: 'theme-and-pause-panel' },
 			{ number: 56, title: 'Performance and exporting a build', slug: 'performance-and-export' },
 			{ number: 57, title: 'Bonus: autumn leaf color', slug: 'bonus-autumn-leaves' },
