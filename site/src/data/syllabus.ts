@@ -140,11 +140,12 @@ export const modules: Module[] = [
 		title: 'Make it a template',
 		directory: 'make-it-a-template',
 		lessons: [
-			{ number: 58, title: 'Clean up and draw the art library boundary', slug: 'clean-up' },
-			{ number: 59, title: 'Copy the template into a new game', slug: 'copy-the-template' },
-			{ number: 60, title: 'Bonus: a grid cursor for tactics games', slug: 'bonus-grid-cursor' },
-			{ number: 61, title: 'Bonus: click to move for action RPGs', slug: 'bonus-click-to-move' },
-			{ number: 62, title: 'Bonus: tile-snapped movement for farming games', slug: 'bonus-tile-movement' },
+			{ number: 58, title: 'Scaffold the project settings', slug: 'scaffold-the-project-settings' },
+			{ number: 59, title: 'Clean up and draw the art library boundary', slug: 'clean-up' },
+			{ number: 60, title: 'Copy the template into a new game', slug: 'copy-the-template' },
+			{ number: 61, title: 'Bonus: a grid cursor for tactics games', slug: 'bonus-grid-cursor' },
+			{ number: 62, title: 'Bonus: click to move for action RPGs', slug: 'bonus-click-to-move' },
+			{ number: 64, title: 'Bonus: tile-snapped movement for farming games', slug: 'bonus-tile-movement' },
 		],
 	},
 ];

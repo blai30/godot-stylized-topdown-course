@@ -159,6 +159,11 @@
     "notarized",
     "notarization",
     "ditto",
-    "Notarization"
+    "Notarization",
+    "OLED",
+    "Interactable",
+    "Hurtbox",
+    "letterboxed",
+    "Npc"
   ]
 }

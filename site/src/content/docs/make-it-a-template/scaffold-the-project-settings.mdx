@@ -1,0 +1,371 @@
+---
+title: Scaffold the project settings
+description: Set the boot splash color, the user data folder, a 1080p window that gains view on ultra-wide screens, and a named set of physics and render layers, so every new game starts from the same foundation.
+sidebar:
+  order: 58
+  label: 58. Scaffold the project settings
+lesson:
+  number: 58
+  minutes: 60
+  learn:
+    - How a project's boot splash, user data folder, and window settings are chosen once and kept
+    - Why a wide screen shows more of the world instead of black bars
+    - How physics and render layers are named and grouped
+    - What a layer and a mask each mean, and how the player and the ground use them
+    - Why the project file asks the compiler to treat warnings as errors
+  prerequisites: [3, 6, 57]
+---
+
+import { Aside, Code, FileTree, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Solution from '../../../components/Solution.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import projectGodot from '../../../checkpoints/58/files/project.godot?raw';
+import editorconfig from '../../../checkpoints/58/files/.editorconfig?raw';
+import csproj from '../../../checkpoints/58/files/TopDownTemplate.csproj?raw';
+import splash from '../../../assets/lessons/scaffold-the-project-settings/splash.png';
+import userDir from '../../../assets/lessons/scaffold-the-project-settings/user-dir.png';
+import windowSettings from '../../../assets/lessons/scaffold-the-project-settings/window.png';
+import physics from '../../../assets/lessons/scaffold-the-project-settings/physics.png';
+import physicsLayers from '../../../assets/lessons/scaffold-the-project-settings/physics-layers.png';
+import renderLayers from '../../../assets/lessons/scaffold-the-project-settings/render-layers.png';
+import playerCollision from '../../../assets/lessons/scaffold-the-project-settings/player-collision.png';
+import terrainCollision from '../../../assets/lessons/scaffold-the-project-settings/terrain-collision.png';
+import ratio16x9 from '../../../assets/lessons/scaffold-the-project-settings/ratio-16x9.png';
+import ratio16x10 from '../../../assets/lessons/scaffold-the-project-settings/ratio-16x10.png';
+import ratio21x9 from '../../../assets/lessons/scaffold-the-project-settings/ratio-21x9.png';
+import ratio32x9 from '../../../assets/lessons/scaffold-the-project-settings/ratio-32x9.png';
+
+## What you will build
+
+The part of a template nobody sees in a screenshot: the settings every new game inherits. By the end of this lesson the project starts on a black splash, keeps its saved files in a folder named for your studio and game, fills any screen from 16:10 to 32:9 without bars, and has a named set of layers for the things later games will need: hazards, enemies, pickups, and more.
+
+<Figure
+	src={ratio21x9}
+	alt="The meadow in a 2560 by 1080 game window, an ultra-wide shape, with the whole window filled by the sky and the meadow in the middle, and no black bars."
+	caption="The meadow in a 21:9 window: the picture fills the window."
+/>
+
+You change a few things in **Project Settings**, two kinds of scene, and two files. Nothing in this lesson changes how the meadow looks.
+
+<Aside type="note" title="Why a lesson for settings">
+In lesson 3 you set only what the first lessons needed. A template is different: whoever copies it, including you in a year, should not have to remember what a good project looks like. These are the settings I set on every new Godot project, written down once.
+</Aside>
+
+## The boot splash
+
+When a game starts, Godot shows a **boot splash**, its logo on a colored background, until the first scene loads. The default background is a dark gray-blue. On an OLED screen, where black pixels are switched off, pure black is the cleanest start, and it matches a game that opens on a dark loading screen.
+
+<Steps>
+
+1. Open **Project > Project Settings...**. Make sure **Advanced Settings** is off.
+
+2. In the list on the left, under **Application**, click **Boot Splash**.
+
+3. Click the color next to **BG Color**, and in the picker set the hex field to `000000`. Close the picker.
+
+	<Figure
+		src={splash}
+		alt="The Boot Splash settings: BG Color black with a reset arrow, Show Image on, Stretch Mode Keep, Use Filter on, and Image empty."
+		caption="BG Color is black. The round arrow marks a setting that differs from Godot's default."
+	/>
+
+</Steps>
+
+The logo stays: **Show Image** is on. Your own game replaces **Image** with its logo.
+
+## The user data folder
+
+A game saves things while it runs: settings, a save game, logs. Godot keeps them in the **user data folder**, one per project. The folder's name defaults to the project's name, kept inside a Godot folder with every other Godot project's. That works, but a player has to know which Godot folder to look in.
+
+Two settings give the game a home of its own, named for your studio and the game.
+
+<Steps>
+
+1. Switch **Advanced Settings** on. These two settings are advanced ones.
+
+2. Click **Application > Config**. Scroll to **Use Custom User Dir** and tick it. Beside **Custom User Dir Name**, type `YourCompany/TopDownTemplate` and press <Kbd keys="Enter" />.
+
+3. Click the **Description** field and type a sentence about your game, such as `A stylized top-down game.`. Stores and operating systems show it.
+
+	<Figure
+		src={userDir}
+		alt="The Application Config settings with Advanced Settings on: Name TopDownTemplate, Description A stylized top-down game, Use Hidden Project Data Directory on, Use Custom User Dir on with a reset arrow, and Custom User Dir Name YourCompany/TopDownTemplate with a reset arrow."
+		caption="The user data folder gets a name of its own."
+	/>
+
+4. Switch **Advanced Settings** off again.
+
+</Steps>
+
+Godot puts that folder in the player's data folder: `~/Library/Application Support/YourCompany/TopDownTemplate` on macOS, `%APPDATA%\YourCompany\TopDownTemplate` on Windows, and `~/.local/share/YourCompany/TopDownTemplate` on Linux. The two parts of the name are folders, so every game from one studio sits under one studio folder. `YourCompany` and `TopDownTemplate` are placeholders; lesson 60 gives you a script that replaces them when you start a game from the template.
+
+## The window
+
+<Steps>
+
+1. Click **Display > Window**. Set **Viewport Width** to `1920` and **Viewport Height** to `1080`.
+
+	<Figure
+		src={windowSettings}
+		alt="The Display Window settings: Viewport Width 1920 and Viewport Height 1080 with reset arrows, Mode Windowed, Resizable on, and under Stretch, Mode canvas_items and Aspect expand."
+		caption="The base size is 1080p. Stretch Mode and Aspect stay as lesson 3 left them."
+	/>
+
+2. Leave **Stretch > Mode** on `canvas_items` and **Aspect** on `expand`.
+
+</Steps>
+
+<Aside type="note" title="Why 1920 by 1080">
+1920 by 1080 is the size most monitors, and most designers, treat as the reference. Menus you build in lesson 55's pause panel and later are laid out against this size, and a smaller screen scales them down. The 3D world does not depend on it.
+</Aside>
+
+### Why a wide screen gains view and not bars
+
+Two settings decide what a window of any shape shows:
+
+- **Aspect `expand`** tells Godot to keep the base size's height and let the width grow with the window, so no black bars appear at the sides or at the top and bottom.
+- Your camera's **Keep Aspect** is **Keep Height**, which is Godot's default and what the camera rig from lesson 5 uses. The camera keeps its vertical size, so a wider window shows more to the left and right. Games call this Hor+ (horizontal plus).
+
+Together they mean an ultra-wide monitor sees more of the world than a 16:9 one, and a taller 16:10 screen sees a little more above and below. Nobody sees bars. If you set **Keep Width** on the camera instead, a wide screen would crop the top and bottom, which is why the template does not.
+
+You test this at the end of the lesson.
+
+## Physics
+
+Two settings from earlier are part of the template, so check that they are still there.
+
+<Steps>
+
+1. Click **Physics > 3D**. **Physics Engine** reads **Jolt Physics**. The Project Manager set it when it created the project, and the round arrow shows it differs from the default.
+
+	<Figure
+		src={physics}
+		alt="The Physics 3D settings: Physics Engine Jolt Physics with a reset arrow, Default Gravity 9.8, and Default Gravity Vector 0, minus 1, 0."
+		caption="Jolt Physics is the 3D physics engine."
+	/>
+
+2. Switch **Advanced Settings** on, click **Physics > Common**, and check that **Physics Interpolation** is ticked, as in lesson 3. Switch **Advanced Settings** off.
+
+</Steps>
+
+<Aside type="note" title="Jolt, in one sentence">
+Jolt is a physics engine, the code that decides how bodies collide and move. Godot offers it beside its older built-in 3D engine, and the Project Manager picked it when it made your project.
+</Aside>
+
+## Layers
+
+A game has many kinds of things that must tell one another apart: the player, the ground, a bullet, a pickup, a trigger that opens a door. Godot does this with **layers**. Each body sits on one or more **physics layers**, and has a **mask**: the layers it looks for. A body's layer says what it is. Its mask says what it collides with.
+
+Layers are numbers, and numbers are easy to forget, so you name them once in the project and every Inspector shows the name.
+
+### Name the physics layers
+
+<Steps>
+
+1. Click **Layer Names > 3D Physics**.
+
+2. Type these names, one per layer, pressing <Kbd keys="Enter" /> after each. Layers 1 and 2 already hold lesson 3's `world` and `player`; replace them.
+
+	| Layer | Name |
+	|---|---|
+	| 1 | `World` |
+	| 2 | `Terrain` |
+	| 3 | `Hazard` |
+	| 4 | `Interactable` |
+	| 5 | `Player` |
+	| 6 | `Enemy` |
+	| 7 | `Npc` |
+	| 8 | `Destructible` |
+	| 9 | `Hurtbox` |
+	| 10 | `Projectile` |
+	| 11 | `Pickup` |
+	| 12 | `Sensor` |
+
+	<Figure
+		src={physicsLayers}
+		alt="The Layer Names 3D Physics list: layers 1 to 12 named World, Terrain, Hazard, Interactable, Player, Enemy, Npc, Destructible, Hurtbox, Projectile, Pickup, and Sensor, each with a reset arrow; layers 13 and up are empty."
+		caption="Twelve physics layers, named. The others stay free."
+	/>
+
+</Steps>
+
+The order is on purpose. The Inspector draws a layer picker as blocks of four boxes, in two rows: 1 to 4 over 5 to 8, then 9 to 12 over 13 to 16. The names follow those blocks, so a picker reads as groups:
+
+- **1 to 4**, the level: `World` for static props such as trees and rocks, `Terrain` for the ground, `Hazard` for spikes and fire, `Interactable` for doors and chests. `World` is first because it is what you want most often: a prop you drop into a level should land on layer 1 without any setting changed.
+- **5 to 8**, things that act: `Player`, `Enemy`, `Npc`, and `Destructible` for things that break.
+- **9 to 12**, combat and triggers: `Hurtbox` for the area that takes a hit, `Projectile`, `Pickup`, and `Sensor` for an area that notices things without blocking them.
+- **13 to 16** are free for your game.
+
+<Aside type="note" title="Layers are for what a thing is, masks for what it notices">
+Give a thing one layer, the one that names it. Choose its mask by asking what it should bump into or notice. A bullet is on `Projectile` and its mask is `World`, `Terrain`, and `Enemy`. An enemy's `Sensor` area has the `Player` layer in its mask. Keeping to this rule means you rarely need a body on two layers.
+</Aside>
+
+### Name the render layers
+
+A **render layer** is a different thing with the same shape: each visible object sits on one of 20 render layers, and a camera or a light can be told to see only some. A light that should light only the characters, or a second camera that draws only the water, uses them. Nothing in the template needs them yet. You name a few so a game that does has a start.
+
+<Steps>
+
+1. Click **Layer Names > 3D Render** and type these names:
+
+	| Layer | Name |
+	|---|---|
+	| 1 | `World` |
+	| 2 | `Terrain` |
+	| 3 | `Foliage` |
+	| 4 | `Water` |
+	| 5 | `Characters` |
+	| 6 | `Effects` |
+
+	<Figure
+		src={renderLayers}
+		alt="The Layer Names 3D Render list: layers 1 to 6 named World, Terrain, Foliage, Water, Characters, and Effects, each with a reset arrow."
+		caption="Six render layers."
+	/>
+
+2. Click **Close**.
+
+</Steps>
+
+### Move the player and the ground onto them
+
+Renaming layers does not move anything: a body stays on the number it was on. The player was on layer 2, which is now `Terrain`, and the ground tiles are on layer 1, which is `World`. You move them.
+
+<Steps>
+
+1. Open `world/player/player.tscn` and select the `Player` root node.
+
+2. In the Inspector, under **Collision**, find **Layer**. Clear box **2** and tick box **5**. Hover over a box and Godot shows its name: `Player`.
+
+3. Under **Mask**, tick boxes **1** and **2**: `World` and `Terrain`. The player now collides with props and with the ground.
+
+	<Figure
+		src={playerCollision}
+		alt="The Inspector's Collision section for Player: Layer with only box 5 ticked, Mask with boxes 1 and 2 ticked."
+		caption="The Player: layer 5, mask 1 and 2."
+	/>
+
+4. Save the scene with <Kbd keys="Ctrl+S" mac="Cmd+S" />.
+
+5. Open `levels/meadow.tscn`. Select the `GroundTiles` node. Under **Collision**, clear **Layer** box **1** and tick box **2**. Do the same for the `Bank` node, which edges the pond.
+
+	<Figure
+		src={terrainCollision}
+		alt="The Inspector's Collision section for GroundTiles: Layer with only box 2 ticked, Mask with only box 1 ticked."
+		caption="The ground tiles sit on Terrain, layer 2."
+	/>
+
+6. Save, then open `levels/generated.tscn` and do the same for its `GroundTiles` and `Bank`. Save.
+
+</Steps>
+
+The big flat `Ground` plane under the meadow, and the trunks of the trees and bushes, stay on layer 1, `World`: they are static props, which is what that layer is for. Only the tile grid is `Terrain`.
+
+## Check the code settings
+
+Two project files decide how strictly your code is checked. You write them now so every script you add from here on is held to the same rules.
+
+### The style file
+
+`.editorconfig` is a plain text file many editors and IDEs read, to agree on how files are laid out and how C# is written. Godot made it in lesson 2 with one setting, the UTF-8 character set. Replace the whole file with this one. 
+<Steps>
+
+1. Open `.editorconfig` in your code editor and replace its contents with the file under **Show the full .editorconfig**, then save.
+
+</Steps>
+
+<Solution label="Show the full .editorconfig">
+	<Code code={editorconfig} lang="ini" title=".editorconfig" />
+</Solution>
+
+- The `[*]` section applies to every file: UTF-8 text, LF line endings (the same on every system), a final newline, no trailing spaces, and tabs for indentation, which matches the Godot style guide.
+- `[*.{cs,csproj,sln}]` sets how wide a tab shows in code files.
+- The `[*.cs]` rules are C# style. File-scoped namespaces (`namespace X;`) are a warning, the `using` lines of the `System` namespace sort first, braces go on their own line, and `var` is suggested when the type is obvious. They are the style every script in the course already follows.
+
+### Warnings are errors
+
+The compiler reports a **warning** when code is legal but suspicious, such as using a method Godot has marked obsolete. Warnings are easy to ignore until a hundred of them hide the one that matters. Asking the compiler to treat each warning as an error keeps the project at zero.
+
+<Steps>
+
+1. Open `TopDownTemplate.csproj`, the project file beside `project.godot`.
+
+2. Add one line inside the `<PropertyGroup>`, under `<Nullable>enable</Nullable>`: `<TreatWarningsAsErrors>true</TreatWarningsAsErrors>`.
+
+3. Save, then press the **Build** button, the hammer at the top right, <Kbd keys="Alt+B" mac="Option+B" />. The **MSBuild** panel reports no errors.
+
+</Steps>
+
+<Solution label="Show the full TopDownTemplate.csproj">
+	<Code code={csproj} lang="xml" title="TopDownTemplate.csproj" />
+</Solution>
+
+`<Nullable>enable</Nullable>` was already there from lesson 2. It makes the compiler warn wherever a value might be `null`, which now fails the build until you handle it.
+
+## Try it
+
+Press <Kbd keys="F5" mac="Cmd+B" /> to run the meadow. It starts on a black splash, then the meadow, and the character walks on the ground, so the new layers and masks work. Drag the window's edge to make it much wider, then much taller:
+
+<Figure
+	src={ratio16x9}
+	alt="The meadow in a 1920 by 1080 window, the base size: the whole window shows the meadow and sky."
+	caption="1920 by 1080, the base size."
+/>
+
+<Figure
+	src={ratio16x10}
+	alt="The meadow in a 1680 by 1050 window, a 16:10 shape: the window is filled and a little more sky shows above."
+	caption="1680 by 1050, 16:10."
+/>
+
+<Figure
+	src={ratio32x9}
+	alt="The meadow in a 3200 by 900 window, a super-ultra-wide shape: the window is filled with sky to the left and right of the meadow."
+	caption="3200 by 900, 32:9."
+/>
+
+The window is never letterboxed. Each shape is filled, and a wider one shows more sky to the sides. The game measured the same four windows: a 1920 by 1080 window drew a 1920 by 1080 view, 1680 by 1050 drew 1920 by 1200, 2560 by 1080 drew 2560 by 1080, and 3200 by 900 drew 3840 by 1080. The view always keeps the base's 1080 height or grows past it.
+
+<Aside type="note" title="The meadow is small">
+The wide views show sky around the meadow because the meadow is a small test level, about 20 meters across. A full level is as wide as you make it. The point is the behavior: the camera shows more where the window has more room, and never black bars.
+</Aside>
+
+## If it does not work
+
+- **The build fails with a warning shown as an error.** `TreatWarningsAsErrors` is on, so the **MSBuild** panel names the line. Read the message and fix its cause. Do not turn the setting off: a warning you ignore today is a bug you read about later.
+- **The player falls through the ground.** The player's **Mask** does not include `Terrain` (box 2), or `GroundTiles` is not on layer 2 in the level you ran. Check both, and check `meadow.tscn` and `generated.tscn` separately.
+- **A prop does not stop the player.** The prop's layer is not in the player's mask. Props on layer 1 stop the player because **Mask** box 1 is ticked.
+- **A custom user dir seems unused.** The folder is made the first time the game saves or logs something, and only for a run of the game, not the editor, which has its own folders.
+- **The splash is still gray.** The color is set in the wrong place. It is **BG Color** under **Application > Boot Splash**, not a color in **Rendering**.
+
+## Checkpoint
+
+Your project now contains the same files as in lesson 57, with these changed:
+
+<FileTree>
+- .editorconfig the full style file
+- project.godot
+- TopDownTemplate.csproj warnings are errors
+- levels
+  - meadow.tscn GroundTiles and Bank on layer 2
+  - generated.tscn GroundTiles and Bank on layer 2
+- world
+  - player
+    - player.tscn layer 5, mask 1 and 2
+</FileTree>
+
+`project.godot` now holds:
+
+- `[application]`: the description, the custom user dir, and the black splash.
+- `[display]`: the 1920 by 1080 base size.
+- `[layer_names]`: twelve physics layers and six render layers.
+
+<Solution label="Show the full project.godot">
+	<Code code={projectGodot} lang="ini" title="project.godot" />
+</Solution>
+
+Commit your work: `git add .` and `git commit -m "Scaffold the project settings"`. Lesson 59 cleans the project up and draws the boundary around the art folder.
+
+<Checkpoint />

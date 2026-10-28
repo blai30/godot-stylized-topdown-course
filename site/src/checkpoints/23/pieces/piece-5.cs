@@ -56,7 +56,7 @@ public partial class BuildDay : EditorScript
 
 	public override void _Run()
 	{
-		var root = GetScene();
+		var root = EditorInterface.Singleton.GetEditedSceneRoot();
 		var animation = root.GetNode<AnimationPlayer>("Day").GetAnimation(AnimationName);
 
 		foreach (var key in Lights)
