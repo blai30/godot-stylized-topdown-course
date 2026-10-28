@@ -150,6 +150,7 @@
     "Xcode",
     "Perlin",
     "Midlevel",
-    "Schlick"
+    "Schlick",
+    "convcolonly"
   ]
 }

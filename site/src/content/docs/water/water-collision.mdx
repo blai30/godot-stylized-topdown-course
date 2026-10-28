@@ -1,0 +1,201 @@
+---
+title: Water the player cannot walk into
+description: Give the bank kit its collision, a box over the water side of each piece, so that every body stops at the bank, and test it by walking the character into the pond from every side.
+sidebar:
+  order: 48
+  label: "48. Water the player cannot walk into"
+lesson:
+  number: 48
+  minutes: 60
+  learn:
+    - Why a pond's collision belongs to the bank kit and not to a check on every frame
+    - How the importer turns an object named -convcolonly into a collision shape
+    - Why a thin wall of faces lets a body through and a closed box does not
+    - How to test collision by walking the character into every side and corner
+  prerequisites: [6, 28, 44, 47]
+---
+
+import { Aside, FileTree, Steps } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import Checkpoint from '../../../components/Checkpoint.astro';
+import Kbd from '../../../components/Kbd.astro';
+import firstBox from '../../../assets/lessons/water-collision/first-box.png';
+import boxes from '../../../assets/lessons/water-collision/boxes.png';
+import exporter from '../../../assets/lessons/water-collision/exporter.png';
+import before from '../../../assets/lessons/water-collision/before.png';
+import stopped from '../../../assets/lessons/water-collision/stopped.png';
+import shapes from '../../../assets/lessons/water-collision/shapes.png';
+
+## What you will build
+
+The pond has a bank, and the player walks over it. The player stands on the gray placeholder ground from lesson 4, a flat plane at height 0 that lesson 16 hid and kept solid, and the plane is under the pond too. A capsule can walk off the bank, over the water, and across to the far side, with the water a few centimeters under its feet.
+
+<Figure
+	src={before}
+	alt="The game from above: the character stands in the middle of the pond, in the water, among ripples and with the bank's far wall behind it."
+	caption="Before: the character walks into the pond as if it were grass."
+/>
+
+This lesson closes the water off. Each bank piece gets a **collision shape** on its water side, in the kit itself, so that every piece Update shore places stops anything that walks into the water, from any side, and a pond you paint tomorrow is closed the moment you press the button.
+
+## Why the collision is in the kit
+
+There are other ways to keep the player out of a pond. The player's script could ask the ground, every frame, what tile it is on, and refuse to move onto water: the `TileAt` call from lesson 18 is already there. That works for the player and for nothing else. A rock rolled in by physics, an enemy walking to the shore, and a thrown object would each need the same check, and each frame would pay for it.
+
+A collision shape on the bank is checked by the physics engine, which every body already goes through. Nothing in the player's script changes. Anything that moves with physics stops at the bank, for free, and a shape costs nothing on frames when nothing is near it. And because it is part of the kit, Update shore places it with the piece: a new pond has collision with no further step.
+
+The floor stays. The hidden plane is what the player stands on, over the bank and the grass and the water alike, and the collision closes the water off. It does not need to be a floor over the water, only a wall at the edge of it.
+
+## What shape
+
+A bank piece's wall could be its own collision: a shape made of the wall's faces, a **trimesh**. It would have a problem, and it is the reason this lesson does not do it. A trimesh is a sheet of faces, and a face blocks a body only from the side its normal points to. The wall's faces point to the water, so a body coming from the land side meets the back of them and passes through. A wall of faces would stop a boat and let the player walk into the pond.
+
+A **closed** solid has no back. A box is a surface that faces outward on every side, and a body approaching from any direction meets the outside. So the collision of each piece is a closed box, or two, standing on the piece's water side.
+
+The box stands beside the wall, not on it: the wall is 0.2 meters from the middle of the piece, and the piece reaches 0.25, so a straight piece's box is 0.5 meters wide and 0.05 meters thick, from the wall to the edge of the cell. It is as tall as it needs to be to stop a capsule: from the lake bed at -0.75 meters up to 1 meter above the ground, 1.75 in all. It is thin because it does not need to be thick. A character body moves in steps and checks each step against the shapes along its path, so it cannot jump over a box 5 centimeters thick, however fast it goes.
+
+| Piece | Boxes |
+|---|---|
+| straight | one, 0.5 wide and 0.05 thick, along the water side |
+| water corner | one, a 0.05 square in the notch |
+| diagonal | two, a 0.05 square in each notch |
+| land corner | two, an L: one along the front, 0.5 by 0.05, and one up the right side, 0.05 by 0.45 |
+
+The land corner's wall is an arc, and its box is an L, so the box meets the wall at the straight parts and cuts the arc's corner by up to 8 centimeters: a character at that corner may stand with a little of its body over the water. Nothing could tell by looking.
+
+## How the importer finds them
+
+Godot's importer reads **suffixes** in an object's name. An object whose name ends in `-convcolonly` is not imported as a mesh. It becomes a **convex collision shape** built from the object's points, and it belongs to the thing it is the child of: made a child of a bank piece, it becomes a shape of that piece's item in the MeshLibrary. A piece with two such children gets two shapes. The same goes for a Mesh Library import as for a scene.
+
+There is one catch, and the lesson is written around it: the importer keeps the box's **shape** and not its **place**. The shape that comes out is where the box's points are, relative to the piece's origin, but the offset of the box's own origin from the piece's is dropped. A box modeled in the right place, with its own origin somewhere else, would come out centered on the piece. So each box is made with its origin on the piece's origin, and its points moved out to the place they belong.
+
+## The boxes
+
+<Steps>
+
+1. Open `art_source/water/bank.blend` from lesson 44. In the Outliner, click the **bank** collection so that what you add goes into it.
+
+2. Click `bank_straight_a`. Press <Kbd keys="Shift+S" />, and in the pie menu choose **Cursor to Selected**. The 3D cursor is at the piece's origin.
+
+3. Press <Kbd keys="Shift+A" />, type `cube`, and press <Kbd keys="Enter" />. The cube is added at the cursor, at the piece's origin.
+
+4. Press <Kbd keys="Tab" /> for Edit Mode and <Kbd keys="A" /> to select all of it. Press <Kbd keys="S" />, type `0.25`, <Kbd keys="Tab" />, `0.025`, <Kbd keys="Tab" />, `0.875`, and <Kbd keys="Enter" />. A cube is 2 meters across, so these are half the box's size, 0.5 by 0.05 by 1.75. Press <Kbd keys="G" />, type `0`, <Kbd keys="Tab" />, `-0.225`, <Kbd keys="Tab" />, `0.125`, and <Kbd keys="Enter" />. The box moves to 0.225 meters toward the water, which puts it from the wall at 0.2 to the edge at 0.25, and 0.125 up, which puts it from -0.75 to 1.
+
+5. Press <Kbd keys="Tab" /> to return to Object Mode. Press <Kbd keys="F2" />, type `bank_straight_a-convcolonly`, and press <Kbd keys="Enter" />. The importer reads the end of the name.
+
+6. With the box selected, <Kbd keys="Ctrl" />-click `bank_straight_a` in the Outliner so it is the active object, press <Kbd keys="Ctrl+P" mac="Cmd+P" />, and choose **Object (Keep Transform)**. The box is the piece's child.
+
+	<Figure
+		src={firstBox}
+		alt="Blender's viewport with seven pieces in a row, the last two drawn thin, and a tall thin box beside the last piece selected in orange."
+		caption="A box, selected, beside the diagonal piece's notch."
+	/>
+
+</Steps>
+
+Do the same for the other pieces. Each box has its own place and size, relative to the piece's origin, and each is named for its piece, with `-convcolonly` at the end. A second box for a piece is given the same name: Blender adds `.001`, and the importer reads it too.
+
+| Piece | Name | Size X, Y, Z | Move by X, Y, Z |
+|---|---|---|---|
+| `bank_straight_a`, `b`, `c` | `bank_straight_a-convcolonly` | 0.5, 0.05, 1.75 | 0, -0.225, 0.125 |
+| `bank_land_corner_a`, `b` | `bank_land_corner_a-convcolonly` | 0.5, 0.05, 1.75 | 0, -0.225, 0.125 |
+| the same | the same name again | 0.05, 0.45, 1.75 | 0.225, 0.025, 0.125 |
+| `bank_water_corner_a` | `bank_water_corner_a-convcolonly` | 0.05, 0.05, 1.75 | 0.225, -0.225, 0.125 |
+| `bank_diagonal_a` | `bank_diagonal_a-convcolonly` | 0.05, 0.05, 1.75 | -0.225, -0.225, 0.125 |
+| the same | the same name again | 0.05, 0.05, 1.75 | 0.225, 0.225, 0.125 |
+
+Type half the size for **S** and the move for **G**, as above, in Blender's axes, where the water side is -Y. That is ten boxes.
+
+<Aside type="tip" title="See them">
+Select all the boxes and, in the **Object** tab of the Properties editor, under **Viewport Display**, set **Display As** to **Wire**. The boxes show as outlines, and the pieces stay visible through them.
+</Aside>
+
+<Figure
+	src={boxes}
+	alt="Seven pieces in a row, each with a tall thin wire box beside it: a box along the water side of the straight pieces, two boxes in an L along the land corners, and thin boxes at the notches of the last two."
+	caption="The kit with its collision boxes, drawn as wire."
+/>
+
+## Export and import
+
+<Steps>
+
+1. Click the **Collection** tab and the exporter's **Export All** button, as in lesson 44. The exporter's settings are the same. Then save the file.
+
+	<Figure
+		src={exporter}
+		alt="The Collection tab of Blender's Properties editor with the glTF exporter and its Export All button."
+		caption="Export All, as before."
+	/>
+
+2. Switch to Godot. It imports `bank_kit.glb` again when its window gets the focus back, with the settings you gave it in lesson 44. The library's items have shapes now: the straight pieces and the water corner one each, the land corners and the diagonal two. A GridMap that uses the library gives each cell the shapes of its piece, turned with it.
+
+</Steps>
+
+You can see them. In the **Debug** menu, turn on **Visible Collision Shapes**, run the game, and walk to the pond.
+
+<Figure
+	src={shapes}
+	alt="The character standing on the pond's near bank at the lip, with cyan outlines of collision boxes along the bank's edge and around the character's capsule, and the water below."
+	caption="The shapes, shown: a box along the bank, and the character's capsule standing against it."
+/>
+
+## Walk into it
+
+A test that the player stops has to try every way in. This lesson's run walked the character into the pond from the four sides of the arm and into three corners, holding a key for as long as it took to reach the middle of the water if nothing was in the way, and read where it stopped. The character's capsule is 0.3 meters in radius, so a body stopped by a wall at 0.2 from a cell's middle has its own middle 0.3 further out. The table shows where it stopped.
+
+| Test | Without the shapes | With them |
+|---|---|---|
+| north side, walking south | in the water at z -1.13 | stopped at z -2.10, 0.3 from the wall |
+| south side, walking north | in the water at z -1.48 | stopped at z -0.40 |
+| west end, walking east | in the water at x -2.17 | stopped at x -4.10 |
+| east end, walking west | in the water at x -1.73 | stopped at x 0.60 |
+| north east corner | in the water | stopped at 0.56, -1.96 |
+| inside corner, where the lobe meets the arm | in the water | stopped at -1.40, -0.40 |
+| the lobe's south end | in the water at z 0.00 | stopped at z 1.10 |
+
+Without the shapes, the character was in the water in all seven. With them, it stopped in all seven, against the wall, at the distance its radius gives.
+
+<Figure
+	src={stopped}
+	alt="The game from above: the T-shaped pond in the meadow with its collision boxes outlined, and the character standing on the north bank at the lip."
+	caption="After: the character stands at the bank."
+/>
+
+The test is how the work was checked, and you can run a smaller one yourself: run the game, walk the character at the bank from each side, and at the corners. It should stop each time with its feet at the lip, and not walk into the water.
+
+## Not swimming
+
+Some games want the player in the water: swimming slowly, or wading, with a splash. This template does not, and the collision is what says so. If you want it, remove the collision, or make the boxes triggers, and give the Water tile's **Walk Speed** a number below 1, as the sand has 0.7: the player already multiplies its speed by the tile it stands on, from lesson 18. A game that lets the player in has to decide what it does there: that is its own work, and the template's job was to make the choice possible.
+
+## Try it
+
+- Walk the character along the bank, pressing into the water as you go. Does it slide along the wall, or catch? Where the straight pieces meet, two boxes meet at their ends, with no gap between them.
+- Change a box's thickness to 0.2 and see that nothing changes at the water's edge: the character stops at the same place, because it only meets the box's near face. A thicker box would only matter to something that was inside it.
+- Paint a wide pond with a one-cell island of grass in the middle, press **Update shore**, and walk the character into the pond toward the island. The island's four land corners have their L-shaped boxes, and the bank stops the character before it can reach the island.
+
+## If it does not work
+
+- **The character walks into the water.** The library has no shapes: check the glb's name list for `-convcolonly` objects and that each is the child of a piece, and that Godot imported the file again. If the library still has none, open the glb in the Import dock and click **Reimport**.
+- **The character stops far from the bank, or in the middle of the bank.** The box was moved with its origin: the importer drops a box's own place, so a box has to have its origin at the piece's origin and its points moved. Check that **Origin** of the box is at the piece's origin.
+- **Only some pieces stop the character.** The boxes of the others were named wrongly. A name must end in `-convcolonly`, and a second box is allowed to end in `.001`.
+- **The character passes through at one corner.** The piece at that corner has no box on its water side. Check the table: a land corner and a diagonal need two.
+- **A box is on the land side.** Its move had the wrong sign, or the piece was turned. In Blender's axes the water side is -Y.
+- **The character catches on the lip.** The boxes are lower than 1 meter, or the wall's lumps reach a box. Make the boxes tall, and keep them beside the wall.
+
+## Checkpoint
+
+Your project now contains:
+
+<FileTree>
+- art
+  - water
+    - **bank_kit.glb**, with the collision boxes, and its import file, unchanged
+- art_source
+  - water
+    - **bank.blend**, with ten collision boxes
+</FileTree>
+
+Commit your work: `git add .` and `git commit -m "Give the bank kit its collision"`. That is the water: a bank, a shader, a button that edges any pond, and a bank that holds the player back. In the next module the meadow is built by code.
+
+<Checkpoint />
