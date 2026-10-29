@@ -25,7 +25,7 @@ const lessons = (await getCollection('docs', ({ data }) => data.lesson !== undef
 		if (count) count.textContent = `${finished.length} of ${lessons.length} lessons done`;
 		meter?.querySelector('progress')?.setAttribute('value', String(finished.length));
 		for (const link of document.querySelectorAll<HTMLAnchorElement>('.course-sidebar a[href]')) {
-			const id = new URL(link.href).pathname.replace(/^\/|\/$/g, '');
+			const id = new URL(link.href).pathname.slice(import.meta.env.BASE_URL.length).replace(/\/$/, '');
 			link.toggleAttribute('data-done', finished.includes(id));
 		}
 	});

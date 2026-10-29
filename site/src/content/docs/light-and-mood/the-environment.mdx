@@ -57,17 +57,17 @@ The meadow's atmosphere, in a scene of its own: a sky that colors every shadow, 
 
 ## The idea
 
-The [Environment](/reference/glossary/#environment) resource holds everything about the world that is not a model or a light. You met it in lesson 4. Now you tune each part for the look of the template, which is soft, a little hazy, and lit mostly by the sky.
+The [Environment](../../reference/glossary/#environment) resource holds everything about the world that is not a model or a light. You met it in lesson 4. Now you tune each part for the look of the template, which is soft, a little hazy, and lit mostly by the sky.
 
 | Part | What it does | Value you set |
 |---|---|---|
 | Sky | Draws the background and, more importantly, is the source of ambient and reflected light. | A gradient from a horizon color to a zenith color, from a shader you write. |
-| [Ambient light](/reference/glossary/#ambient-light) | Light that arrives from the whole sky, so shadows are never black. | Taken from the sky, scaled to 0.65. |
+| [Ambient light](../../reference/glossary/#ambient-light) | Light that arrives from the whole sky, so shadows are never black. | Taken from the sky, scaled to 0.65. |
 | Reflected light | What shiny surfaces mirror. | Taken from the sky. |
-| [Tonemapping](/reference/glossary/#tonemapping) | Squeezes bright light into what a screen can show. | AgX, with its defaults. |
-| [Ambient occlusion](/reference/glossary/#ambient-occlusion) | Darkens creases and the foot of things, where the sky is blocked. | On, radius 1.5, intensity 1.0. |
-| [Glow](/reference/glossary/#glow) | A soft halo around bright spots. | Soft light, intensity 0.45. Only visible at night. |
-| [Fog](/reference/glossary/#fog) | A veil that grows with distance and lifts the darkest colors toward the sky's color. | Exponential, density 0.0006. |
+| [Tonemapping](../../reference/glossary/#tonemapping) | Squeezes bright light into what a screen can show. | AgX, with its defaults. |
+| [Ambient occlusion](../../reference/glossary/#ambient-occlusion) | Darkens creases and the foot of things, where the sky is blocked. | On, radius 1.5, intensity 1.0. |
+| [Glow](../../reference/glossary/#glow) | A soft halo around bright spots. | Soft light, intensity 0.45. Only visible at night. |
+| [Fog](../../reference/glossary/#fog) | A veil that grows with distance and lifts the darkest colors toward the sky's color. | Exponential, density 0.0006. |
 
 The camera never sees much of the sky: it looks down at the ground. The sky still matters, because Godot lights every surface from it.
 
@@ -228,7 +228,7 @@ AgX looks flat next to Linear. That is on purpose: the template's colors come fr
 
 ## Ambient occlusion
 
-Where a rock meets the ground, the sky cannot reach, and the ground there should be a little darker. [Ambient occlusion](/reference/glossary/#ambient-occlusion) (SSAO) darkens those spots from the picture on screen. Check **SSAO > On**, and set:
+Where a rock meets the ground, the sky cannot reach, and the ground there should be a little darker. [Ambient occlusion](../../reference/glossary/#ambient-occlusion) (SSAO) darkens those spots from the picture on screen. Check **SSAO > On**, and set:
 
 - **Radius** to `1.5`: how far from a surface it looks for blockers, in meters;
 - **Intensity** to `1.0`: the default is 2.0, which is heavy for this look;
@@ -276,7 +276,7 @@ You will see little change by day: nothing in the meadow is bright enough to cro
 
 ## Fog
 
-[Fog](/reference/glossary/#fog) hides distance and lifts the darkest colors toward the fog's color, so a shadow is never black but a deep sky blue. Check **Fog > On**, and set:
+[Fog](../../reference/glossary/#fog) hides distance and lifts the darkest colors toward the fog's color, so a shadow is never black but a deep sky blue. Check **Fog > On**, and set:
 
 - **Light Color** to `#B8DBFF`, the pale blue of the horizon;
 - **Aerial Perspective** to `0.5`, which tints the fog with the sky's color;

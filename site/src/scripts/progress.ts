@@ -1,5 +1,5 @@
 // Lesson progress lives only in this browser's localStorage: no accounts, no backend.
-const storageKey = 'hand-made-top-down:done-lessons';
+const storageKey = 'handmade-meadow:done-lessons';
 export const progressEvent = 'lesson-progress';
 
 export function readDone(): Set<string> {

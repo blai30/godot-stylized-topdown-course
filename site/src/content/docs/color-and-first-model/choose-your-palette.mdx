@@ -37,7 +37,7 @@ import pngOptions from '../../../assets/lessons/choose-your-palette/png-options.
 
 ## What you will build
 
-Your [palette](/reference/glossary/#palette): one small image of flat color squares, made in Krita. Every model you make in this course takes its colors from it, starting with the rock you color in lesson 10, so your whole world shares one set of colors that belong together.
+Your [palette](../../reference/glossary/#palette): one small image of flat color squares, made in Krita. Every model you make in this course takes its colors from it, starting with the rock you color in lesson 10, so your whole world shares one set of colors that belong together.
 
 <Figure
 	src={palette}
@@ -49,9 +49,9 @@ Your [palette](/reference/glossary/#palette): one small image of flat color squa
 
 Every color can be described by three numbers. Painting programs, Krita included, let you type them directly:
 
-- **[Hue](/reference/glossary/#hue)** is the kind of color: red, yellow, green, blue, and everything between. It is an angle around a color wheel, from 0 to 360 degrees: red at 0, yellow at 60, green at 120, cyan at 180, blue at 240, magenta at 300, and back to red.
-- **[Saturation](/reference/glossary/#saturation)** is how strong the color is, from 0% (gray) to 100% (the purest version of that hue).
-- **[Value](/reference/glossary/#value)** is how light or dark the color is, from 0% (black) to 100% (the brightest it can be).
+- **[Hue](../../reference/glossary/#hue)** is the kind of color: red, yellow, green, blue, and everything between. It is an angle around a color wheel, from 0 to 360 degrees: red at 0, yellow at 60, green at 120, cyan at 180, blue at 240, magenta at 300, and back to red.
+- **[Saturation](../../reference/glossary/#saturation)** is how strong the color is, from 0% (gray) to 100% (the purest version of that hue).
+- **[Value](../../reference/glossary/#value)** is how light or dark the color is, from 0% (black) to 100% (the brightest it can be).
 
 Value matters most. From a distance, and from a high camera like yours, players read shapes by their light and dark long before they notice hue. A rock reads as a rock because its top is lighter than its sides and its underside is darker, whatever its exact color.
 
@@ -59,8 +59,8 @@ Value matters most. From a distance, and from a high camera like yours, players 
 
 A stylized look comes from limits. These four rules give natural colors that sit well together under your game's light:
 
-1. **Build in [ramps](/reference/glossary/#color-ramp).** Each material gets four colors from dark to light: a shadow, a dark, a light, and a highlight. Space their values evenly, about 12 to 14 points apart, so each step is clearly different.
-2. **Shift the hue along the ramp.** Real light is warm and shadows are cool, so a ramp turns toward blue as it darkens and toward yellow as it lightens. Move the hue 5 to 10 degrees per step, the short way around the wheel. This is [hue shifting](/reference/glossary/#hue-shifting), and it is what makes painted colors look alive instead of mixed with black.
+1. **Build in [ramps](../../reference/glossary/#color-ramp).** Each material gets four colors from dark to light: a shadow, a dark, a light, and a highlight. Space their values evenly, about 12 to 14 points apart, so each step is clearly different.
+2. **Shift the hue along the ramp.** Real light is warm and shadows are cool, so a ramp turns toward blue as it darkens and toward yellow as it lightens. Move the hue 5 to 10 degrees per step, the short way around the wheel. This is [hue shifting](../../reference/glossary/#hue-shifting), and it is what makes painted colors look alive instead of mixed with black.
 3. **Keep saturation in check.** Stone stays close to gray, at 10% to 20% saturation. Earth and sand sit at about 30% to 45%, and grass and leaves at about 45% to 55%: lively and sunny, as in most stylized games, but never neon. Each ramp is a little more saturated in the middle than at its ends. Stronger saturation is for small things you want noticed, such as flowers.
 4. **No pure black or white.** Keep values between about 25% and 90%. The game's light adds the deepest shadows and the brightest highlights; if the colors already use them up, nothing is left for the light.
 
@@ -68,7 +68,7 @@ FactoryGame, the game whose look this template rebuilds by hand, follows rules 1
 
 ## The palette's layout
 
-Your palette is a 256 by 256 pixel image divided into an 8 by 8 grid of 32 pixel squares, called [swatches](/reference/glossary/#swatch). Each row holds two ramps of four, from dark at the left to light at the right.
+Your palette is a 256 by 256 pixel image divided into an 8 by 8 grid of 32 pixel squares, called [swatches](../../reference/glossary/#swatch). Each row holds two ramps of four, from dark at the left to light at the right.
 
 <Aside type="note" title="Why this layout">
 In lesson 10 you color the rock by pointing each part of it at one swatch. Where a dark part meets a light part, the model's narrow rounded edge reads the colors between the two swatches, so the two steps of a ramp sit side by side and that edge only ever sees colors of the same ramp. A swatch of 32 pixels stays a clean, flat color even when Godot shrinks the image for distant objects, and 256 is a power of two (2 multiplied by itself: 2, 4, 8, 16, and so on), the size graphics cards handle best.
@@ -106,7 +106,7 @@ Each line lists a ramp's four swatches from shadow to highlight:
 	<Figure
 		src={newDimensions}
 		alt="Krita's Create new document dialog on the Dimensions tab: Width 256 and Height 256 in Pixels, Resolution 300 Pixels/Inch, and the Color section with Model RGB/Alpha, Depth 8-bit integer/channel, Profile sRGB-elle-V2-srgbtrc.icc (Default)."
-		caption="A 256 by 256 pixel image in standard [sRGB](/reference/glossary/#srgb) color, the color space Godot expects for color textures."
+		caption="A 256 by 256 pixel image in standard [sRGB](../../reference/glossary/#srgb) color, the color space Godot expects for color textures."
 	/>
 
 4. Click the **Content** tab and set **Name** to `palette`. Leave **Background Color** white and **Background** on **As raster layer**.
@@ -117,7 +117,7 @@ Each line lists a ramp's four swatches from shadow to highlight:
 		caption="The image named palette."
 	/>
 
-5. Click **Create**. A white square fills the middle of the window. Krita's side panels are called **dockers**; the **Layers** docker at the right lists the image's [layers](/reference/glossary/#layer), **Paint Layer 1** above **Background**. You paint on Paint Layer 1.
+5. Click **Create**. A white square fills the middle of the window. Krita's side panels are called **dockers**; the **Layers** docker at the right lists the image's [layers](../../reference/glossary/#layer), **Paint Layer 1** above **Background**. You paint on Paint Layer 1.
 
 </Steps>
 
@@ -288,7 +288,7 @@ You keep two files: the Krita file with its layers, which you edit later, and a 
 	<Figure
 		src={pngOptions}
 		alt="The PNG image options dialog: Compression (Lossless) 3; Force convert to sRGB and Store alpha channel (transparency) checked; the other options unchecked."
-		caption="PNG compression is [lossless](/reference/glossary/#lossless-compression) at every level, so your colors stay exact."
+		caption="PNG compression is [lossless](../../reference/glossary/#lossless-compression) at every level, so your colors stay exact."
 	/>
 
 </Steps>

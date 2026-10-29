@@ -61,7 +61,7 @@ Once the leaves are on, most of the twigs disappear behind them. What stays visi
 - **Forks that leave at different heights and angles.** A trunk that splits into evenly spaced, identical limbs looks like a candelabra. Let one limb rise steeply, let another reach out low, and let the thinnest ones lean.
 - **An uneven line.** No part of a trunk is perfectly straight. A small lean at each joint is enough.
 
-You will not sculpt any of this. A trunk is a tube whose radius changes, and Blender can build a tube around a line for you: you place a few points joined by edges, the **skeleton**, and give each point a radius. The [Skin modifier](/reference/glossary/#skin-modifier) wraps faces around it. A dozen well-placed points make a whole tree, and moving one point reshapes a whole limb.
+You will not sculpt any of this. A trunk is a tube whose radius changes, and Blender can build a tube around a line for you: you place a few points joined by edges, the **skeleton**, and give each point a radius. The [Skin modifier](../../reference/glossary/#skin-modifier) wraps faces around it. A dozen well-placed points make a whole tree, and moving one point reshapes a whole limb.
 
 <Aside type="note" title="Where the budget goes">
 The rocks took 100 to 400 triangles. This tree takes about 1,900, because the Skin modifier joins limbs with many small faces and the Subdivision Surface modifier splits every face again. That is fine for one tree. For a grove, lesson 28 shows how Godot draws a simpler copy of a tree from far away.
@@ -87,7 +87,7 @@ A skeleton starts from a single point, the foot of the trunk, and every other po
 
 1. With the pointer over the 3D view, press <Kbd keys="Tab" /> for Edit Mode, <Kbd keys="1" /> for vertex selection, and <Kbd keys="A" /> to select all eight corners.
 
-2. Press <Kbd keys="M" /> and choose **At Center** in the Merge menu. The eight corners become one [vertex](/reference/glossary/#vertex) at the scene's center, which is the ground.
+2. Press <Kbd keys="M" /> and choose **At Center** in the Merge menu. The eight corners become one [vertex](../../reference/glossary/#vertex) at the scene's center, which is the ground.
 
 3. The foot of the trunk should sit a little below the ground, so the trunk can never float above it. Press <Kbd keys="G" />, <Kbd keys="Z" />, type `-0.1`, and press <Kbd keys="Enter" />. Press <Kbd keys="N" /> to open the Sidebar if you want to check: on its **Item** tab, **Vertex** reads X `0`, Y `0`, Z `-0.1`. Press <Kbd keys="N" /> again to close it.
 
@@ -95,7 +95,7 @@ A skeleton starts from a single point, the foot of the trunk, and every other po
 
 ## Grow the trunk
 
-To [extrude](/reference/glossary/#extrude) a vertex is to pull a new vertex out of it, joined to it by an edge. You will type how far to pull it, so the lesson's numbers land exactly where yours do: after <Kbd keys="E" />, the three numbers are the distance along X, Y, and Z, and <Kbd keys="Tab" /> moves from one to the next.
+To [extrude](../../reference/glossary/#extrude) a vertex is to pull a new vertex out of it, joined to it by an edge. You will type how far to pull it, so the lesson's numbers land exactly where yours do: after <Kbd keys="E" />, the three numbers are the distance along X, Y, and Z, and <Kbd keys="Tab" /> moves from one to the next.
 
 <Steps>
 
@@ -185,7 +185,7 @@ The table is one possible tree. To change it, select a vertex and press <Kbd key
 		caption="Every vertex starts at radius 0.25 m. The Symmetry buttons are shown after X was turned off."
 	/>
 
-3. Turn on [X-ray](/reference/glossary/#x-ray) with <Kbd keys="Alt+Z" mac="Option+Z" />, so you can click the vertices inside the thick shape.
+3. Turn on [X-ray](../../reference/glossary/#x-ray) with <Kbd keys="Alt+Z" mac="Option+Z" />, so you can click the vertices inside the thick shape.
 
 4. The radius at each vertex is what shapes the wood. Select the vertices that share a radius, then choose **Mesh > Transform > Skin Resize** (<Kbd keys="Ctrl+A" mac="Cmd+A" />), type a number, and press <Kbd keys="Enter" />. The number is a factor: it multiplies the radius the vertex has now, which is still 0.25, so each factor in the table is the radius you want divided by 0.25.
 

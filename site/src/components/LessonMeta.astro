@@ -18,7 +18,7 @@ if (planned.id !== id || planned.title !== entry.data.title) {
 const published = await publishedIds();
 const prerequisites = lesson.prerequisites.map((number) => {
 	const prerequisite = lessonByNumber(number);
-	return { ...prerequisite, href: published.has(prerequisite.id) ? `/${prerequisite.id}/` : undefined };
+	return { ...prerequisite, href: published.has(prerequisite.id) ? `${import.meta.env.BASE_URL}${prerequisite.id}/` : undefined };
 });
 ---
 

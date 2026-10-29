@@ -118,7 +118,7 @@ Interpolation draws movement smoothly as long as your code moves things in Godot
 
 ## Name the physics layers
 
-Every physics object sits on one or more of 32 [physics layers](/reference/glossary/#physics-layer), and chooses which layers it collides with. Naming the layers you use means the Inspector shows `World` and `Player` instead of bare numbers.
+Every physics object sits on one or more of 32 [physics layers](../../reference/glossary/#physics-layer), and chooses which layers it collides with. Naming the layers you use means the Inspector shows `World` and `Player` instead of bare numbers.
 
 <Steps>
 
@@ -138,7 +138,7 @@ Every physics object sits on one or more of 32 [physics layers](/reference/gloss
 
 ## The input map
 
-Your code should not ask "is the W key down?". Players on a French keyboard reach W where you have Z, and some play with a gamepad. Godot calls gamepads **joypads**, so the lists below say Joypad. Instead, your code asks about an [action](/reference/glossary/#input-action), such as `move_forward`, and the input map lists which keys, buttons, and sticks trigger it. Action names are `snake_case`, like file names.
+Your code should not ask "is the W key down?". Players on a French keyboard reach W where you have Z, and some play with a gamepad. Godot calls gamepads **joypads**, so the lists below say Joypad. Instead, your code asks about an [action](../../reference/glossary/#input-action), such as `move_forward`, and the input map lists which keys, buttons, and sticks trigger it. Action names are `snake_case`, like file names.
 
 ### Add the actions
 

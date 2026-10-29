@@ -93,7 +93,7 @@ The meadow is lit, and the grass is the calm green you want. The shadows are not
 
 ## Shadows under an orthographic camera
 
-Godot draws a directional light's shadow into a picture, the [shadow map](/reference/glossary/#shadow-map), that covers the area in front of the camera, out to a distance. By default it splits that area into four slices, to give shadows near a perspective camera more detail, and, under an orthographic camera, FactoryGame found that Godot sizes it to the camera's **Far** plane, which is 4000 meters by default. An orthographic camera has no use for splits, because everything is the same size on screen, and a shadow map stretched over a long range has little detail left.
+Godot draws a directional light's shadow into a picture, the [shadow map](../../reference/glossary/#shadow-map), that covers the area in front of the camera, out to a distance. By default it splits that area into four slices, to give shadows near a perspective camera more detail, and, under an orthographic camera, FactoryGame found that Godot sizes it to the camera's **Far** plane, which is 4000 meters by default. An orthographic camera has no use for splits, because everything is the same size on screen, and a shadow map stretched over a long range has little detail left.
 
 There are two changes:
 

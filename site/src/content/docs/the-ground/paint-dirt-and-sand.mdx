@@ -52,11 +52,11 @@ Two ground textures to sit beside your grass: dirt, with pebbles of many sizes a
 
 ## A texture that repeats
 
-Ground is too big for one picture. Instead, one small square image repeats across it like floor tiles. For that to work, whatever leaves the image at its right edge must come back in at its left edge, and the same at the top and bottom. Paint a stroke that stops at the edge, and every copy shows a hard line there, a **seam**. A texture that avoids this is [tileable](/reference/glossary/#tileable-texture).
+Ground is too big for one picture. Instead, one small square image repeats across it like floor tiles. For that to work, whatever leaves the image at its right edge must come back in at its left edge, and the same at the top and bottom. Paint a stroke that stops at the edge, and every copy shows a hard line there, a **seam**. A texture that avoids this is [tileable](../../reference/glossary/#tileable-texture).
 
 Krita's **wrap-around mode** solves this while you paint. It shows copies of your image all around it, and a stroke that runs off one edge continues on the opposite edge. You paint on the copies as if they were one endless surface, and the seams never appear.
 
-Your texture is 512 by 512 pixels and covers 2 by 2 meters of ground, so each meter gets 256 pixels. That number is the [texel density](/reference/glossary/#texel-density). The grass detail from lesson 13 is 1024 pixels for the same 2 meters, so it is twice as fine; the hand-painted textures use bolder shapes, which suit that density.
+Your texture is 512 by 512 pixels and covers 2 by 2 meters of ground, so each meter gets 256 pixels. That number is the [texel density](../../reference/glossary/#texel-density). The grass detail from lesson 13 is 1024 pixels for the same 2 meters, so it is twice as fine; the hand-painted textures use bolder shapes, which suit that density.
 
 ## How to make textures match
 
@@ -83,7 +83,7 @@ The reference ramps from lesson 7, as hue, saturation, and value:
 		caption="512 by 512 pixels: 2 meters of ground at 256 pixels per meter."
 	/>
 
-2. Click the **Content** tab, set **Name** to `dirt_albedo`, and click **Create**. [Albedo](/reference/glossary/#albedo) is a surface's plain color; the name says what the texture is for.
+2. Click the **Content** tab, set **Name** to `dirt_albedo`, and click **Create**. [Albedo](../../reference/glossary/#albedo) is a surface's plain color; the name says what the texture is for.
 
 3. Click the **foreground color** square in the toolbar, as in lesson 7. On the **HSV** tab, type the dirt ramp's **light** swatch, `32`, `44`, `66`, pressing <Kbd keys="Tab" /> after each, and click **OK**. Choose **Edit > Fill with Foreground Color** (<Kbd keys="Shift+Backspace" mac="Shift+Delete" />). With nothing selected, Krita fills the whole layer, **Paint Layer 1**.
 

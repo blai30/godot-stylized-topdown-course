@@ -53,7 +53,7 @@ The game's camera: a rig that looks down at the world at the same angle as Facto
 
 ## How the camera sees
 
-A normal camera, like your eyes, shows far things smaller than near things. That is a **perspective** projection. Top-down games such as FactoryGame use an [orthographic projection](/reference/glossary/#orthographic-projection) instead: every object shows at the same size wherever it is on screen, and parallel lines stay parallel. A tile at the top of the screen looks exactly like a tile at the bottom, which keeps a tiled world tidy and easy to read.
+A normal camera, like your eyes, shows far things smaller than near things. That is a **perspective** projection. Top-down games such as FactoryGame use an [orthographic projection](../../reference/glossary/#orthographic-projection) instead: every object shows at the same size wherever it is on screen, and parallel lines stay parallel. A tile at the top of the screen looks exactly like a tile at the bottom, which keeps a tiled world tidy and easy to read.
 
 An orthographic camera has no zoom by distance. Moving it closer changes nothing; what it shows is set by its **Size**, the height of the view in meters. Size 20 shows 20 meters of the world from the bottom of the window to the top.
 
@@ -106,7 +106,7 @@ The distance does not change what an orthographic camera shows, but anything clo
 
 ## Attach a script
 
-A [script](/reference/glossary/#script) gives a node behavior. Your C# script becomes part of the `CameraRig` node: it can read and change the node's properties and react to input.
+A [script](../../reference/glossary/#script) gives a node behavior. Your C# script becomes part of the `CameraRig` node: it can read and change the node's properties and react to input.
 
 <Steps>
 
@@ -164,7 +164,7 @@ public partial class CameraRig : Node3D
 Read it from the top:
 
 - `using Godot;` lets the file use Godot's types, such as `Node3D`, without writing `Godot.Node3D` each time. `using System;` does the same for .NET's basic types.
-- `public partial class CameraRig : Node3D` declares a [class](/reference/glossary/#class) named `CameraRig`. `: Node3D` means it is a kind of `Node3D`, with everything a `Node3D` can do. `partial` lets Godot add generated code to the class from another file, which it needs for every script.
+- `public partial class CameraRig : Node3D` declares a [class](../../reference/glossary/#class) named `CameraRig`. `: Node3D` means it is a kind of `Node3D`, with everything a `Node3D` can do. `partial` lets Godot add generated code to the class from another file, which it needs for every script.
 - Inside the braces after the class name is everything that belongs to the class. `_Ready()` and `_Process()` are **methods**, blocks of code with a name. Godot calls `_Ready()` once when the node enters the game, and `_Process()` every frame. `override` says your method replaces an empty one `Node3D` already has.
 
 ## Write the script, piece by piece
@@ -182,7 +182,7 @@ You write the script in three pieces. After each piece, save the file in your co
 The script needs to reach the `Camera3D` to change its size. Change the template so that:
 
 - `using System;`, `_Process()`, and the two comments are gone: the script uses nothing from `System` and needs no work every frame, and the comments only described the template.
-- A line `namespace TopDownTemplate.Camera;` sits under `using Godot;`, separated by an empty line. A [namespace](/reference/glossary/#namespace) is a family name for your classes, so your `CameraRig` can never clash with someone else's. Every namespace in the template starts with the project's name, `TopDownTemplate`, followed by the folder under `src` the file sits in, here `Camera`.
+- A line `namespace TopDownTemplate.Camera;` sits under `using Godot;`, separated by an empty line. A [namespace](../../reference/glossary/#namespace) is a family name for your classes, so your `CameraRig` can never clash with someone else's. Every namespace in the template starts with the project's name, `TopDownTemplate`, followed by the folder under `src` the file sits in, here `Camera`.
 - Inside the class, above `_Ready()`, there is a **property**, a named value the class holds, called `Camera` and of type `Camera3D`. Write it `public Camera3D Camera { get; set; }`: `public` lets Godot and other code see it, and `{ get; set; }` means it can be read and changed. Put `[Export]` in front of it, an **attribute**, which is a label in square brackets that tells Godot something about the code after it, and ` = null!;` after it.
 - `_Ready()` prints the camera's size with `GD.Print($"Camera size: {Camera.Size}");`.
 
@@ -191,7 +191,7 @@ The script needs to reach the `Camera3D` to change its size. Change the template
 </Solution>
 
 <Aside type="note" title="Export, and what null! means">
-- **`[Export]`** [exports](/reference/glossary/#export) the property: it shows in the Inspector, so you can set it there instead of in code. Godot saves the value in the scene.
+- **`[Export]`** [exports](../../reference/glossary/#export) the property: it shows in the Inspector, so you can set it there instead of in code. Godot saves the value in the scene.
 - **`= null!`** tells the compiler, which checks your code as it builds, "this starts empty, but I promise it is set before it is used". Nullable checks, which you turned on in lesson 2, would otherwise warn that `Camera` might be `null`. You keep the promise in the next steps by assigning the camera in the Inspector.
 - **`$"Camera size: {Camera.Size}"`** is a string, a piece of text, with a value placed inside it at the braces.
 </Aside>
@@ -234,7 +234,7 @@ Save the file and click **Build Project**. Then connect the property:
 
 2. Select `Meadow` and click the chain button at the top of the Scene dock, whose tooltip reads **Instantiate a scene file as a Node.** (or press <Kbd keys="Ctrl+Shift+A" mac="Cmd+Shift+A" />, **Instantiate Child Scene**). **Select Scene** opens.
 
-3. Type `camera_rig`, check that `camera_rig.tscn` is highlighted, and press <Kbd keys="Enter" />. A `CameraRig` node appears under `Meadow`, with a small scene icon beside it: it is an [instance](/reference/glossary/#instance) of your rig scene.
+3. Type `camera_rig`, check that `camera_rig.tscn` is highlighted, and press <Kbd keys="Enter" />. A `CameraRig` node appears under `Meadow`, with a small scene icon beside it: it is an [instance](../../reference/glossary/#instance) of your rig scene.
 
 	<Figure
 		src={instantiate}

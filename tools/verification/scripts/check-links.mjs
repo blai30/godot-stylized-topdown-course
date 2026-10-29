@@ -3,6 +3,10 @@ import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 
 const dist = process.argv[2];
+// The site's base path, when it is built for a sub-path: links to it are looked up from the folder's root.
+const base = (process.argv[3] ?? '').replace(/\/$/, '');
+// The site's own address, which answers only once it is published, is not looked up.
+const origin = process.argv[4];
 const files = [];
 const walk = (dir) => readdirSync(dir, { withFileTypes: true }).forEach((entry) => {
 	const path = join(dir, entry.name);
@@ -17,7 +21,7 @@ const ids = (file) => {
 	return idsOf.get(file);
 };
 const pageFor = (pathname) => {
-	const clean = decodeURIComponent(pathname).replace(/^\//, '');
+	const clean = decodeURIComponent(base && pathname.startsWith(base) ? pathname.slice(base.length) : pathname).replace(/^\//, '');
 	for (const candidate of [join(dist, clean, 'index.html'), join(dist, `${clean}.html`)]) {
 		if (existsSync(candidate)) return candidate;
 	}
@@ -33,6 +37,7 @@ for (const file of files) {
 		const href = raw.replaceAll('&amp;', '&');
 		if (href.startsWith('mailto:') || href.startsWith('data:')) continue;
 		if (/^https?:\/\//.test(href)) {
+			if (origin && href.startsWith(origin)) continue;
 			if (!external.has(href)) external.set(href, page);
 			continue;
 		}

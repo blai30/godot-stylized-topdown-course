@@ -43,7 +43,7 @@ import frontOrigin from '../../../assets/lessons/model-a-small-rock/front-origin
 
 ## What you will build
 
-A small rock, about 60 cm across: a chunky shape with broad flat faces and soft rounded edges. It is the first model in your art library, and the technique carries over to every [hard-surface model](/reference/glossary/#hard-surface-model) in the course.
+A small rock, about 60 cm across: a chunky shape with broad flat faces and soft rounded edges. It is the first model in your art library, and the technique carries over to every [hard-surface model](../../reference/glossary/#hard-surface-model) in the course.
 
 <Figure
 	src={final}
@@ -57,9 +57,9 @@ Your camera looks down at the world from high up, so players see a rock mostly f
 
 - **An uneven silhouette from above.** A perfect box or circle looks man-made. Push a few corners in and out until the outline is irregular.
 - **Broad, flat faces.** Big planes catch light in clear patches of bright and dark, which reads as solid stone. Lots of small bumps turn into noise at a distance.
-- **Soft edges.** Real stone has worn edges. A narrow [bevel](/reference/glossary/#bevel) on each edge catches a thin line of light and makes the shape feel heavy and real.
+- **Soft edges.** Real stone has worn edges. A narrow [bevel](../../reference/glossary/#bevel) on each edge catches a thin line of light and makes the shape feel heavy and real.
 
-The [triangle budget](/reference/glossary/#triangle-budget) for a small rock is **100 to 400 triangles**. That is plenty, because the shape does the work, not the detail.
+The [triangle budget](../../reference/glossary/#triangle-budget) for a small rock is **100 to 400 triangles**. That is plenty, because the shape does the work, not the detail.
 
 <Aside type="tip" title="Two habits for Blender hotkeys">
 - Blender hotkeys act on the area under the mouse pointer. Keep the pointer over the 3D viewport when you press them.
@@ -130,7 +130,7 @@ Your `.blend` and Krita files live in `art_source`, outside the folders Godot im
 		caption="Typing the dimensions stretches the object: its Scale changes, not its mesh."
 	/>
 
-2. Apply that size so it becomes the [mesh](/reference/glossary/#mesh)'s real size: move the pointer off the Sidebar onto the empty part of the 3D view, press <Kbd keys="Ctrl+A" />, and choose **Scale** in the **Apply** menu. The **Scale** fields return to `1.000`.
+2. Apply that size so it becomes the [mesh](../../reference/glossary/#mesh)'s real size: move the pointer off the Sidebar onto the empty part of the 3D view, press <Kbd keys="Ctrl+A" />, and choose **Scale** in the **Apply** menu. The **Scale** fields return to `1.000`.
 
 	<Figure
 		src={applyMenu}
@@ -142,9 +142,9 @@ Your `.blend` and Krita files live in `art_source`, outside the folders Godot im
 	Before applying, the mesh is still a 2-meter cube that the object stretches to the size you typed. Modifiers such as Bevel measure in the mesh's own size, so on a stretched object a 4 cm bevel would come out a different width on every side. Applying the scale bakes the size into the mesh, so every later measurement is true.
 	</Aside>
 
-3. Press <Kbd keys="N" /> to close the Sidebar, then <Kbd keys="Numpad ." /> to zoom in on the rock (without a number pad: **View > Frame Selected**). Press <Kbd keys="Tab" /> to enter [Edit Mode](/reference/glossary/#edit-mode), where you change the mesh itself.
+3. Press <Kbd keys="N" /> to close the Sidebar, then <Kbd keys="Numpad ." /> to zoom in on the rock (without a number pad: **View > Frame Selected**). Press <Kbd keys="Tab" /> to enter [Edit Mode](../../reference/glossary/#edit-mode), where you change the mesh itself.
 
-4. Add a [loop cut](/reference/glossary/#loop-cut) around the middle: point at one of the vertical edges, press <Kbd keys="Ctrl+R" />, and a yellow line circles the rock across that edge. Click once, then right-click. The right-click cancels the sliding part, so the cut stays centered.
+4. Add a [loop cut](../../reference/glossary/#loop-cut) around the middle: point at one of the vertical edges, press <Kbd keys="Ctrl+R" />, and a yellow line circles the rock across that edge. Click once, then right-click. The right-click cancels the sliding part, so the cut stays centered.
 
 	<Figure
 		src={loopCut}
@@ -154,7 +154,7 @@ Your `.blend` and Krita files live in `art_source`, outside the folders Godot im
 
 5. Repeat the loop cut twice more, pointing at edges that run in the other two directions, so the cube is cut once around each axis.
 
-6. Press <Kbd keys="1" /> for [vertex](/reference/glossary/#vertex) selection, then <Kbd keys="Numpad 1" /> to look from the front and <Kbd keys="Alt+Z" /> to turn on [X-ray](/reference/glossary/#x-ray), so a box selection reaches the vertices on the back too.
+6. Press <Kbd keys="1" /> for [vertex](../../reference/glossary/#vertex) selection, then <Kbd keys="Numpad 1" /> to look from the front and <Kbd keys="Alt+Z" /> to turn on [X-ray](../../reference/glossary/#x-ray), so a box selection reaches the vertices on the back too.
 
 7. Press <Kbd keys="Alt+A" /> to select nothing. Press <Kbd keys="B" />, then drag a box around the top row of vertices: press the left mouse button above and to the left of the row, move below and to the right of it, and release.
 
@@ -169,7 +169,7 @@ Your `.blend` and Krita files live in `art_source`, outside the folders Godot im
 	<Figure
 		src={blocked}
 		alt="The rock from the front in Edit Mode: a block whose top is narrower than its base, cut once around the middle in each direction, with the top row of vertices selected."
-		caption="The [blockout](/reference/glossary/#blockout) after the loop cuts and the narrower top."
+		caption="The [blockout](../../reference/glossary/#blockout) after the loop cuts and the narrower top."
 	/>
 
 9. Now break the symmetry from above. Press <Kbd keys="Numpad 7" /> to look down from the top. The outline you see is the base and the ring around the middle: at each corner of the outline, a middle vertex sits right above a base vertex. For three or four corners: press <Kbd keys="Alt+A" />, press <Kbd keys="B" /> and drag a small box around the corner, which selects both vertices of that stack, then press <Kbd keys="G" />, move the mouse to push them out or pull them in by a few centimeters, and click. The outline should look irregular, not like a box. Then press <Kbd keys="Alt+Z" /> to turn X-ray off.
@@ -199,10 +199,10 @@ Your `.blend` and Krita files live in `art_source`, outside the folders Godot im
 12. Set the rock on the ground. Look from the front (<Kbd keys="Numpad 1" />). Keep everything selected, press <Kbd keys="G" /> then <Kbd keys="Z" />, and move the mouse until the rock's lowest point touches the red line, which is the ground. Click to confirm. Instead of moving the mouse, you can type the distance, about `0.18`, and press <Kbd keys="Enter" />; then check the lowest point against the red line and move again if it is off. A gap of a few millimeters is fine, because nobody sees it from the game camera.
 
 	<Aside type="note" title="Why the base sits at zero">
-	You moved the mesh, not the object, so the object's [origin](/reference/glossary/#origin) stayed at the center of the world, which is now the center of the rock's base. In Godot, a rock placed at any spot then sits on the ground there instead of sinking halfway into it.
+	You moved the mesh, not the object, so the object's [origin](../../reference/glossary/#origin) stayed at the center of the world, which is now the center of the rock's base. In Godot, a rock placed at any spot then sits on the ground there instead of sinking halfway into it.
 	</Aside>
 
-13. Press <Kbd keys="Tab" /> to go back to [Object Mode](/reference/glossary/#object-mode).
+13. Press <Kbd keys="Tab" /> to go back to [Object Mode](../../reference/glossary/#object-mode).
 
 </Steps>
 
@@ -225,10 +225,10 @@ Your `.blend` and Krita files live in `art_source`, outside the folders Godot im
 	/>
 
 	<Aside type="note" title="Why smooth shading first">
-	[Smooth shading](/reference/glossary/#smooth-shading) makes lighting blend from face to face instead of jumping at every edge. On its own it makes flat faces look round. The bevel and the weighted normals below decide where the blend happens: only along the narrow edges, so the big faces stay flat and the edges look softly rounded.
+	[Smooth shading](../../reference/glossary/#smooth-shading) makes lighting blend from face to face instead of jumping at every edge. On its own it makes flat faces look round. The bevel and the weighted normals below decide where the blend happens: only along the narrow edges, so the big faces stay flat and the edges look softly rounded.
 	</Aside>
 
-2. With `rock_small` still selected, go to the **Properties** editor at the bottom right and click the **Modifiers** tab (the blue wrench). A [modifier](/reference/glossary/#modifier) changes the mesh without destroying it. Click **Add Modifier** at the top of the tab, then **Generate > Bevel**.
+2. With `rock_small` still selected, go to the **Properties** editor at the bottom right and click the **Modifiers** tab (the blue wrench). A [modifier](../../reference/glossary/#modifier) changes the mesh without destroying it. Click **Add Modifier** at the top of the tab, then **Generate > Bevel**.
 
 	<Figure
 		src={generateMenu}
@@ -253,7 +253,7 @@ Your `.blend` and Krita files live in `art_source`, outside the folders Godot im
 	/>
 
 	<Aside type="note" title="Why weighted normals">
-	A [normal](/reference/glossary/#normal) is the direction a surface faces, and lighting depends on it. The Weighted Normal modifier points each vertex's normal mostly toward the biggest face beside it, so large faces light as flat planes and the small bevel faces carry all the rounding. That is the look of [weighted normals](/reference/glossary/#weighted-normals): crisp planes, soft edges, and no smudges.
+	A [normal](../../reference/glossary/#normal) is the direction a surface faces, and lighting depends on it. The Weighted Normal modifier points each vertex's normal mostly toward the biggest face beside it, so large faces light as flat planes and the small bevel faces carry all the rounding. That is the look of [weighted normals](../../reference/glossary/#weighted-normals): crisp planes, soft edges, and no smudges.
 	</Aside>
 
 </Steps>

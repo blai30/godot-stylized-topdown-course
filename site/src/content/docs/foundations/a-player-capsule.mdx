@@ -56,13 +56,13 @@ A stand-in player: a capsule with a small box for a nose, which walks with the k
 
 ## Bodies, shapes, and layers
 
-Godot's physics moves **bodies**, and each body has one or more **collision shapes** that say how much space it takes. The shape is invisible and simple, such as a capsule or a box, because physics checks it many times per second; what you see is a separate [mesh](/reference/glossary/#mesh). Godot has three bodies you meet in this course:
+Godot's physics moves **bodies**, and each body has one or more **collision shapes** that say how much space it takes. The shape is invisible and simple, such as a capsule or a box, because physics checks it many times per second; what you see is a separate [mesh](../../reference/glossary/#mesh). Godot has three bodies you meet in this course:
 
 - A `StaticBody3D` never moves: the ground, rocks, and walls.
 - A `CharacterBody3D` moves only when your code tells it to, and slides along whatever it bumps into. It is made for players and characters.
 - A `RigidBody3D` is moved by forces and gravity, like a ball. The template does not need one.
 
-Each body sits on [physics layers](/reference/glossary/#physics-layer) and has a **mask**: the layers it collides with. In lesson 3 you named layer 1 `World` and layer 2 `Player`. The player sits on `Player` and collides with `World`.
+Each body sits on [physics layers](../../reference/glossary/#physics-layer) and has a **mask**: the layers it collides with. In lesson 3 you named layer 1 `World` and layer 2 `Player`. The player sits on `Player` and collides with `World`.
 
 ## Build the player scene
 

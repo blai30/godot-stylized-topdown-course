@@ -45,7 +45,7 @@ The same meadow, but the game now knows which ground it stands on. Sand slows th
 
 Right now the meadow's ground is a grid of numbers: `0` is grass, `1` is sand, `2` is dirt. The numbers are the MeshLibrary's item numbers, and nothing in the game knows what they mean. The quick fix is `if (item == 1) speed *= 0.7f;` in the player's script. It works, and it spreads: scattering grass, generating levels, and footstep sounds would each need their own `if (item == 1)`, and renumbering the library would break all of them.
 
-The fix is to keep what a kind of ground means in **data**, in one place. A [custom resource](/reference/glossary/#custom-resource) is a C# class that extends `Resource`, with [exported](/reference/glossary/#export) properties. You make one `GroundTile` per kind of ground, and one `GroundTileSet` that lists them. Code asks the set about a tile, and the answer comes from the Inspector.
+The fix is to keep what a kind of ground means in **data**, in one place. A [custom resource](../../reference/glossary/#custom-resource) is a C# class that extends `Resource`, with [exported](../../reference/glossary/#export) properties. You make one `GroundTile` per kind of ground, and one `GroundTileSet` that lists them. Code asks the set about a tile, and the answer comes from the Inspector.
 
 | Property | What it says |
 |---|---|

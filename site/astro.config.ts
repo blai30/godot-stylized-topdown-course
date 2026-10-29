@@ -6,10 +6,15 @@ import { modules } from './src/data/syllabus';
 // A module appears in the sidebar once its folder has lessons in it.
 const published = modules.filter((module) => existsSync(`./src/content/docs/${module.directory}`));
 
+// The site is a GitHub Pages project site, so it lives under its repository's name. Local builds serve from the root.
+const base = process.env.SITE_BASE ?? '/';
+
 export default defineConfig({
+	site: process.env.SITE_URL ?? 'https://blai30.github.io',
+	base,
 	integrations: [
 		starlight({
-			title: 'Hand-Made Top-Down',
+			title: 'Handmade Meadow',
 			// The 404 page lives in src/pages/404.astro.
 			disable404Route: true,
 			description: 'Build a stylized top-down Godot game template by hand, from the first install to your own art library.',

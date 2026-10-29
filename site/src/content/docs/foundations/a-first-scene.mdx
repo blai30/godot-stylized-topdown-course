@@ -53,9 +53,9 @@ The first version of the meadow, the level you grow through the whole course: a 
 
 ## Scenes, nodes, and resources
 
-Everything in a Godot game is built from [nodes](/reference/glossary/#node). Each node does one job: a `MeshInstance3D` shows a 3D shape, a `DirectionalLight3D` lights the world, a `Camera3D` films it. Nodes hang under each other in a tree, and a saved tree is a [scene](/reference/glossary/#scene), a `.tscn` file. Your level is a scene; later, the camera rig and the player are scenes too, placed inside the level.
+Everything in a Godot game is built from [nodes](../../reference/glossary/#node). Each node does one job: a `MeshInstance3D` shows a 3D shape, a `DirectionalLight3D` lights the world, a `Camera3D` films it. Nodes hang under each other in a tree, and a saved tree is a [scene](../../reference/glossary/#scene), a `.tscn` file. Your level is a scene; later, the camera rig and the player are scenes too, placed inside the level.
 
-Many nodes need data to do their job: the shape a `MeshInstance3D` shows, the sky an environment uses. That data is a [resource](/reference/glossary/#resource). The Inspector shows a node's resources as rows you can open, and you create them from the row's menu.
+Many nodes need data to do their job: the shape a `MeshInstance3D` shows, the sky an environment uses. That data is a [resource](../../reference/glossary/#resource). The Inspector shows a node's resources as rows you can open, and you create them from the row's menu.
 
 ## Create the scene
 
@@ -137,7 +137,7 @@ They light only the editor; the running game would be dark. You replace each one
 
 ## Add the environment
 
-A `WorldEnvironment` node holds an [Environment](/reference/glossary/#environment) resource: the scene's background, the light that comes from the sky, the [tonemapping](/reference/glossary/#tonemapping), fog, glow, and more. One per level is enough; in lesson 19 you tune it for the look of the template.
+A `WorldEnvironment` node holds an [Environment](../../reference/glossary/#environment) resource: the scene's background, the light that comes from the sky, the [tonemapping](../../reference/glossary/#tonemapping), fog, glow, and more. One per level is enough; in lesson 19 you tune it for the look of the template.
 
 <Steps>
 
@@ -216,7 +216,7 @@ A `DirectionalLight3D` lights the whole world from one direction, the way the su
 		caption="The Sun's rotation."
 	/>
 
-3. Scroll up to the **Shadow** heading under **Light3D** and check its **On** box. The sun now casts [shadows](/reference/glossary/#shadow-map).
+3. Scroll up to the **Shadow** heading under **Light3D** and check its **On** box. The sun now casts [shadows](../../reference/glossary/#shadow-map).
 
 	<Figure
 		src={sunShadow}

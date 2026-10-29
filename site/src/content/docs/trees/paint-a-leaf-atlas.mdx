@@ -53,7 +53,7 @@ Three decisions shape everything you paint in this lesson.
 
 - **A spray, not a leaf.** A card with one leaf on it would need a thousand cards. A card with a spray of twenty overlapping leaves needs a few hundred, and each shows a leafy shape, with gaps for sky, at its edge.
 - **Mid-gray values, warm and cool.** The foliage shader in lesson 27 reads the atlas as numbers, not as a color picture: it multiplies each pixel by about two and then by one flat leaf color, so a 50 percent gray comes out as the leaf color itself. A lighter leaf brightens the tree, a darker one shades it. Paint some leaves a little warm (brown-gray) and some a little cool (blue-gray), so a crown made of them has tint variety, and keep all of them near the middle.
-- **Room at the edges.** Godot shrinks textures into [mipmaps](/reference/glossary/#mipmap) for objects far away, and every shrunk copy blurs a pixel into its neighbors. Keep paint at least 16 pixels away from each cell's edge, so one spray never leaks into the next.
+- **Room at the edges.** Godot shrinks textures into [mipmaps](../../reference/glossary/#mipmap) for objects far away, and every shrunk copy blurs a pixel into its neighbors. Keep paint at least 16 pixels away from each cell's edge, so one spray never leaks into the next.
 
 <Aside type="note" title="The reference atlas is more finished">
 The atlas in the course's reference project was made with a script, so it has soft shadows between the leaves and slightly wavy edges that a hand-painted atlas takes hours to get. Yours does not have to match it. Everything after this lesson works with whatever atlas you paint, as long as it has four sprays on a see-through background and stays near mid-gray.
@@ -263,7 +263,7 @@ A spray is a stem with leaves fanned around it. You paint the stems first, then 
 </Steps>
 
 <Aside type="note" title="Color or data?">
-A texture of colors is stored so that the numbers look right on screen, in the [sRGB](/reference/glossary/#srgb) encoding, and the shader decodes it when it reads it. Your atlas is read as plain numbers to be multiplied, so its shader will not ask for that decoding. The foliage shader in lesson 27 reads it without that decoding, so nothing in the import changes.
+A texture of colors is stored so that the numbers look right on screen, in the [sRGB](../../reference/glossary/#srgb) encoding, and the shader decodes it when it reads it. Your atlas is read as plain numbers to be multiplied, so its shader will not ask for that decoding. The foliage shader in lesson 27 reads it without that decoding, so nothing in the import changes.
 </Aside>
 
 ## Try it

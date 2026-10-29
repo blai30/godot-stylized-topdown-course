@@ -48,7 +48,7 @@ The same meadow as in lesson 16, but the borders between grass, dirt, and sand a
 Three small tricks, each simple on its own, make the grid disappear:
 
 1. **Each tile overhangs its cell.** A tile is 0.9 meters wide on a 0.5 meter cell, so it reaches 0.2 meters into each neighbor.
-2. **The overhang is cut with noise.** The shader keeps the whole cell, and keeps only part of the overhang, along a ragged line set by a [noise texture](/reference/glossary/#noise-texture). The cut is made with [alpha scissor](/reference/glossary/#alpha-scissor): each pixel is drawn fully or not at all, so the edge stays crisp, like a brush stroke, not a blur.
+2. **The overhang is cut with noise.** The shader keeps the whole cell, and keeps only part of the overhang, along a ragged line set by a [noise texture](../../reference/glossary/#noise-texture). The cut is made with [alpha scissor](../../reference/glossary/#alpha-scissor): each pixel is drawn fully or not at all, so the edge stays crisp, like a brush stroke, not a blur.
 3. **Each kind of ground has its own layer.** Sand sits lowest, dirt 4 millimeters above it, and grass 4 millimeters above that. Where grass meets dirt, the grass's ragged overhang lies on top of the dirt, as grass grows over a path's edge. Two tiles of the same kind overlap at the same height, but they show the same world-space texture, so you cannot see where one ends.
 
 None of the tiles needs to know its neighbors. That is what keeps the shader short.
@@ -72,7 +72,7 @@ None of the tiles needs to know its neighbors. That is what keeps the shader sho
 </Steps>
 
 <Aside type="note" title="Why Center Offset and not Position">
-The MeshLibrary keeps each tile's mesh, not its node's position, so the height must live in the mesh itself. **Center Offset** moves the plane inside its own mesh. Four millimeters is too little for the eye to see from the game camera, and enough for the graphics card to tell which surface is on top: at the same height, two different textures would flicker in stripes, which is called [z-fighting](/reference/glossary/#z-fighting).
+The MeshLibrary keeps each tile's mesh, not its node's position, so the height must live in the mesh itself. **Center Offset** moves the plane inside its own mesh. Four millimeters is too little for the eye to see from the game camera, and enough for the graphics card to tell which surface is on top: at the same height, two different textures would flicker in stripes, which is called [z-fighting](../../reference/glossary/#z-fighting).
 </Aside>
 
 ## Piece 1: cut the overhang

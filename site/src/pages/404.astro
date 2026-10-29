@@ -4,5 +4,5 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
 
 <StarlightPage frontmatter={{ title: 'Page not found', pagefind: false }}>
 	<p>This page does not exist. It may have moved, or the link may have a typo.</p>
-	<p><a href="/start/syllabus/">Go to the syllabus</a> to find the lesson you were looking for.</p>
+	<p><a href={`${import.meta.env.BASE_URL}start/syllabus/`}>Go to the syllabus</a> to find the lesson you were looking for.</p>
 </StarlightPage>

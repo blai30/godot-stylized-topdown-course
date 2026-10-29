@@ -46,7 +46,7 @@ The meadow's ground, painted by hand from three tiles: grass everywhere, a dirt 
 
 Many games build their ground from **tiles**: small squares, each of one kind of ground, laid in a grid like a board game. You choose what each square is, and the game knows it too, which matters later, when grass grows only on grass tiles and the player walks slower in sand.
 
-Godot has this built in. A [GridMap](/reference/glossary/#gridmap) is a node that places meshes in a 3D grid of cells. It takes its meshes from a [MeshLibrary](/reference/glossary/#meshlibrary), a resource that lists them by name, like a palette of pieces. You make the library from a scene of mesh nodes, one per tile, and then paint cells with the mouse.
+Godot has this built in. A [GridMap](../../reference/glossary/#gridmap) is a node that places meshes in a 3D grid of cells. It takes its meshes from a [MeshLibrary](../../reference/glossary/#meshlibrary), a resource that lists them by name, like a palette of pieces. You make the library from a scene of mesh nodes, one per tile, and then paint cells with the mouse.
 
 Your tiles are half a meter wide: small enough that a curving path looks like a curve, not a staircase, once the next lesson softens the edges. Your textures cover 2 meters, but that does not matter: the shader from lesson 15 reads the texture by world position, so neighboring tiles of the same kind join without a seam, whatever their size.
 
@@ -80,7 +80,7 @@ Your tiles are half a meter wide: small enough that a curving path looks like a 
 
 ## Shared and unique resources
 
-Duplicate `Grass` now and both copies show grass, because a duplicate shares the original's mesh, and the mesh holds the material. A [resource](/reference/glossary/#resource) such as a mesh or a material is shared by every node that points at it: change it in one, and all change. That is what you wanted in lesson 15, where two test tiles showed one grass. Here each tile needs its own material, so you make the copy's resources **unique**: Godot gives the node its own copy of the resource, which you can then change alone.
+Duplicate `Grass` now and both copies show grass, because a duplicate shares the original's mesh, and the mesh holds the material. A [resource](../../reference/glossary/#resource) such as a mesh or a material is shared by every node that points at it: change it in one, and all change. That is what you wanted in lesson 15, where two test tiles showed one grass. Here each tile needs its own material, so you make the copy's resources **unique**: Godot gives the node its own copy of the resource, which you can then change alone.
 
 <Steps>
 

@@ -39,7 +39,7 @@ import worldSpaceIcons from '../../../assets/lessons/your-first-shader/world-spa
 
 ## What you will build
 
-Two ground tiles, one turned at an angle and overlapping the other, covered by your grass detail, tinted green, with no seam where they meet. The [shader](/reference/glossary/#shader) you write here becomes the ground shader for the whole template: in lesson 17 it learns to draw soft edges between grass, dirt, and sand.
+Two ground tiles, one turned at an angle and overlapping the other, covered by your grass detail, tinted green, with no seam where they meet. The [shader](../../reference/glossary/#shader) you write here becomes the ground shader for the whole template: in lesson 17 it learns to draw soft edges between grass, dirt, and sand.
 
 <Figure
 	src={worldSpaceGrass}
@@ -51,8 +51,8 @@ Two ground tiles, one turned at an angle and overlapping the other, covered by y
 
 A shader is a small program that runs on your graphics card and decides how a surface is drawn. Godot runs it for every part of a surface on every frame, so it must be short and fast. A 3D shader has two main parts you write:
 
-- The [vertex function](/reference/glossary/#vertex-function), `vertex()`, runs once for every corner point of the mesh. It can move points and pass values along.
-- The [fragment function](/reference/glossary/#fragment-function), `fragment()`, runs once for every pixel the surface covers on screen. It decides that pixel's color, roughness, and other surface properties.
+- The [vertex function](../../reference/glossary/#vertex-function), `vertex()`, runs once for every corner point of the mesh. It can move points and pass values along.
+- The [fragment function](../../reference/glossary/#fragment-function), `fragment()`, runs once for every pixel the surface covers on screen. It decides that pixel's color, roughness, and other surface properties.
 
 Godot then lights the result with your sun and sky. You only describe the surface; you do not write the lighting.
 
@@ -90,7 +90,7 @@ You need a surface to put the shader on. A flat square, called a `PlaneMesh`, is
 	Two surfaces at exactly the same height fight over the same pixels, and you see flickering stripes where they overlap. This is called z-fighting. A centimeter is enough to make the tile always win, and too little to notice.
 	</Aside>
 
-7. Scroll back up to the **Mesh** section. Below the **PlaneMesh** properties, under the heading **PrimitiveMesh**, find **Material**. Click its **&lt;empty&gt;** field and, under **New**, choose **ShaderMaterial**. A [material](/reference/glossary/#material) decides how a surface looks; a `ShaderMaterial` uses a shader you write.
+7. Scroll back up to the **Mesh** section. Below the **PlaneMesh** properties, under the heading **PrimitiveMesh**, find **Material**. Click its **&lt;empty&gt;** field and, under **New**, choose **ShaderMaterial**. A [material](../../reference/glossary/#material) decides how a surface looks; a `ShaderMaterial` uses a shader you write.
 
 8. The new **ShaderMaterial** opens right below. Click its **Shader** property's **&lt;empty&gt;** field and choose **New Shader...**.
 
@@ -142,7 +142,7 @@ Change the template so that:
 - the `vertex()` function and its comment are gone (you bring `vertex()` back in piece 3)
 - inside `fragment()`, the comment is replaced by one instruction that sets `ALBEDO` to a green color, written as `vec3(0.4, 0.6, 0.2)`, with `=` between them
 
-[Albedo](/reference/glossary/#albedo) is the plain color of a surface before light touches it. A `vec3` holds three numbers, here the red, green, and blue amounts, each from 0 to 1.
+[Albedo](../../reference/glossary/#albedo) is the plain color of a surface before light touches it. A `vec3` holds three numbers, here the red, green, and blue amounts, each from 0 to 1.
 
 <Solution>
 	<Code code={piece1} lang="gdshader" title="art/ground/ground.gdshader" />
@@ -158,16 +158,16 @@ Save the shader. The tile turns a soft green, lit by your sun.
 
 ### Piece 2: a texture
 
-Now read the color from your grass detail, a gray [texture](/reference/glossary/#texture) from lesson 13, instead. A [uniform](/reference/glossary/#uniform) is written as the word `uniform`, then its type, then its name. After the name you can add a colon and hints, separated by commas, and the line ends with a semicolon. Add, between `shader_type spatial;` and `fragment()`:
+Now read the color from your grass detail, a gray [texture](../../reference/glossary/#texture) from lesson 13, instead. A [uniform](../../reference/glossary/#uniform) is written as the word `uniform`, then its type, then its name. After the name you can add a colon and hints, separated by commas, and the line ends with a semicolon. Add, between `shader_type spatial;` and `fragment()`:
 
 - a uniform named `albedo_texture` of type `sampler2D` (a texture the shader can read), with the hints `source_color`, `filter_linear_mipmap`, and `repeat_enable`;
 - a uniform named `albedo_tint` of type `vec3` with the hint `source_color` and the default `vec3(1.0)` (one number fills all three channels, so this is white), with a comment: the ground's color, which multiplies the texture, and white leaves the texture as it is
 
-and change `fragment()` so it sets `ALBEDO` to the color of `albedo_texture` at the [mesh](/reference/glossary/#mesh)'s `UV` coordinates, multiplied by `albedo_tint`. The function `texture(albedo_texture, UV)` returns four numbers (red, green, blue, and alpha); take the first three by adding `.rgb` after it.
+and change `fragment()` so it sets `ALBEDO` to the color of `albedo_texture` at the [mesh](../../reference/glossary/#mesh)'s `UV` coordinates, multiplied by `albedo_tint`. The function `texture(albedo_texture, UV)` returns four numbers (red, green, blue, and alpha); take the first three by adding `.rgb` after it.
 
 <Aside type="note" title="What the three hints do">
-- `source_color` says this texture holds colors. Color images are stored in [sRGB](/reference/glossary/#srgb), and Godot converts them before lighting. Without the hint, the grass looks washed out. It also gives `albedo_tint` a color picker in the Inspector.
-- `filter_linear_mipmap` smooths the texture between pixels and uses its [mipmaps](/reference/glossary/#mipmap), the smaller copies made on import, when the ground is far away. Without it, distant ground shimmers.
+- `source_color` says this texture holds colors. Color images are stored in [sRGB](../../reference/glossary/#srgb), and Godot converts them before lighting. Without the hint, the grass looks washed out. It also gives `albedo_tint` a color picker in the Inspector.
+- `filter_linear_mipmap` smooths the texture between pixels and uses its [mipmaps](../../reference/glossary/#mipmap), the smaller copies made on import, when the ground is far away. Without it, distant ground shimmers.
 - `repeat_enable` repeats the texture past its edges instead of smearing the last row of pixels. The ground needs it, as you see in piece 3.
 </Aside>
 
@@ -201,7 +201,7 @@ Save the shader. The tile turns white, because the texture is still empty, and t
 
 ### See the problem with UV
 
-[UV](/reference/glossary/#uv) coordinates are stored in the mesh, so the texture is glued to the tile. That breaks as soon as a second tile is turned or overlaps the first. Try it:
+[UV](../../reference/glossary/#uv) coordinates are stored in the mesh, so the texture is glued to the tile. That breaks as soon as a second tile is turned or overlaps the first. Try it:
 
 <Steps>
 
@@ -231,8 +231,8 @@ The **Output** panel shows `res://icon.svg: Texture detected as used in 3D. Enab
 
 Change the shader so each pixel samples the texture by its position in the world:
 
-- Declare a [varying](/reference/glossary/#varying) named `world_position` of type `vec3`. A varying carries a value from the vertex function to the fragment function.
-- Add a `vertex()` function, shaped like `fragment()`, that sets `world_position` to the vertex's position in the [world](/reference/glossary/#world-space). Inside `vertex()`, `VERTEX` is the point's position relative to the mesh itself, and `MODEL_MATRIX` is the [matrix](/reference/glossary/#matrix) that places the mesh in the world. Multiplying the matrix by the position moves the point into world coordinates. The matrix needs four numbers, so build a `vec4` from `VERTEX` with a fourth number of `1.0`, which marks it as a position, and keep the first three numbers of the result with `.xyz`.
+- Declare a [varying](../../reference/glossary/#varying) named `world_position` of type `vec3`. A varying carries a value from the vertex function to the fragment function.
+- Add a `vertex()` function, shaped like `fragment()`, that sets `world_position` to the vertex's position in the [world](../../reference/glossary/#world-space). Inside `vertex()`, `VERTEX` is the point's position relative to the mesh itself, and `MODEL_MATRIX` is the [matrix](../../reference/glossary/#matrix) that places the mesh in the world. Multiplying the matrix by the position moves the point into world coordinates. The matrix needs four numbers, so build a `vec4` from `VERTEX` with a fourth number of `1.0`, which marks it as a position, and keep the first three numbers of the result with `.xyz`.
 - Add a uniform `float` (a number with a decimal point) named `texture_scale`, with a default value of `0.5`: write `= 0.5` after the name. It is how many times the texture repeats per meter.
 - In `fragment()`, sample the texture at the pixel's world position instead of `UV`. The ground is flat, so use only the world's X and Z axes, which `world_position.xz` gives you, and multiply them by `texture_scale`.
 
@@ -251,14 +251,14 @@ Save the shader. The two icons become one continuous grid that runs straight acr
 Put `grass_detail.png` back in **Albedo Texture** with **Quick Load...** the same way. The grass now runs across both tiles with no seam, like the picture at the top of this lesson.
 
 <Aside type="note" title="Why 0.5">
-Your grass detail is 1024 pixels wide and the dirt and sand are 512, and each covers 2 meters of ground: 512 and 256 pixels per meter, the [texel density](/reference/glossary/#texel-density) you chose for them. Repeating a texture 0.5 times per meter, once every 2 meters, shows it at exactly that size.
+Your grass detail is 1024 pixels wide and the dirt and sand are 512, and each covers 2 meters of ground: 512 and 256 pixels per meter, the [texel density](../../reference/glossary/#texel-density) you chose for them. Repeating a texture 0.5 times per meter, once every 2 meters, shows it at exactly that size.
 </Aside>
 
 ### Piece 4: roughness and comments
 
 Finish the shader:
 
-- Add a uniform `float` named `roughness` with the hint `hint_range(0.0, 1.0)` and the default `0.9`. The hint comes first, after a colon, and the default last: `: hint` then `= value`. Then set `ROUGHNESS` to it in `fragment()`. [Roughness](/reference/glossary/#roughness) 0.9 keeps grass matte, with no shiny highlights.
+- Add a uniform `float` named `roughness` with the hint `hint_range(0.0, 1.0)` and the default `0.9`. The hint comes first, after a colon, and the default last: `: hint` then `= value`. Then set `ROUGHNESS` to it in `fragment()`. [Roughness](../../reference/glossary/#roughness) 0.9 keeps grass matte, with no shiny highlights.
 - Add a short comment, a line starting with `//`, above `albedo_texture` and above `texture_scale` that says what each one is for.
 
 <Solution>
@@ -275,7 +275,7 @@ Save the shader, then save the scene with <Kbd keys="Ctrl+S" mac="Cmd+S" />. Sel
 
 ## Try it
 
-- Select `TestTile2` and drag it around with the arrows of its move [gizmo](/reference/glossary/#gizmo), or turn it with the rings. The grass stays still while the tile slides over it, and there is never a seam.
+- Select `TestTile2` and drag it around with the arrows of its move [gizmo](../../reference/glossary/#gizmo), or turn it with the rings. The grass stays still while the tile slides over it, and there is never a seam.
 - Change **Texture Scale** to `1` and then `0.25`. The grass gets smaller and bigger on both tiles at once, because they share one material. Set it back to `0.5`.
 - Drag **Roughness** to `0.2` and orbit the 3D view until you look toward the sun: a soft shine appears on the tile. Set it back to `0.9`.
 

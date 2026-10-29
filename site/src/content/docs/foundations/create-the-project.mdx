@@ -45,7 +45,7 @@ The project that becomes your template: a Godot project with C# turned on, conne
 
 ## Create the project in Godot
 
-A Godot [project](/reference/glossary/#project) is a folder with a file named `project.godot` in it. Everything in that folder belongs to the game: scenes, scripts, textures, models. Godot's Project Manager makes the folder and the file for you.
+A Godot [project](../../reference/glossary/#project) is a folder with a file named `project.godot` in it. Everything in that folder belongs to the game: scenes, scripts, textures, models. Godot's Project Manager makes the folder and the file for you.
 
 <Steps>
 
@@ -82,7 +82,7 @@ A Godot [project](/reference/glossary/#project) is a folder with a file named `p
 </Steps>
 
 <Aside type="note" title="Why these choices">
-- **The name** becomes the name of your game's C# code library, its [assembly](/reference/glossary/#assembly), and the first part of every code name you write. Code names cannot contain spaces, so `TopDownTemplate` is written as one word with a capital letter at the start of each part. You can rename the project when you copy the template into a real game, in lesson 59.
+- **The name** becomes the name of your game's C# code library, its [assembly](../../reference/glossary/#assembly), and the first part of every code name you write. Code names cannot contain spaces, so `TopDownTemplate` is written as one word with a capital letter at the start of each part. You can rename the project when you copy the template into a real game, in lesson 59.
 - **Forward+** is Godot's renderer for desktop computers, and the only one with every lighting feature this course uses: soft shadows, ambient occlusion, fog, and glow. Mobile and Compatibility trade those away to run on phones and old graphics cards.
 - **Git** metadata makes Godot write two small files that tell Git how to treat a Godot project. You add to them later in this lesson.
 </Aside>
@@ -97,10 +97,10 @@ A Godot [project](/reference/glossary/#project) is a folder with a file named `p
 
 The window has five parts you use all the time. The panels around the edges are **docks**: you can drag them elsewhere, but this course always shows them where they start.
 
-- The **Scene** dock, top left, shows the [nodes](/reference/glossary/#node) of the [scene](/reference/glossary/#scene) you are editing. A scene is saved as a `.tscn` file. A new project has no scene, so it offers buttons to create one.
+- The **Scene** dock, top left, shows the [nodes](../../reference/glossary/#node) of the [scene](../../reference/glossary/#scene) you are editing. A scene is saved as a `.tscn` file. A new project has no scene, so it offers buttons to create one.
 - The **FileSystem** dock, bottom left, shows the files in your project. `res://` at its top is the project folder itself. Godot writes every file path starting from there, such as `res://levels/meadow.tscn`.
 - The **viewport** in the middle shows the scene. **2D**, **3D**, **Script**, and **Game** at the top switch what it shows.
-- The [Inspector](/reference/glossary/#inspector), on the right, shows the settings of whatever you select.
+- The [Inspector](../../reference/glossary/#inspector), on the right, shows the settings of whatever you select.
 - The **bottom panel** holds the **Output** log, where Godot and your game print messages, and other tools.
 
 ## Connect your code editor
@@ -140,7 +140,7 @@ The **External** section under **Text Editor** is for Godot's own scripting lang
 
 ## Create the C# solution
 
-Your C# code is built by the .NET SDK, which needs two files to know what to build: a C# **project file** (`.csproj`), and a [solution](/reference/glossary/#solution) file (`.sln`) that your code editor opens. Godot writes both.
+Your C# code is built by the .NET SDK, which needs two files to know what to build: a C# **project file** (`.csproj`), and a [solution](../../reference/glossary/#solution) file (`.sln`) that your code editor opens. Godot writes both.
 
 <Steps>
 
@@ -283,7 +283,7 @@ Godot reads `.gdignore` files, and tidies the `.csproj`, when it opens a project
 
 ## Save the first version with Git
 
-[Git](/reference/glossary/#git) keeps the history of your project in a [repository](/reference/glossary/#repository), a hidden `.git` folder inside the project folder. Each saved version is a [commit](/reference/glossary/#commit): a snapshot of every file, with a short message saying what changed. Before the first commit, tell Git two more things about a Godot project.
+[Git](../../reference/glossary/#git) keeps the history of your project in a [repository](../../reference/glossary/#repository), a hidden `.git` folder inside the project folder. Each saved version is a [commit](../../reference/glossary/#commit): a snapshot of every file, with a short message saying what changed. Before the first commit, tell Git two more things about a Godot project.
 
 ### What Git should ignore
 
@@ -295,11 +295,11 @@ The new lines ignore your code editor's own settings (Rider makes an `.idea` fol
 
 ### Which files go to Git LFS
 
-Git is built for text. It stores every version of every file in full, so a 20 MB texture saved ten times costs 200 MB in every copy of the repository, forever. [Git LFS](/reference/glossary/#git-lfs) stores large files on the side and keeps only a small pointer in Git. `.gitattributes` says which files are text and which go to Git LFS. Open it in your code editor the same way and replace its contents with:
+Git is built for text. It stores every version of every file in full, so a 20 MB texture saved ten times costs 200 MB in every copy of the repository, forever. [Git LFS](../../reference/glossary/#git-lfs) stores large files on the side and keeps only a small pointer in Git. `.gitattributes` says which files are text and which go to Git LFS. Open it in your code editor the same way and replace its contents with:
 
 <Code code={gitattributes} lang="txt" title=".gitattributes" />
 
-The first rule is Godot's own: it stores text files with the line endings Linux and macOS use (LF, short for line feed), so the same file never looks changed on another computer. The others send images, Blender and Krita files, models, audio, and video to Git LFS. `.tscn` scenes, `.tres` [resources](/reference/glossary/#resource), shaders, and C# scripts are text, so Git stores them itself and can show you exactly what changed.
+The first rule is Godot's own: it stores text files with the line endings Linux and macOS use (LF, short for line feed), so the same file never looks changed on another computer. The others send images, Blender and Krita files, models, audio, and video to Git LFS. `.tscn` scenes, `.tres` [resources](../../reference/glossary/#resource), shaders, and C# scripts are text, so Git stores them itself and can show you exactly what changed.
 
 ### The first commit
 
@@ -312,7 +312,7 @@ The first rule is Godot's own: it stores text files with the line endings Linux 
 	git config --global user.email "you@example.com"
 	```
 
-2. Create the repository. `-b main` names its main [branch](/reference/glossary/#branch) `main`, the name most projects use today:
+2. Create the repository. `-b main` names its main [branch](../../reference/glossary/#branch) `main`, the name most projects use today:
 
 	```powershell
 	git init -b main

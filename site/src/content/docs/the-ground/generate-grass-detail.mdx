@@ -45,7 +45,7 @@ A 1024 by 1024 gray picture of grass: hundreds of large curved blades, flat in t
 
 ## The idea
 
-A hand-painted game ground is often a **flat color** multiplied by a [detail texture](/reference/glossary/#detail-texture), a picture in grays. The color says what the ground is: grass green, dirt brown. The detail says how its surface looks: where the blades are, which parts are lit, which are in shadow. A white pixel in the detail leaves the color as it is, a darker one darkens it, so one picture serves any color: you can make the meadow lusher, or autumn, by changing one number, without redrawing anything.
+A hand-painted game ground is often a **flat color** multiplied by a [detail texture](../../reference/glossary/#detail-texture), a picture in grays. The color says what the ground is: grass green, dirt brown. The detail says how its surface looks: where the blades are, which parts are lit, which are in shadow. A white pixel in the detail leaves the color as it is, a darker one darkens it, so one picture serves any color: you can make the meadow lusher, or autumn, by changing one number, without redrawing anything.
 
 The detail can be drawn by hand in a painting program, as you do for dirt and sand in the next lesson. Grass is different. It needs hundreds of nearly identical shapes, with only their position, direction, and size varied, and no seam where the picture repeats. A script does that well, and it runs the same on every operating system. Most of this ground will be covered by the 3D grass of Module 6, so what shows through is calm, soft in tone, and low in contrast, and a script can hold that evenness better than a hand.
 
@@ -58,7 +58,7 @@ The script draws every blade in a few steps:
 
 ## Make the tool script
 
-You write the script as a C# [tool script](/reference/glossary/#tool-script): a script that runs in the editor, not in the game.
+You write the script as a C# [tool script](../../reference/glossary/#tool-script): a script that runs in the editor, not in the game.
 
 <Steps>
 
@@ -185,7 +185,7 @@ The palette in lesson 11 needed exact colors, so it stayed lossless. This pictur
 
 2. Set **Compress > Mode** to **VRAM Compressed**. Graphics cards can keep this kind of texture compressed in their own memory, VRAM, at a quarter of the size or less. The loss is too small to see on soft, flat shapes.
 
-3. Under **Mipmaps**, check **Generate**. [Mipmaps](/reference/glossary/#mipmap) are the smaller copies Godot draws for ground far from the camera; without them, the blades shimmer as the camera moves.
+3. Under **Mipmaps**, check **Generate**. [Mipmaps](../../reference/glossary/#mipmap) are the smaller copies Godot draws for ground far from the camera; without them, the blades shimmer as the camera moves.
 
 4. Click **Reimport (\*)**.
 

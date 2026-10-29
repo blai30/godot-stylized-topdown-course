@@ -57,7 +57,7 @@ Your rock in your game: four of them in the meadow, colored from your palette, s
 
 ## How Godot imports files
 
-Godot cannot use a `.png` or `.glb` directly in a game. When it finds a new or changed file in your project, it [imports](/reference/glossary/#import) it: it converts the file into a form the game can load fast, and saves that in the hidden `.godot` folder. The **import settings** that control the conversion live in a small `.import` file beside each file, such as `palette.png.import`. You change them in the **Import** dock, which shares a tab with the Scene dock.
+Godot cannot use a `.png` or `.glb` directly in a game. When it finds a new or changed file in your project, it [imports](../../reference/glossary/#import) it: it converts the file into a form the game can load fast, and saves that in the hidden `.godot` folder. The **import settings** that control the conversion live in a small `.import` file beside each file, such as `palette.png.import`. You change them in the **Import** dock, which shares a tab with the Scene dock.
 
 ## Keep the palette's colors exact
 
@@ -67,7 +67,7 @@ Godot cannot use a `.png` or `.glb` directly in a game. When it finds a new or c
 
 2. In the FileSystem dock, click `art/palette/palette.png`. Then click the **Import** tab at the top of the left dock, beside **Scene**.
 
-3. The palette imports with **Compress > Mode** set to **Lossless** and **Mipmaps > Generate** off ([mipmaps](/reference/glossary/#mipmap) are the smaller copies Godot can make for distant objects), which is right for it. Scroll to the bottom: **Detect 3D > Compress To** is **VRAM Compressed**.
+3. The palette imports with **Compress > Mode** set to **Lossless** and **Mipmaps > Generate** off ([mipmaps](../../reference/glossary/#mipmap) are the smaller copies Godot can make for distant objects), which is right for it. Scroll to the bottom: **Detect 3D > Compress To** is **VRAM Compressed**.
 
 	<Figure
 		src={paletteImport}
@@ -86,12 +86,12 @@ Godot cannot use a `.png` or `.glb` directly in a game. When it finds a new or c
 </Steps>
 
 <Aside type="note" title="Why not VRAM Compressed">
-Graphics cards can store images compressed in their own memory, VRAM (video memory), which saves memory but changes colors slightly: it rounds them in small blocks. That is fine for a painted picture and wrong for a palette, whose whole point is exact colors. Godot switches any image a 3D material uses to **VRAM Compressed** with mipmaps, unless **Detect 3D** is **Disabled**. Your palette is a few kilobytes, so storing it [lossless](/reference/glossary/#lossless-compression) costs nothing.
+Graphics cards can store images compressed in their own memory, VRAM (video memory), which saves memory but changes colors slightly: it rounds them in small blocks. That is fine for a painted picture and wrong for a palette, whose whole point is exact colors. Godot switches any image a 3D material uses to **VRAM Compressed** with mipmaps, unless **Detect 3D** is **Disabled**. Your palette is a few kilobytes, so storing it [lossless](../../reference/glossary/#lossless-compression) costs nothing.
 </Aside>
 
 ## One shared palette material
 
-Your rock arrived with a [material](/reference/glossary/#material) named `palette`, made from the one in Blender. Every model you color from the palette will bring a material of the same name. Instead of each model keeping its own copy, you **extract** the first one into a file and let every model use that file. Change it once, and every rock, tree, and flower follows.
+Your rock arrived with a [material](../../reference/glossary/#material) named `palette`, made from the one in Blender. Every model you color from the palette will bring a material of the same name. Instead of each model keeping its own copy, you **extract** the first one into a file and let every model use that file. Change it once, and every rock, tree, and flower follows.
 
 <Steps>
 
@@ -123,7 +123,7 @@ Your rock arrived with a [material](/reference/glossary/#material) named `palett
 
 ## Set up the palette material
 
-The material came from glTF with five things to set: it has no image (you exported none), its color is Blender's default gray, it draws both sides of every face, it is a little shiny, and it smooths its image. Its **Albedo** section is the surface's plain color, its [albedo](/reference/glossary/#albedo).
+The material came from glTF with five things to set: it has no image (you exported none), its color is Blender's default gray, it draws both sides of every face, it is a little shiny, and it smooths its image. Its **Albedo** section is the surface's plain color, its [albedo](../../reference/glossary/#albedo).
 
 <Steps>
 
@@ -159,7 +159,7 @@ The material came from glTF with five things to set: it has no image (you export
 		caption="White albedo and the palette texture. Back culling draws only the outside of each face, as solid objects need."
 	/>
 
-5. Under **Roughness**, set [Roughness](/reference/glossary/#roughness) to `1`: stone is not shiny.
+5. Under **Roughness**, set [Roughness](../../reference/glossary/#roughness) to `1`: stone is not shiny.
 
 	<Figure
 		src={materialRoughness}
@@ -214,12 +214,12 @@ The player should bump into rocks. Godot can build a collision shape from the mo
 </Steps>
 
 <Aside type="note" title="Why a single convex shape">
-A [convex shape](/reference/glossary/#convex-shape) has no dents: like a gift wrapped in plastic, it covers the outside of the rock. It is the cheapest kind of shape that still follows the rock's outline, and a rock has no hollows a player could walk into. **Trimesh** would follow every face exactly, at a higher cost; **Automatic**, the default, lets Godot choose. You could also add collision in Blender, with objects named with the suffixes `-col` or `-colonly`; Godot turns those into collision shapes on import. For simple props, the option here is less work.
+A [convex shape](../../reference/glossary/#convex-shape) has no dents: like a gift wrapped in plastic, it covers the outside of the rock. It is the cheapest kind of shape that still follows the rock's outline, and a rock has no hollows a player could walk into. **Trimesh** would follow every face exactly, at a higher cost; **Automatic**, the default, lets Godot choose. You could also add collision in Blender, with objects named with the suffixes `-col` or `-colonly`; Godot turns those into collision shapes on import. For simple props, the option here is less work.
 </Aside>
 
 ## A scene for the rock
 
-Levels should not place the `.glb` itself. You make an [inherited scene](/reference/glossary/#inherited-scene) from it: a scene of your own that contains the imported model, which you can add to or change, while the `.glb` stays exactly as Blender exported it. When you re-export, the inherited scene picks up the new model and keeps your changes.
+Levels should not place the `.glb` itself. You make an [inherited scene](../../reference/glossary/#inherited-scene) from it: a scene of your own that contains the imported model, which you can add to or change, while the `.glb` stays exactly as Blender exported it. When you re-export, the inherited scene picks up the new model and keeps your changes.
 
 <Steps>
 

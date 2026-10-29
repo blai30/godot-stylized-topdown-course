@@ -94,7 +94,7 @@ Move the mouse pointer over the 3D Viewport and try each of these:
 - Look from the back, the left, the bottom: <Kbd keys="Ctrl+Numpad 1" />, <Kbd keys="Ctrl+Numpad 3" />, <Kbd keys="Ctrl+Numpad 7" />
 - Switch between perspective and orthographic: <Kbd keys="Numpad 5" />
 
-The front, side, and top views are [orthographic](/reference/glossary/#orthographic-projection), flat like your game camera, so the label in the top left corner of the view changes to, for example, **Front Orthographic**. Orbiting turns the view back to perspective.
+The front, side, and top views are [orthographic](../../reference/glossary/#orthographic-projection), flat like your game camera, so the label in the top left corner of the view changes to, for example, **Front Orthographic**. Orbiting turns the view back to perspective.
 
 No number pad on your keyboard? Use either of these instead:
 
@@ -151,7 +151,7 @@ With metric units at scale 1, a 0.6 m rock in Blender arrives in Godot as a 0.6 
 
 ## Axes and the model front
 
-Blender and Godot point their axes differently. In Blender, **Z** points up and the ground is the X and Y plane. In Godot, **Y** points up and the ground is X and Z. You never convert by hand: the [glTF](/reference/glossary/#gltf) exporter you use in lesson 10 turns Blender's Z up into Godot's Y up, with its **+Y Up** option, which is on by default.
+Blender and Godot point their axes differently. In Blender, **Z** points up and the ground is the X and Y plane. In Godot, **Y** points up and the ground is X and Z. You never convert by hand: the [glTF](../../reference/glossary/#gltf) exporter you use in lesson 10 turns Blender's Z up into Godot's Y up, with its **+Y Up** option, which is on by default.
 
 Facing matters too. Godot calls **+Z** the **model front**, the way a model faces when it is not rotated; your player's nose in lesson 6 points along +Z, because `LookAt` with `useModelFront` turns +Z toward where the player walks. Blender's **front** view (<Kbd keys="Numpad 1" />) looks at a model from its **-Y** side, and the exporter turns Blender's -Y into Godot's +Z.
 
@@ -215,7 +215,7 @@ The startup file is a whole Blender scene: objects, the view angle, open panels,
 
 ## Hotkeys you will use every day
 
-Keep the pointer over the 3D view. Object Mode is where you move whole objects, and Edit Mode is where you change a [mesh](/reference/glossary/#mesh)'s points; the list says where a key works in only one of them.
+Keep the pointer over the 3D view. Object Mode is where you move whole objects, and Edit Mode is where you change a [mesh](../../reference/glossary/#mesh)'s points; the list says where a key works in only one of them.
 
 - <Kbd keys="Tab" />: switch between Object Mode and Edit Mode
 - <Kbd keys="G" />, <Kbd keys="R" />, <Kbd keys="S" />: move (grab), rotate, scale. Then press <Kbd keys="X" />, <Kbd keys="Y" />, or <Kbd keys="Z" /> to lock to an axis, type an amount, and press <Kbd keys="Enter" />; right-click or <Kbd keys="Esc" /> cancels
