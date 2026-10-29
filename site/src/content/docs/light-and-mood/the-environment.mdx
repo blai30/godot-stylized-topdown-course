@@ -12,7 +12,7 @@ lesson:
     - What ambient light, reflected light, and tonemapping each do to the picture
     - How ambient occlusion, glow, and fog change the look, and when to keep them gentle
     - Why fog density depends on how far the camera is from the ground
-  prerequisites: [4, 15]
+  prerequisites: [4, 5, 6, 15]
 ---
 
 import { Aside, Code, FileTree, Steps } from '@astrojs/starlight/components';
@@ -346,7 +346,7 @@ The meadow is calmer and bluer, and the contrast is lower. That is the base the 
 - **The meadow stays dark and gray.** The meadow still has no instance of the environment, or the environment's **Background > Mode** is still **Clear Color**. Check the Scene dock for `WorldEnvironment` with the scene icon, and the mode.
 - **The instance does not show your changes.** Save the `world_environment` scene with <Kbd keys="Ctrl+S" mac="Cmd+S" />, then switch to the meadow tab.
 - **The sky is black or pink.** The shader failed to compile. Open the **Shader Editor** and read its message, which names the line. The first line must be `shader_type sky;`.
-- **There is no SSAO.** SSAO needs the Forward+ renderer. A project made in lesson 3 uses it.
+- **There is no SSAO.** SSAO needs the Forward+ renderer. A project made in lesson 2 uses it.
 - **The meadow is a flat haze.** The fog **Density** is still `0.01`.
 - **The editor says the Environment's changes were not saved.** The Environment is part of the scene file, so save the scene.
 

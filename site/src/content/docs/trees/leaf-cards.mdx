@@ -431,7 +431,7 @@ The collection already has the glTF exporter you set up in lesson 24, writing `a
 
 <Steps>
 
-1. Click the **Layout** tab. Open the **Collection** tab in the Properties editor, scroll to **glTF 2.0**, and open its **Data** section. Open **Vertex Colors**. Set **Use Vertex Color** to **Active**, and uncheck **Export All Vertex Colors**. The default, **Material**, writes the colors only when a material reads them, and the cards have no material.
+1. Click the **Layout** tab. Open the **Collection** tab in the Properties editor, scroll to **glTF 2.0**, and open its **Data** section. Open **Vertex Colors**. Set **Use Vertex Color** to **Active**, and uncheck **Export All Vertex Colors**. **Active** writes the active color attribute, `Col`, whether or not a material reads it, so nothing else has to be set.
 
 	<Figure
 		src={exporterColors}
@@ -475,7 +475,7 @@ The odd colors are the proof that the data arrived: red is each card's phase, gr
 - **The cards all face one way.** **Roll to the clump** has the wrong axis or its **Vector** is not linked to **Card points**' **Normal**. Its **axis** is **Y**, and its pivot **Z**.
 - **The crown is a hollow shell.** **Push inward** is not scaling by **Push depth**, so the clump centers lie on the surface. Check that **Push depth**'s **Value** goes to **Push inward**'s **Scale**.
 - **The cards are lit as a speckle.** **Set normals** is muted, or **Unit normal** is not linked to its **Custom Normal**.
-- **In Godot the cards are white.** The exporter's **Use Vertex Color** is **Material**, or the mesh has no `Col` color attribute. Redo **A place for the colors** and the **Export** step, and check that **Apply Modifiers** is on.
+- **In Godot the cards are white.** The exporter's **Use Vertex Color** is not **Active**, or the mesh has no `Col` color attribute. Redo **A place for the colors** and the **Export** step, and check that **Apply Modifiers** is on.
 - **Blender says there is no active color attribute.** In the Color Attributes panel, click the `Col` entry to make it active.
 
 ## Checkpoint

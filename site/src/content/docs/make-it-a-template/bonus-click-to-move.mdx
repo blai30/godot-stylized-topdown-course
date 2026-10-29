@@ -12,7 +12,7 @@ lesson:
     - How to put the level's solid things in a group and bake from the group
     - How a NavigationAgent3D finds a path and hands it to a body
     - Which baking settings make the mesh match the player
-  prerequisites: [6, 59, 60]
+  prerequisites: [6, 28, 54, 59, 60]
 ---
 
 import { Aside, Code, Steps } from '@astrojs/starlight/components';
@@ -29,7 +29,7 @@ import agentSettings from '../../../assets/lessons/bonus-click-to-move/agent-set
 import path from '../../../assets/lessons/bonus-click-to-move/path.png';
 
 <Aside type="note" title="An optional add-on">
-Lessons 61, 62, 64, and 65 are optional add-ons, not part of the template. Each is a small addition for one kind of game, and you add it to a game you copied from the template in lesson 60. This one is for action RPGs, where you click and the hero goes there. It replaces the keyboard walking from lesson 6.
+Lessons 61, 62, 64, and 65 are optional add-ons, not part of the template. Each is a small addition for one kind of game, and you add it to a game you copied from the template in lesson 60. If you renamed the project, use your game's name wherever the code says `TopDownTemplate`. This one is for action RPGs, where you click and the hero goes there. It replaces the keyboard walking from lesson 6.
 </Aside>
 
 ## What you will build
@@ -153,7 +153,7 @@ The defaults are an agent 1.5 meters tall and 0.5 in radius that can climb 0.25 
 
 </Steps>
 
-The player in `meadow.tscn` had a **Ground** property from `PlayerMovement`. It is gone now, and so are the walking speed that depends on the tile under the player and the sprint.
+`levels/generated.tscn` shares this player but has no navigation mesh, so the player stands still there until you bake one in that level too. The player in `meadow.tscn` had a **Ground** property from `PlayerMovement`. It is gone now, and so are the walking speed that depends on the tile under the player and the sprint.
 
 ## Try it
 

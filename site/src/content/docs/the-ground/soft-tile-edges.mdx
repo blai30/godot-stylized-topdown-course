@@ -115,8 +115,8 @@ Replace the straight cut with noise. Change the shader so that:
 
 - there is a uniform `sampler2D` named `edge_noise` with the hints `filter_linear_mipmap` and `repeat_enable`, and a uniform `float` named `edge_noise_scale` with the default `0.4`, how many times the noise repeats per meter, each with a comment;
 - in `fragment()`, a `float` named `noise` reads the red channel of `edge_noise` at `world_position.xz * edge_noise_scale`;
-- `ALPHA` is `noise + 0.5 - outside`, and `ALPHA_SCISSOR_THRESHOLD` stays the last line of `fragment()`;
-- after that line, a `float` named `tone` reads the same noise again, at `world_position.xz * edge_noise_scale * 0.25`, four times as wide, and `ALBEDO` is multiplied by `0.75 + 0.5 * tone`, with a comment saying the ground brightens and darkens slowly so the texture's repeat does not show.
+- `ALPHA` is `noise + 0.5 - outside`;
+- after the `ALPHA` line and before `ALPHA_SCISSOR_THRESHOLD`, which stays the last line of `fragment()`, a `float` named `tone` reads the same noise again, at `world_position.xz * edge_noise_scale * 0.25`, four times as wide, and `ALBEDO` is multiplied by `0.75 + 0.5 * tone`, with a comment saying the ground brightens and darkens slowly so the texture's repeat does not show.
 
 <Solution>
 	<Code code={piece2} lang="gdshader" title="art/ground/ground.gdshader" />

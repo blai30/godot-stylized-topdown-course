@@ -128,13 +128,13 @@ Every physics object sits on one or more of 32 [physics layers](../../reference/
 
 	<Figure
 		src={layerNames}
-		alt="Project Settings with Layer Names 3D Physics selected: Layer 1 is world and Layer 2 is player, both with reset arrows; Layer 3 to Layer 18 are empty."
+		alt="Project Settings with Layer Names 3D Physics selected: Layer 1 is World and Layer 2 is Player, both with reset arrows; Layer 3 to Layer 18 are empty."
 		caption="Two named layers. Later lessons add more when they need them."
 	/>
 
 </Steps>
 
-`World` is for the ground and everything solid standing on it. `Player` is for the player, so that later things can tell the player apart from the world, such as water the player cannot walk into in lesson 47.
+`World` is for the ground and everything solid standing on it. `Player` is for the player, so that later things can tell the player apart from the world, such as water the player cannot walk into in lesson 48.
 
 ## The input map
 
@@ -226,7 +226,7 @@ An event is one key, button, or stick direction. You add events with the **+** a
 
 ## Try it
 
-- Open `project.godot` in your code editor (it is in the project folder, beside `TopDownTemplate.csproj`). Find `window/size/viewport_width=1280` under `[display]`, `common/physics_interpolation=true` under `[physics]`, `3d_physics/layer_1="world"` under `[layer_names]`, and your seven actions under `[input]`. Close it without changing anything: the Project Settings window is the safe way to edit this file.
+- Open `project.godot` in your code editor (it is in the project folder, beside `TopDownTemplate.csproj`). Find `window/size/viewport_width=1280` under `[display]`, `common/physics_interpolation=true` under `[physics]`, `3d_physics/layer_1="World"` under `[layer_names]`, and your seven actions under `[input]`. Close it without changing anything: the Project Settings window is the safe way to edit this file.
 - In the Input Map tab, type `move` in **Filter by Name**: the list narrows to the four move actions. Clear the field to see all seven again.
 
 ## If it does not work

@@ -12,7 +12,7 @@ lesson:
     - How a gradient map turns a grayscale texture into a range of colors
     - How to make and edit a GradientTexture1D in the Inspector
     - How an exported property sets a different instance shader parameter on each copy of a tree
-  prerequisites: [25, 27, 53, 59]
+  prerequisites: [25, 27, 28, 53, 59]
 ---
 
 import { Aside, Code, FileTree, Steps } from '@astrojs/starlight/components';
@@ -34,7 +34,7 @@ import groveClose from '../../../assets/lessons/bonus-autumn-leaves/grove-close.
 import groveDusk from '../../../assets/lessons/bonus-autumn-leaves/grove-dusk.png';
 
 <Aside type="note" title="An optional add-on">
-Lessons 61, 62, 64, and 65 are optional add-ons, not part of the template. This one is for any game with trees that should change with the season, and you add it to a game you copied from the template in lesson 60. The art stays script-free: the script goes on the trees in your level, not on the tree in `art`.
+Lessons 61, 62, 64, and 65 are optional add-ons, not part of the template. This one is for any game with trees that should change with the season, and you add it to a game you copied from the template in lesson 60. If you renamed the project, use your game's name wherever the code says `TopDownTemplate`. The art stays script-free: the script goes on the trees in your level, not on the tree in `art`.
 </Aside>
 
 ## What you will build
@@ -63,7 +63,7 @@ The difference matters for autumn. Try the flat way first.
 
 1. Open `art/nature/tree_oak/tree_oak.tscn` and select the `leaves` node.
 
-2. In the Inspector, under **Geometry**, click the picture of **Material Override**. The Inspector now shows `leaves.tres`. Set **Leaf Color** to `#E6731F`, an orange, and save the scene with <Kbd keys="Ctrl+S" mac="Cmd+S" />.
+2. In the Inspector, under **Geometry**, click the picture of **Material Override**. The Inspector now shows `leaves.tres`. Set **Leaf Color** to `#E6731F`, an orange. The bushes from lesson 54 use this same material, so they turn orange too, until you put the color back. Save the scene with <Kbd keys="Ctrl+S" mac="Cmd+S" />.
 
 3. Open `levels/meadow.tscn`, click **Play Scene**, <Kbd keys="F6" mac="Cmd+R" />, and zoom in on the oaks.
 
@@ -258,7 +258,7 @@ With `levels/meadow.tscn` open, click **Play Scene**, <Kbd keys="F6" mac="Cmd+R"
 		caption="The grove at dusk."
 	/>
 - Edit the ramp's colors. Make the last stop pink for a cherry blossom, or the first stop a deep purple. The ramp is the whole look of the autumn, in four colors.
-- The pines are unchanged because they have no `AutumnTree` script, so their `autumn` stays `0`. If you put the script on a pine, give its material an `autumn_ramp` first, or the shader has no colors to turn toward.
+- The bushes and the pines are unchanged because they have no `AutumnTree` script, so their `autumn` stays `0`. The pine's material has no `autumn_ramp`, so if you put the script on a pine, give its material an `autumn_ramp` first, or the shader has no colors to turn toward.
 
 <Aside type="tip" title="A whole season">
 A tree with its own `autumn` is a grove of different trees. To have the whole meadow turn together, add a global shader parameter named `season` as you did `wind_strength` in lesson 27, read it in the shader in place of `autumn`, and let a script move it from 0 to 1 over the year. If each tree also has a number of its own from 0 to 1, such as the one `tree_phase_at` makes from where it stands, subtract it first, with something like `clamp(season * 2.0 - number, 0.0, 1.0)`. The trees then turn one after the other, so the meadow changes gradually instead of all at once.
@@ -270,7 +270,7 @@ A tree with its own `autumn` is a grove of different trees. To have the whole me
 - **The oaks stay green at `1`.** The script is not on that oak in the meadow, or the project was not built after you saved it. Click **Build Project**, and check that the Inspector shows **Autumn** at the top. Also check that the meadow was saved after you set the values.
 - **The oaks turn solid black or white.** The ramp is empty or not set: check **Autumn Ramp** in the material, and that its gradient has four stops.
 - **The autumn colors look much too dark or too light.** `GRAY_RANGE` does not match your atlas. If you painted a lighter or darker atlas than the reference, change the two numbers to its darkest and lightest grays.
-- **Godot says `AutumnTree` cannot be loaded.** The class name and the file name must match, and the namespace must be `TopDownTemplate.World`. Build again.
+- **Godot says `AutumnTree` cannot be loaded.** The class name and the file name must match, and the class must be `partial`. Build again.
 
 ## Checkpoint
 

@@ -47,7 +47,7 @@ A character model that is **humanoid** (two arms, two legs, a head, an upright b
 
 The lesson uses the **Superhero Male** from Quaternius's **Universal Base Characters** (the free Standard pack, CC0, from `https://quaternius.com`): a realistic, skinned, textured man with hair, eyes, and a 65-bone skeleton with fingers. In the pack, open `Base Characters/Godot - UE` and take `Superhero_Male_FullBody.gltf`, its `.bin` file, and the textures `T_Superhero_Male_Dark.png`, `T_Superhero_Male_Normal.png`, `T_Superhero_Male_Roughness.png`, `T_Hair_1_BaseColor.png`, `T_Eye_Brown.png`, `T_Hair_1_Normal.png`, and `T_Eye_Normal.png`. Put them in one folder, `art/character/superhero`. The `.gltf` is a glTF in several files: the `.bin` holds its geometry and the pictures are the textures, and all must sit beside it.
 
-One snag: the glTF asks for the two normal maps as `T_Hair_1_Normal_png.png` and `T_Eye_Normal_png.png`. If you copy the files under their pack names, Godot cannot find them and reports it in the Output panel. Copy each of those two once more and rename the copy to the name the glTF asks for. The reference project has them already: `art_source/character/superhero`.
+One snag: the glTF asks for the two normal maps as `T_Hair_1_Normal_png.png` and `T_Eye_Normal_png.png`. If you copy the files under their pack names, Godot cannot find them and reports it in the Output panel. Copy each of those two once more and rename the copy to the name the glTF asks for. The reference project keeps the originals in `art_source/character/superhero`, where Godot does not import them; for this exercise you put the copies in `art`, so Godot can.
 
 ## Check the model first
 
@@ -170,4 +170,12 @@ Only the numbers change: the stride speed depends on the character's legs.
 
 ## Checkpoint
 
-Your project is as lesson 43 left it, plus the model you imported. Nothing here changes the course's template: the character you made stays the player.
+Your project is as lesson 43 left it, plus the model you imported. Nothing here changes the course's template: the character you made stays the player. Delete `art/character/superhero` when you are done, since its file names do not follow the project's `snake_case` rule and lesson 59's audit would list them.
+
+<FileTree>
+- art
+  - character
+    - superhero: the downloaded model and its textures, to delete
+</FileTree>
+
+<Checkpoint />
