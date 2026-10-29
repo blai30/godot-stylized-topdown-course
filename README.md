@@ -8,7 +8,7 @@ Read the course at https://blai30.github.io/godot-stylized-topdown-course/.
 
 - Godot 4.8 (.NET build) and the .NET SDK it requires
 - Blender 5.2 and Krita
-- Git and Git LFS
+- Git
 
 The first lesson walks through installing everything.
 
@@ -18,10 +18,9 @@ The first lesson walks through installing everything.
 |---|---|
 | `site/` | The course website (Astro and Starlight). |
 | `reference/` | The course's own build of the template, made by following the lessons. It proves every step works and provides the screenshots and solution code. |
-| `docs/` | The course spec, the phase and module reports, and the target-look reference images. |
 | `tools/verification/` | Tooling that performs the lessons in Godot, Blender, and Krita, captures the screenshots, and checks the site. |
 
-Binary files are stored with Git LFS. Run `git lfs install` once before cloning.
+The screenshots and the `reference/` art are ordinary files in git, so a clone is a few hundred megabytes.
 
 ## Build the site locally
 

@@ -75,3 +75,14 @@ The editor plugin cannot run in the Project Manager. Start Godot with `--project
 A running game writes its log to Godot's user data folder for the project: `%APPDATA%\Godot\app_userdata\TopDownTemplate\logs` on Windows, `~/Library/Application Support/Godot/app_userdata/TopDownTemplate` on a Mac, `~/.local/share/godot/app_userdata/TopDownTemplate` on Linux. Delete that folder after a verification session.
 
 Some scripts, such as `make_assets.py`, still hold absolute paths from the first machine they ran on; set them for your machine before running.
+
+## Git LFS
+
+This repository does not use Git LFS. `reference/` is a Godot project and carries its own `.gitattributes`, as does lesson 2's checkpoint, and those files route art through LFS because the course teaches that for the reader's game. If Git LFS is installed on your machine, turn its filter off in this clone so it does not turn this repository's images into pointers:
+
+```sh
+git config --local filter.lfs.clean cat
+git config --local filter.lfs.smudge cat
+git config --local filter.lfs.process ""
+git config --local filter.lfs.required false
+```
