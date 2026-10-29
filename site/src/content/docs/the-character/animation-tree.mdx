@@ -59,7 +59,7 @@ Here the line is speed in meters per second, the clips are `Idle` at 0, `Jog_Fwd
 		caption="An AnimationTree beside the AnimationPlayer."
 	/>
 
-2. In the Inspector, set **Tree Root** to a new **AnimationNodeBlendSpace1D**, and **Anim Player** to the `AnimationPlayer`. Click the blend space to open it, and set **Min Space** to `0`, **Max Space** to `6`, and **Sync Mode** to the option that syncs the clips (the checkpoint file stores `sync_mode = 1`). Syncing keeps the clips in step as they blend, so a foot does not lose its beat.
+2. In the Inspector, set **Tree Root** to a new **AnimationNodeBlendSpace1D**, and **Anim Player** to the `AnimationPlayer`. Click the blend space to open it, and set **Min Space** to `0`, **Max Space** to `6`, and **Sync Mode** to **Independent**, the value the checkpoint file stores as `sync_mode = 1`.
 
 3. In the **Animation Tree** panel at the bottom, the blend space is a line. Choose the **Add Point** tool and click the line near the left end: choose the animation `Idle`. Select the point and set its position to `0` in the Inspector. Add `Jog_Fwd` and set its position to `3.5`, and `Sprint` at `6`.
 

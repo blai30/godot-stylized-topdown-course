@@ -91,7 +91,7 @@ The grass is not shaded from a texture. The shader of lesson 31 reads the ground
 
 1. Start Blender from the file you set up in lesson 8, and press <Kbd keys="A" /> and <Kbd keys="X" /> over the 3D view, then <Kbd keys="Enter" />, to delete the startup file's cube. This scene starts empty.
 
-2. Choose **File > Save As** (<Kbd keys="Shift+Ctrl+S" mac="Shift+Cmd+S" />), go to your project's `art_source` folder, make a `nature\grass` folder inside it with the **Create New Directory** button, and save the file there as `grass.blend`.
+2. Choose **File > Save As** (<Kbd keys="Shift+Ctrl+S" mac="Shift+Cmd+S" />), go to your project's `art_source` folder, click the path field, press <Kbd keys="Ctrl+A" mac="Cmd+A" />, and type the path to a new `nature\grass` folder ending with a backslash. Blender asks **Create new directory?**; click **Create**. Save the file there as `grass.blend`.
 
 </Steps>
 
@@ -178,11 +178,11 @@ The blades are the **source** the clump's group will copy, not part of the final
 
 <Steps>
 
-1. In the outliner, click the **New Collection** button at the top right. A second collection appears under **Scene Collection**. Click it, press <Kbd keys="F2" />, name it `grass_blades`, and press <Kbd keys="Enter" />.
+1. In the outliner, right-click **Scene Collection** and choose **New Collection**. The new collection sits beside the startup file's `Collection`, not inside it. Click it, press <Kbd keys="F2" />, name it `grass_blades`, and press <Kbd keys="Enter" />.
 
 2. Over the 3D view, press <Kbd keys="A" /> to select the three blades, then <Kbd keys="M" />, type `grass_blades`, and press <Kbd keys="Enter" />. The blades move into the collection.
 
-3. Click the eye next to `grass_blades` to hide it, then click the other collection, press <Kbd keys="F2" />, name it `grass`, and press <Kbd keys="Enter" />. New objects go into the collection you clicked last, so everything you export is in `grass`.
+3. Click the eye next to `grass_blades` to hide it, then click the startup file's `Collection`, press <Kbd keys="F2" />, name it `grass`, and press <Kbd keys="Enter" />. New objects go into the collection you clicked last, so everything you export is in `grass`.
 
 	<Figure
 		src={collections}

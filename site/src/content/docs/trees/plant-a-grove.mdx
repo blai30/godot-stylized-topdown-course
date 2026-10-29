@@ -107,17 +107,17 @@ The phase comes from the tree's position, so it needs no saved data: move a tree
 
 A far-off model needs fewer triangles than a close one. Godot can make simpler copies of a mesh when it imports it, **levels of detail**, and switch among them by how big the mesh is on screen. It did so for the oak, and the importer's settings were on by default, so there was nothing to turn on.
 
-What it did is worth looking at, because the numbers are not what you would expect. The reference project reads the imported mesh back: the trunk, `tree_oak`, has the full mesh of 5,592 indices and three simpler ones of 1,398, 699, and 333. The crown, `leaves`, has none: a card is two triangles, and there is nothing to simplify. So the levels of detail only touch the trunk.
+What it did is worth looking at, because the numbers are not what you would expect. The reference project reads the imported mesh back: the trunk, `tree_oak`, has the full mesh of 5,592 indices and three simpler ones of 2,796, 1,398, and 666. The crown, `leaves`, has none: a card is two triangles, and there is nothing to simplify. So the levels of detail only touch the trunk.
 
 Under this game's orthographic camera, the engine still switches them. The reference project counted the triangles Godot drew for one oak, shadows included, at three zooms:
 
 | Camera | Triangles drawn for one oak |
 |---|---|
-| Zoomed in all the way | 4,514 |
-| The starting view | 4,270 |
-| Zoomed out all the way | 3,804 |
+| Zoomed in all the way | 4,516 |
+| The starting view | 4,272 |
+| Zoomed out all the way | 3,806 |
 
-The count falls by about 15 percent as you zoom out, which fits the trunk's levels taking over: the crown has none to switch. The count covers the shadow passes too, and the probe did not separate the trunk from the crown, so read it as a size, not a proof. The crown's cost stays the same at every zoom. For seven trees, the whole grove is about 30,000 triangles at the starting view, which is small for a modern GPU, so this template does not add its own crown levels. If your trees grow to hundreds, the next step is a second, coarser crown with fewer cards, swapped in by distance on the `leaves` node's **Visibility Range** properties.
+The count falls by about 16 percent as you zoom out, which fits the trunk's levels taking over: the crown has none to switch. The count covers the shadow passes too, and the probe did not separate the trunk from the crown, so read it as a size, not a proof. The crown's cost stays the same at every zoom. For seven trees, the whole grove is about 30,000 triangles at the starting view, which is small for a modern GPU, so this template does not add its own crown levels. If your trees grow to hundreds, the next step is a second, coarser crown with fewer cards, swapped in by distance on the `leaves` node's **Visibility Range** properties.
 
 <Aside type="note" title="A report from another project">
 FactoryGame turns the importer's levels off and swaps meshes itself, because it found the shadow pass picking a level by the wrong rule under an orthographic camera. This lesson did not set out to reproduce that, and the numbers above come from the oak's shadows and its main view together, so it cannot say either way. If you see a tree's shadow change shape as you zoom, turn **Generate LODs** off in the glb's **Import** tab, and reimport.

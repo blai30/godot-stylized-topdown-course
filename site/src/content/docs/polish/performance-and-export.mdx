@@ -98,7 +98,7 @@ What the numbers say:
 - **Trees cost objects.** Hiding the generated level's trees took 183 of its 674 objects away. A tree adds objects and little else: those 183 objects cost 27 draw calls here. A level with hundreds of them still adds up.
 - **Water and ambient occlusion do not show in the counts.** The water is one or two draw calls; what it costs would be in the pixels it covers, which these counts cannot show. Ambient occlusion is a screen effect with no draw calls of its own. Both could only show in the frame time, and the frame rate readings on the test computer moved about as much as they do from run to run.
 
-None of this needs a change for the template. By draw calls the order is shadows, then grass and trees. By frame rate, which is noisier, hiding the grass gained the most (to about 390 in the meadow and 260 in the generated level), shadows came next (about 330 and 205), and the rest moved less than the noise. So when something is slow, reach for the grass density and the shadows first, then the prop count, and only then the effects.
+None of this needs a change for the template. By draw calls the order is shadows, then grass and trees. By frame rate, which is noisier, in the generated level, where the readings held steady, hiding the grass gained the most (to about 260 from about 160), shadows came next (about 205), and the rest moved less than the noise. The meadow's readings were too noisy to rank. So when something is slow, reach for the grass density and the shadows first, then the prop count, and only then the effects.
 
 ## Export a build
 

@@ -121,7 +121,7 @@ Three bones with no match is expected, and Godot may warn about them in the Outp
 
 The renamed skeleton is called `GeneralSkeleton`, the same name your character's skeleton has. Every track in the library now reads `%GeneralSkeleton:Hips`, `%GeneralSkeleton:LeftUpperLeg`, and so on: a **unique name** `%GeneralSkeleton` and a bone name. A clip moves whichever skeleton in the scene has that unique name, and your character's has it.
 
-The reference run reads one clip back: `Walk` has 58 tracks, and only one of them is a position track, `Hips`. Every other bone only rotates, because a position track on a leg would not fit a character with different leg lengths. The `Hips` position is rescaled by **Normalize Position Tracks**, which lesson 41's import turned on by default, so the walk's bob matches your character's size.
+The reference run reads one clip back: `Walk` has 58 tracks, and only one of them is a position track, `Hips`. Every other bone only rotates, because a position track on a leg would not fit a character with different leg lengths. The `Hips` position is rescaled by **Normalize Position Tracks**, the Retarget option listed in lesson 41, which is on by default, so the walk's bob matches your character's size.
 
 ## The clips already loop
 
