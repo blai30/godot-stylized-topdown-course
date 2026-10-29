@@ -15,6 +15,18 @@ export default defineConfig({
 	integrations: [
 		starlight({
 			title: 'Handmade Meadow',
+			// A table wider than its column scrolls sideways, and a keyboard can only scroll what it can focus.
+			head: [
+				{
+					tag: 'script',
+					content: `const focusWideTables = () => document.querySelectorAll('.sl-markdown-content table').forEach((table) => {
+	if (table.scrollWidth > table.clientWidth) table.setAttribute('tabindex', '0');
+	else table.removeAttribute('tabindex');
+});
+addEventListener('DOMContentLoaded', focusWideTables);
+addEventListener('resize', focusWideTables);`,
+				},
+			],
 			// The 404 page lives in src/pages/404.astro.
 			disable404Route: true,
 			description: 'Build a stylized top-down Godot game template by hand, from the first install to your own art library.',

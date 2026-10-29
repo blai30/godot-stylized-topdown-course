@@ -1,0 +1,10 @@
+{
+  "name": "verification",
+  "private": true,
+  "type": "module",
+  "description": "Tooling for the course: the accessibility check needs these two packages.",
+  "devDependencies": {
+    "axe-core": "^4.11.0",
+    "playwright-core": "^1.55.0"
+  }
+}

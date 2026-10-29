@@ -65,7 +65,8 @@ The editor plugin cannot run in the Project Manager. Start Godot with `--project
 
 ## Site checks
 
-- `scripts/check-links.mjs dist`: every internal link and anchor must exist, and every external link must answer.
+- `scripts/check-links.mjs dist [base] [own origin]`: every internal link and anchor must exist, and every external link must answer. For a sub-path build, pass the base path (`/StylizedGameTemplateCourse/`) and the site's origin, which is skipped until it is published.
+- `scripts/check-accessibility.mjs dist [base]`: axe-core on every page at a desktop and a phone width, in both themes. Run `npm install` in `tools/verification` first, and set `CHROME` to a Chromium executable if Playwright's is not installed.
 - `scripts/cspell.json`: American English spelling, run with `npx cspell --config tools/verification/scripts/cspell.json "site/src/**/*.mdx"`.
 - Accessibility was checked with axe-core in a browser, in both themes, at desktop and phone widths, with solutions, the image viewer, and search open.
 
