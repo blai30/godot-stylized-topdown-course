@@ -2,7 +2,7 @@
 
 A beginner course that teaches you to build, entirely by hand, a reusable Godot template for stylized top-down 3D games: a hand-painted meadow with grass, trees, and water, a day and night cycle, an animated character, a follow camera, and your own art library. You make every model, texture, shader, scene, and script yourself, then copy the result to start any game.
 
-Read the course at https://blai30.github.io/StylizedGameTemplateCourse/.
+Read the course at https://blai30.github.io/godot-stylized-topdown-course/.
 
 ## What you need
 
